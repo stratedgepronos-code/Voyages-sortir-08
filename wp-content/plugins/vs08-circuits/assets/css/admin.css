@@ -1,0 +1,45 @@
+/* VS08 Circuits — Admin */
+/* Postbox headers en teal pour mieux voir les catégories */
+.post-type-vs08_circuit .postbox .postbox-header,
+.post-type-vs08_circuit .postbox h2.hndle,
+.post-type-vs08_circuit .postbox .hndle {
+    background: #59b7b7 !important;
+    border-bottom: 1px solid #3d9a9a !important;
+    border-radius: 3px 3px 0 0;
+}
+.post-type-vs08_circuit .postbox .postbox-header *,
+.post-type-vs08_circuit .postbox h2.hndle *,
+.post-type-vs08_circuit .postbox .hndle *,
+.post-type-vs08_circuit .postbox .postbox-header .hndle-icon:before {
+    color: #fff !important;
+}
+.post-type-vs08_circuit .postbox .postbox-header .toggle-indicator:before {
+    color: #fff !important;
+}
+
+.vs08c-field-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; align-items: flex-start; }
+.vs08c-field { display: flex; flex-direction: column; flex: 1 1 140px; min-width: 0; }
+.vs08c-field-wide { flex: 1 1 100%; }
+.vs08c-field label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #1a3a3a; margin-bottom: 5px; }
+.vs08c-field input[type="text"],
+.vs08c-field input[type="number"],
+.vs08c-field input[type="date"],
+.vs08c-field textarea { width: 100%; box-sizing: border-box; border: 1.5px solid #dde1e7; border-radius: 6px; padding: 8px 10px; font-size: 13px; }
+.vs08c-desc { font-size: 12px; color: #666; margin-bottom: 12px; }
+.vs08c-help { font-size: 12px; color: #888; margin-top: 8px; }
+.vs08c-dyn-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; background: #fafbfc; border: 1px solid #edf0f4; border-radius: 8px; padding: 8px 12px; }
+.vs08c-dyn-row input[type="text"] { width: 120px; }
+.vs08c-dyn-row input[type="date"] { width: 140px; }
+.vs08c-inline { font-size: 12px; color: #666; margin: 0 4px; white-space: nowrap; }
+.vs08c-euro { display: inline-flex; align-items: center; gap: 4px; }
+.vs08c-euro input { width: 90px; }
+.vs08c-rm { flex-shrink: 0; }
+.vs08c-two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 782px) { .vs08c-two-cols { grid-template-columns: 1fr; } }
+.vs08c-jour-block { display: flex; gap: 12px; margin-bottom: 12px; padding: 12px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; align-items: flex-start; }
+.vs08c-jour-num { font-weight: 700; color: #059669; min-width: 60px; font-size: 13px; }
+.vs08c-jour-fields { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.vs08c-jour-fields input { width: 100%; }
+.vs08c-jour-fields textarea { width: 100%; min-height: 60px; resize: vertical; }
+.vs08c-gal-preview { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+.vs08c-gal-preview img { max-width: 80px; height: 60px; object-fit: cover; border-radius: 6px; }

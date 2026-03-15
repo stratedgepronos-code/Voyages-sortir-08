@@ -1,0 +1,40 @@
+---
+description: Checklist de migration sortirmonde.fr vers www.voyagessortir08.com
+alwaysApply: true
+---
+
+# Migration sortirmonde.fr → www.voyagessortir08.com
+
+Le site est développé sur `sortirmonde.fr` (domaine de dev). La version finale ira sur `www.voyagessortir08.com`.
+
+## Quand l'utilisateur dit "on migre" :
+
+### 1. WordPress — Changer les URLs
+- `Réglages > Général` : remplacer `sortirmonde.fr` par `www.voyagessortir08.com` (Adresse WordPress + Adresse du site)
+- Ou via WP-CLI : `wp option update siteurl` et `wp option update home`
+
+### 2. Base de données — Search & Replace
+- Lancer un search-replace sur toute la BDD : `sortirmonde.fr` → `www.voyagessortir08.com`
+- Outil recommandé : plugin "Better Search Replace" ou WP-CLI `wp search-replace`
+
+### 3. Paybox Mail — Mettre à jour le webhook
+- Ancien : `https://sortirmonde.fr/wp-json/vs08v/v1/paybox-mail-webhook`
+- Nouveau : `https://www.voyagessortir08.com/wp-json/vs08v/v1/paybox-mail-webhook`
+
+### 4. config.cfg — Copier sur le nouveau serveur
+- Si changement d'hébergement : copier `wp-content/plugins/vs08-voyages/config.cfg` (clés Duffel + Paybox Mail)
+
+### 5. GitHub Actions — Mettre à jour deploy.yml
+- Modifier `SSH_HOST` dans les secrets GitHub si le serveur change
+- Modifier le chemin distant si différent
+
+### 6. DNS — Pointer le domaine
+- Configurer les DNS de `voyagessortir08.com` vers le serveur
+- Installer le certificat SSL
+
+### 7. Redirections
+- Ajouter une redirection 301 de `sortirmonde.fr` vers `www.voyagessortir08.com` (htaccess ou Hostinger)
+
+## Important
+- Aucune URL n'est codée en dur dans le code PHP/JS/CSS — tout utilise `home_url()`, `admin_url()`, `rest_url()`, etc.
+- Le code s'adapte automatiquement au nouveau domaine après le changement dans WordPress.

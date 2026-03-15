@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none">
+  <rect width="400" height="200" rx="20" fill="#f0f4f8"/>
+  <g transform="translate(50,30)">
+    <path d="M60 120 Q60 100 80 95 L110 85 Q130 70 160 65 L220 60 Q260 58 280 65 L295 75 Q310 85 310 95 L310 120" fill="#59b7b7" opacity=".9"/>
+    <path d="M120 85 Q135 55 175 50 L210 48 Q240 48 250 65 L260 80" fill="#fff" opacity=".3"/>
+    <path d="M130 83 Q140 60 170 55 L195 53 Q215 53 225 65 L230 75" fill="#fff" opacity=".5" stroke="#4a9e9e" stroke-width="1"/>
+    <rect x="55" y="120" width="260" height="12" rx="6" fill="#3a8a8a"/>
+    <circle cx="110" cy="132" r="18" fill="#2d3748"/><circle cx="110" cy="132" r="10" fill="#718096"/><circle cx="110" cy="132" r="5" fill="#a0aec0"/>
+    <circle cx="265" cy="132" r="18" fill="#2d3748"/><circle cx="265" cy="132" r="10" fill="#718096"/><circle cx="265" cy="132" r="5" fill="#a0aec0"/>
+    <rect x="290" y="90" width="20" height="8" rx="3" fill="#e53e3e" opacity=".7"/>
+    <rect x="65" y="93" width="16" height="7" rx="3" fill="#ecc94b" opacity=".7"/>
+  </g>
+  <text x="200" y="185" text-anchor="middle" font-family="Outfit,sans-serif" font-size="13" font-weight="600" fill="#59b7b7" letter-spacing="2">MINI / CITADINE</text>
+</svg>

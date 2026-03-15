@@ -1,0 +1,115 @@
+# Deploy plugin vs08-voyages vers Hostinger (sortirmonde.fr)
+# Ce dépôt = contenu du plugin uniquement (racine = plugin)
+name: Deploy to Hostinger (sortirmonde.fr)
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SSH_OPTS: -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=15 -p 65002
+  WEBROOT: /home/${{ secrets.FTP_USERNAME }}/domains/sortirmonde.fr/public_html
+
+jobs:
+  deploy:
+    name: Deploy plugin via SSH
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install sshpass
+        run: sudo apt-get install -y sshpass
+
+      - name: Deploy plugin vs08-voyages (with retry)
+        run: |
+          ok=0
+          for attempt in 1 2 3; do
+            echo "=== Attempt $attempt/3 — Deploy plugin ==="
+            if sshpass -p "${{ secrets.SSH_PASSWORD }}" rsync -avz --delete \
+              --exclude='config.cfg' \
+              -e "ssh ${{ env.SSH_OPTS }}" \
+              . \
+              ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }}:${{ env.WEBROOT }}/wp-content/plugins/vs08-voyages/; then
+              echo "Plugin deployed OK" && ok=1 && break
+            fi
+            echo "Attempt $attempt failed, waiting 10s..."
+            sleep 10
+          done
+          [ "$ok" -eq 1 ] || exit 1
+
+      - name: Deploy plugin vs08-circuits (with retry)
+        run: |
+          ok=0
+          for attempt in 1 2 3; do
+            echo "=== Attempt $attempt/3 — Deploy Circuits ==="
+            if sshpass -p "${{ secrets.SSH_PASSWORD }}" rsync -avz --delete \
+              -e "ssh ${{ env.SSH_OPTS }}" \
+              wp-content/plugins/vs08-circuits/ \
+              ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }}:${{ env.WEBROOT }}/wp-content/plugins/vs08-circuits/; then
+              echo "Plugin Circuits deployed OK" && ok=1 && break
+            fi
+            echo "Attempt $attempt failed, waiting 10s..."
+            sleep 10
+          done
+          [ "$ok" -eq 1 ] || echo "Circuits deploy failed (non-blocking)"
+
+      # ⚠️ ATTENTION : PAS de --delete sur le thème !
+      # Le repo ne contient que des fichiers de surcharge (footer.php, single-vs08_voyage.php).
+      # Le thème complet (style.css, header.php, functions.php, logo, assets…) vit UNIQUEMENT sur le serveur.
+      # Ajouter --delete ici DÉTRUIRAIT le site (déjà arrivé — ne JAMAIS refaire).
+      - name: Deploy theme vs08-theme (with retry)
+        run: |
+          ok=0
+          for attempt in 1 2 3; do
+            echo "=== Attempt $attempt/3 — Deploy theme ==="
+            if sshpass -p "${{ secrets.SSH_PASSWORD }}" rsync -avz \
+              -e "ssh ${{ env.SSH_OPTS }}" \
+              wp-content/themes/vs08-theme/ \
+              ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }}:${{ env.WEBROOT }}/wp-content/themes/vs08-theme/; then
+              echo "Theme deployed OK" && ok=1 && break
+            fi
+            echo "Attempt $attempt failed, waiting 10s..."
+            sleep 10
+          done
+          [ "$ok" -eq 1 ] || echo "Theme deploy failed (non-blocking)"
+
+      - name: Fix paybox-polyfill show_message conflict
+        run: |
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ env.SSH_OPTS }} \
+            ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} "
+            FILE=${{ env.WEBROOT }}/wp-content/mu-plugins/paybox-polyfill.php
+            if [ -f \"\$FILE\" ] && grep -q 'function show_message' \"\$FILE\" && ! grep -q 'function_exists.*show_message' \"\$FILE\"; then
+              sed -i 's/function show_message/if (!function_exists(\"show_message\")) { function show_message/' \"\$FILE\"
+              echo '}' >> \"\$FILE\"
+              echo 'paybox-polyfill.php patched'
+            else
+              echo 'paybox-polyfill.php already OK or not found'
+            fi
+          " || echo "Patch skipped (non-blocking)"
+
+      - name: Purge caches
+        run: |
+          ok=0
+          for attempt in 1 2 3; do
+            echo "=== Attempt $attempt/3 — Purge caches ==="
+            if sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ env.SSH_OPTS }} \
+              ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} "
+              WEBROOT=${{ env.WEBROOT }}
+              rm -rf \$WEBROOT/wp-content/cache/
+              rm -rf \$WEBROOT/wp-content/litespeed/
+              rm -rf \$WEBROOT/wp-content/advanced-cache.php
+              echo '<?php if(function_exists(\"opcache_reset\")){opcache_reset();echo \"OK\";}' > \$WEBROOT/_opcache_flush.php
+              curl -s https://sortirmonde.fr/_opcache_flush.php || true
+              rm -f \$WEBROOT/_opcache_flush.php
+              echo 'Cache purged OK'
+            "; then ok=1; break; fi
+            echo "Attempt $attempt failed, waiting 10s..."
+            sleep 10
+          done
+          [ "$ok" -eq 1 ] || exit 1

@@ -1,0 +1,119 @@
+/* ═══════════════════════════════════════════════════════
+   VS08 CALENDAR COMPONENT — Premium Travel Design
+   Modes: travel (boarding pass), date (simple), range
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Base container ── */
+.vs-cal{width:100%;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 32px rgba(15,36,36,.1);user-select:none;position:relative;z-index:100;touch-action:pan-y}
+.vs-cal *{box-sizing:border-box}
+/* Masquer la barre de défilement sur le calendrier */
+.vs-cal,.vs-cal-overlay{scrollbar-width:none;-ms-overflow-style:none}
+.vs-cal::-webkit-scrollbar,.vs-cal-overlay::-webkit-scrollbar{display:none}
+
+/* ── HEADER — Travel mode (boarding pass) ── */
+.vs-cal-header{background:linear-gradient(135deg,#0f2424 0%,#1a3e3e 100%);padding:20px 22px 16px;position:relative;overflow:hidden}
+.vs-cal-header::before{content:'';position:absolute;top:-30px;right:-20px;width:120px;height:120px;border-radius:50%;background:rgba(89,183,183,.08)}
+.vs-cal-header::after{content:'';position:absolute;bottom:-40px;left:-30px;width:100px;height:100px;border-radius:50%;background:rgba(89,183,183,.05)}
+.vs-cal-route{display:flex;align-items:center;gap:12px;margin-bottom:12px;position:relative;z-index:2}
+.vs-cal-iata{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#fff;letter-spacing:1px}
+.vs-cal-route-mid{flex:1;position:relative;height:28px;display:flex;align-items:center}
+.vs-cal-route-line{position:absolute;top:50%;left:0;right:0;height:1.5px;background:rgba(255,255,255,.1)}
+.vs-cal-route-line::before{content:'';position:absolute;top:0;left:0;right:0;height:100%;background:repeating-linear-gradient(90deg,rgba(89,183,183,.3) 0,rgba(89,183,183,.3) 6px,transparent 6px,transparent 14px)}
+.vs-cal-plane{position:absolute;top:50%;transform:translateY(-50%);filter:drop-shadow(0 0 8px rgba(89,183,183,.6));animation:vs-flyPlane 4s ease-in-out infinite;z-index:3;line-height:0}
+@keyframes vs-flyPlane{0%{left:-5%;opacity:0}6%{opacity:1}65%{left:85%;opacity:1}80%{left:85%;opacity:1}90%{left:85%;opacity:0}100%{left:85%;opacity:0}}
+.vs-cal-trail{position:absolute;top:50%;height:1.5px;transform:translateY(-50%);background:linear-gradient(90deg,transparent,rgba(89,183,183,.4));animation:vs-flyTrail 4s ease-in-out infinite;z-index:2;border-radius:1px}
+@keyframes vs-flyTrail{0%{left:0;width:0;opacity:0}6%{opacity:.6}65%{left:0;width:85%;opacity:.5}80%{left:0;width:85%;opacity:.3}90%{opacity:0}100%{left:0;width:85%;opacity:0}}
+.vs-cal-route-city{font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.5px}
+.vs-cal-route-city.right{text-align:right}
+.vs-cal-sel-bar{display:flex;gap:10px;position:relative;z-index:2}
+.vs-cal-sel-box{flex:1;background:rgba(255,255,255,.06);border:1.5px solid rgba(89,183,183,.2);border-radius:12px;padding:9px 12px;cursor:pointer;transition:all .3s}
+.vs-cal-sel-box.active{border-color:#59b7b7;background:rgba(89,183,183,.1);box-shadow:0 0 15px rgba(89,183,183,.15)}
+.vs-cal-sel-box-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4);margin-bottom:2px}
+.vs-cal-sel-box-val{font-size:14px;font-weight:700;color:#fff}
+.vs-cal-sel-box-val.placeholder{color:rgba(255,255,255,.25);font-weight:400;font-style:italic}
+.vs-cal-sel-arrow{display:flex;align-items:center;color:rgba(89,183,183,.5);font-size:18px;padding-top:12px}
+
+/* ── HEADER — Date/Simple mode ── */
+.vs-cal-header-simple{background:linear-gradient(135deg,#0f2424 0%,#1a3e3e 100%);padding:16px 22px;position:relative;overflow:hidden}
+.vs-cal-header-simple::before{content:'';position:absolute;top:-20px;right:-16px;width:80px;height:80px;border-radius:50%;background:rgba(89,183,183,.08)}
+.vs-cal-header-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:#fff;position:relative;z-index:2}
+.vs-cal-header-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;position:relative;z-index:2}
+.vs-cal-header-val{font-size:20px;font-weight:800;color:#59b7b7;margin-top:6px;font-family:'Outfit',sans-serif;position:relative;z-index:2}
+.vs-cal-header-val.empty{font-size:13px;font-weight:400;color:rgba(255,255,255,.25);font-style:italic}
+
+/* ── Perforations ── */
+.vs-cal-perf{position:relative;height:14px;background:#fff}
+.vs-cal-perf::before,.vs-cal-perf::after{content:'';position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:#f5f3ef;transform:translateY(-50%)}
+.vs-cal-perf::before{left:-8px}
+.vs-cal-perf::after{right:-8px}
+.vs-cal-perf-line{position:absolute;top:50%;left:22px;right:22px;height:0;border-top:2px dashed #e5e7eb}
+
+/* ── Nav ── */
+.vs-cal-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 20px 4px}
+.vs-cal-nav-btn{width:32px;height:32px;border-radius:10px;border:none;background:#f9f7f4;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:#0f2424;transition:all .2s;font-family:'Outfit',sans-serif}
+.vs-cal-nav-btn:hover{background:#edf8f8;color:#59b7b7}
+.vs-cal-nav-center{display:flex;align-items:center;gap:6px}
+.vs-cal-nav-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:#0f2424;cursor:default;min-width:1em}
+/* Year/month selects for date mode — mois complet visible (ex. Septembre, Décembre) */
+.vs-cal-nav-select{font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;color:#0f2424;background:#f9f7f4;border:1.5px solid #e5e7eb;border-radius:8px;padding:6px 10px;cursor:pointer;outline:none;transition:all .2s;-webkit-appearance:none;appearance:none}
+.vs-cal-nav-select.vs-cal-sel-month{min-width:115px;max-width:140px}
+.vs-cal-nav-select.vs-cal-sel-year{min-width:70px}
+.vs-cal-nav-select:hover,.vs-cal-nav-select:focus{border-color:#59b7b7;background:#edf8f8}
+
+/* ── Days header ── */
+.vs-cal-days{display:grid;grid-template-columns:repeat(7,1fr);padding:4px 18px 0}
+.vs-cal-day-name{text-align:center;font-size:10px;font-weight:700;color:#b0b5bd;text-transform:uppercase;letter-spacing:.8px;padding:5px 0;font-family:'Outfit',sans-serif}
+
+/* ── Grid ── */
+.vs-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px 0;padding:4px 16px 16px;touch-action:pan-y;overflow:hidden}
+.vs-cal-cell{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;height:42px;cursor:pointer;transition:all .25s;border-radius:12px}
+.vs-cal-cell:hover:not(.empty):not(.disabled):not(.selected):not(.range-start):not(.range-end){background:#f0fafa}
+.vs-cal-cell.empty{cursor:default}
+.vs-cal-cell.disabled{cursor:not-allowed;opacity:.15;pointer-events:none}
+.vs-cal-cell.disabled .vs-cal-cell-day{color:#d1d5db;text-decoration:line-through;font-weight:300}
+.vs-cal-cell-day{font-size:13px;font-weight:500;color:#374151;line-height:1;z-index:2;transition:all .2s;font-family:'Outfit',sans-serif}
+.vs-cal-cell-sub{font-size:8px;font-weight:600;color:#059669;margin-top:2px;z-index:2;font-family:'Outfit',sans-serif}
+/* Today */
+.vs-cal-cell.today .vs-cal-cell-day{color:#59b7b7;font-weight:800}
+.vs-cal-cell.today::before{content:'';position:absolute;bottom:3px;width:4px;height:4px;border-radius:50%;background:#59b7b7;z-index:2}
+/* Available dot */
+.vs-cal-cell.available::after{content:'';position:absolute;top:4px;right:7px;width:4px;height:4px;border-radius:50%;background:#59b7b7;opacity:.35;z-index:2}
+/* Selected */
+.vs-cal-cell.selected,.vs-cal-cell.range-start,.vs-cal-cell.range-end{background:linear-gradient(135deg,#59b7b7,#3d9a9a);border-radius:12px;box-shadow:0 4px 14px rgba(89,183,183,.3)}
+.vs-cal-cell.selected .vs-cal-cell-day,.vs-cal-cell.range-start .vs-cal-cell-day,.vs-cal-cell.range-end .vs-cal-cell-day{color:#fff;font-weight:700}
+.vs-cal-cell.selected .vs-cal-cell-sub,.vs-cal-cell.range-start .vs-cal-cell-sub,.vs-cal-cell.range-end .vs-cal-cell-sub{color:rgba(255,255,255,.7)}
+.vs-cal-cell.selected::after,.vs-cal-cell.range-start::after,.vs-cal-cell.range-end::after,.vs-cal-cell.selected::before,.vs-cal-cell.range-start::before,.vs-cal-cell.range-end::before{display:none}
+/* Range fill */
+.vs-cal-cell.in-range{background:rgba(89,183,183,.08);border-radius:0}
+.vs-cal-cell.in-range .vs-cal-cell-day{color:#0f2424;font-weight:600}
+.vs-cal-cell.range-start{border-radius:12px 4px 4px 12px}
+.vs-cal-cell.range-end{border-radius:4px 12px 12px 4px}
+.vs-cal-cell.range-start.range-end{border-radius:12px}
+
+/* ── Footer ── */
+.vs-cal-footer{padding:0 20px 16px;display:flex;align-items:center;justify-content:space-between}
+.vs-cal-nights{display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280;font-family:'Outfit',sans-serif}
+.vs-cal-nights-badge{font-size:12px;font-weight:700;color:#59b7b7;background:#edf8f8;padding:3px 10px;border-radius:20px}
+.vs-cal-footer-hint{font-size:11px;color:#9ca3af;font-style:italic;font-family:'Outfit',sans-serif}
+.vs-cal-btn{background:linear-gradient(135deg,#59b7b7,#3d9a9a);color:#fff;border:none;padding:9px 22px;border-radius:12px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .3s;box-shadow:0 4px 14px rgba(89,183,183,.25)}
+.vs-cal-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(89,183,183,.35)}
+.vs-cal-btn:disabled{opacity:.3;cursor:default;transform:none;box-shadow:none}
+
+/* ── Overlay/dropdown mode ── */
+.vs-cal-overlay{position:absolute;top:100%;left:0;z-index:9999;margin-top:6px;display:none;min-width:340px}
+.vs-cal-overlay.open{display:block;animation:vs-calFadeIn .2s ease}
+.vs-cal-overlay.right{left:auto;right:0}
+@keyframes vs-calFadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+/* Backdrop click to close */
+.vs-cal-backdrop{position:fixed;inset:0;z-index:9998;display:none}
+.vs-cal-backdrop.open{display:block}
+
+/* ── Responsive ── */
+@media(max-width:420px){
+    .vs-cal-iata{font-size:22px}
+    .vs-cal-cell{height:36px}
+    .vs-cal-cell-day{font-size:12px}
+    .vs-cal-grid{padding:4px 10px 12px}
+    .vs-cal-days{padding:4px 10px 0}
+    .vs-cal-overlay{min-width:300px}
+}

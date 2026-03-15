@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none">
+  <rect width="400" height="200" rx="20" fill="#f0f4f8"/>
+  <g transform="translate(25,25)">
+    <path d="M40 128 Q40 108 58 100 L90 92 Q112 65 165 52 L265 46 Q320 44 345 58 L362 74 Q372 88 372 102 L372 128" fill="#59b7b7" opacity=".85"/>
+    <path d="M108 90 Q125 46 190 36 L260 34 Q305 34 322 52 L338 76" fill="#fff" opacity=".3"/>
+    <path d="M118 86 Q132 50 188 42 L255 40 Q295 40 308 55 L320 72" fill="#fff" opacity=".5" stroke="#4a9e9e" stroke-width="1"/>
+    <rect x="35" y="128" width="342" height="12" rx="6" fill="#3a8a8a"/>
+    <circle cx="98" cy="140" r="20" fill="#2d3748"/><circle cx="98" cy="140" r="12" fill="#718096"/><circle cx="98" cy="140" r="5" fill="#a0aec0"/>
+    <circle cx="310" cy="140" r="20" fill="#2d3748"/><circle cx="310" cy="140" r="12" fill="#718096"/><circle cx="310" cy="140" r="5" fill="#a0aec0"/>
+    <rect x="350" y="94" width="24" height="10" rx="3" fill="#e53e3e" opacity=".7"/>
+    <rect x="45" y="98" width="20" height="8" rx="3" fill="#ecc94b" opacity=".7"/>
+  </g>
+  <text x="200" y="185" text-anchor="middle" font-family="Outfit,sans-serif" font-size="13" font-weight="600" fill="#59b7b7" letter-spacing="2">BERLINE</text>
+</svg>

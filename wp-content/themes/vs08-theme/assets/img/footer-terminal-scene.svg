@@ -1,0 +1,674 @@
+﻿<svg viewBox="0 0 1400 520" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+<defs>
+    <!-- Gradient ciel crépuscule -->
+    <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#0c1028"/>
+        <stop offset="25%" stop-color="#162040"/>
+        <stop offset="45%" stop-color="#2a3c68"/>
+        <stop offset="60%" stop-color="#4a5888"/>
+        <stop offset="72%" stop-color="#b87050"/>
+        <stop offset="82%" stop-color="#d89860"/>
+        <stop offset="92%" stop-color="#e8c080"/>
+        <stop offset="100%" stop-color="#f0d8a8"/>
+    </linearGradient>
+    <!-- Sol tarmac -->
+    <linearGradient id="gndG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#3a4050"/>
+        <stop offset="30%" stop-color="#2e3444"/>
+        <stop offset="100%" stop-color="#222836"/>
+    </linearGradient>
+    <!-- Sol intérieur -->
+    <linearGradient id="floorG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#12161e"/>
+        <stop offset="100%" stop-color="#0a0e16"/>
+    </linearGradient>
+    <!-- Filtres -->
+    <filter id="blurSoft"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="blurMed"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="glow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <!-- Gradient vitre (teinte bleue subtile) -->
+    <linearGradient id="glassG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="rgba(80,120,180,.04)"/>
+        <stop offset="50%" stop-color="rgba(60,100,160,.02)"/>
+        <stop offset="100%" stop-color="rgba(80,120,180,.06)"/>
+    </linearGradient>
+    <!-- Gradient reflet sol -->
+    <linearGradient id="floorRefG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="rgba(200,160,100,.04)"/>
+        <stop offset="40%" stop-color="rgba(100,120,160,.02)"/>
+        <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    </linearGradient>
+</defs>
+
+<!-- ══ CIEL (plus de couches, plus réaliste) ══ -->
+<rect x="0" y="0" width="1400" height="300" fill="url(#skyG)"/>
+<!-- Haze atmosphérique à l'horizon -->
+<rect x="0" y="240" width="1400" height="50" fill="rgba(200,160,100,.06)"/>
+<!-- Nuages réalistes (multi-couches, blur naturel) -->
+<g opacity=".12">
+    <ellipse cx="160" cy="70" rx="140" ry="28" fill="#c8b8a8" filter="url(#blurSoft)"/>
+    <ellipse cx="220" cy="65" rx="80" ry="22" fill="#d8c8b0" filter="url(#blurSoft)"/>
+    <ellipse cx="600" cy="90" rx="180" ry="32" fill="#c0b0a0" filter="url(#blurSoft)"/>
+    <ellipse cx="680" cy="82" rx="100" ry="26" fill="#d0c0a8" filter="url(#blurSoft)"/>
+    <ellipse cx="1050" cy="55" rx="130" ry="24" fill="#c8b8a0" filter="url(#blurSoft)"/>
+    <ellipse cx="1120" cy="48" rx="70" ry="18" fill="#d8c8b8" filter="url(#blurSoft)"/>
+    <!-- Petits nuages hauts -->
+    <ellipse cx="380" cy="40" rx="60" ry="10" fill="#b8a890" filter="url(#blurSoft)"/>
+    <ellipse cx="850" cy="35" rx="50" ry="8" fill="#c0b0a0" filter="url(#blurSoft)"/>
+</g>
+<!-- Étoiles -->
+<g opacity=".5">
+    <circle cx="80" cy="28" r="1" fill="#fff"/><circle cx="180" cy="14" r=".8" fill="#fff"/>
+    <circle cx="300" cy="18" r="1.2" fill="#fff"/><circle cx="420" cy="8" r=".7" fill="#fff"/>
+    <circle cx="520" cy="38" r="1" fill="#fff"/><circle cx="650" cy="12" r=".9" fill="#fff"/>
+    <circle cx="900" cy="22" r="1.3" fill="#fff"/><circle cx="1050" cy="15" r=".8" fill="#fff"/>
+    <circle cx="1200" cy="32" r="1" fill="#fff"/><circle cx="1320" cy="10" r=".7" fill="#fff"/>
+</g>
+<!-- Lueur soleil couchant (horizon) -->
+<ellipse cx="700" cy="280" rx="500" ry="40" fill="rgba(240,180,100,.06)" filter="url(#blurSoft)"/>
+
+<!-- SKYLINE NEW YORK -->
+<g opacity=".25" filter="url(#blurMed)">
+
+    <!-- === FAR LEFT : brownstones + water tower === -->
+    <path d="M20 280 L20 254 Q20 250 24 250 L38 250 Q42 250 42 254 L42 280Z" fill="#1e2434"/>
+    <path d="M18 250 Q30 240 44 250" fill="#222838"/>
+    <path d="M48 280 L48 246 Q48 242 52 242 L62 242 Q66 242 66 246 L66 280Z" fill="#222838"/>
+    <path d="M46 242 Q57 234 68 242" fill="#1a2030"/>
+    <!-- Water tower typique NYC -->
+    <path d="M72 280 L72 260 L78 260 L78 280Z" fill="#1a2030"/>
+    <path d="M68 260 L70 250 Q75 246 80 250 L82 260Z" fill="#1e2434"/>
+    <path d="M74 246 L75 242 L76 246" fill="#1a2030"/>
+    
+    <path d="M86 280 L86 248 Q86 244 90 244 L102 244 Q106 244 106 248 L106 280Z" fill="#1e2434"/>
+
+    <!-- === BROOKLYN BRIDGE === -->
+    <g transform="translate(112,254)">
+        <!-- Tours gothiques -->
+        <path d="M0 26 L0 -16 Q0 -20 2 -22 L6 -22 Q8 -20 8 -16 L8 26Z" fill="#1e2434"/>
+        <path d="M0 -8 Q4 -14 8 -8" fill="none" stroke="#222838" stroke-width=".8"/>
+        <path d="M56 26 L56 -16 Q56 -20 58 -22 L62 -22 Q64 -20 64 -16 L64 26Z" fill="#1e2434"/>
+        <path d="M56 -8 Q60 -14 64 -8" fill="none" stroke="#222838" stroke-width=".8"/>
+        <!-- Tablier -->
+        <path d="M-8 20 L72 20 L72 22 L-8 22Z" fill="#1a2030"/>
+        <!-- Cables principaux -->
+        <path d="M4 -20 Q32 4 60 -20" stroke="#1a2030" stroke-width=".8" fill="none"/>
+        <path d="M4 -16 Q32 6 60 -16" stroke="#1a2030" stroke-width=".5" fill="none"/>
+        <!-- Haubans -->
+        <line x1="16" y1="-10" x2="16" y2="20" stroke="#1a2030" stroke-width=".3"/>
+        <line x1="24" y1="-4" x2="24" y2="20" stroke="#1a2030" stroke-width=".3"/>
+        <line x1="32" y1="-2" x2="32" y2="20" stroke="#1a2030" stroke-width=".3"/>
+        <line x1="40" y1="-4" x2="40" y2="20" stroke="#1a2030" stroke-width=".3"/>
+        <line x1="48" y1="-10" x2="48" y2="20" stroke="#1a2030" stroke-width=".3"/>
+    </g>
+
+    <!-- === LOWER MANHATTAN === -->
+    <path d="M194 280 L194 228 Q194 224 198 224 L210 224 Q214 224 214 228 L214 280Z" fill="#1e2434"/>
+    <path d="M218 280 L218 218 Q218 214 222 214 L230 214 Q234 214 234 218 L234 280Z" fill="#222838"/>
+    <path d="M238 280 L238 236 Q238 232 242 232 L256 232 Q260 232 260 236 L260 280Z" fill="#1e2434"/>
+
+    <!-- === ONE WORLD TRADE CENTER === -->
+    <path d="M270 280 L274 172 Q276 168 280 168 L286 168 Q290 168 292 172 L296 280Z" fill="#1e2434"/>
+    <path d="M276 172 L278 280 L288 280 L290 172Z" fill="#252a3a"/>
+    <!-- Antenne -->
+    <path d="M282 168 L282 140 L284 140 L284 168" fill="#1a2030"/>
+    <path d="M280 150 L286 150" stroke="#1a2030" stroke-width=".8"/>
+    <!-- Observation deck -->
+    <path d="M272 185 L294 185" stroke="rgba(255,220,120,.12)" stroke-width="1.5"/>
+
+    <!-- === BATIMENTS WTC AREA === -->
+    <path d="M300 280 L300 210 Q300 206 304 206 L316 206 Q320 206 320 210 L320 280Z" fill="#1a2030"/>
+    <path d="M300 206 Q310 196 320 206" fill="#222838"/>
+    <path d="M324 280 L324 226 Q324 222 328 222 L338 222 Q342 222 342 226 L342 280Z" fill="#1e2434"/>
+    <path d="M346 280 L346 216 Q346 212 350 212 L364 212 Q368 212 368 216 L368 280Z" fill="#222838"/>
+    <path d="M346 208 L368 208 L368 212 L346 212Z" fill="#1a2030"/>
+
+    <!-- === MIDTOWN TRANSITION === -->
+    <path d="M376 280 L376 238 Q376 234 380 234 L392 234 Q396 234 396 238 L396 280Z" fill="#1a2030"/>
+    <path d="M400 280 L400 224 Q400 220 404 220 L418 220 Q422 220 422 224 L422 280Z" fill="#1e2434"/>
+    <path d="M400 216 L422 216 L422 220 L400 220Z" fill="#222838"/>
+    <path d="M426 280 L426 244 Q426 240 430 240 L440 240 Q444 240 444 244 L444 280Z" fill="#222838"/>
+
+    <!-- === ART DECO BUILDING (setbacks) === -->
+    <path d="M452 280 L452 210 Q452 206 456 206 L470 206 Q474 206 474 210 L474 280Z" fill="#1e2434"/>
+    <path d="M454 200 L456 206 L472 206 L474 200 L472 196 L456 196Z" fill="#222838"/>
+    <path d="M458 190 L460 196 L468 196 L470 190 L468 186 L460 186Z" fill="#1e2434"/>
+
+    <!-- === GRATTE-CIEL MODERNE (verre) === -->
+    <path d="M482 280 L486 198 Q488 194 492 194 L500 194 Q504 194 506 198 L510 280Z" fill="#252a3a"/>
+    <path d="M488 198 L490 280 L502 280 L504 198Z" fill="rgba(255,255,255,.03)"/>
+    <path d="M495 190 L496 194 L498 194 L497 190Z" fill="#1a2030"/>
+
+    <!-- === CHRYSLER BUILDING === -->
+    <path d="M524 280 L524 196 Q524 192 528 192 L540 192 Q544 192 544 196 L544 280Z" fill="#1e2434"/>
+    <!-- Couronne art deco (arches en cascade) -->
+    <path d="M522 192 L534 170 L546 192" fill="#1a2030"/>
+    <path d="M524 188 L534 174 L544 188" fill="#222838"/>
+    <path d="M526 184 L534 176 L542 184" fill="#1e2434"/>
+    <path d="M528 180 L534 178 L540 180" fill="#1a2030"/>
+    <!-- Fleche -->
+    <path d="M533 170 L534 158 L535 170" fill="#1a2030"/>
+    <!-- Setback -->
+    <path d="M520 224 L548 224 L548 228 L520 228Z" fill="#222838"/>
+
+    <!-- === EMPIRE STATE BUILDING === -->
+    <!-- Base large -->
+    <path d="M564 280 L564 230 Q564 226 568 226 L598 226 Q602 226 602 230 L602 280Z" fill="#1a2030"/>
+    <!-- Setback 1 -->
+    <path d="M570 226 L570 204 Q570 200 574 200 L592 200 Q596 200 596 204 L596 226Z" fill="#1e2434"/>
+    <!-- Setback 2 -->
+    <path d="M574 200 L574 186 Q574 182 578 182 L588 182 Q592 182 592 186 L592 200Z" fill="#222838"/>
+    <!-- Observatoire -->
+    <path d="M576 182 L576 174 Q576 170 580 170 L586 170 Q590 170 590 174 L590 182Z" fill="#1e2434"/>
+    <!-- Mat/antenne -->
+    <path d="M582 170 L582 150 Q583 146 584 150 L584 170" fill="#1a2030"/>
+    <path d="M581 154 L585 154" stroke="#1a2030" stroke-width=".6"/>
+    <!-- Feu rouge -->
+    <circle cx="583" cy="148" r="1.8" fill="rgba(255,80,80,.3)"/>
+    <!-- Fenetres -->
+    <g fill="rgba(255,220,120,.15)">
+        <rect x="574" y="190" width="2" height="3"/><rect x="586" y="190" width="2" height="3"/>
+        <rect x="574" y="206" width="2" height="3"/><rect x="586" y="206" width="2" height="3"/>
+        <rect x="580" y="198" width="2" height="3"/>
+    </g>
+
+    <!-- === MIDTOWN EAST === -->
+    <path d="M610 280 L610 242 Q610 238 614 238 L624 238 Q628 238 628 242 L628 280Z" fill="#222838"/>
+    <path d="M632 280 L632 230 Q632 226 636 226 L650 226 Q654 226 654 230 L654 280Z" fill="#1e2434"/>
+    <path d="M658 280 L658 246 Q658 242 662 242 L670 242 Q674 242 674 246 L674 280Z" fill="#1a2030"/>
+    
+    <!-- === UN-STYLE TOWER (courbe) === -->
+    <path d="M680 280 L680 218 Q680 210 686 210 L692 210 Q698 210 698 218 L698 280Z" fill="#1e2434" rx="4"/>
+    
+    <!-- === STATUE DE LA LIBERTE === -->
+    <g transform="translate(720,236)">
+        <!-- Piedestal -->
+        <path d="M2 44 L14 44 L12 26 Q12 24 10 22 L6 22 Q4 24 4 26Z" fill="#1e2434"/>
+        <path d="M0 44 L16 44 L16 48 L0 48Z" fill="#1a2030"/>
+        <!-- Base etoile -->
+        <path d="M-2 48 L18 48 L18 50 L-2 50Z" fill="#222838"/>
+        <!-- Corps/robe -->
+        <path d="M5 22 Q4 14 5 8 L11 8 Q12 14 11 22Z" fill="#1e2434"/>
+        <path d="M4 22 Q5 16 3 22Z" fill="#222838"/>
+        <path d="M12 22 Q11 16 13 22Z" fill="#222838"/>
+        <!-- Tete + couronne -->
+        <circle cx="8" cy="5" r="3.5" fill="#1a2030"/>
+        <!-- Pointes de la couronne -->
+        <path d="M4 3 L2 -1 L5 2Z" fill="#1a2030"/>
+        <path d="M6 1 L5 -3 L7 0Z" fill="#1a2030"/>
+        <path d="M8 0 L8 -4 L9 0Z" fill="#1a2030"/>
+        <path d="M10 1 L11 -3 L9 0Z" fill="#1a2030"/>
+        <path d="M12 3 L14 -1 L11 2Z" fill="#1a2030"/>
+        <!-- Bras droit + torche -->
+        <path d="M11 10 Q14 6 16 2 L18 2 Q18 4 16 6 Q14 10 12 12Z" fill="#1a2030"/>
+        <!-- Flamme -->
+        <path d="M16 2 Q17 -2 18 0 Q19 -2 18 2Z" fill="rgba(255,200,80,.2)"/>
+        <!-- Tablette bras gauche -->
+        <path d="M3 12 L1 14 L3 18 L5 16Z" fill="#1e2434"/>
+    </g>
+
+    <!-- === UPPER WEST SIDE === -->
+    <path d="M758 280 L758 240 Q758 236 762 236 L774 236 Q778 236 778 240 L778 280Z" fill="#1a2030"/>
+    <path d="M782 280 L782 228 Q782 224 786 224 L798 224 Q802 224 802 228 L802 280Z" fill="#1e2434"/>
+    <path d="M780 224 Q792 216 804 224" fill="#222838"/>
+    <path d="M808 280 L808 246 Q808 242 812 242 L820 242 Q824 242 824 246 L824 280Z" fill="#222838"/>
+    
+    <!-- Tour fine moderne -->
+    <path d="M830 280 L830 210 Q830 206 833 206 L839 206 Q842 206 842 210 L842 280Z" fill="#252a3a"/>
+    
+    <path d="M848 280 L848 238 Q848 234 852 234 L864 234 Q868 234 868 238 L868 280Z" fill="#1e2434"/>
+    <path d="M872 280 L872 248 Q872 244 876 244 L888 244 Q892 244 892 248 L892 280Z" fill="#222838"/>
+    
+    <!-- === FAR RIGHT (diminue) === -->
+    <path d="M900 280 L900 242 Q900 238 904 238 L914 238 Q918 238 918 242 L918 280Z" fill="#1a2030"/>
+    <path d="M924 280 L924 250 Q924 246 928 246 L938 246 Q942 246 942 250 L942 280Z" fill="#1e2434"/>
+    <path d="M922 246 Q933 238 944 246" fill="#222838"/>
+    <path d="M948 280 L948 254 Q948 250 952 250 L960 250 Q964 250 964 254 L964 280Z" fill="#222838"/>
+    <path d="M970 280 L970 246 Q970 242 974 242 L986 242 Q990 242 990 246 L990 280Z" fill="#1e2434"/>
+    <path d="M994 280 L994 258 Q994 254 998 254 L1006 254 Q1010 254 1010 258 L1010 280Z" fill="#1a2030"/>
+    <path d="M1016 280 L1016 250 Q1016 246 1020 246 L1032 246 Q1036 246 1036 250 L1036 280Z" fill="#222838"/>
+    <path d="M1014 246 Q1026 238 1038 246" fill="#1e2434"/>
+    <path d="M1042 280 L1042 260 Q1042 256 1046 256 L1054 256 Q1058 256 1058 260 L1058 280Z" fill="#1a2030"/>
+    <path d="M1064 280 L1064 252 Q1064 248 1068 248 L1078 248 Q1082 248 1082 252 L1082 280Z" fill="#1e2434"/>
+    <path d="M1086 280 L1086 262 Q1086 258 1090 258 L1098 258 Q1102 258 1102 262 L1102 280Z" fill="#222838"/>
+    <path d="M1108 280 L1108 256 Q1108 252 1112 252 L1122 252 Q1126 252 1126 256 L1126 280Z" fill="#1a2030"/>
+    <!-- Tour avec antenne -->
+    <path d="M1132 280 L1132 240 Q1132 236 1136 236 L1146 236 Q1150 236 1150 240 L1150 280Z" fill="#1e2434"/>
+    <path d="M1139 236 L1140 228 L1142 228 L1143 236" fill="#1a2030"/>
+    <path d="M1156 280 L1156 258 Q1156 254 1160 254 L1170 254 Q1174 254 1174 258 L1174 280Z" fill="#222838"/>
+    <path d="M1180 280 L1180 264 Q1180 260 1184 260 L1192 260 Q1196 260 1196 264 L1196 280Z" fill="#1a2030"/>
+    <path d="M1202 280 L1202 256 Q1202 252 1206 252 L1216 252 Q1220 252 1220 258 L1220 280Z" fill="#1e2434"/>
+    <path d="M1226 280 L1226 266 Q1226 262 1230 262 L1238 262 Q1242 262 1242 266 L1242 280Z" fill="#222838"/>
+    <path d="M1248 280 L1248 260 Q1248 256 1252 256 L1262 256 Q1266 256 1266 260 L1266 280Z" fill="#1a2030"/>
+    <path d="M1272 280 L1272 268 Q1272 264 1276 264 L1284 264 Q1288 264 1288 268 L1288 280Z" fill="#1e2434"/>
+    <path d="M1294 280 L1294 262 Q1294 258 1298 258 L1308 258 Q1312 258 1312 262 L1312 280Z" fill="#222838"/>
+    <path d="M1318 280 L1318 270 Q1318 266 1322 266 L1330 266 Q1334 266 1334 270 L1334 280Z" fill="#1a2030"/>
+    <path d="M1340 280 L1340 268 Q1344 264 1352 266 L1352 280Z" fill="#1e2434"/>
+    <path d="M1358 280 L1358 272 Q1362 268 1370 270 L1370 280Z" fill="#222838"/>
+    <path d="M1378 280 L1378 274 Q1382 272 1390 274 L1390 280Z" fill="#1a2030"/>
+
+    <!-- === FENETRES ALLUMEES === -->
+    <g fill="rgba(255,220,120,.25)">
+        <rect x="278" y="182" width="1.5" height="1.5"/>
+        <rect x="406" y="228" width="1.5" height="1.5"/>
+        <rect x="456" y="218" width="1.5" height="1.5"/>
+        <rect x="490" y="208" width="1.5" height="1.5"/>
+        <rect x="638" y="236" width="1.5" height="1.5"/>
+        <rect x="684" y="222" width="1.5" height="1.5"/>
+        <rect x="788" y="232" width="1.5" height="1.5"/>
+        <rect x="834" y="220" width="1.5" height="1.5"/>
+        <rect x="906" y="248" width="1.5" height="1.5"/>
+        <rect x="976" y="250" width="1.5" height="1.5"/>
+        <rect x="1070" y="256" width="1.5" height="1.5"/>
+        <rect x="1138" y="246" width="1.5" height="1.5"/>
+    </g>
+</g>
+
+<!-- ══ TOUR DE CONTRÔLE (gauche) ══ -->
+<g opacity=".3">
+    <rect x="30" y="200" width="12" height="80" fill="#2a3040"/>
+    <rect x="20" y="190" width="32" height="18" rx="3" fill="#2a3448"/>
+    <rect x="24" y="192" width="24" height="10" rx="2" fill="rgba(89,183,183,.2)"/>
+    <rect x="32" y="180" width="8" height="12" fill="#2a3040"/>
+    <circle cx="36" cy="177" r="3" fill="#ff4444" opacity=".5"/>
+</g>
+
+<!-- ══ LIGNE D'HORIZON (glow réaliste) ══ -->
+<rect x="0" y="276" width="1400" height="6" fill="rgba(240,180,100,.1)" filter="url(#blurSoft)"/>
+<rect x="200" y="278" width="1000" height="3" fill="rgba(255,200,120,.08)" filter="url(#blurMed)"/>
+
+<!-- ══ TARMAC + PISTE ══ -->
+<rect x="0" y="280" width="1400" height="240" fill="url(#gndG)"/>
+<!-- Reflet mouillé du ciel sur le tarmac (nuit humide) -->
+<rect x="0" y="280" width="1400" height="30" fill="rgba(180,140,100,.03)"/>
+<!-- Piste -->
+<rect x="40" y="318" width="1320" height="8" fill="#343848" opacity=".8"/>
+<!-- Bande de seuil (threshold markings) -->
+<g fill="rgba(255,255,255,.15)">
+    <rect x="48" y="318" width="3" height="8"/><rect x="54" y="318" width="3" height="8"/>
+    <rect x="60" y="318" width="3" height="8"/><rect x="66" y="318" width="3" height="8"/>
+    <rect x="72" y="318" width="3" height="8"/><rect x="78" y="318" width="3" height="8"/>
+</g>
+<!-- Marquage central pointillé -->
+<line x1="40" y1="322" x2="1360" y2="322" stroke="rgba(255,255,255,.25)" stroke-width="1" stroke-dasharray="18 30"/>
+
+<!-- Lumières de piste (avec glow) -->
+<g opacity=".8" filter="url(#glow)">
+    <circle cx="60" cy="316" r="2" fill="#00cc66"/><circle cx="80" cy="316" r="2" fill="#00cc66"/>
+    <circle cx="100" cy="316" r="2" fill="#00cc66"/><circle cx="120" cy="316" r="2" fill="#00cc66"/>
+    <circle cx="200" cy="316" r="1.5" fill="rgba(255,255,240,.5)"/>
+    <circle cx="320" cy="316" r="1.5" fill="rgba(255,255,240,.5)"/>
+    <circle cx="440" cy="316" r="1.5" fill="rgba(255,255,240,.5)"/>
+    <circle cx="560" cy="316" r="1.5" fill="rgba(255,255,240,.5)"/>
+    <circle cx="680" cy="316" r="1.5" fill="rgba(255,255,240,.5)"/>
+    <circle cx="800" cy="316" r="1.5" fill="rgba(255,255,240,.5)"/>
+    <circle cx="920" cy="316" r="1.5" fill="rgba(255,255,240,.5)"/>
+    <circle cx="1040" cy="316" r="1.5" fill="rgba(255,255,240,.5)"/>
+    <circle cx="1160" cy="316" r="1.5" fill="rgba(255,255,240,.5)"/>
+    <circle cx="1280" cy="328" r="2" fill="#ff4444"/><circle cx="1300" cy="328" r="2" fill="#ff4444"/>
+    <circle cx="1320" cy="328" r="2" fill="#ff4444"/><circle cx="1340" cy="328" r="2" fill="#ff4444"/>
+</g>
+
+<!-- Avion stationné au loin (petit, à droite) -->
+<g transform="translate(1100,295) scale(.3)" opacity=".25">
+    <rect x="0" y="8" width="100" height="10" rx="5" fill="#c0c8d8"/>
+    <polygon points="35,0 55,8 35,8" fill="#b0b8c8"/>
+    <polygon points="35,18 55,18 35,26" fill="#b0b8c8"/>
+    <polygon points="5,5 0,0 10,5" fill="#b0b8c8"/>
+</g>
+
+<!-- ══ AVION — redesign complet ══ -->
+<g transform="translate(-300, 268)">
+<g class="takeoff-plane">
+
+    <!-- === COUCHE 1 (ARRIÈRE) : Stabilisateurs + dérive + APU === -->
+
+    <!-- Stabilisateur horizontal (empennage) — plus court, plus épais -->
+    <path d="M22 34 L-6 18 L2 14 L32 30Z" fill="#cdd4e0"/>
+    <path d="M22 62 L-6 78 L2 82 L32 66Z" fill="#c4ccd8"/>
+    
+    <!-- Dérive verticale — base large en bas, fine en haut -->
+    <path d="M16 34 L44 34 Q40 8 30 -14 L28 -14 Q22 -2 16 34Z" fill="#59b7b7"/>
+    <path d="M30 -12 L36 10 L38 30 L24 30 L24 4Z" fill="rgba(255,255,255,.12)"/>
+    
+    <!-- APU cône de queue -->
+    <path d="M14 42 L6 46 Q3 48 6 50 L14 54" fill="#d0d4dc"/>
+
+    <!-- === COUCHE 2 : AILE LOINTAINE (miroir, part du milieu vers le haut) === -->
+    <path d="M220 48 L168 10 Q164 6 160 6 L152 12 Q158 24 186 48Z" 
+          fill="#c8ceda" opacity=".35"/>
+    <path d="M152 12 L148 24 Q148 26 150 26 L154 18Z" fill="#d8dce8" opacity=".3"/>
+
+    <!-- === COUCHE 3 : FUSELAGE === -->
+    <path d="
+        M16 40 C16 36 22 32 32 32 
+        L354 32 C364 32 372 34 378 38 L386 44 
+        C388 46 388 50 386 52 
+        L378 58 C372 62 364 64 354 64 
+        L32 64 C22 64 16 60 16 56 Z
+    " fill="#f2f4f8"/>
+    <!-- Ombre ventre -->
+    <path d="M32 58 L354 58 C360 58 366 56 370 54 L354 64 L32 64 C22 64 16 60 16 56 L16 54 C16 58 22 58 32 58Z" fill="rgba(0,0,0,.04)"/>
+    <!-- Ligne fenêtre (belt line) -->
+    <line x1="50" y1="44" x2="365" y2="44" stroke="rgba(0,0,0,.06)" stroke-width=".4"/>
+    
+    <!-- Bande turquoise cheatline -->
+    <rect x="40" y="56" width="330" height="2" rx="1" fill="#59b7b7" opacity=".3"/>
+
+    <!-- === COUCHE 4 : COCKPIT === -->
+    <path d="M375 36 L382 40 Q386 44 386 48 Q386 50 384 52" fill="#dce0e8"/>
+    <!-- Vitres cockpit -->
+    <path d="M374 37 L381 42 Q384 45 383 47" stroke="#3abbc4" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M370 36 L376 39" stroke="#3abbc4" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+
+    <!-- === COUCHE 5 : RÉACTEUR (dessiné AVANT l'aile = derrière visuellement) === -->
+    <!-- Pylon (du milieu du fuselage vers le bas) -->
+    <path d="M196 50 L190 62 L200 62 L198 50Z" fill="#c8ccd8"/>
+    <!-- Nacelle -->
+    <path d="M178 62 Q174 62 172 66 Q170 70 172 74 Q174 78 178 78 
+             L206 78 Q210 78 212 74 Q214 70 212 66 Q210 62 206 62 Z" 
+          fill="#d8dce6" stroke="#bcc0cc" stroke-width=".4"/>
+    <!-- Fan face -->
+    <ellipse cx="210" cy="70" rx="3" ry="8" fill="#4a5468"/>
+    <ellipse cx="210.5" cy="70" rx="1.5" ry="5.5" fill="#3a4050"/>
+    <!-- Tuyère -->
+    <ellipse cx="175" cy="70" rx="1.5" ry="6" fill="#8a8e98"/>
+
+    <!-- === COUCHE 6 : AILE PROCHE AU MILIEU (y=48, niveau hublots) === -->
+    <path d="M220 48 L168 86 Q164 90 160 90 L152 84 Q158 72 186 48Z" 
+          fill="#dce0ea" stroke="#c4c8d6" stroke-width=".3"/>
+    <!-- Sharklet -->
+    <path d="M152 84 L148 72 Q148 70 150 70 L154 78Z" fill="#e8ecf4"/>
+
+    <!-- === COUCHE 7 : HUBLOTS (discrets, gris subtil) === -->
+    <g fill="none" stroke="rgba(100,110,130,.3)" stroke-width=".6">
+        <circle cx="356" cy="44" r="1.2"/><circle cx="349" cy="44" r="1.2"/>
+        <circle cx="342" cy="44" r="1.2"/><circle cx="335" cy="44" r="1.2"/>
+        <circle cx="328" cy="44" r="1.2"/><circle cx="321" cy="44" r="1.2"/>
+        <circle cx="314" cy="44" r="1.2"/><circle cx="307" cy="44" r="1.2"/>
+        <circle cx="300" cy="44" r="1.2"/><circle cx="293" cy="44" r="1.2"/>
+        <circle cx="286" cy="44" r="1.2"/><circle cx="279" cy="44" r="1.2"/>
+        <circle cx="272" cy="44" r="1.2"/><circle cx="265" cy="44" r="1.2"/>
+        <circle cx="258" cy="44" r="1.2"/><circle cx="251" cy="44" r="1.2"/>
+        <circle cx="244" cy="44" r="1.2"/><circle cx="237" cy="44" r="1.2"/>
+        <circle cx="230" cy="44" r="1.2"/><circle cx="223" cy="44" r="1.2"/>
+        <circle cx="216" cy="44" r="1.2"/>
+        <!-- gap pour l'aile -->
+        <circle cx="130" cy="44" r="1.2"/><circle cx="123" cy="44" r="1.2"/>
+        <circle cx="116" cy="44" r="1.2"/><circle cx="109" cy="44" r="1.2"/>
+        <circle cx="102" cy="44" r="1.2"/><circle cx="95" cy="44" r="1.2"/>
+        <circle cx="88" cy="44" r="1.2"/><circle cx="81" cy="44" r="1.2"/>
+        <circle cx="74" cy="44" r="1.2"/><circle cx="67" cy="44" r="1.2"/>
+        <circle cx="60" cy="44" r="1.2"/>
+    </g>
+    
+    <!-- === COUCHE 8 : LOGO VS08 SUR LE FUSELAGE === -->
+    <image href="data:image/png;base64,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" 
+           x="250" y="34" width="130" height="18" style="mix-blend-mode:multiply" preserveAspectRatio="xMidYMid meet"/>
+    
+    <!-- === COUCHE 9 : PORTES === -->
+    <rect x="362" y="36" width="3" height="20" rx="1.5" fill="rgba(0,0,0,.03)" stroke="rgba(0,0,0,.06)" stroke-width=".3"/>
+    <rect x="140" y="36" width="3" height="20" rx="1.5" fill="rgba(0,0,0,.03)" stroke="rgba(0,0,0,.06)" stroke-width=".3"/>
+    <rect x="56" y="36" width="3" height="20" rx="1.5" fill="rgba(0,0,0,.03)" stroke="rgba(0,0,0,.06)" stroke-width=".3"/>
+
+    <!-- === COUCHE 10 : TRAIN D'ATTERRISSAGE === -->
+    <!-- Nose gear -->
+    <line x1="346" y1="64" x2="346" y2="78" stroke="#6a7080" stroke-width="1.3" stroke-linecap="round"/>
+    <circle cx="344" cy="79" r="2.5" fill="#50585e"/><circle cx="348" cy="79" r="2.5" fill="#50585e"/>
+    <!-- Main gear (DERRIÈRE les ailes) -->
+    <line x1="155" y1="64" x2="155" y2="80" stroke="#6a7080" stroke-width="1.5" stroke-linecap="round"/>
+    <circle cx="152" cy="81" r="2.8" fill="#50585e"/>
+    <circle cx="158" cy="81" r="2.8" fill="#50585e"/>
+
+    <!-- === COUCHE 11 : FEUX === -->
+    <!-- Beacon belly -->
+    <circle cx="200" cy="65" r="1.5" fill="#ff2222" opacity=".7">
+        <animate attributeName="opacity" values=".8;0;.8" dur="1s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Feu nav vert bout d'aile proche -->
+    <circle cx="154" cy="86" r="2" fill="#00dd44" opacity=".7"/>
+    <!-- Strobe wingtip -->
+    <circle cx="152" cy="84" r="1.3" fill="#fff">
+        <animate attributeName="opacity" values="0;0;1;0;0" dur="1.2s" repeatCount="indefinite"/>
+    </circle>
+
+</g>
+</g>
+
+<!-- Petit avion au loin dans le ciel -->
+<g transform="translate(1050,70)">
+<g class="far-plane" opacity=".2">
+    <polygon points="0,0 10,2 20,0 10,-2" fill="#c0c8d8"/>
+    <polygon points="8,-4 12,-2 8,-2" fill="#b0b8c8"/>
+</g>
+</g>
+
+<!-- ══════════════════════════════════════
+     STRUCTURE DU TERMINAL (premier plan)
+══════════════════════════════════════ -->
+
+<!-- SOL INTÉRIEUR (plus réaliste, reflet) -->
+<rect x="0" y="360" width="1400" height="160" fill="#0a0e18"/>
+<rect x="0" y="360" width="1400" height="142" fill="url(#floorG)"/>
+<!-- Reflet du ciel/horizon sur le sol poli (perspective) -->
+<rect x="0" y="378" width="1400" height="50" fill="url(#floorRefG)"/>
+<!-- Reflet des baies vitrées au sol (bandes lumineuses) -->
+<g opacity=".03">
+    <rect x="4" y="378" width="226" height="80" fill="rgba(200,160,100,1)"/>
+    <rect x="234" y="378" width="231" height="80" fill="rgba(200,160,100,1)"/>
+    <rect x="469" y="378" width="231" height="80" fill="rgba(200,160,100,1)"/>
+    <rect x="704" y="378" width="228" height="80" fill="rgba(200,160,100,1)"/>
+    <rect x="936" y="378" width="229" height="80" fill="rgba(200,160,100,1)"/>
+    <rect x="1169" y="378" width="227" height="80" fill="rgba(200,160,100,1)"/>
+</g>
+
+<!-- BARRE D'APPUI (railing, avec reflet métallique) -->
+<rect x="0" y="373" width="1400" height="2" fill="#4a5268"/>
+<rect x="0" y="375" width="1400" height="3" fill="#3a4258"/>
+<rect x="0" y="373" width="1400" height="1" fill="rgba(255,255,255,.06)"/>
+
+<!-- PLAFOND (avec profondeur) -->
+<rect x="0" y="0" width="1400" height="50" fill="#12161e"/><rect x="0" y="50" width="1400" height="10" fill="rgba(20,24,30,.8)"/>
+<rect x="0" y="50" width="1400" height="10" fill="rgba(26,31,42,.7)"/>
+
+<!-- TEINTE VITRÉE (bleuté subtil sur chaque panneau de verre) -->
+<g>
+    <rect x="4" y="60" width="226" height="313" fill="url(#glassG)"/>
+    <rect x="234" y="60" width="231" height="313" fill="url(#glassG)"/>
+    <rect x="469" y="60" width="231" height="313" fill="url(#glassG)"/>
+    <rect x="704" y="60" width="228" height="313" fill="url(#glassG)"/>
+    <rect x="936" y="60" width="229" height="313" fill="url(#glassG)"/>
+    <rect x="1169" y="60" width="227" height="313" fill="url(#glassG)"/>
+</g>
+
+<!-- SPOTS AU PLAFOND (lumières intérieures) -->
+<g filter="url(#blurSoft)" opacity=".06">
+    <circle cx="120" cy="55" r="30" fill="#f0d8a0"/>
+    <circle cx="350" cy="55" r="30" fill="#f0d8a0"/>
+    <circle cx="580" cy="55" r="30" fill="#f0d8a0"/>
+    <circle cx="810" cy="55" r="30" fill="#f0d8a0"/>
+    <circle cx="1050" cy="55" r="30" fill="#f0d8a0"/>
+    <circle cx="1280" cy="55" r="30" fill="#f0d8a0"/>
+</g>
+
+<!-- POUTRES VERTICALES (métal avec reflet) -->
+<g opacity=".9">
+    <rect x="0" y="0" width="4" height="378" fill="#2a3048"/>
+    <rect x="0" y="0" width="1" height="378" fill="rgba(255,255,255,.03)"/>
+    <rect x="230" y="0" width="4" height="378" fill="#2a3048"/>
+    <rect x="230" y="0" width="1" height="378" fill="rgba(255,255,255,.03)"/>
+    <rect x="465" y="0" width="4" height="378" fill="#2a3048"/>
+    <rect x="465" y="0" width="1" height="378" fill="rgba(255,255,255,.03)"/>
+    <rect x="700" y="0" width="4" height="378" fill="#2a3048"/>
+    <rect x="700" y="0" width="1" height="378" fill="rgba(255,255,255,.03)"/>
+    <rect x="932" y="0" width="4" height="378" fill="#2a3048"/>
+    <rect x="932" y="0" width="1" height="378" fill="rgba(255,255,255,.03)"/>
+    <rect x="1165" y="0" width="4" height="378" fill="#2a3048"/>
+    <rect x="1165" y="0" width="1" height="378" fill="rgba(255,255,255,.03)"/>
+    <rect x="1396" y="0" width="4" height="378" fill="#2a3048"/>
+</g>
+<!-- Traverse horizontale (métal + reflet) -->
+<rect x="0" y="200" width="1400" height="3" fill="#2a3048" opacity=".8"/>
+<rect x="0" y="200" width="1400" height="1" fill="rgba(255,255,255,.03)"/>
+
+<!-- Panneaux directionnels -->
+<!-- Panneau gauche -->
+<g transform="translate(120,30)">
+    <rect x="0" y="0" width="80" height="22" rx="3" fill="#1a1e28" stroke="#2a3040" stroke-width="1"/>
+    <polygon points="8,6 16,11 8,16" fill="#d4a010"/>
+    <rect x="22" y="7" width="30" height="2.5" rx="1" fill="#d4a010"/>
+    <rect x="22" y="12" width="22" height="2.5" rx="1" fill="#d4a010"/>
+</g>
+<!-- Panneau droit -->
+<g transform="translate(1180,30)">
+    <rect x="0" y="0" width="80" height="22" rx="3" fill="#1a1e28" stroke="#2a3040" stroke-width="1"/>
+    <polygon points="72,6 64,11 72,16" fill="#d4a010"/>
+    <rect x="28" y="7" width="30" height="2.5" rx="1" fill="#d4a010"/>
+    <rect x="34" y="12" width="22" height="2.5" rx="1" fill="#d4a010"/>
+</g>
+
+<!-- ══════════════════════════
+     MOBILIER & PERSONNAGES
+══════════════════════════ -->
+
+<!-- PLANTE (pot vert) -->
+<g transform="translate(100,388)">
+    <rect x="8" y="50" width="24" height="28" rx="4" fill="#3a4258"/>
+    <ellipse cx="20" cy="50" rx="14" ry="4" fill="#444c64"/>
+    <path d="M20 50 Q12 30 8 15" stroke="#2d7a3a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M20 50 Q22 28 30 12" stroke="#348a42" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M20 50 Q28 35 35 22" stroke="#2a7035" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="8" cy="13" rx="8" ry="10" fill="#2d8a3a" opacity=".7"/>
+    <ellipse cx="30" cy="10" rx="9" ry="11" fill="#34944a" opacity=".7"/>
+    <ellipse cx="36" cy="20" rx="7" ry="9" fill="#2a7838" opacity=".6"/>
+</g>
+
+<!-- SIÈGES (rangée type aéroport, 3 sièges) à gauche -->
+<g transform="translate(180,418)">
+    <!-- Pieds -->
+    <rect x="5" y="32" width="3" height="18" rx="1" fill="#2e3548"/>
+    <rect x="92" y="32" width="3" height="18" rx="1" fill="#2e3548"/>
+    <rect x="48" y="35" width="3" height="15" rx="1" fill="#2e3548"/>
+    <!-- Assise -->
+    <rect x="2" y="28" width="96" height="6" rx="2" fill="#4a5268"/>
+    <!-- Dossiers -->
+    <rect x="4" y="10" width="28" height="20" rx="4" fill="#5a6480"/>
+    <rect x="36" y="10" width="28" height="20" rx="4" fill="#5a6480"/>
+    <rect x="68" y="10" width="28" height="20" rx="4" fill="#5a6480"/>
+    <!-- Accoudoirs -->
+    <rect x="0" y="22" width="100" height="3" rx="1" fill="#3a4258"/>
+    <rect x="33" y="22" width="3" height="8" rx="1" fill="#3a4258"/>
+    <rect x="65" y="22" width="3" height="8" rx="1" fill="#3a4258"/>
+</g>
+
+<!-- Personne assise 1 (femme, téléphone, veste rose) -->
+<g transform="translate(192,392)">
+    <circle cx="14" cy="8" r="7" fill="#4a3a3a"/><!-- Cheveux -->
+    <circle cx="14" cy="9" r="5.5" fill="#d4a888"/><!-- Visage -->
+    <rect x="7" y="15" width="14" height="18" rx="4" fill="#c06080"/><!-- Veste rose -->
+    <rect x="4" y="33" width="7" height="18" rx="3" fill="#3a4260"/><!-- Jambe -->
+    <rect x="15" y="33" width="7" height="18" rx="3" fill="#3a4260"/><!-- Jambe -->
+    <!-- Téléphone dans la main -->
+    <rect x="20" y="22" width="5" height="9" rx="1" fill="#59b7b7" opacity=".6"/>
+</g>
+
+<!-- Personne assise 2 (homme, laptop) -->
+<g transform="translate(225,395)">
+    <circle cx="12" cy="7" r="6" fill="#2a2a3a"/>
+    <circle cx="12" cy="8" r="5" fill="#c8a480"/>
+    <rect x="6" y="14" width="12" height="16" rx="3" fill="#4a6478"/>
+    <rect x="3" y="30" width="7" height="18" rx="3" fill="#3a4a5a"/>
+    <rect x="14" y="30" width="7" height="18" rx="3" fill="#3a4a5a"/>
+    <!-- Laptop -->
+    <rect x="1" y="26" width="14" height="9" rx="1" fill="#2a3040"/>
+    <rect x="2" y="27" width="12" height="6" rx="1" fill="rgba(89,183,183,.25)"/>
+</g>
+
+<!-- SIÈGES rangée droite -->
+<g transform="translate(850,418)">
+    <rect x="5" y="32" width="3" height="18" rx="1" fill="#2e3548"/>
+    <rect x="92" y="32" width="3" height="18" rx="1" fill="#2e3548"/>
+    <rect x="48" y="35" width="3" height="15" rx="1" fill="#2e3548"/>
+    <rect x="2" y="28" width="96" height="6" rx="2" fill="#4a5268"/>
+    <rect x="4" y="10" width="28" height="20" rx="4" fill="#5a6480"/>
+    <rect x="36" y="10" width="28" height="20" rx="4" fill="#5a6480"/>
+    <rect x="68" y="10" width="28" height="20" rx="4" fill="#5a6480"/>
+    <rect x="0" y="22" width="100" height="3" rx="1" fill="#3a4258"/>
+    <rect x="33" y="22" width="3" height="8" rx="1" fill="#3a4258"/>
+    <rect x="65" y="22" width="3" height="8" rx="1" fill="#3a4258"/>
+</g>
+
+<!-- Couple assis à droite -->
+<g transform="translate(862,395)">
+    <circle cx="12" cy="7" r="6" fill="#3a3040"/>
+    <circle cx="12" cy="8" r="5" fill="#c8a080"/>
+    <rect x="6" y="14" width="12" height="16" rx="3" fill="#6a5870"/>
+    <rect x="3" y="30" width="7" height="18" rx="3" fill="#4a3a50"/>
+    <rect x="14" y="30" width="7" height="18" rx="3" fill="#4a3a50"/>
+</g>
+<g transform="translate(892,397)">
+    <circle cx="12" cy="7" r="6" fill="#2a2838"/>
+    <circle cx="12" cy="8" r="5" fill="#c4a488"/>
+    <rect x="6" y="14" width="12" height="15" rx="3" fill="#5a5a6a"/>
+    <rect x="3" y="29" width="7" height="18" rx="3" fill="#3a3a48"/>
+    <rect x="14" y="29" width="7" height="18" rx="3" fill="#3a3a48"/>
+</g>
+
+<!-- Valise à côté -->
+<g transform="translate(960,438)">
+    <rect x="0" y="4" width="12" height="18" rx="3" fill="#4a5878"/>
+    <rect x="3" y="0" width="6" height="5" rx="1.5" fill="none" stroke="#5a6888" stroke-width="1.2"/>
+    <circle cx="3" cy="23" r="1.5" fill="#3a4050"/><circle cx="9" cy="23" r="1.5" fill="#3a4050"/>
+</g>
+
+<!-- PERSONNE DEBOUT devant vitre (homme, regarde avions) -->
+<g transform="translate(530,382)">
+    <circle cx="10" cy="8" r="7" fill="#2a2838"/>
+    <circle cx="10" cy="9" r="5.5" fill="#c8a888"/>
+    <rect x="4" y="16" width="12" height="22" rx="4" fill="#4a6878"/>
+    <rect x="2" y="38" width="6" height="24" rx="3" fill="#3a5060"/>
+    <rect x="12" y="38" width="6" height="24" rx="3" fill="#3a5060"/>
+    <!-- Bras levé vers le railing -->
+    <line x1="15" y1="22" x2="20" y2="16" stroke="#4a6878" stroke-width="3" stroke-linecap="round"/>
+</g>
+
+<!-- FEMME DEBOUT avec sac -->
+<g transform="translate(680,384)">
+    <circle cx="10" cy="7" r="6.5" fill="#3a2a30"/>
+    <circle cx="10" cy="8" r="5" fill="#d0a890"/>
+    <path d="M5 15 Q3 28 5 36 L15 36 Q17 28 15 15Z" fill="#805a6a"/>
+    <rect x="3" y="36" width="6" height="24" rx="3" fill="#5a4260"/>
+    <rect x="11" y="36" width="6" height="24" rx="3" fill="#5a4260"/>
+    <!-- Sac bandoulière -->
+    <rect x="16" y="22" width="8" height="14" rx="3" fill="#6a5878"/>
+    <line x1="16" y1="22" x2="10" y2="14" stroke="#6a5878" stroke-width="1.5"/>
+</g>
+
+<!-- ENFANT assis par terre (avec ballon/jouet) -->
+<g transform="translate(620,442)">
+<g class="child-anim">
+    <circle cx="8" cy="5" r="5.5" fill="#3a2828"/>
+    <circle cx="8" cy="6" r="4.5" fill="#d8b090"/>
+    <rect x="4" y="11" width="8" height="10" rx="3" fill="#e08858"/><!-- T-shirt orange -->
+    <rect x="3" y="21" width="5" height="10" rx="2" fill="#4a5270"/>
+    <rect x="9" y="21" width="5" height="10" rx="2" fill="#4a5270"/>
+    <!-- Petit ballon -->
+    <circle cx="20" cy="26" r="5" fill="#cc4444" opacity=".6"/>
+</g>
+</g>
+
+<!-- PERSONNE debout téléphone (droite) -->
+<g transform="translate(1100,384)">
+    <circle cx="10" cy="7" r="6.5" fill="#2a2a3a"/>
+    <circle cx="10" cy="8" r="5" fill="#c8a480"/>
+    <rect x="5" y="15" width="11" height="20" rx="3" fill="#c0905a"/><!-- Veste beige -->
+    <rect x="3" y="35" width="6" height="24" rx="3" fill="#3a3a48"/>
+    <rect x="12" y="35" width="6" height="24" rx="3" fill="#3a3a48"/>
+    <!-- Téléphone -->
+    <rect x="15" y="20" width="5" height="9" rx="1" fill="#3a4060"/>
+    <rect x="16" y="21" width="3" height="6" rx=".5" fill="rgba(89,183,183,.3)"/>
+    <!-- Sac à dos -->
+    <rect x="-2" y="16" width="8" height="14" rx="3" fill="#8a7a60"/>
+</g>
+
+</svg>

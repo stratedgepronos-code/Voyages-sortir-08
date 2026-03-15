@@ -1,0 +1,335 @@
+<?php
+/**
+ * Plugin Name: VS08 Voyages — Réservation Golf
+ * Description: Système complet de création et réservation de voyages golf. Back-office, calcul de prix, tunnel de réservation, WooCommerce.
+ * Version: 2.0.0
+ * Author: Voyages Sortir 08
+ * Requires WooCommerce: true
+ */
+// Déploiement CI: modification pour déclencher le workflow GitHub Actions
+
+if (!defined('ABSPATH')) exit;
+
+// Polyfill show_message() géré par mu-plugins/paybox-polyfill.php
+
+define('VS08V_PATH', plugin_dir_path(__FILE__));
+define('VS08V_URL',  plugin_dir_url(__FILE__));
+define('VS08V_VER',  '2.0.0');
+
+// ============================================================
+// CHARGEMENT SÉCURISÉ DE LA CLÉ DUFFEL DEPUIS config.cfg
+// Le fichier config.cfg doit être à la racine du plugin :
+//   public_html/wp-content/plugins/vs08-voyages/config.cfg
+// Format attendu dans config.cfg :
+//   DUFFEL_API_KEY=duffel_live_XXXXXXXXXXXXXXXX
+//   SERPAPI_API_KEY=xxxx   (optionnel : vols Ryanair / low-cost via Google Flights)
+//   VS08_SANDBOX_PAYMENT=1   (optionnel : déverrouille la dernière étape si "token invalide" en test)
+// ============================================================
+$vs08v_config_file = VS08V_PATH . 'config.cfg';
+if (file_exists($vs08v_config_file)) {
+    $lines = file($vs08v_config_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        $line = trim($line);
+        // Ignorer les commentaires (lignes commençant par # ou ;)
+        if (empty($line) || $line[0] === '#' || $line[0] === ';') continue;
+        if (strpos($line, '=') !== false) {
+            [$key, $val] = explode('=', $line, 2);
+            $key = trim($key);
+            $val = trim($val);
+            if ($key === 'DUFFEL_API_KEY' && !defined('VS08_DUFFEL_API_KEY')) {
+                define('VS08_DUFFEL_API_KEY', $val);
+            }
+            if ($key === 'SERPAPI_API_KEY' && !defined('VS08_SERPAPI_API_KEY')) {
+                define('VS08_SERPAPI_API_KEY', $val);
+            }
+            if ($key === 'VS08_SANDBOX_PAYMENT' && !defined('VS08_SANDBOX_PAYMENT')) {
+                define('VS08_SANDBOX_PAYMENT', $val === '1' || $val === 'true' || $val === 'yes');
+            }
+            if ($key === 'PAYBOX_MAIL_APP_KEY' && !defined('VS08_PAYBOX_MAIL_APP_KEY')) {
+                define('VS08_PAYBOX_MAIL_APP_KEY', $val);
+            }
+            if ($key === 'PAYBOX_MAIL_SECRET_KEY' && !defined('VS08_PAYBOX_MAIL_SECRET_KEY')) {
+                define('VS08_PAYBOX_MAIL_SECRET_KEY', $val);
+            }
+        }
+    }
+}
+
+// Chargement des modules
+require_once VS08V_PATH . 'includes/class-post-type.php';
+require_once VS08V_PATH . 'includes/class-meta-boxes.php';
+require_once VS08V_PATH . 'includes/class-hotel-box.php';
+require_once VS08V_PATH . 'includes/class-hotel-scanner.php';
+require_once VS08V_PATH . 'includes/class-golf-box.php';
+require_once VS08V_PATH . 'includes/class-compris-box.php';
+require_once VS08V_PATH . 'includes/class-calculator.php';
+require_once VS08V_PATH . 'includes/class-booking.php';
+require_once VS08V_PATH . 'includes/class-insurance.php';
+require_once VS08V_PATH . 'includes/class-woo.php';
+require_once VS08V_PATH . 'includes/class-checkout.php';
+require_once VS08V_PATH . 'includes/class-duffel-api.php';
+require_once VS08V_PATH . 'includes/class-serpapi.php';
+require_once VS08V_PATH . 'includes/class-ajax.php';
+require_once VS08V_PATH . 'includes/class-rest.php';
+require_once VS08V_PATH . 'includes/class-contract.php';
+require_once VS08V_PATH . 'includes/class-emails.php';
+require_once VS08V_PATH . 'includes/class-traveler-space.php';
+require_once VS08V_PATH . 'includes/class-admin-dossiers.php';
+require_once VS08V_PATH . 'includes/class-duplicate-voyage.php';
+require_once VS08V_PATH . 'includes/class-homepage-editor.php';
+require_once VS08V_PATH . 'includes/class-newsletter.php';
+require_once VS08V_PATH . 'includes/class-avis-admin.php';
+require_once VS08V_PATH . 'includes/class-search.php';
+try {
+    require_once VS08V_PATH . 'includes/class-paybox-mail.php';
+} catch (\Throwable $e) {
+    error_log('VS08 Paybox Mail load error: ' . $e->getMessage());
+}
+
+// Init
+VS08V_REST::register();
+VS08V_Traveler_Space::register();
+VS08V_Admin_Dossiers::register();
+VS08V_Duplicate_Voyage::register();
+VS08V_Homepage_Editor::register();
+VS08V_Newsletter::register();
+VS08V_Avis_Admin::register();
+VS08V_Search::register();
+if (class_exists('VS08V_Paybox_Mail')) {
+    VS08V_Paybox_Mail::register();
+}
+add_action('init', ['VS08V_PostType', 'register']);
+
+// Titres admin pour nos pages custom (complète le mu-plugin fix-php81-deprecations)
+add_action('admin_enqueue_scripts', function($hook_suffix) {
+    if (!isset($_GET['page'])) return;
+    $page = sanitize_text_field(wp_unslash($_GET['page'] ?? ''));
+    if (strpos($page, 'vs08-dossiers') !== 0) return;
+    global $title;
+    if ($title === null || $title === '') {
+        if ($page === 'vs08-dossiers-edit') $title = 'Modifier le dossier';
+        elseif ($page === 'vs08-dossiers-list') $title = 'Dossiers';
+        else $title = 'Gestion Dossiers Voyages';
+    }
+}, 1);
+add_filter('document_title_parts', function($parts) {
+    if (!is_array($parts)) return $parts;
+    foreach (['title', 'page', 'tagline'] as $k) {
+        if (array_key_exists($k, $parts) && $parts[$k] === null) $parts[$k] = '';
+    }
+    return $parts;
+}, 1);
+add_action('add_meta_boxes', ['VS08V_MetaBoxes', 'register']);
+add_action('add_meta_boxes', ['VS08V_HotelBox', 'register']);
+add_action('add_meta_boxes', ['VS08V_GolfBox', 'register']);
+add_action('add_meta_boxes', ['VS08V_ComprisBox', 'register']);
+VS08V_HotelScanner::register();
+add_action('wp_ajax_vs08v_scan_golf_pdf', ['VS08V_HotelScanner', 'ajax_scan_golf_pdf']);
+add_action('save_post', ['VS08V_MetaBoxes', 'save'], 10, 2);
+add_action('wp_enqueue_scripts', 'vs08v_frontend_assets');
+add_action('wp_print_scripts', function() {
+    wp_dequeue_script('footer-terminal');
+    wp_deregister_script('footer-terminal');
+}, 100);
+add_action('admin_enqueue_scripts', 'vs08v_admin_assets');
+
+function vs08v_frontend_assets() {
+    wp_dequeue_script('footer-terminal');
+    wp_deregister_script('footer-terminal');
+
+    wp_enqueue_style('vs08v-front', VS08V_URL . 'assets/css/front.css', [], VS08V_VER);
+    wp_enqueue_script('vs08v-front', VS08V_URL . 'assets/js/front.js', ['jquery'], VS08V_VER, true);
+    $rest_base = rest_url(VS08V_REST::NAMESPACE);
+    wp_localize_script('vs08v-front', 'vs08v', [
+        'ajax_url'       => admin_url('admin-ajax.php'),
+        'rest_flight'    => $rest_base . '/flight',
+        'rest_calculate' => $rest_base . '/calculate',
+        'nonce'      => wp_create_nonce('vs08v_nonce'),
+    ]);
+
+    // ── VS08 Calendar Premium ──
+    wp_enqueue_style('vs08-calendar', VS08V_URL . 'assets/css/vs08-calendar.css', [], '1.5.0');
+    wp_enqueue_script('vs08-calendar', VS08V_URL . 'assets/js/vs08-calendar.js', [], '1.5.0', true);
+}
+
+function vs08v_admin_assets($hook) {
+    if (!in_array($hook, ['post.php', 'post-new.php'])) return;
+    global $post;
+    if (!$post || $post->post_type !== 'vs08_voyage') return;
+    wp_enqueue_media();
+    wp_enqueue_style('vs08v-admin', VS08V_URL . 'assets/css/admin.css', [], VS08V_VER);
+    wp_enqueue_script('vs08v-admin', VS08V_URL . 'assets/js/admin.js', ['jquery'], VS08V_VER, true);
+    wp_localize_script('vs08v-admin', 'vs08v_admin', [
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce'    => wp_create_nonce('vs08v_nonce'),
+    ]);
+
+    // ── VS08 Calendar Premium (admin) ──
+    wp_enqueue_style('vs08-calendar', VS08V_URL . 'assets/css/vs08-calendar.css', [], '1.5.0');
+    wp_enqueue_script('vs08-calendar', VS08V_URL . 'assets/js/vs08-calendar.js', [], '1.5.0', true);
+}
+
+// Barre admin VS08
+add_action('admin_bar_menu', function($wp_admin_bar) {
+    if (!current_user_can('manage_options')) return;
+    $wp_admin_bar->add_node([
+        'id'     => 'vs08v-logo',
+        'title'  => '✈️ VS08 Voyages',
+        'href'   => admin_url('edit.php?post_type=vs08_voyage'),
+        'meta'   => ['title' => 'Voyages Sortir 08 — Tableau de bord'],
+    ]);
+}, 5);
+
+add_action('admin_enqueue_scripts', function() {
+    echo '<style>
+    #wp-admin-bar-vs08v-logo { }
+    #wp-admin-bar-vs08v-logo > .ab-item { padding:0 10px!important;display:flex!important;align-items:center!important;height:32px!important }
+    #wp-admin-bar-vs08v-logo > .ab-item:hover { background:rgba(255,255,255,.1)!important;border-radius:4px }
+    </style>';
+});
+add_action('wp_head', function() {
+    if (!is_admin_bar_showing()) return;
+    echo '<style>
+    #wp-admin-bar-vs08v-logo > .ab-item { padding:0 10px!important;display:flex!important;align-items:center!important;height:32px!important }
+    #wp-admin-bar-vs08v-logo > .ab-item:hover { background:rgba(255,255,255,.1)!important;border-radius:4px }
+    </style>';
+});
+
+// ============================================================
+// RECONSTRUCTION DU PANIER SUR LA PAGE CHECKOUT
+// Résout le problème « panier vide » : les cookies de session définis
+// dans une réponse AJAX/REST ne sont pas toujours enregistrés par le
+// navigateur avant la redirection JS. On utilise un token transient
+// passé en query string pour reconstruire le panier côté serveur,
+// dans la même requête HTTP que le rendu de la page checkout.
+// ============================================================
+add_action('template_redirect', function() {
+    if (empty($_GET['vs08_cart'])) return;
+    if (!function_exists('is_checkout') || !is_checkout()) return;
+
+    $token = sanitize_text_field($_GET['vs08_cart']);
+    $transient_key = 'vs08_cart_' . $token;
+    $product_id = get_transient($transient_key);
+
+    if (!$product_id) return; // Déjà utilisé ou expiré
+
+    delete_transient($transient_key); // Usage unique
+
+    if (!function_exists('WC') || !WC()) return;
+
+    if (is_null(WC()->session) && method_exists(WC(), 'initialize_session')) {
+        WC()->initialize_session();
+    }
+    if (is_null(WC()->cart)) {
+        if (function_exists('wc_load_cart')) { wc_load_cart(); }
+        elseif (method_exists(WC(), 'initialize_cart')) { WC()->initialize_cart(); }
+    }
+    if (!WC()->cart) return;
+
+    WC()->cart->empty_cart();
+    WC()->cart->add_to_cart((int) $product_id, 1);
+    WC()->cart->calculate_totals();
+    if (WC()->session) {
+        if (!WC()->session->has_session()) {
+            WC()->session->set_customer_session_cookie(true);
+        }
+        WC()->cart->set_session();
+        WC()->cart->maybe_set_cart_cookies();
+        if (method_exists(WC()->session, 'save_data')) {
+            WC()->session->save_data();
+        }
+    }
+}, 5); // Priorité 5 = avant le rendu du template checkout
+
+// Endpoint réservation
+add_action('init', function() {
+    add_rewrite_rule('^reservation/([0-9]+)/?$', 'index.php?vs08_booking=1&vs08_voyage_id=$matches[1]', 'top');
+    add_rewrite_tag('%vs08_booking%', '([0-9]+)');
+    add_rewrite_tag('%vs08_voyage_id%', '([0-9]+)');
+
+    add_rewrite_rule('^resultats-recherche/?$', 'index.php?vs08_search_results=1', 'top');
+    add_rewrite_tag('%vs08_search_results%', '([0-9]+)');
+});
+add_action('template_redirect', function() {
+    if (get_query_var('vs08_booking')) {
+        include VS08V_PATH . 'templates/booking-steps.php';
+        exit;
+    }
+    if (get_query_var('vs08_search_results')) {
+        include get_theme_file_path('page-resultats.php');
+        exit;
+    }
+});
+
+// ============================================================
+// EMAILS POST-PAIEMENT (contrat de vente admin + client)
+// ============================================================
+// Hook principal : déclenché par WooCommerce quand le paiement est confirmé
+add_action('woocommerce_payment_complete', function($order_id) {
+    VS08V_Emails::dispatch($order_id);
+});
+
+// Fallback : certains moyens de paiement (virement, chèque) ne déclenchent
+// pas woocommerce_payment_complete mais changent le statut en « processing »
+add_action('woocommerce_order_status_changed', function($order_id, $old_status, $new_status) {
+    if (in_array($new_status, ['processing', 'completed'])) {
+        VS08V_Emails::dispatch($order_id);
+    }
+}, 10, 3);
+
+// Après paiement (CB, chèque, virement) : rediriger vers le voyage dans l'espace client au lieu de la page WooCommerce
+add_action('template_redirect', function() {
+    if (!function_exists('is_wc_endpoint_url') || !is_wc_endpoint_url('order-received')) {
+        return;
+    }
+    $order_id = absint(get_query_var('order-received'));
+    if (!$order_id) {
+        return;
+    }
+    $order = wc_get_order($order_id);
+    if (!$order || !is_user_logged_in() || (int) $order->get_customer_id() !== (int) get_current_user_id()) {
+        return;
+    }
+    // Commande principale
+    if ($order->get_meta('_vs08v_booking_data')) {
+        wp_safe_redirect(VS08V_Traveler_Space::voyage_url($order_id));
+        exit;
+    }
+    // Commande solde : rediriger vers le voyage parent
+    $parent_id = (int) $order->get_meta('_vs08v_order_solde_parent');
+    if ($parent_id) {
+        wp_safe_redirect(VS08V_Traveler_Space::voyage_url($parent_id));
+        exit;
+    }
+}, 5);
+
+// Cron rappel solde (J-14 et J-3)
+add_action('vs08v_solde_reminder_cron', function() {
+    VS08V_Emails::run_solde_reminders();
+});
+add_action('init', function() {
+    if (defined('DOING_CRON') && DOING_CRON) {
+        return;
+    }
+    if (get_transient('vs08v_cron_solde_scheduled')) {
+        return;
+    }
+    if (!wp_next_scheduled('vs08v_solde_reminder_cron')) {
+        wp_schedule_event(time(), 'daily', 'vs08v_solde_reminder_cron');
+        set_transient('vs08v_cron_solde_scheduled', 1, DAY_IN_SECONDS);
+    }
+});
+
+// Activation
+register_activation_hook(__FILE__, function() {
+    VS08V_PostType::register();
+    flush_rewrite_rules();
+    VS08V_Insurance::create_defaults();
+    if (!wp_next_scheduled('vs08v_solde_reminder_cron')) {
+        wp_schedule_event(time(), 'daily', 'vs08v_solde_reminder_cron');
+    }
+});
+register_deactivation_hook(__FILE__, function() {
+    flush_rewrite_rules();
+    wp_clear_scheduled_hook('vs08v_solde_reminder_cron');
+});

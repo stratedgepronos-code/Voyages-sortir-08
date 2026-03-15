@@ -1,0 +1,10 @@
+/* VS08 Voyages — Frontend CSS */
+
+/* WooCommerce checkout - recap voyage */
+.vs08v-woo-recap { font-family: 'Outfit', sans-serif; }
+.vs08v-woo-recap h3,
+.vs08v-woo-recap h4 { font-family: 'Playfair Display', serif; margin: 12px 0 8px; }
+.vs08v-woo-recap table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+.vs08v-woo-recap td { padding: 6px 8px; font-size: 13px; vertical-align: top; }
+.vs08v-woo-recap td:last-child { text-align: right; font-weight: 600; white-space: nowrap; }
+.vs08v-woo-recap small { font-size: 11px; display: block; font-weight: 400; }

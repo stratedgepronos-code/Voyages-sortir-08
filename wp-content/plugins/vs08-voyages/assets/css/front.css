@@ -1,0 +1,555 @@
+/**
+ * VS08 Voyages — front.css (GOLD v2.0.0)
+ * Styles frontend : page voyage, sélecteur de vols, calcul de prix, tunnel réservation.
+ */
+
+/* ============================================================
+   VARIABLES
+   ============================================================ */
+:root {
+    --vs08-green    : #2d8a5a;
+    --vs08-green-lt : #e8f7ef;
+    --vs08-teal     : #0f6b6b;
+    --vs08-teal-lt  : #edf8f8;
+    --vs08-orange   : #e8724a;
+    --vs08-orange-lt: #fff4f0;
+    --vs08-dark     : #0f2424;
+    --vs08-gray     : #6b7280;
+    --vs08-border   : #e2e8f0;
+    --vs08-radius   : 12px;
+    --vs08-shadow   : 0 4px 20px rgba(0,0,0,.08);
+    --vs08-font     : 'Outfit', system-ui, sans-serif;
+}
+
+/* ============================================================
+   SPINNER DE CHARGEMENT
+   ============================================================ */
+.vs08v-spinner-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    gap: 12px;
+}
+
+.vs08v-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--vs08-border);
+    border-top-color: var(--vs08-teal);
+    border-radius: 50%;
+    animation: vs08spin 0.7s linear infinite;
+}
+
+@keyframes vs08spin {
+    to { transform: rotate(360deg); }
+}
+
+.vs08v-spinner-msg {
+    font-size: 14px;
+    color: var(--vs08-gray);
+    margin: 0;
+    font-family: var(--vs08-font);
+}
+
+/* ============================================================
+   ALERTES
+   ============================================================ */
+.vs08v-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: var(--vs08-radius);
+    font-size: 14px;
+    font-family: var(--vs08-font);
+    line-height: 1.5;
+}
+
+.vs08v-alert-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+.vs08v-alert-success {
+    background: var(--vs08-green-lt);
+    border: 1px solid #bbf7d0;
+    color: #166534;
+}
+
+.vs08v-alert-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* ============================================================
+   SECTION VOLS — Sélecteur d'aéroport + résultats
+   ============================================================ */
+.vs08v-vols-section {
+    background: #fff;
+    border: 1px solid var(--vs08-border);
+    border-radius: var(--vs08-radius);
+    padding: 20px 24px;
+    margin: 24px 0;
+    box-shadow: var(--vs08-shadow);
+}
+
+.vs08v-vols-section h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--vs08-dark);
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vs08v-vols-controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    align-items: flex-end;
+}
+
+.vs08v-vols-controls select,
+.vs08v-vols-controls input[type="date"] {
+    border: 1.5px solid var(--vs08-border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: var(--vs08-font);
+    color: var(--vs08-dark);
+    background: #fff;
+    min-width: 180px;
+    cursor: pointer;
+    transition: border-color .2s;
+}
+
+.vs08v-vols-controls select:focus,
+.vs08v-vols-controls input[type="date"]:focus {
+    outline: none;
+    border-color: var(--vs08-teal);
+    box-shadow: 0 0 0 3px rgba(15,107,107,.1);
+}
+
+/* Résultats vols */
+.vs08v-vols-result {
+    margin-top: 12px;
+    min-height: 60px;
+}
+
+.vs08v-vol-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 2px solid var(--vs08-border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color .2s, background .2s, box-shadow .2s;
+    background: #fff;
+    font-family: var(--vs08-font);
+}
+
+.vs08v-vol-card:hover {
+    border-color: var(--vs08-teal);
+    background: var(--vs08-teal-lt);
+    box-shadow: 0 2px 12px rgba(15,107,107,.1);
+}
+
+.vs08v-vol-card.selected {
+    border-color: var(--vs08-teal);
+    background: var(--vs08-teal-lt);
+    box-shadow: 0 0 0 3px rgba(15,107,107,.15);
+}
+
+.vs08v-vol-card.is-reference {
+    border-color: var(--vs08-green);
+}
+
+.vs08v-vol-badge-ref {
+    display: inline-block;
+    background: var(--vs08-green);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+}
+
+.vs08v-vol-airline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.vs08v-vol-airline-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.vs08v-vol-airline-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--vs08-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vs08v-vol-num {
+    font-size: 11px;
+    color: var(--vs08-gray);
+}
+
+.vs08v-vol-horaires {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--vs08-dark);
+}
+
+.vs08v-vol-arrow {
+    color: var(--vs08-gray);
+    font-size: 12px;
+}
+
+.vs08v-vol-duree {
+    font-size: 11px;
+    color: var(--vs08-gray);
+    text-align: center;
+}
+
+.vs08v-vol-prix {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.vs08v-vol-prix-amount {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--vs08-teal);
+}
+
+.vs08v-vol-prix-delta {
+    font-size: 11px;
+    color: var(--vs08-orange);
+}
+
+.vs08v-vol-prix-detail {
+    font-size: 11px;
+    color: var(--vs08-gray);
+}
+
+/* ============================================================
+   CALCUL DE PRIX — Récapitulatif
+   ============================================================ */
+.vs08v-recap-box {
+    background: var(--vs08-teal-lt);
+    border: 1px solid #a7d9d9;
+    border-radius: var(--vs08-radius);
+    padding: 20px 24px;
+    font-family: var(--vs08-font);
+    margin: 20px 0;
+}
+
+.vs08v-recap-box h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--vs08-teal);
+    margin: 0 0 14px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.vs08v-recap-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 13px;
+    color: var(--vs08-dark);
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(0,0,0,.05);
+    gap: 8px;
+}
+
+.vs08v-recap-line:last-child {
+    border-bottom: none;
+}
+
+.vs08v-recap-line-detail {
+    font-size: 11px;
+    color: var(--vs08-gray);
+    margin-top: 1px;
+}
+
+.vs08v-recap-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0 0;
+    margin-top: 10px;
+    border-top: 2px solid var(--vs08-teal);
+}
+
+.vs08v-recap-total-label {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--vs08-dark);
+}
+
+.vs08v-recap-total-amount {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--vs08-teal);
+}
+
+.vs08v-recap-par-pers {
+    font-size: 12px;
+    color: var(--vs08-gray);
+    text-align: right;
+    margin-top: 2px;
+}
+
+.vs08v-recap-acompte {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: var(--vs08-orange-lt);
+    border: 1px solid #fcd5c7;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.vs08v-recap-acompte-label {
+    font-size: 13px;
+    color: var(--vs08-orange);
+    font-weight: 600;
+}
+
+.vs08v-recap-acompte-amount {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--vs08-orange);
+}
+
+/* ============================================================
+   BOUTON PRINCIPAL
+   ============================================================ */
+.vs08v-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: var(--vs08-font);
+    cursor: pointer;
+    border: none;
+    transition: transform .15s, box-shadow .15s, background .2s;
+    text-decoration: none;
+}
+
+.vs08v-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,0,0,.15);
+}
+
+.vs08v-btn:active {
+    transform: translateY(0);
+}
+
+.vs08v-btn-primary {
+    background: var(--vs08-teal);
+    color: #fff;
+}
+
+.vs08v-btn-primary:hover {
+    background: var(--vs08-dark);
+    color: #fff;
+}
+
+.vs08v-btn-orange {
+    background: var(--vs08-orange);
+    color: #fff;
+}
+
+.vs08v-btn-orange:hover {
+    background: #c95a35;
+    color: #fff;
+}
+
+.vs08v-btn:disabled,
+.vs08v-btn[disabled] {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* ============================================================
+   FORMULAIRE VOYAGEURS
+   ============================================================ */
+.vs08v-voyageur-card {
+    background: #f9fafb;
+    border: 1px solid var(--vs08-border);
+    border-radius: var(--vs08-radius);
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    font-family: var(--vs08-font);
+}
+
+.vs08v-voyageur-card h5 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--vs08-teal);
+    margin: 0 0 14px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.vs08v-form-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.vs08v-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 140px;
+}
+
+.vs08v-form-field label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--vs08-gray);
+}
+
+.vs08v-form-field input,
+.vs08v-form-field select {
+    border: 1.5px solid var(--vs08-border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 14px;
+    font-family: var(--vs08-font);
+    color: var(--vs08-dark);
+    background: #fff;
+    transition: border-color .2s;
+}
+
+.vs08v-form-field input:focus,
+.vs08v-form-field select:focus {
+    outline: none;
+    border-color: var(--vs08-teal);
+    box-shadow: 0 0 0 3px rgba(15,107,107,.1);
+}
+
+/* ============================================================
+   ÉTAPES DU TUNNEL (steps)
+   ============================================================ */
+.vs08v-steps {
+    display: flex;
+    gap: 0;
+    margin-bottom: 32px;
+    border-radius: var(--vs08-radius);
+    overflow: hidden;
+    border: 1px solid var(--vs08-border);
+    font-family: var(--vs08-font);
+}
+
+.vs08v-step {
+    flex: 1;
+    padding: 12px 8px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--vs08-gray);
+    background: #f9fafb;
+    border-right: 1px solid var(--vs08-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background .2s, color .2s;
+}
+
+.vs08v-step:last-child {
+    border-right: none;
+}
+
+.vs08v-step.active {
+    background: var(--vs08-teal);
+    color: #fff;
+}
+
+.vs08v-step.done {
+    background: var(--vs08-green-lt);
+    color: var(--vs08-green);
+}
+
+.vs08v-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 800;
+    background: rgba(255,255,255,.25);
+    flex-shrink: 0;
+}
+
+.vs08v-step.done .vs08v-step-num {
+    background: var(--vs08-green);
+    color: #fff;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 640px) {
+    .vs08v-vols-controls {
+        flex-direction: column;
+    }
+    .vs08v-vols-controls select,
+    .vs08v-vols-controls input[type="date"] {
+        width: 100%;
+    }
+    .vs08v-vol-card {
+        flex-wrap: wrap;
+    }
+    .vs08v-steps {
+        flex-direction: column;
+    }
+    .vs08v-step {
+        border-right: none;
+        border-bottom: 1px solid var(--vs08-border);
+    }
+    .vs08v-form-row {
+        flex-direction: column;
+    }
+}

@@ -1,0 +1,20 @@
+# ============================================================
+# VS08 Voyages — Protection sécurité GOLD
+# Empêche tout accès direct aux fichiers sensibles depuis le web
+# ============================================================
+
+# Bloquer l'accès direct à config.cfg (contient la clé API Duffel)
+<Files "config.cfg">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Bloquer aussi les fichiers PHP dans /includes/ depuis le web
+# (ils doivent uniquement être chargés par WordPress)
+<Files "*.php">
+    # Les fichiers PHP dans ce dossier ne doivent pas être appelés directement
+    # Tous sont protégés par if (!defined('ABSPATH')) exit;
+</Files>
+
+# Interdire la navigation dans les dossiers du plugin
+Options -Indexes

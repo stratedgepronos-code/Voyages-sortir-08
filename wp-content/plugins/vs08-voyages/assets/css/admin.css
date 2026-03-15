@@ -1,0 +1,60 @@
+/* VS08 Voyages — Admin CSS v1.1 */
+
+.vs08v-field-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-start}
+.vs08v-field{display:flex;flex-direction:column;flex:1 1 140px;min-width:0}
+.vs08v-field-2{flex:2 1 240px}
+.vs08v-field-3{flex:3 1 320px}
+.vs08v-field-full{flex:1 1 100%}
+
+.vs08v-field label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a3a3a;margin-bottom:5px;white-space:nowrap}
+
+/* INPUTS — box-sizing obligatoire pour ne pas deborder */
+.vs08v-field input,.vs08v-field select,.vs08v-field textarea{width:100%;box-sizing:border-box;border:1.5px solid #dde1e7;border-radius:6px;padding:8px 10px;font-size:13px;transition:border-color .2s;font-family:inherit;background:#fafafa}
+.vs08v-field input:focus,.vs08v-field select:focus,.vs08v-field textarea:focus{border-color:#59b7b7;outline:none;box-shadow:0 0 0 2px rgba(89,183,183,.12);background:#fff}
+
+.vs08v-pi{position:relative;display:flex;align-items:center;width:100%}
+.vs08v-pi span{position:absolute;left:10px;color:#9ca3af;font-size:13px;pointer-events:none;z-index:1}
+.vs08v-pi input{padding-left:24px!important;width:100%;box-sizing:border-box}
+
+.vs08v-notice{background:#edf8f8;border-left:3px solid #59b7b7;padding:10px 14px;font-size:13px;color:#1a3a3a;border-radius:0 6px 6px 0;margin-bottom:16px;line-height:1.5}
+.vs08v-stitle{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#59b7b7;border-bottom:1.5px solid #edf8f8;padding-bottom:6px;margin:22px 0 12px}
+.vs08v-help{font-size:11px;color:#9ca3af;margin-top:4px;line-height:1.4}
+.vs08v-sep{border:none;border-top:1px solid #f0f2f4;margin:16px 0}
+
+/* LIGNES DYNAMIQUES */
+.vs08v-dyn-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;background:#fafbfc;border:1px solid #edf0f4;border-radius:7px;padding:8px 10px}
+.vs08v-dyn-row input,.vs08v-dyn-row select{flex:1 1 80px;min-width:0;box-sizing:border-box;border:1.5px solid #dde1e7;border-radius:6px;padding:7px 10px;font-size:13px;background:#fff}
+
+/* BOUTON SUPPRIMER — rouge au hover */
+.vs08v-rm,.vs08v-rm.button{flex-shrink:0;background:#fff!important;border:1.5px solid #e5e7eb!important;color:#6b7280!important;border-radius:6px!important;padding:5px 10px!important;font-size:12px;cursor:pointer;transition:all .2s;line-height:1.4;font-family:inherit;min-height:auto!important;height:auto!important}
+.vs08v-rm:hover,.vs08v-rm.button:hover{background:#fee2e2!important;border-color:#dc2626!important;color:#dc2626!important}
+
+.vs08v-option-block{background:#f9f9f9;border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:10px}
+.postbox .inside{padding:12px 14px}
+
+/* POST HEADER — couleur teal pour distinguer les voyages */
+.post-type-vs08_voyage #post-header,
+.post-type-vs08_voyage .post-header{background:#59b7b7!important;border-color:#3d9a9a!important}
+.post-type-vs08_voyage #post-header *,
+.post-type-vs08_voyage .post-header *{color:#fff!important}
+.post-type-vs08_voyage #post-header input#title,
+.post-type-vs08_voyage .post-header input#title{background:rgba(255,255,255,.15)!important;border-color:rgba(255,255,255,.3)!important;color:#fff!important}
+.post-type-vs08_voyage #post-header input#title::placeholder{color:rgba(255,255,255,.6)!important}
+
+/* POSTBOX HEADERS — teal pour bien séparer les sections */
+.post-type-vs08_voyage .postbox .postbox-header,
+.post-type-vs08_voyage .postbox h2.hndle,
+.post-type-vs08_voyage .postbox .hndle{
+    background:#59b7b7!important;
+    border-bottom:1px solid #3d9a9a!important;
+    border-radius:3px 3px 0 0;
+}
+.post-type-vs08_voyage .postbox .postbox-header *,
+.post-type-vs08_voyage .postbox h2.hndle *,
+.post-type-vs08_voyage .postbox .hndle *,
+.post-type-vs08_voyage .postbox .postbox-header .hndle-icon:before{
+    color:#fff!important;
+}
+.post-type-vs08_voyage .postbox .postbox-header .toggle-indicator:before{
+    color:#fff!important;
+}

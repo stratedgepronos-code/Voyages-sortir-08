@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" fill="none">
+  <rect width="400" height="200" rx="20" fill="#f0f4f8"/>
+  <g transform="translate(22,25)">
+    <path d="M38 128 Q38 106 56 96 L88 86 Q108 58 168 44 L275 38 Q335 36 358 52 L375 70 Q385 86 385 100 L385 128" fill="#2d3748" opacity=".9"/>
+    <path d="M106 84 Q120 42 188 32 L270 30 Q325 30 345 48 L360 72" fill="#fff" opacity=".25"/>
+    <path d="M116 80 Q128 46 186 38 L265 36 Q315 36 330 52 L342 68" fill="#fff" opacity=".4" stroke="#4a5568" stroke-width="1"/>
+    <rect x="33" y="128" width="357" height="12" rx="6" fill="#1a202c"/>
+    <circle cx="98" cy="140" r="20" fill="#2d3748"/><circle cx="98" cy="140" r="12" fill="#4a5568"/><circle cx="98" cy="140" r="5" fill="#a0aec0"/>
+    <circle cx="320" cy="140" r="20" fill="#2d3748"/><circle cx="320" cy="140" r="12" fill="#4a5568"/><circle cx="320" cy="140" r="5" fill="#a0aec0"/>
+    <rect x="362" y="90" width="26" height="10" rx="3" fill="#e53e3e" opacity=".8"/>
+    <rect x="42" y="94" width="20" height="8" rx="3" fill="#ecc94b" opacity=".8"/>
+    <path d="M200 128 L200 100" stroke="#ecc94b" stroke-width="0.5" opacity=".3"/>
+  </g>
+  <text x="200" y="185" text-anchor="middle" font-family="Outfit,sans-serif" font-size="13" font-weight="600" fill="#59b7b7" letter-spacing="2">PREMIUM / LUXE</text>
+</svg>
