@@ -141,6 +141,13 @@ var BK_CIRCUIT = <?php echo json_encode([
 .bkc-btn-submit{display:block;width:100%;padding:17px;background:linear-gradient(135deg,#59b7b7,#3d9a9a);color:#fff;border:none;border-radius:14px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;cursor:pointer;text-align:center;margin-top:18px;transition:all .3s}
 .bkc-btn-submit:hover{background:linear-gradient(135deg,#4aa8a8,#2d8a8a);transform:translateY(-1px);box-shadow:0 6px 20px rgba(89,183,183,.3)}
 .bkc-btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none}
+/* Navigation étapes */
+.bkc-nav{display:flex;gap:12px;margin-top:18px;align-items:center}
+.bkc-btn-next{flex:1;padding:15px;background:linear-gradient(135deg,#59b7b7,#3d9a9a);color:#fff;border:none;border-radius:14px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;cursor:pointer;text-align:center;transition:all .3s}
+.bkc-btn-next:hover{background:linear-gradient(135deg,#4aa8a8,#2d8a8a);transform:translateY(-1px);box-shadow:0 6px 20px rgba(89,183,183,.3)}
+.bkc-btn-prev{padding:15px 24px;background:#fff;color:#0f2424;border:1.5px solid #e5e7eb;border-radius:14px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.bkc-btn-prev:hover{border-color:#59b7b7;color:#59b7b7}
+.bkc-step-content{}
 .bkc-security{text-align:center;margin-top:10px;font-size:11px;color:#999;font-family:'Outfit',sans-serif}
 .bkc-error{background:#fee2e2;color:#dc2626;padding:14px 16px;border-radius:12px;font-size:13px;font-family:'Outfit',sans-serif;margin-bottom:16px;display:none}
 .bkc-loading{display:none;text-align:center;padding:16px}
@@ -207,6 +214,9 @@ var BK_CIRCUIT = <?php echo json_encode([
     <!-- MAIN -->
     <div class="bkc-main">
         <div class="bkc-error" id="bkc-error"></div>
+
+        <!-- ═══ ÉTAPES 1-3 (formulaire) ═══ -->
+        <div id="bkc-steps-form">
 
         <!-- ÉTAPE 1 : Sélection du vol -->
         <div class="bkc-section">
@@ -328,7 +338,16 @@ var BK_CIRCUIT = <?php echo json_encode([
             if (intval($qty) <= 0) continue;
         ?><input type="hidden" name="options[<?php echo esc_attr($oid); ?>]" value="<?php echo esc_attr(intval($qty)); ?>"><?php endforeach; ?>
 
-        <!-- ÉTAPE 4 : CONFIRMATION — Récap complet avant paiement (comme golf) -->
+        <!-- Bouton vers étape 4 -->
+        <div class="bkc-nav">
+            <button type="button" class="bkc-btn-next" onclick="bkcGoToConfirm()">Vérifier et confirmer →</button>
+        </div>
+
+        </div><!-- /bkc-steps-form -->
+
+        <!-- ═══ ÉTAPE 4 : CONFIRMATION (page séparée) ═══ -->
+        <div id="bkc-step-confirm" style="display:none">
+
         <div class="bkc-section">
             <h3 class="bkc-section-title"><span class="bkc-step-num">4</span> Confirmation de votre réservation</h3>
             <p class="bkc-section-sub">Vérifiez scrupuleusement toutes les informations avant de procéder au paiement.</p>
@@ -359,7 +378,14 @@ var BK_CIRCUIT = <?php echo json_encode([
                     dans les conditions prévues par le contrat.
                 </span>
             </label>
+
+            <div class="bkc-nav" style="margin-top:24px">
+                <button type="button" class="bkc-btn-prev" onclick="bkcGoBack()">← Retour</button>
+                <button type="button" class="bkc-btn-next" id="bkc-btn-submit" onclick="bkcSubmit()">🔒 Procéder au paiement →</button>
+            </div>
         </div>
+
+        </div><!-- /bkc-step-confirm -->
     </div>
 
     <!-- SIDEBAR RÉCAP -->
@@ -391,8 +417,7 @@ var BK_CIRCUIT = <?php echo json_encode([
         <div style="font-size:11px;color:#6b7280;font-family:'Outfit',sans-serif;margin-top:4px">Solde à régler <?php echo $delai_solde; ?> jours avant le départ</div>
         <?php endif; ?>
         <div class="bkc-loading" id="bkc-loading"><div class="bkc-spinner"></div><div style="font-size:13px;color:#59b7b7;font-family:'Outfit',sans-serif">Création de votre réservation…</div></div>
-        <button type="button" class="bkc-btn-submit" id="bkc-btn-submit" onclick="bkcSubmit()">🔒 Procéder au paiement →</button>
-        <div class="bkc-security">Paiement sécurisé 3D Secure · APST · Atout France</div>
+        <div class="bkc-security" style="margin-top:12px">Paiement sécurisé 3D Secure · APST · Atout France</div>
     </div>
 
 </div></div>
@@ -758,18 +783,30 @@ var BK_CIRCUIT = <?php echo json_encode([
         return parseInt(parts[2]) + ' ' + mois[parseInt(parts[1]) - 1] + ' ' + parts[0];
     }
 
-    bkcBuildRecap();
+    /* ═══ Navigation étapes : formulaire ↔ confirmation ═══ */
+    window.bkcGoToConfirm = function() {
+        var errEl = document.getElementById('bkc-error');
+        var missing = false;
+        document.querySelectorAll('.bkc-required').forEach(function(el){ if(!el.value.trim()){el.style.borderColor='#dc2626';missing=true;}else{el.style.borderColor='';} });
+        if (missing) { errEl.textContent='Veuillez remplir tous les champs obligatoires (*).'; errEl.style.display='block'; window.scrollTo({top:errEl.offsetTop-120,behavior:'smooth'}); return; }
+        errEl.style.display='none';
+        bkcBuildRecap();
+        document.getElementById('bkc-steps-form').style.display = 'none';
+        document.getElementById('bkc-step-confirm').style.display = 'block';
+        window.scrollTo({top:0,behavior:'smooth'});
+    };
+
+    window.bkcGoBack = function() {
+        document.getElementById('bkc-step-confirm').style.display = 'none';
+        document.getElementById('bkc-steps-form').style.display = 'block';
+        window.scrollTo({top:0,behavior:'smooth'});
+    };
 
     /* ── Submit ── */
     window.bkcSubmit = function() {
         var errEl = document.getElementById('bkc-error');
-        bkcBuildRecap();
         if (!document.getElementById('bkc-confirm-info').checked) { alert("Veuillez certifier l'exactitude des informations voyageurs."); return; }
         if (!document.getElementById('bkc-cgu').checked) { alert('Veuillez accepter les conditions générales de vente et la politique de confidentialité.'); return; }
-
-        var missing = false;
-        document.querySelectorAll('.bkc-required').forEach(function(el){ if(!el.value.trim()){el.style.borderColor='#dc2626';missing=true;}else{el.style.borderColor='';} });
-        if (missing) { errEl.textContent='Veuillez remplir tous les champs obligatoires (*).'; errEl.style.display='block'; window.scrollTo({top:errEl.offsetTop-120,behavior:'smooth'}); return; }
         if (submitting) return;
         submitting = true;
 
