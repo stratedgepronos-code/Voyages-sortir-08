@@ -18,6 +18,7 @@ function vs08c_ajax_calculate() {
         'aeroport'    => strtoupper(sanitize_text_field($_POST['aeroport'] ?? '')),
         'prix_vol'    => floatval($_POST['prix_vol'] ?? 0),
         'rooms'       => $_POST['rooms'] ?? '',
+        'options'     => isset($_POST['options']) ? wp_unslash($_POST['options']) : '',
     ];
 
     $devis = VS08C_Calculator::calculate($circuit_id, $params);

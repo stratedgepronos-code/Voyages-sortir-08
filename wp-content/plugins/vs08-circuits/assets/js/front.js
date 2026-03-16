@@ -11,6 +11,16 @@ var hasTriple = CIRCUIT.prix_triple && parseFloat(CIRCUIT.prix_triple) > 0;
 $(document).on('click', '.vc-day-header', function(){ $(this).closest('.vc-day').toggleClass('open'); });
 $('.vc-day').first().addClass('open');
 
+/* ══ PRACTICAL CARDS — repliables, clic pour déplier ══ */
+$(document).on('click', '.vc-practical-card-header', function(){
+    var $card = $(this).closest('.vc-practical-card');
+    var $body = $card.find('.vc-practical-card-body');
+    var isOpen = $card.hasClass('open');
+    $card.toggleClass('open');
+    $body.attr('hidden', isOpen ? true : null);
+    $(this).attr('aria-expanded', !isOpen);
+});
+
 /* ══ LIGHTBOX ══ */
 var lbImages = [], lbIndex = 0;
 $(document).on('click', '.vc-gal-item', function(e){
@@ -81,15 +91,16 @@ function vcFetchVol() {
     }, function(res) {
         if (res.success && res.data) {
             vc_prix_vol = parseFloat(res.data.prix) || 0;
-            $status.attr('class', 'vc-vol-status loaded').text(
-                res.data.note === 'estimate'
-                    ? '~' + vc_prix_vol + '€/pers. (estimé)'
-                    : '✅ ' + vc_prix_vol + '€/pers. (en temps réel)'
-            );
+            var flights = res.data.flights || [];
+            var count = Array.isArray(flights) ? flights.length : 0;
+            var statusText = res.data.note === 'estimate'
+                ? (count > 0 ? count + ' vol(s) trouvé(s) (estimé)' : 'Tarif estimé')
+                : (count > 0 ? '✅ ' + count + ' vol(s) trouvé(s)' : 'Vols trouvés');
+            $status.attr('class', 'vc-vol-status loaded').text(statusText);
         } else {
             vc_prix_vol = parseFloat(CIRCUIT.prix_vol_base) || 0;
             $status.attr('class', 'vc-vol-status ' + (vc_prix_vol > 0 ? 'loaded' : 'error'))
-                   .text(vc_prix_vol > 0 ? '~' + vc_prix_vol + '€/pers. (tarif de base)' : 'Tarif vol indisponible');
+                   .text(vc_prix_vol > 0 ? 'Tarif de base' : 'Tarif vol indisponible');
         }
         triggerCalc();
     }).fail(function(){
@@ -134,6 +145,22 @@ $(document).on('change', '#vc-nb-chambres, #vc-nb-adultes', buildRooms);
 $(document).on('change', '.vc-room-occupants', triggerCalc);
 
 /* ══════════════════════════════════════
+   OPTIONS — collecte pour le calcul et la résa
+   ══════════════════════════════════════ */
+function collectOptions(){
+    var opts = {};
+    $('.vc-option-cb').each(function(){
+        var id = $(this).data('id');
+        if (id) opts[id] = this.checked ? 1 : 0;
+    });
+    $('.vc-option-qty').each(function(){
+        var id = $(this).data('id');
+        if (id) opts[id] = parseInt($(this).val(), 10) || 0;
+    });
+    return opts;
+}
+
+/* ══════════════════════════════════════
    CALCULATOR — Real-time price
    ══════════════════════════════════════ */
 function triggerCalc(){ clearTimeout(calcTimer); calcTimer = setTimeout(doCalc, 400); }
@@ -147,13 +174,15 @@ function doCalc(){
 
     var rooms = [];
     $('.vc-room-card').each(function(){ rooms.push({type:$(this).find('.vc-room-type').val()||'double', occupants:parseInt($(this).find('.vc-room-occupants').val())||2}); });
+    var options = collectOptions();
 
     $.post(vs08c.ajax_url, {
         action:'vs08c_calculate', nonce:vs08c.nonce, circuit_id:CIRCUIT.id,
         nb_adultes: parseInt($('#vc-nb-adultes').val())||2, nb_enfants:0,
         nb_chambres: parseInt($('#vc-nb-chambres').val())||1,
         date_depart:date, aeroport:aero, prix_vol:vc_prix_vol,
-        rooms: JSON.stringify(rooms)
+        rooms: JSON.stringify(rooms),
+        options: JSON.stringify(options)
     }, function(r){
         $('#vc-price-loading').hide();
         if(!r.success) return;
@@ -172,12 +201,13 @@ function renderPrice(d){
     $r.html(h);
     $('.vc-cta-btn').prop('disabled', false);
 
-    // Store params for booking redirect
+    // Store params for booking redirect (options inclus pour page résa)
     window.vc_params = {
         date_depart:$('#vc-date-depart').val(), aeroport:$('#vc-aeroport').val(),
         nb_adultes:$('#vc-nb-adultes').val(), nb_chambres:$('#vc-nb-chambres').val(),
         prix_vol:vc_prix_vol,
-        rooms:JSON.stringify($('.vc-room-card').map(function(){return{type:$(this).find('.vc-room-type').val(),occupants:parseInt($(this).find('.vc-room-occupants').val())}}).get())
+        rooms:JSON.stringify($('.vc-room-card').map(function(){return{type:$(this).find('.vc-room-type').val(),occupants:parseInt($(this).find('.vc-room-occupants').val())}}).get()),
+        options:JSON.stringify(collectOptions())
     };
 }
 
@@ -188,7 +218,7 @@ $(document).on('click', '.vc-cta-btn', function(e){
     e.preventDefault();
     if ($(this).prop('disabled') || !window.vc_params) return;
     var p = window.vc_params;
-    window.location.href = CIRCUIT.booking_url
+    var url = CIRCUIT.booking_url
         + '?date='+encodeURIComponent(p.date_depart)
         + '&aeroport='+encodeURIComponent(p.aeroport)
         + '&nadultes='+p.nb_adultes
@@ -196,11 +226,14 @@ $(document).on('click', '.vc-cta-btn', function(e){
         + '&nchamb='+p.nb_chambres
         + '&vol='+p.prix_vol
         + '&rooms='+encodeURIComponent(p.rooms);
+    if (p.options && p.options !== '{}') url += '&options='+encodeURIComponent(p.options);
+    window.location.href = url;
 });
 
-/* ══ OPTIONS TOGGLE ══ */
-$(document).on('change', '.vc-option-check', function(){
-    $(this).closest('.vc-option-card').toggleClass('selected', this.checked);
+/* ══ OPTIONS — recalc au changement (checkbox + select) ══ */
+$(document).on('change', '.vc-option-cb, .vc-option-qty', function(){
+    $(this).closest('.vc-option-card').toggleClass('selected', $(this).is('.vc-option-cb') ? this.checked : (parseInt($(this).val(),10) > 0));
+    triggerCalc();
 });
 
 /* ══ INIT ══ */
