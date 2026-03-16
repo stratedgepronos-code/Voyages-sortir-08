@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * VS08 Voyages — Module Hôtel complet
  * Meta box dédiée avec tous les champs + rendu frontend
@@ -94,16 +94,16 @@ class VS08V_HotelBox {
                 <span>🤖</span>
                 <h3>Remplissage automatique par IA</h3>
             </div>
-            <p class="vs08h-scanner-subtitle">Entrez le nom de l'hôtel : Claude (Sonnet 4, recherche web) remplit les champs automatiquement.</p>
+            <p class="vs08h-scanner-subtitle">Entrez le nom de l'hôtel : Claude (modèle économique Haiku + recherche web) remplit les champs. Résultats mis en cache 48 h pour réduire le coût.</p>
             <p style="margin:-6px 0 10px;font-size:11px;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                 <?php if ($claude_ok): ?>
-                <span style="color:#86efac">✅ Clé Claude chargée</span> — les requêtes partent vers l’API (crédits consommés sur votre compte Anthropic).
+                <span style="color:#86efac">✅ Clé Claude chargée</span> — requêtes en Haiku (≈3× moins cher) ; même recherche dans les 48 h = 0 appel API.
                 <?php else: ?>
                 <span style="color:#fca5a5">❌ Clé Claude non chargée sur ce serveur</span>
                 <?php if (!$config_exists): ?>
                     — Fichier <code>config.cfg</code> absent dans <code>wp-content/plugins/vs08-voyages/</code>. Uploadez-le par FTP avec la ligne <code>CLAUDE_API_KEY=sk-ant-...</code>.
                 <?php else: ?>
-                    — Le fichier <code>config.cfg</code> existe mais <code>CLAUDE_API_KEY</code> est absent ou vide. Ajoutez <code>CLAUDE_API_KEY=votre_clé</code> dans config.cfg sur le serveur.
+                    — Le fichier <code>config.cfg</code> existe mais <code>CLAUDE_API_KEY</code> est absent ou vide. Ajoutez <code>CLAUDE_API_KEY=votre_clé</code> dans config.cfg sur le serveur. Sinon, dans <code>wp-config.php</code> (avant « require wp-settings.php ») : <code>define('VS08V_CLAUDE_KEY', 'sk-ant-...');</code>
                 <?php endif; ?>
                 <?php endif; ?>
             </p>

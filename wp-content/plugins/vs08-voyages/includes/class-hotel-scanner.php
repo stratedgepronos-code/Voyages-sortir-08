@@ -2,12 +2,15 @@
 /**
  * VS08 Voyages — Scanner IA d'hôtel
  * Récupère les infos d'un site hôtelier via Claude API (recherche web).
- * Modèle utilisé : Claude Sonnet 4 (claude-sonnet-4-20250514). Surcharge possible via VS08V_CLAUDE_MODEL dans wp-config ou config.cfg.
+ * Recherche par nom : modèle économique Haiku par défaut (≈3× moins cher que Sonnet), cache 48 h.
+ * Surcharge : VS08V_CLAUDE_MODEL_HOTEL dans config.cfg pour forcer Sonnet si besoin.
  */
 class VS08V_HotelScanner {
 
-    const API_KEY = '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';
-    const MODEL   = 'claude-sonnet-4-20250514';
+    const API_KEY     = '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';
+    const MODEL       = 'claude-sonnet-4-20250514';
+    /** Modèle économique pour la recherche hôtel par nom (Haiku ≈ 3× moins cher que Sonnet). */
+    const MODEL_HOTEL = 'claude-haiku-4-5-20251001';
 
     public static function register() {
         add_action('wp_ajax_vs08v_scan_hotel',        [__CLASS__, 'ajax_scan']);
@@ -232,6 +235,7 @@ PROMPT;
 
         $hotel_name = sanitize_text_field($_POST['hotel_name'] ?? '');
         $location   = sanitize_text_field($_POST['location'] ?? '');
+        $no_cache   = !empty($_POST['no_cache']);
 
         if (!$hotel_name) {
             wp_send_json_error('Veuillez entrer le nom de l\'hôtel.');
@@ -242,11 +246,22 @@ PROMPT;
             $query .= ', ' . $location;
         }
 
+        // Cache 48 h : même recherche = 0 appel API (réduit fortement le coût)
+        if (!$no_cache) {
+            $cache_key = 'vs08v_hotel_scan_' . md5($query);
+            $cached    = get_transient($cache_key);
+            if ($cached !== false && is_array($cached)) {
+                wp_send_json_success($cached);
+                return;
+            }
+        }
+
         $api_key = defined('VS08V_CLAUDE_KEY') ? VS08V_CLAUDE_KEY : self::API_KEY;
         if (empty($api_key) || !is_string($api_key)) {
             wp_send_json_error('Clé API Claude non configurée. Ajoutez CLAUDE_API_KEY=votre_clé dans wp-content/plugins/vs08-voyages/config.cfg (ou VS08V_CLAUDE_KEY dans wp-config.php).');
         }
-        $model = defined('VS08V_CLAUDE_MODEL') ? VS08V_CLAUDE_MODEL : self::MODEL;
+        // Modèle économique par défaut pour la recherche par nom (Haiku ≈ 3× moins cher)
+        $model = defined('VS08V_CLAUDE_MODEL_HOTEL') ? VS08V_CLAUDE_MODEL_HOTEL : self::MODEL_HOTEL;
 
         try {
         $schema = self::get_search_extraction_schema();
@@ -278,7 +293,7 @@ PROMPT;
 
         $body = [
             'model'      => $model,
-            'max_tokens' => 4000,
+            'max_tokens' => 2500,
             'tools'      => [['type' => 'web_search_20250305', 'name' => 'web_search']],
             'messages'   => [['role' => 'user', 'content' => $prompt]],
         ];
@@ -339,7 +354,7 @@ PROMPT;
                     ],
                     'body' => json_encode([
                         'model'    => $model,
-                        'max_tokens' => 4000,
+                        'max_tokens' => 2500,
                         'messages' => $messages,
                     ]),
                 ]);
@@ -373,6 +388,12 @@ PROMPT;
 
         if (!empty($data['golfs']) && is_array($data['golfs'])) {
             $data['golfs'] = self::sanitize_golf_text_fields($data['golfs']);
+        }
+
+        // Mise en cache 48 h pour éviter un nouvel appel API sur la même recherche
+        if (!isset($no_cache) || !$no_cache) {
+            $cache_key = 'vs08v_hotel_scan_' . md5($query);
+            set_transient($cache_key, $data, 48 * HOUR_IN_SECONDS);
         }
 
         wp_send_json_success($data);

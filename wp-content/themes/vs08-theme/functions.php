@@ -36,6 +36,14 @@ add_action('wp_enqueue_scripts', function() {
     wp_enqueue_script('vs08-footer-terminal', get_template_directory_uri() . '/assets/js/footer-terminal.js', [], '1.0', true);
 });
 
+/* Ne pas charger stats.wp.com (Jetpack) — évite ERR_BLOCKED_BY_CLIENT en admin si extension bloque la requête */
+add_filter('script_loader_tag', function($tag, $handle, $src) {
+    if (strpos($src, 'stats.wp.com') !== false) {
+        return '';
+    }
+    return $tag;
+}, 10, 3);
+
 /* Checkout : masquer le bloc code promo */
 add_filter('woocommerce_coupon_enabled', function() {
     return false;

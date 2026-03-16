@@ -90,7 +90,9 @@
 .vc-practical-card p { font-size:13px; color:#6b7280; line-height:1.6; font-family:'Outfit',sans-serif; margin:0; white-space:pre-line; }
 
 /* ═══ CALCULATOR STICKY SIDEBAR ═══ */
-.vc-calc-col { position:sticky; top:90px; display:flex; flex-direction:column; gap:16px; }
+.vc-calc-col { position:sticky; top:90px; display:flex; flex-direction:column; gap:16px; max-height:calc(100vh - 100px); overflow-y:auto; scrollbar-width:thin; scrollbar-color:#ddd transparent; }
+.vc-calc-col::-webkit-scrollbar { width:5px; }
+.vc-calc-col::-webkit-scrollbar-thumb { background:#ccc; border-radius:10px; }
 .vc-calc-card { background:#fff; border-radius:22px; padding:28px; box-shadow:0 8px 40px rgba(0,0,0,.1); }
 .vc-calc-title { font-family:'Playfair Display',serif; font-size:19px; font-weight:700; color:#0f2424; margin-bottom:4px; }
 .vc-calc-sub { font-size:12px; color:#6b7280; font-family:'Outfit',sans-serif; margin-bottom:20px; }

@@ -27,6 +27,9 @@ define('VS08V_VER',  '2.0.0');
 //   VS08_SANDBOX_PAYMENT=1   (optionnel : déverrouille la dernière étape si "token invalide" en test)
 // ============================================================
 $vs08v_config_file = VS08V_PATH . 'config.cfg';
+if (!file_exists($vs08v_config_file) && defined('ABSPATH')) {
+    $vs08v_config_file = ABSPATH . 'wp-content/plugins/vs08-voyages/config.cfg';
+}
 if (file_exists($vs08v_config_file)) {
     $raw = @file_get_contents($vs08v_config_file);
     if ($raw !== false) {
@@ -53,6 +56,9 @@ if (file_exists($vs08v_config_file)) {
             }
             if ($key === 'CLAUDE_MODEL' && !defined('VS08V_CLAUDE_MODEL')) {
                 define('VS08V_CLAUDE_MODEL', $val);
+            }
+            if ($key === 'CLAUDE_MODEL_HOTEL' && !defined('VS08V_CLAUDE_MODEL_HOTEL')) {
+                define('VS08V_CLAUDE_MODEL_HOTEL', $val);
             }
             if ($key === 'VS08_SANDBOX_PAYMENT' && !defined('VS08_SANDBOX_PAYMENT')) {
                 define('VS08_SANDBOX_PAYMENT', $val === '1' || $val === 'true' || $val === 'yes');

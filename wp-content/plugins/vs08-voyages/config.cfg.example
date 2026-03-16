@@ -9,9 +9,10 @@ SERPAPI_API_KEY=
 
 # Recherche IA hôtel & golf (évite "invalid x-api-key")
 # Créez une clé sur https://console.anthropic.com/ et vérifiez que le compte a des crédits.
-# Optionnel : autre modèle (défaut = claude-sonnet-4-20250514)
+# Par défaut la recherche par nom utilise Haiku (≈3× moins cher) avec cache 48 h.
 CLAUDE_API_KEY=sk-ant-api03-xxxx
-# CLAUDE_MODEL=claude-sonnet-4-20250514
+# Pour forcer Sonnet sur la recherche hôtel (plus précis, plus cher) :
+# CLAUDE_MODEL_HOTEL=claude-sonnet-4-20250514
 
 # Paiement Paybox Mail (optionnel)
 # PAYBOX_MAIL_APP_KEY=

@@ -11,7 +11,6 @@ while (have_posts()) : the_post();
     $galerie   = $m['galerie'] ?? [];
     $jours     = $m['jours'] ?? [];
     $aeroports = $m['aeroports'] ?? [];
-    $dates     = $m['dates_depart'] ?? [];
     $options   = $m['options'] ?? [];
     $hotels    = $m['hotels'] ?? [];
     $duree_j   = intval($m['duree_jours'] ?? 8);
@@ -26,16 +25,16 @@ while (have_posts()) : the_post();
 <!-- JS Data -->
 <script>
 var VS08C_CIRCUIT = <?php echo json_encode([
-    'id'             => $id,
-    'titre'          => get_the_title(),
-    'duree'          => $duree_n,
-    'prix_double'    => floatval($m['prix_double'] ?? 0),
-    'prix_vol_base'  => floatval($m['prix_vol_base'] ?? 0),
-    'iata_dest'      => strtoupper((string)($m['iata_dest'] ?? '')),
-    'aeroports'      => $aeroports,
-    'dates'          => $dates,
-    'options'        => $options,
-    'booking_url'    => home_url('/reservation-circuit/' . $id),
+    'id'            => $id,
+    'titre'         => get_the_title(),
+    'duree'         => $duree_n,
+    'prix_double'   => floatval($m['prix_double'] ?? 0),
+    'prix_vol_base' => floatval($m['prix_vol_base'] ?? 0),
+    'prix_triple'   => floatval($m['prix_triple'] ?? 0),
+    'iata_dest'     => strtoupper($m['iata_dest'] ?? ''),
+    'aeroports'     => $aeroports,
+    'options'       => $options,
+    'booking_url'   => home_url('/reservation-circuit/' . $id),
 ]); ?>;
 </script>
 
@@ -201,46 +200,6 @@ var VS08C_CIRCUIT = <?php echo json_encode([
             </section>
             <?php endif; ?>
 
-            <!-- OPTIONS & SUPPLÉMENTS (sous Hébergement) -->
-            <?php if (!empty($options)): ?>
-            <section class="vc-section vc-options-section">
-                <h2 class="vc-section-title">🎁 Options & suppléments</h2>
-                <p class="vc-options-intro">Personnalisez votre circuit : les montants s’ajoutent au total dans le récapitulatif de réservation.</p>
-                <div class="vc-options-grid">
-                    <?php foreach ($options as $oi => $opt):
-                        $oid = $opt['id'] ?? 'opt_' . $oi;
-                        $type = $opt['type'] ?? 'par_pers';
-                        $prix_opt = floatval($opt['prix'] ?? 0);
-                        $label_opt = esc_html($opt['label'] ?? 'Option');
-                        $suffix = ($type === 'par_pers') ? '/pers.' : '';
-                        $icon = ($type === 'quantite') ? '📦' : '✨';
-                    ?>
-                    <div class="vc-option-card" data-type="<?php echo esc_attr($type); ?>">
-                        <div class="vc-option-card-inner">
-                            <span class="vc-option-card-icon"><?php echo $icon; ?></span>
-                            <div class="vc-option-card-body">
-                                <span class="vc-option-card-label"><?php echo $label_opt; ?></span>
-                                <span class="vc-option-card-price"><?php echo number_format($prix_opt, 0); ?> €<?php echo $suffix; ?></span>
-                            </div>
-                            <div class="vc-option-card-input">
-                                <?php if ($type === 'quantite'): ?>
-                                <select name="vc_opt_<?php echo esc_attr($oid); ?>" class="vc-option-qty" data-id="<?php echo esc_attr($oid); ?>" data-type="<?php echo esc_attr($type); ?>" data-prix="<?php echo esc_attr($prix_opt); ?>" aria-label="Quantité <?php echo $label_opt; ?>">
-                                    <?php for ($q = 0; $q <= 5; $q++): ?><option value="<?php echo $q; ?>"><?php echo $q; ?></option><?php endfor; ?>
-                                </select>
-                                <?php else: ?>
-                                <label class="vc-option-card-check">
-                                    <input type="checkbox" class="vc-option-cb" name="vc_opt_<?php echo esc_attr($oid); ?>" value="1" data-id="<?php echo esc_attr($oid); ?>" data-type="<?php echo esc_attr($type); ?>" data-prix="<?php echo esc_attr($prix_opt); ?>">
-                                    <span class="vc-option-checkbox-visual"></span>
-                                </label>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-            </section>
-            <?php endif; ?>
-
             <!-- INCLUS / NON INCLUS -->
             <section class="vc-section">
                 <h2 class="vc-section-title">✅ Ce qui est inclus</h2>
@@ -286,6 +245,32 @@ var VS08C_CIRCUIT = <?php echo json_encode([
             </section>
             <?php endif; ?>
 
+            <!-- OPTIONS / SUPPLÉMENTS -->
+            <?php if (!empty($options)): ?>
+            <section class="vc-section vc-options-section">
+                <h2 class="vc-section-title">🎁 Options & suppléments</h2>
+                <p style="font-size:13px;color:#6b7280;font-family:'Outfit',sans-serif;margin:-8px 0 18px">Personnalisez votre circuit : les montants s'ajoutent au total dans le récapitulatif de réservation.</p>
+                <div class="vc-options-grid">
+                    <?php foreach ($options as $opt):
+                        $opt_type_txt = ($opt['type'] ?? 'par_pers') === 'par_pers' ? '/pers.' : (($opt['type'] ?? '') === 'fixe' ? ' forfait' : '/unité');
+                        $prix_fmt = number_format(floatval($opt['prix'] ?? 0), 0, ',', ' ');
+                    ?>
+                    <div class="vc-option-card">
+                        <div class="vc-option-icon">✨</div>
+                        <div class="vc-option-info">
+                            <div class="vc-option-name"><?php echo esc_html($opt['label'] ?? ''); ?></div>
+                            <div class="vc-option-price"><?php echo $prix_fmt; ?> €<?php echo $opt_type_txt; ?></div>
+                        </div>
+                        <label class="vc-option-toggle">
+                            <input type="checkbox" class="vc-option-check" data-opt-id="<?php echo esc_attr($opt['id'] ?? ''); ?>" data-prix="<?php echo floatval($opt['prix'] ?? 0); ?>" data-type="<?php echo esc_attr($opt['type'] ?? 'par_pers'); ?>">
+                            <span class="vc-option-slider"></span>
+                        </label>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+            <?php endif; ?>
+
             <!-- CONDITIONS -->
             <?php if (!empty($m['annulation'])): ?>
             <section class="vc-section">
@@ -303,70 +288,13 @@ var VS08C_CIRCUIT = <?php echo json_encode([
             <div class="vc-calc-card">
                 <div class="vc-calc-title">Réserver ce circuit</div>
                 <div class="vc-calc-sub"><?php echo esc_html($flag . ' ' . get_the_title()); ?> — <?php echo $duree_j; ?>j/<?php echo $duree_n; ?>n</div>
+                <div class="vc-calc-hint">Choisissez d'abord votre aéroport de départ → le calendrier des jours ouverts s'affichera ensuite.</div>
 
-                <!-- Date -->
-                <div class="vc-field">
-                    <label>📅 Date de départ <span class="vc-required-dot">*</span></label>
-                    <select id="vc-date-depart">
-                        <option value="">— Choisir une date —</option>
-                        <?php
-                        // Générer les dates depuis les périodes
-                        $periodes = $dates; // $dates = $m['dates_depart']
-                        $generated_dates = [];
-                        foreach ($periodes as $per) {
-                            if (($per['statut'] ?? '') === 'complet') continue;
-                            $debut = $per['date_debut'] ?? '';
-                            $fin   = $per['date_fin'] ?? '';
-                            if (!$debut || !$fin) continue;
-                            $ts_debut = strtotime($debut);
-                            $ts_fin   = strtotime($fin);
-                            if (!$ts_debut || !$ts_fin) continue;
-                            $jours_ok = $per['jours_depart'] ?? [1,2,3,4,5,6,7];
-                            if (empty($jours_ok)) $jours_ok = [1,2,3,4,5,6,7];
-                            $supp   = floatval($per['supp'] ?? 0);
-                            $statut = $per['statut'] ?? 'ouvert';
-
-                            // Parcourir chaque jour de la période
-                            $current = $ts_debut;
-                            while ($current <= $ts_fin) {
-                                // Vérifier que la date est dans le futur
-                                if ($current > time()) {
-                                    // Jour de la semaine PHP: 1=Lun ... 7=Dim
-                                    $dow = (int) date('N', $current);
-                                    if (in_array($dow, $jours_ok)) {
-                                        $date_str = date('Y-m-d', $current);
-                                        if (!isset($generated_dates[$date_str])) {
-                                            $generated_dates[$date_str] = [
-                                                'date'   => $date_str,
-                                                'supp'   => $supp,
-                                                'statut' => $statut,
-                                            ];
-                                        }
-                                    }
-                                }
-                                $current = strtotime('+1 day', $current);
-                            }
-                        }
-                        // Trier par date
-                        ksort($generated_dates);
-                        $jours_noms = [1=>'Lun',2=>'Mar',3=>'Mer',4=>'Jeu',5=>'Ven',6=>'Sam',7=>'Dim'];
-                        foreach ($generated_dates as $gd):
-                            $ts = strtotime($gd['date']);
-                            $dow = (int) date('N', $ts);
-                            $supp_txt = $gd['supp'] > 0 ? ' (+' . intval($gd['supp']) . '€/pers)' : '';
-                            $garanti = $gd['statut'] === 'garanti' ? ' ✅ Garanti' : '';
-                            $label = ($jours_noms[$dow] ?? '') . '. ' . date('d/m/Y', $ts) . $supp_txt . $garanti;
-                        ?>
-                        <option value="<?php echo esc_attr($gd['date']); ?>"><?php echo esc_html($label); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <!-- Aéroport -->
+                <!-- 1. AÉROPORT -->
                 <div class="vc-field">
                     <label>✈️ Aéroport de départ <span class="vc-required-dot">*</span></label>
                     <select id="vc-aeroport">
-                        <option value="">— Choisir —</option>
+                        <option value="">— Choisir un aéroport —</option>
                         <?php foreach ($aeroports as $a):
                             $supp = floatval($a['supp'] ?? 0);
                             $lbl = strtoupper($a['code']) . ' — ' . ($a['label'] ?? '');
@@ -377,52 +305,58 @@ var VS08C_CIRCUIT = <?php echo json_encode([
                     </select>
                 </div>
 
-                <!-- Voyageurs (adultes uniquement) -->
-                <div class="vc-field">
-                    <label>👥 Nombre de voyageurs</label>
-                    <select id="vc-nb-adultes">
-                        <?php for ($i = 1; $i <= 10; $i++): ?>
-                        <option value="<?php echo $i; ?>" <?php selected($i, 2); ?>><?php echo $i; ?> voyageur<?php echo $i > 1 ? 's' : ''; ?></option>
-                        <?php endfor; ?>
-                    </select>
+                <!-- 2. DATE DE DÉPART — VS08 Calendar (apparaît après choix aéroport) -->
+                <div class="vc-field" id="vc-field-date-block" style="display:none">
+                    <label>📅 Date de départ</label>
+                    <div id="vc-date-wrap" style="position:relative"></div>
+                    <input type="hidden" id="vc-date-depart">
                 </div>
+                <p class="vc-date-hint" id="vc-date-hint">Choisissez d'abord un aéroport ci-dessus.</p>
 
-                <!-- Nombre de chambres -->
-                <div class="vc-field">
-                    <label>🛏️ Nombre de chambres</label>
-                    <select id="vc-nb-chambres">
-                        <?php for ($i = 1; $i <= 8; $i++): ?>
-                        <option value="<?php echo $i; ?>"><?php echo $i; ?> chambre<?php echo $i > 1 ? 's' : ''; ?></option>
-                        <?php endfor; ?>
-                    </select>
-                </div>
+                <!-- VOL STATUS -->
+                <div class="vc-vol-status" id="vc-vol-status"></div>
 
-                <!-- Chambres auto-générées -->
-                <div class="vc-rooms-section" id="vc-rooms-section">
-                    <!-- Les chambres seront générées automatiquement par le JS -->
-                </div>
+                <!-- STEP 2 — caché tant que aéroport + date + vol pas ok -->
+                <div id="vc-step2" style="display:none">
 
-                <!-- Statut vol (recherche Duffel + SerpApi) -->
-                <div class="vc-vol-status" id="vc-vol-status" style="display:none; font-size:12px; padding:8px 12px; border-radius:8px; margin-bottom:12px; font-family:'Outfit',sans-serif"></div>
-
-                <!-- Price Result (options/suppléments inclus via section sous Hébergement) -->
-                <div class="vc-price-result">
-                    <div class="vc-price-placeholder" style="text-align:center;color:#9ca3af;font-size:13px;font-family:'Outfit',sans-serif;padding:12px 0">
-                        Choisissez date et aéroport → le prix vol sera cherché puis ajouté au total
+                    <!-- VOYAGEURS -->
+                    <div class="vc-field">
+                        <label>👥 Voyageurs</label>
+                        <select id="vc-nb-adultes">
+                            <?php for ($i = 1; $i <= 10; $i++): ?>
+                            <option value="<?php echo $i; ?>" <?php selected($i, 2); ?>><?php echo $i; ?> voyageur<?php echo $i > 1 ? 's' : ''; ?></option>
+                            <?php endfor; ?>
+                        </select>
                     </div>
+
+                    <!-- CHAMBRES -->
+                    <div class="vc-field">
+                        <label>🛏️ Nombre de chambres</label>
+                        <select id="vc-nb-chambres">
+                            <?php for ($i = 1; $i <= 8; $i++): ?>
+                            <option value="<?php echo $i; ?>"><?php echo $i; ?> chambre<?php echo $i > 1 ? 's' : ''; ?></option>
+                            <?php endfor; ?>
+                        </select>
+                    </div>
+
+                    <!-- Chambres auto-générées -->
+                    <div class="vc-rooms-section" id="vc-rooms-section"></div>
+
+                    <!-- RÉSULTAT PRIX -->
+                    <div class="vc-price-loading" id="vc-price-loading" style="display:none">⏳ Calcul en cours...</div>
+                    <div class="vc-price-result" id="vc-price-result"></div>
+
+                    <!-- CTA -->
+                    <button class="vc-cta-btn" disabled>
+                        Réserver ce circuit →
+                    </button>
                 </div>
 
-                <!-- CTA -->
-                <button class="vc-cta-btn" disabled>
-                    Réserver ce circuit →
-                </button>
-            </div>
-
-            <!-- Contact Card -->
-            <div class="vc-contact-card">
-                <h3>Un conseiller à votre écoute</h3>
-                <p>Personnalisez ce circuit selon vos envies</p>
-                <a href="tel:0326652863" class="vc-contact-phone">📞 03 26 65 28 63</a>
+                <div class="vc-reassurance">
+                    <div class="vc-reass-item">🛡️ Assurances multirisques en option</div>
+                    <div class="vc-reass-item">🔒 Paiement 100% sécurisé</div>
+                    <div class="vc-reass-item" style="font-weight:700;color:#0f2424">☎ Conseiller disponible<br><span style="font-weight:400;color:#6b7280">03 26 65 28 63<br>Lun — Ven 09h00 – 12h00 / 14h00 – 18h30<br>Samedi 09h00 – 12h00 / 14h00 – 18h00</span></div>
+                </div>
             </div>
         </div>
 
