@@ -83,11 +83,18 @@
 .vc-hotel-stars { color:#e8a948; font-size:12px; }
 .vc-hotel-nights { background:#edf8f8; color:#3d9a9a; font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; font-family:'Outfit',sans-serif; white-space:nowrap; }
 
-/* ── PRACTICAL INFO ── */
+/* ── PRACTICAL INFO (repliables, 1 ligne = titre, déplier pour voir) ── */
 .vc-practical-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.vc-practical-card { background:#f9f6f0; border-radius:12px; padding:16px; }
-.vc-practical-card h4 { font-size:13px; font-weight:700; color:#0f2424; margin:0 0 8px; font-family:'Outfit',sans-serif; }
-.vc-practical-card p { font-size:13px; color:#6b7280; line-height:1.6; font-family:'Outfit',sans-serif; margin:0; white-space:pre-line; }
+.vc-practical-card { background:#f9f6f0; border-radius:12px; overflow:hidden; border:1px solid rgba(0,0,0,.06); }
+.vc-practical-card-header { width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 16px; background:transparent; border:none; cursor:pointer; font-family:'Outfit',sans-serif; text-align:left; transition:background .2s; line-height:1.3; }
+.vc-practical-card-header:hover { background:rgba(89,183,183,.08); }
+.vc-practical-card-header:focus { outline:2px solid #59b7b7; outline-offset:2px; }
+.vc-practical-card-title { font-size:13px; font-weight:700; color:#0f2424; margin:0; }
+.vc-practical-card-toggle { font-size:14px; color:#59b7b7; transition:transform .25s ease; flex-shrink:0; }
+.vc-practical-card.open .vc-practical-card-toggle { transform:rotate(180deg); }
+.vc-practical-card-body { padding:0 16px 14px; }
+.vc-practical-card-body[hidden] { display:none !important; }
+.vc-practical-card-body p { font-size:13px; color:#6b7280; line-height:1.6; font-family:'Outfit',sans-serif; margin:0; white-space:pre-line; padding-top:4px; }
 
 /* ═══ CALCULATOR STICKY SIDEBAR ═══ */
 .vc-calc-col { position:sticky; top:90px; display:flex; flex-direction:column; gap:16px; max-height:calc(100vh - 100px); overflow-y:auto; scrollbar-width:thin; scrollbar-color:#ddd transparent; }

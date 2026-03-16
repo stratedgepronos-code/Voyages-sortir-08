@@ -9,6 +9,15 @@ var hasTriple = CIRCUIT.prix_triple && parseFloat(CIRCUIT.prix_triple) > 0;
 $(document).on('click', '.vc-day-header', function(){ $(this).closest('.vc-day').toggleClass('open'); });
 $('.vc-day').first().addClass('open');
 
+/* ══ PRACTICAL CARDS — repliables, clic pour déplier ══ */
+$(document).on('click', '.vc-practical-card-header', function(){
+    var $card=$(this).closest('.vc-practical-card'), $body=$card.find('.vc-practical-card-body');
+    var isOpen=$card.hasClass('open');
+    $card.toggleClass('open');
+    $body.attr('hidden', isOpen ? true : null);
+    $(this).attr('aria-expanded', !isOpen);
+});
+
 /* ══ LIGHTBOX ══ */
 var lbImages=[], lbIdx=0;
 $(document).on('click', '.vc-gal-item', function(e){ e.preventDefault(); lbImages=[]; $('.vc-gal-item img').each(function(){ lbImages.push($(this).attr('src')); }); lbIdx=$(this).index(); showLB(); });

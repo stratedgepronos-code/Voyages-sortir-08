@@ -261,10 +261,15 @@ var VS08C_CIRCUIT = <?php echo json_encode([
             <section class="vc-section">
                 <h2 class="vc-section-title">ℹ️ Informations pratiques</h2>
                 <div class="vc-practical-grid">
-                    <?php foreach ($practical as $p): ?>
+                    <?php foreach ($practical as $p): $pid = 'vc-practical-' . sanitize_title($p['title']); ?>
                     <div class="vc-practical-card">
-                        <h4><?php echo $p['icon'] . ' ' . esc_html($p['title']); ?></h4>
-                        <p><?php echo esc_html($p['text']); ?></p>
+                        <button type="button" class="vc-practical-card-header" aria-expanded="false" aria-controls="<?php echo esc_attr($pid); ?>">
+                            <span class="vc-practical-card-title"><?php echo $p['icon'] . ' ' . esc_html($p['title']); ?></span>
+                            <span class="vc-practical-card-toggle" aria-hidden="true">▾</span>
+                        </button>
+                        <div class="vc-practical-card-body" id="<?php echo esc_attr($pid); ?>" hidden>
+                            <p><?php echo esc_html($p['text']); ?></p>
+                        </div>
                     </div>
                     <?php endforeach; ?>
                 </div>
