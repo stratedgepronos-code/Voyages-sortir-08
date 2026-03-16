@@ -150,6 +150,9 @@ var BK_CIRCUIT = <?php echo json_encode([
 .bkc-btn-prev{padding:15px 24px;background:#fff;color:#0f2424;border:1.5px solid #e5e7eb;border-radius:14px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
 .bkc-btn-prev:hover{border-color:#59b7b7;color:#59b7b7}
 .bkc-step-content{}
+/* Une seule page d'étape visible à la fois (step 1 = Vols, step 2 = Voyageurs+Facturation) */
+.bkc-step-page{display:none!important}
+.bkc-step-page.bkc-step-active{display:block!important}
 /* ── Assurance (mêmes styles que golf) ── */
 .bk-ins-wrap{background:linear-gradient(135deg,#f0f9fa 0%,#fdf2f8 100%);border:2px solid #59b7b7;border-radius:18px;padding:0;overflow:hidden}
 .bk-ins-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid rgba(89,183,183,.18)}
@@ -245,8 +248,8 @@ var BK_CIRCUIT = <?php echo json_encode([
         <!-- ═══ ÉTAPES 1-3 (formulaire) ═══ -->
         <div id="bkc-steps-form">
 
-        <!-- PAGE 1 : ÉTAPE 1 — Vol + Assurance uniquement -->
-        <div id="bkc-step-1" class="bkc-step-page">
+        <!-- PAGE 1 : ÉTAPE 1 — Vol + Assurance uniquement (recherche des vols) -->
+        <div id="bkc-step-1" class="bkc-step-page bkc-step-active">
         <div class="bkc-section">
             <h3 class="bkc-section-title"><span class="bkc-step-num">1</span> Sélection de votre vol</h3>
             <p class="bkc-section-sub">Choisissez votre combinaison aller-retour parmi les vols disponibles.</p>
@@ -321,10 +324,10 @@ var BK_CIRCUIT = <?php echo json_encode([
         </div>
         </div><!-- /bkc-step-1 -->
 
-        <!-- PAGE 2 : ÉTAPE 2 — Voyageurs + Facturation (step juste avant confirmation/paiement) -->
-        <div id="bkc-step-2" class="bkc-step-page" style="display:none">
+        <!-- PAGE 2 : ÉTAPE 2 — Bulletin d'inscription (voyageurs + facturation), step juste après la page Vols -->
+        <div id="bkc-step-2" class="bkc-step-page">
         <div class="bkc-section">
-            <h3 class="bkc-section-title"><span class="bkc-step-num">2</span> Informations voyageurs et coordonnées de facturation</h3>
+            <h3 class="bkc-section-title"><span class="bkc-step-num">2</span> Bulletin d'inscription — Informations voyageurs et coordonnées de facturation</h3>
             <p class="bkc-section-sub"><?php echo $nb_total; ?> voyageur(s) — <?php echo $nb_chambres; ?> chambre(s) — Départ le <?php echo esc_html($date_fmt); ?></p>
 
             <?php
@@ -872,16 +875,16 @@ var BK_CIRCUIT = <?php echo json_encode([
         return parseInt(parts[2]) + ' ' + mois[parseInt(parts[1]) - 1] + ' ' + parts[0];
     }
 
-    /* ═══ Navigation étapes : step 1 ↔ step 2 ↔ confirmation ═══ */
+    /* ═══ Navigation étapes : step 1 (Vols) → step 2 (Bulletin voyageurs+facturation) → confirmation ═══ */
     window.bkcGoToStep2 = function() {
-        document.getElementById('bkc-step-1').style.display = 'none';
-        document.getElementById('bkc-step-2').style.display = 'block';
+        document.getElementById('bkc-step-1').classList.remove('bkc-step-active');
+        document.getElementById('bkc-step-2').classList.add('bkc-step-active');
         window.scrollTo({top:0,behavior:'smooth'});
     };
 
     window.bkcGoBackToStep1 = function() {
-        document.getElementById('bkc-step-2').style.display = 'none';
-        document.getElementById('bkc-step-1').style.display = 'block';
+        document.getElementById('bkc-step-2').classList.remove('bkc-step-active');
+        document.getElementById('bkc-step-1').classList.add('bkc-step-active');
         window.scrollTo({top:0,behavior:'smooth'});
     };
 
@@ -900,8 +903,8 @@ var BK_CIRCUIT = <?php echo json_encode([
     window.bkcGoBack = function() {
         document.getElementById('bkc-step-confirm').style.display = 'none';
         document.getElementById('bkc-steps-form').style.display = 'block';
-        document.getElementById('bkc-step-1').style.display = 'none';
-        document.getElementById('bkc-step-2').style.display = 'block';
+        document.getElementById('bkc-step-1').classList.remove('bkc-step-active');
+        document.getElementById('bkc-step-2').classList.add('bkc-step-active');
         window.scrollTo({top:0,behavior:'smooth'});
     };
 
