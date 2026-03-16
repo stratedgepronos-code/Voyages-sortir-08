@@ -358,10 +358,26 @@ var VS08C_CIRCUIT = <?php echo json_encode([
                 </div>
 
                 <div class="vc-reassurance">
-                    <div class="vc-reass-item">🛡️ Assurances multirisques en option</div>
-                    <div class="vc-reass-item">🔒 Paiement 100% sécurisé</div>
-                    <div class="vc-reass-item" style="font-weight:700;color:#0f2424">☎ Conseiller disponible<br><span style="font-weight:400;color:#6b7280">03 26 65 28 63<br>Lun — Ven 09h00 – 12h00 / 14h00 – 18h30<br>Samedi 09h00 – 12h00 / 14h00 – 18h00</span></div>
+                    <div class="vc-reass"><span class="vc-reass-icon">🛡️</span><span>Assurances multirisques en option</span></div>
+                    <div class="vc-reass"><span class="vc-reass-icon">🔒</span><span>Paiement 100% sécurisé</span></div>
+                    <div class="vc-reass"><span class="vc-reass-icon">📞</span><div><strong style="color:#374151">Conseiller disponible</strong><br>03 26 65 28 63<br>Lun – Ven 09h00 – 12h00 / 14h00 – 18h30<br>Samedi 09h00 – 12h00 / 14h00 – 18h00</div></div>
                 </div>
+            </div>
+
+            <!-- MENU ACTIONS — 1 bouton par ligne (comme voyages golf) -->
+            <div class="vc-actions-card">
+                <button type="button" class="vc-action-btn vc-action-print" onclick="window.print()">🖨️ Imprimer la fiche</button>
+                <a class="vc-action-btn vc-action-mail" href="mailto:?subject=<?php echo rawurlencode('Circuit : '.get_the_title()); ?>&body=<?php echo rawurlencode("Bonjour,\n\nVoici un circuit qui pourrait t'intéresser :\n\n".get_the_title()."\n".get_permalink()); ?>">✉️ Envoyer par mail</a>
+                <button type="button" class="vc-action-btn vc-action-pdf" onclick="window.print()">📄 Sauvegarder en PDF</button>
+                <a class="vc-action-btn vc-action-msg" href="#messagerie" onclick="alert('Messagerie interne — bientôt disponible !'); return false;">💬 Message à un conseiller</a>
+            </div>
+
+            <!-- DEVIS PERSONNALISÉ (bloc type voyages golf) -->
+            <div class="vc-devis-card">
+                <div style="font-size:28px">📅</div>
+                <h3>Vous ne trouvez pas votre date ?</h3>
+                <p>Notre équipe organise ce circuit sur mesure. Réponse garantie sous 24h ouvrées.</p>
+                <a class="vc-devis-btn" href="mailto:contact@voyagessortir08.fr?subject=<?php echo rawurlencode('Demande de devis circuit — '.get_the_title()); ?>&body=<?php echo rawurlencode("Bonjour,\n\nJe souhaite un devis pour le circuit : ".get_the_title()."\n\nMes disponibilités :\nNombre de voyageurs :\n\nMerci !"); ?>">✉️ Demander un devis personnalisé</a>
             </div>
         </div>
 

@@ -92,10 +92,13 @@ function vcOnDateSelected(){
     $.post(vs08c.ajax_url,{action:'vs08c_get_flight',nonce:vs08c.nonce,circuit_id:CIRCUIT.id,date:date,aeroport:aero,passengers:parseInt($('#vc-nb-adultes').val())||2},function(res){
         if(res.success&&res.data){
             vc_prix_vol=parseFloat(res.data.prix)||0;
-            $s.attr('class','vc-vol-status loaded').text(res.data.note==='estimate'?'~'+vc_prix_vol+'€/pers. (estimé)':'✅ '+vc_prix_vol+'€/pers. · vol A/R en temps réel');
+            var flights=res.data.flights||[];
+            var count=Array.isArray(flights)?flights.length:0;
+            var txt=res.data.note==='estimate'?(count>0?count+' vol(s) trouvé(s) (estimé)':'Tarif estimé'):(count>0?'✅ '+count+' vol(s) trouvé(s)':'Vols trouvés');
+            $s.attr('class','vc-vol-status loaded').text(txt);
         }else{
             vc_prix_vol=parseFloat(CIRCUIT.prix_vol_base)||0;
-            $s.attr('class','vc-vol-status '+(vc_prix_vol>0?'loaded':'error')).text(vc_prix_vol>0?'~'+vc_prix_vol+'€/pers. (tarif de base)':'Tarif vol indisponible');
+            $s.attr('class','vc-vol-status '+(vc_prix_vol>0?'loaded':'error')).text(vc_prix_vol>0?'Tarif de base':'Tarif vol indisponible');
         }
         $('#vc-step2').slideDown(300);buildRooms();triggerCalc();
     }).fail(function(){

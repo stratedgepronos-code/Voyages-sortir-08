@@ -155,9 +155,29 @@
 /* ═══ PRICE LOADING ═══ */
 .vc-price-loading { text-align:center; padding:14px; color:#9ca3af; font-family:'Outfit',sans-serif; font-size:13px; }
 
-/* ═══ REASSURANCE ═══ */
-.vc-reassurance { margin-top:14px; display:flex; flex-direction:column; gap:6px; }
-.vc-reass-item { font-size:11px; color:#6b7280; font-family:'Outfit',sans-serif; }
+/* ═══ REASSURANCE (bloc type voyages golf) ═══ */
+.vc-reassurance { border-top:1px solid #f0f0f0; margin-top:14px; padding-top:12px; display:flex; flex-direction:column; gap:8px; }
+.vc-reass { font-size:11px; color:#6b7280; font-family:'Outfit',sans-serif; display:flex; gap:7px; align-items:flex-start; line-height:1.4; }
+.vc-reass-icon { flex-shrink:0; font-size:13px; }
+
+/* ═══ ACTIONS — menu 1 bouton par ligne ═══ */
+.vc-actions-card { display:flex; flex-direction:column; gap:7px; margin-top:16px; }
+.vc-action-btn { display:flex; align-items:center; justify-content:center; gap:7px; padding:10px 16px; border-radius:10px; font-size:12px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; border:none; text-decoration:none; transition:all .2s; width:100%; box-sizing:border-box; }
+.vc-action-print { background:#e7e078; color:#0f2424; }
+.vc-action-print:hover { background:#d4cc55; }
+.vc-action-mail { background:#59b7b7; color:#fff; }
+.vc-action-mail:hover { background:#3d9a9a; }
+.vc-action-pdf { background:#e87460; color:#fff; }
+.vc-action-pdf:hover { background:#c4503c; }
+.vc-action-msg { background:#6366f1; color:#fff; }
+.vc-action-msg:hover { background:#4f46e5; }
+
+/* ═══ DEVIS PERSONNALISÉ (bloc type voyages golf) ═══ */
+.vc-devis-card { background:linear-gradient(145deg,#0f2424,#1a4a3a); border-radius:18px; padding:22px; text-align:center; margin-top:16px; }
+.vc-devis-card h3 { font-family:'Playfair Display',serif; font-size:16px; color:#fff; margin:8px 0 8px; }
+.vc-devis-card p { font-size:12px; color:rgba(255,255,255,.65); margin:0 0 16px; line-height:1.55; font-family:'Outfit',sans-serif; }
+.vc-devis-btn { display:flex; align-items:center; justify-content:center; gap:8px; background:#e8724a; color:#fff; border:none; padding:13px 20px; border-radius:11px; font-size:13px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; text-decoration:none; transition:all .2s; width:100%; box-sizing:border-box; }
+.vc-devis-btn:hover { background:#d4603c; transform:translateY(-2px); }
 
 /* ═══ OPTIONS SECTION — Premium Cards ═══ */
 .vc-options-grid { display:flex; flex-direction:column; gap:10px; }
@@ -228,4 +248,28 @@
     .vc-day-header { flex-direction:column; align-items:flex-start; gap:4px; }
     .vc-inner { padding:0 14px; }
     .vc-field-row { grid-template-columns:1fr; }
+}
+
+/* ═══ IMPRESSION / PDF — circuit propre ═══ */
+@media print {
+    .vc-calc-col,
+    .vc-actions-card,
+    .vc-devis-card,
+    .vc-reassurance,
+    .vc-badge,
+    .vc-cta-btn,
+    .vc-day-toggle,
+    .vc-practical-card-toggle,
+    .vc-option-toggle,
+    .vc-lightbox,
+    .no-print { display:none !important; }
+    .vc-practical-card-body[hidden] { display:block !important; }
+    .vc-practical-card-body { padding:8px 16px 12px !important; }
+    .vc-day-body { display:block !important; }
+    .vc-page { background:#fff; padding:0; }
+    .vc-section { box-shadow:none; border:1px solid #eee; break-inside:avoid; }
+    .vc-hero { min-height:280px; }
+    .vc-inner { grid-template-columns:1fr; padding:0; }
+    .vc-main { max-width:100%; }
+    body { background:#fff; }
 }
