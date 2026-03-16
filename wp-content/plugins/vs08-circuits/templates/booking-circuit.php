@@ -80,6 +80,7 @@ var BK_CIRCUIT = <?php echo json_encode([
     'circuit_id'     => $circuit_id,
     'titre'          => $titre,
     'duree'          => $duree,
+    'iata_dest'      => strtoupper($m['iata_dest'] ?? ''),
     'nb_total'       => $nb_total,
     'nb_chambres'    => $nb_chambres,
     'params'         => $params,
@@ -90,6 +91,7 @@ var BK_CIRCUIT = <?php echo json_encode([
     'saved_voyageurs'=> $bk_saved_voy,
     'ajax_url'       => admin_url('admin-ajax.php'),
     'nonce'          => wp_create_nonce('vs08c_nonce'),
+    'date_retour'    => $params['date_depart'] ? date('Y-m-d', strtotime($params['date_depart'].' +'.$duree.' days')) : '',
 ]); ?>;
 </script>
 
@@ -144,8 +146,45 @@ var BK_CIRCUIT = <?php echo json_encode([
 .bkc-loading{display:none;text-align:center;padding:16px}
 .bkc-spinner{width:24px;height:24px;border:3px solid #e5e7eb;border-top-color:#59b7b7;border-radius:50%;animation:bkc-spin .7s linear infinite;margin:0 auto 8px}
 @keyframes bkc-spin{to{transform:rotate(360deg)}}
+/* ── Sélection vol : route header ── */
+.bkc-route-header{display:flex;align-items:center;justify-content:center;gap:14px;background:#0f2424;border-radius:14px;padding:14px 20px;margin-bottom:20px}
+.bkc-route-iata{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase}
+.bkc-route-arrow{font-size:22px;color:#59b7b7}
+.bkc-route-city{font-size:10px;color:rgba(255,255,255,.5);font-family:'Outfit',sans-serif;text-transform:uppercase;letter-spacing:1px}
+.bkc-route-dates{font-size:11px;color:rgba(255,255,255,.45);font-family:'Outfit',sans-serif;margin-top:3px}
+/* ── Combo cards ── */
+.bkc-combo-loading{display:flex;align-items:center;gap:10px;font-size:15px;color:#9ca3af;font-family:'Outfit',sans-serif;padding:20px 0}
+.bkc-flights-spinner{width:20px;height:20px;border:3px solid #e5e7eb;border-top-color:#59b7b7;border-radius:50%;animation:bkc-spin .7s linear infinite;flex-shrink:0}
+.bkc-flights-error{padding:14px 16px;background:#fee2e2;color:#dc2626;border-radius:10px;font-size:15px;font-family:'Outfit',sans-serif}
+.bkc-combo-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:14px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:all .25s}
+.bkc-combo-card:hover{border-color:#b7dfdf;box-shadow:0 2px 12px rgba(89,183,183,.08)}
+.bkc-combo-card.selected{border-color:#59b7b7;background:#f0fafa;box-shadow:0 2px 16px rgba(89,183,183,.15)}
+.bkc-combo-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.bkc-combo-airline{display:flex;align-items:center;gap:10px}
+.bkc-combo-airline img{width:28px;height:28px;border-radius:6px;object-fit:contain;background:#f5f5f5;padding:2px}
+.bkc-combo-airline-name{font-size:14px;font-weight:700;color:#0f2424;font-family:'Outfit',sans-serif}
+.bkc-combo-airline-sub{font-size:10px;color:#9ca3af;font-family:'Outfit',sans-serif}
+.bkc-combo-price{text-align:right}
+.bkc-combo-price-delta{font-size:13px;font-weight:700;color:#b85c1a;font-family:'Outfit',sans-serif}
+.bkc-combo-price-delta.ref{color:#2d8a5a;background:#e8f8f0;padding:3px 10px;border-radius:100px;font-size:11px}
+.bkc-combo-price-sub{font-size:9px;color:#9ca3af;font-family:'Outfit',sans-serif}
+.bkc-combo-check{width:24px;height:24px;border-radius:50%;background:#59b7b7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;opacity:0;transition:all .2s}
+.bkc-combo-card.selected .bkc-combo-check{opacity:1}
+.bkc-combo-leg{display:flex;align-items:center;gap:10px;padding:6px 0;font-family:'Outfit',sans-serif;font-size:12px;color:#4a5568}
+.bkc-combo-leg-badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 8px;border-radius:6px;flex-shrink:0}
+.bkc-combo-leg-badge.aller{background:#edf8f8;color:#3d9a9a}
+.bkc-combo-leg-badge.retour{background:#fff3e8;color:#b85c1a}
+.bkc-combo-leg-times{display:flex;align-items:center;gap:6px;flex:1}
+.bkc-combo-leg-line{flex:1;display:flex;align-items:center;gap:4px}
+.bkc-combo-leg-dash{flex:1;height:1px;background:#ddd}
+.bkc-combo-leg-plane{font-size:12px;color:#59b7b7}
+.bkc-combo-leg-dur{font-size:10px;color:#9ca3af;min-width:40px;text-align:center}
+.bkc-combo-leg-num{font-size:10px;color:#bbb;min-width:50px;text-align:right}
+.bkc-combo-more{text-align:center;padding:11px;font-size:14px;font-weight:600;color:#59b7b7;cursor:pointer;border-top:1px solid #e5e7eb;transition:color .15s;background:#fafafa;border-radius:0 0 14px 14px}
+.bkc-combo-more:hover{color:#0f2424}
+.bkc-flights-hidden{display:none}
 @media(max-width:960px){.bkc-inner{grid-template-columns:1fr;padding:0 20px}.bkc-header{grid-column:span 1}.bkc-recap{position:static}}
-@media(max-width:640px){.bkc-inner{padding:0 14px}.bkc-field-row{grid-template-columns:1fr}.bkc-fact-grid{grid-template-columns:1fr}.bkc-fact-grid .full{grid-column:span 1}.bkc-header{flex-direction:column;text-align:center}.bkc-header-chips{justify-content:center}}
+@media(max-width:640px){.bkc-inner{padding:0 14px}.bkc-field-row{grid-template-columns:1fr}.bkc-fact-grid{grid-template-columns:1fr}.bkc-fact-grid .full{grid-column:span 1}.bkc-header{flex-direction:column;text-align:center}.bkc-header-chips{justify-content:center}.bkc-route-iata{font-size:20px}.bkc-route-header{padding:10px 14px;gap:10px}}
 </style>
 
 <div class="bkc-wrap"><div class="bkc-inner">
@@ -169,9 +208,47 @@ var BK_CIRCUIT = <?php echo json_encode([
     <div class="bkc-main">
         <div class="bkc-error" id="bkc-error"></div>
 
-        <!-- ÉTAPE 1 : Voyageurs groupés par chambre -->
+        <!-- ÉTAPE 1 : Sélection du vol -->
         <div class="bkc-section">
-            <h3 class="bkc-section-title"><span class="bkc-step-num">1</span> Informations voyageurs</h3>
+            <h3 class="bkc-section-title"><span class="bkc-step-num">1</span> Sélection de votre vol</h3>
+            <p class="bkc-section-sub">Choisissez votre combinaison aller-retour parmi les vols disponibles.</p>
+
+            <?php
+            $d_aller  = $params['date_depart'] ? date('d/m/Y', strtotime($params['date_depart'])) : '—';
+            $d_retour_fmt = $params['date_depart'] ? date('d/m/Y', strtotime($params['date_depart'].' +'.$duree.' days')) : '—';
+            $iata_dest = strtoupper($m['iata_dest'] ?? '');
+            ?>
+            <div class="bkc-route-header">
+                <div style="text-align:center">
+                    <div class="bkc-route-iata"><?php echo esc_html($params['aeroport'] ?: '—'); ?></div>
+                    <div class="bkc-route-city"><?php echo esc_html($params['aeroport']); ?></div>
+                </div>
+                <div style="text-align:center">
+                    <div class="bkc-route-arrow">✈️ ⟷</div>
+                    <div class="bkc-route-dates"><?php echo esc_html($d_aller . ' → ' . $d_retour_fmt . ' · ' . $nb_total . ' pax'); ?></div>
+                </div>
+                <div style="text-align:center">
+                    <div class="bkc-route-iata"><?php echo esc_html($iata_dest ?: '—'); ?></div>
+                    <div class="bkc-route-city"><?php echo esc_html($iata_dest); ?></div>
+                </div>
+            </div>
+
+            <div id="bkc-combo-wrap">
+                <div class="bkc-combo-loading" id="bkc-combo-loading">
+                    <div class="bkc-flights-spinner"></div>
+                    Recherche des vols aller et retour…
+                </div>
+                <div id="bkc-combo-list"></div>
+                <div id="bkc-combo-error" class="bkc-flights-error" style="display:none"></div>
+            </div>
+
+            <input type="hidden" id="bkc-selected-offer-id" name="selected_offer_id" value="">
+            <input type="hidden" id="bkc-selected-vol-delta" name="vol_delta_pax" value="0">
+        </div>
+
+        <!-- ÉTAPE 2 : Voyageurs groupés par chambre -->
+        <div class="bkc-section">
+            <h3 class="bkc-section-title"><span class="bkc-step-num">2</span> Informations voyageurs</h3>
             <p class="bkc-section-sub"><?php echo $nb_total; ?> voyageur(s) — <?php echo $nb_chambres; ?> chambre(s) — Départ le <?php echo esc_html($date_fmt); ?></p>
 
             <?php
@@ -221,7 +298,7 @@ var BK_CIRCUIT = <?php echo json_encode([
 
         <!-- ÉTAPE 2 : Facturation -->
         <div class="bkc-section">
-            <h3 class="bkc-section-title"><span class="bkc-step-num">2</span> Coordonnées de facturation</h3>
+            <h3 class="bkc-section-title"><span class="bkc-step-num">3</span> Coordonnées de facturation</h3>
             <p class="bkc-section-sub">Ces informations figureront sur votre facture et permettront à votre conseiller de vous contacter.</p>
             <div class="bkc-fact-grid">
                 <div class="bkc-field"><label>Prénom *</label><input type="text" id="fact-prenom" class="bkc-required" placeholder="Jean" value="<?php echo esc_attr($bk_saved_fact['prenom'] ?? ''); ?>"></div>
@@ -253,7 +330,7 @@ var BK_CIRCUIT = <?php echo json_encode([
 
         <!-- CONFIRMATION -->
         <div class="bkc-section">
-            <h3 class="bkc-section-title"><span class="bkc-step-num">3</span> Confirmation</h3>
+            <h3 class="bkc-section-title"><span class="bkc-step-num">4</span> Confirmation</h3>
             <label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;font-family:'Outfit',sans-serif;color:#1a3a3a;cursor:pointer;margin-bottom:10px">
                 <input type="checkbox" id="bkc-confirm-info" style="margin-top:3px;flex-shrink:0">
                 Je certifie l'exactitude des informations voyageurs (noms, dates de naissance, passeports).
@@ -271,6 +348,9 @@ var BK_CIRCUIT = <?php echo json_encode([
         <div class="bkc-recap-line" style="font-weight:600;color:#0f2424"><span>🗺️ <?php echo esc_html($titre); ?></span></div>
         <div class="bkc-recap-line"><span>📅 Départ</span><span><?php echo esc_html($date_fmt ?: '—'); ?></span></div>
         <div class="bkc-recap-line"><span>✈️ Aéroport</span><span><?php echo esc_html($params['aeroport'] ?: '—'); ?></span></div>
+        <div class="bkc-recap-line" id="bkc-recap-row-vol" style="display:none"><span>✈️ Vol aller</span><span id="bkc-recap-vol-detail">—</span></div>
+        <div class="bkc-recap-line" id="bkc-recap-row-retour" style="display:none"><span>✈️ Vol retour</span><span id="bkc-recap-retour-detail">—</span></div>
+        <div class="bkc-recap-line" id="bkc-recap-row-vol-delta" style="display:none"><span>Supplément vol</span><span id="bkc-recap-vol-delta-val">—</span></div>
         <div class="bkc-recap-line"><span>📅 Durée</span><span><?php echo $duree_j; ?>j / <?php echo $duree; ?>n</span></div>
         <div class="bkc-recap-line"><span>👥 Voyageurs</span><span><?php echo $nb_total; ?> pers.</span></div>
         <?php if (!empty($options_recap)): ?>
@@ -338,6 +418,231 @@ var BK_CIRCUIT = <?php echo json_encode([
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initDDNCalendars);
     else initDDNCalendars();
 
+    /* ═══════════════════════════════════════════════════════
+       RECHERCHE VOLS — aller + retour → combos (comme golf)
+       ═══════════════════════════════════════════════════════ */
+    var bkc_flights_data = [];
+    var bkc_retour_data  = [];
+    var bkc_combos_data  = [];
+    var bkc_aller_loaded = false;
+    var bkc_retour_loaded = false;
+    var bkc_vol_nb_pax   = BK.nb_total;
+    var bkc_vol_delta_total = 0;
+
+    (function bkcLoadFlights(){
+        var aero    = BK.params.aeroport;
+        var date    = BK.params.date_depart;
+        var errDiv  = document.getElementById('bkc-combo-error');
+        var loading = document.getElementById('bkc-combo-loading');
+
+        if (!aero || !date) {
+            if (loading) loading.style.display = 'none';
+            if (errDiv) { errDiv.style.display = 'block'; errDiv.textContent = 'Aucun aéroport ou date sélectionné. Retournez sur la fiche circuit.'; }
+            return;
+        }
+
+        var dateRetour = BK.date_retour || bkcAddDays(date, BK.duree || 7);
+
+        function bkcPostFlight(payload, done) {
+            var ajaxData = { action: 'vs08c_get_flight', nonce: BK.nonce };
+            for (var k in payload) ajaxData[k] = payload[k];
+            jQuery.post(BK.ajax_url, ajaxData).done(done).fail(function(){ done({ success: false }); });
+        }
+
+        bkcPostFlight({
+            circuit_id: BK.circuit_id,
+            date: date,
+            aeroport: aero,
+            passengers: bkc_vol_nb_pax
+        }, function(res){
+            if (res && res.success && res.data && res.data.flights && res.data.flights.length) {
+                bkc_flights_data = res.data.flights;
+            }
+            bkc_aller_loaded = true;
+            bkcTryBuildCombos();
+        });
+
+        bkcPostFlight({
+            circuit_id: BK.circuit_id,
+            date: dateRetour,
+            aeroport: BK.iata_dest,
+            passengers: bkc_vol_nb_pax
+        }, function(res){
+            if (res && res.success && res.data && res.data.flights && res.data.flights.length) {
+                bkc_retour_data = res.data.flights;
+            }
+            bkc_retour_loaded = true;
+            bkcTryBuildCombos();
+        });
+    })();
+
+    function bkcAddDays(dateStr, days) {
+        var d = new Date(dateStr); d.setDate(d.getDate() + parseInt(days));
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+    function bkcFmtDuration(min) { if(!min) return ''; var h=Math.floor(min/60), m=min%60; return h+'h'+String(m).padStart(2,'0'); }
+    function bkcEsc(str) { var d=document.createElement('div'); d.appendChild(document.createTextNode(str||'')); return d.innerHTML; }
+    function bkcFmt(n) { return Math.ceil(parseFloat(n||0)).toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:0})+' €'; }
+
+    function bkcTryBuildCombos() {
+        if (!bkc_aller_loaded || !bkc_retour_loaded) return;
+        var loading = document.getElementById('bkc-combo-loading');
+        var errDiv  = document.getElementById('bkc-combo-error');
+        if (loading) loading.style.display = 'none';
+
+        if (!bkc_flights_data.length && !bkc_retour_data.length) {
+            if (errDiv) { errDiv.style.display = 'block'; errDiv.textContent = 'Aucun vol direct disponible pour cette combinaison. Contactez-nous au 03 26 65 28 63.'; }
+            return;
+        }
+
+        var combos = [];
+        bkc_flights_data.forEach(function(a) {
+            bkc_retour_data.filter(function(r){ return r.airline_iata === a.airline_iata; }).forEach(function(r) {
+                combos.push({ aller:a, retour:r, airline_name:a.airline_name, airline_iata:a.airline_iata, total_delta:(a.delta_per_pax||0)+(r.delta_per_pax||0) });
+            });
+        });
+
+        if (!combos.length) {
+            bkc_flights_data.forEach(function(a) {
+                combos.push({ aller:a, retour:null, airline_name:a.airline_name, airline_iata:a.airline_iata, total_delta:a.delta_per_pax||0 });
+            });
+        }
+
+        combos.sort(function(a,b){ return a.total_delta - b.total_delta; });
+        if (combos.length) combos[0].is_reference = true;
+        bkc_combos_data = combos;
+        bkcRenderCombos(combos);
+        bkcSelectCombo(0);
+    }
+
+    function bkcRenderCombos(combos) {
+        var list = document.getElementById('bkc-combo-list');
+        if (!list) return;
+        list.innerHTML = '';
+
+        combos.forEach(function(c, idx) {
+            var a = c.aller, r = c.retour;
+            var hidden = idx >= 3 ? ' bkc-flights-hidden' : '';
+            var priceHtml = '';
+            if (c.is_reference) {
+                priceHtml = '<div class="bkc-combo-price-delta ref">Meilleur prix</div>';
+            } else {
+                priceHtml = '<div class="bkc-combo-price-delta">+'+bkcFmt(c.total_delta)+'</div><div class="bkc-combo-price-sub">/pers. aller-retour</div>';
+            }
+
+            var html = '<div class="bkc-combo-header">'
+                +'<div class="bkc-combo-airline">'
+                +'<img src="https://images.kiwi.com/airlines/64/'+bkcEsc(a.airline_iata)+'.png" alt="" onerror="this.style.display=\'none\'">'
+                +'<div><div class="bkc-combo-airline-name">'+bkcEsc(c.airline_name)+'</div>'
+                +'<div class="bkc-combo-airline-sub">'+bkcEsc(a.airline_iata)+'</div></div>'
+                +'</div>'
+                +'<div style="display:flex;align-items:center;gap:8px">'
+                +'<div class="bkc-combo-price">'+priceHtml+'</div>'
+                +'<div class="bkc-combo-check">✓</div>'
+                +'</div></div>';
+
+            html += '<div class="bkc-combo-leg">'
+                +'<div class="bkc-combo-leg-badge aller">Aller</div>'
+                +'<div class="bkc-combo-leg-times">'
+                +'<div>'+bkcEsc(a.depart_time)+'</div>'
+                +'<div class="bkc-combo-leg-line"><div class="bkc-combo-leg-dash"></div><div class="bkc-combo-leg-plane">✈</div><div class="bkc-combo-leg-dash"></div></div>'
+                +'<div>'+bkcEsc(a.arrive_time)+'</div>'
+                +'</div>'
+                +'<div class="bkc-combo-leg-dur">'+bkcFmtDuration(a.duration_min)+'</div>'
+                +'<div class="bkc-combo-leg-num">'+bkcEsc(a.flight_number)+'</div>'
+                +'</div>';
+
+            if (r) {
+                html += '<div class="bkc-combo-leg">'
+                    +'<div class="bkc-combo-leg-badge retour">Retour</div>'
+                    +'<div class="bkc-combo-leg-times">'
+                    +'<div>'+bkcEsc(r.depart_time)+'</div>'
+                    +'<div class="bkc-combo-leg-line"><div class="bkc-combo-leg-dash"></div><div class="bkc-combo-leg-plane">✈</div><div class="bkc-combo-leg-dash"></div></div>'
+                    +'<div>'+bkcEsc(r.arrive_time)+'</div>'
+                    +'</div>'
+                    +'<div class="bkc-combo-leg-dur">'+bkcFmtDuration(r.duration_min)+'</div>'
+                    +'<div class="bkc-combo-leg-num">'+bkcEsc(r.flight_number)+'</div>'
+                    +'</div>';
+            }
+
+            var card = document.createElement('div');
+            card.className = 'bkc-combo-card' + hidden;
+            card.id = 'bkc-combo-' + idx;
+            card.innerHTML = html;
+            card.addEventListener('click', (function(i){ return function(){ bkcSelectCombo(i); }; })(idx));
+            list.appendChild(card);
+        });
+
+        if (combos.length > 3) {
+            var more = document.createElement('div');
+            more.className = 'bkc-combo-more';
+            var extra = combos.length - 3;
+            more.textContent = 'Afficher ' + extra + ' autre(s) combinaison(s) ▾';
+            more.setAttribute('data-expanded', 'false');
+            more.addEventListener('click', function() {
+                var exp = this.getAttribute('data-expanded') === 'true';
+                if (exp) {
+                    list.querySelectorAll('.bkc-combo-card').forEach(function(el,i){ if(i>=3) el.classList.add('bkc-flights-hidden'); });
+                    this.textContent = 'Afficher ' + extra + ' autre(s) combinaison(s) ▾';
+                    this.setAttribute('data-expanded','false');
+                } else {
+                    list.querySelectorAll('.bkc-flights-hidden').forEach(function(el){ el.classList.remove('bkc-flights-hidden'); });
+                    this.textContent = 'Réduire ▴';
+                    this.setAttribute('data-expanded','true');
+                }
+            });
+            list.appendChild(more);
+        }
+    }
+
+    function bkcSelectCombo(idx) {
+        var c = bkc_combos_data[idx];
+        if (!c) return;
+        document.querySelectorAll('.bkc-combo-card').forEach(function(el){ el.classList.remove('selected'); });
+        var card = document.getElementById('bkc-combo-' + idx);
+        if (card) card.classList.add('selected');
+
+        bkc_vol_delta_total = (c.total_delta || 0) * bkc_vol_nb_pax;
+        window.bkc_selected_combo = c;
+
+        var offerInput = document.getElementById('bkc-selected-offer-id');
+        var deltaInput = document.getElementById('bkc-selected-vol-delta');
+        if (offerInput) offerInput.value = c.aller.offer_id || '';
+        if (deltaInput) deltaInput.value = c.total_delta || 0;
+
+        var volRow = document.getElementById('bkc-recap-row-vol');
+        var volDetail = document.getElementById('bkc-recap-vol-detail');
+        if (volRow) volRow.style.display = 'flex';
+        if (volDetail) {
+            var airline = c.airline_name ? ' · ' + c.airline_name : '';
+            var times = (c.aller.depart_time && c.aller.arrive_time) ? ' · ' + c.aller.depart_time + ' → ' + c.aller.arrive_time : '';
+            volDetail.textContent = (BK.params.aeroport||'') + ' → ' + (BK.iata_dest||'') + airline + times;
+        }
+
+        var retourRow = document.getElementById('bkc-recap-row-retour');
+        var retourDetail = document.getElementById('bkc-recap-retour-detail');
+        if (c.retour) {
+            if (retourRow) retourRow.style.display = 'flex';
+            if (retourDetail) {
+                var rAirline = c.retour.airline_name ? ' · ' + c.retour.airline_name : '';
+                var rTimes = (c.retour.depart_time && c.retour.arrive_time) ? ' · ' + c.retour.depart_time + ' → ' + c.retour.arrive_time : '';
+                retourDetail.textContent = (BK.iata_dest||'') + ' → ' + (BK.params.aeroport||'') + rAirline + rTimes;
+            }
+        }
+
+        var deltaLine = document.getElementById('bkc-recap-row-vol-delta');
+        if (deltaLine) {
+            if (bkc_vol_delta_total > 0) {
+                deltaLine.style.display = 'flex';
+                var deltaVal = document.getElementById('bkc-recap-vol-delta-val');
+                if (deltaVal) { deltaVal.textContent = '+' + bkcFmt(bkc_vol_delta_total); deltaVal.style.color = '#b85c1a'; }
+            } else {
+                deltaLine.style.display = 'none';
+            }
+        }
+    }
+    window.bkcSelectCombo = bkcSelectCombo;
+
     /* ── Submit ── */
     window.bkcSubmit = function() {
         var errEl = document.getElementById('bkc-error');
@@ -359,6 +664,15 @@ var BK_CIRCUIT = <?php echo json_encode([
             date_depart:BK.params.date_depart, aeroport:BK.params.aeroport,
             nb_adultes:BK.params.nb_adultes, nb_enfants:0,
             nb_chambres:BK.params.nb_chambres, prix_vol:BK.params.prix_vol, rooms:BK.params.rooms||'',
+            selected_offer_id: (document.getElementById('bkc-selected-offer-id')||{}).value||'',
+            vol_delta_pax: (document.getElementById('bkc-selected-vol-delta')||{}).value||'0',
+            vol_aller_depart: (window.bkc_selected_combo&&window.bkc_selected_combo.aller) ? window.bkc_selected_combo.aller.depart_time : '',
+            vol_aller_arrivee: (window.bkc_selected_combo&&window.bkc_selected_combo.aller) ? window.bkc_selected_combo.aller.arrive_time : '',
+            vol_aller_num: (window.bkc_selected_combo&&window.bkc_selected_combo.aller) ? window.bkc_selected_combo.aller.flight_number : '',
+            vol_aller_cie: (window.bkc_selected_combo&&window.bkc_selected_combo.aller) ? window.bkc_selected_combo.aller.airline_name : '',
+            vol_retour_depart: (window.bkc_selected_combo&&window.bkc_selected_combo.retour) ? window.bkc_selected_combo.retour.depart_time : '',
+            vol_retour_arrivee: (window.bkc_selected_combo&&window.bkc_selected_combo.retour) ? window.bkc_selected_combo.retour.arrive_time : '',
+            vol_retour_num: (window.bkc_selected_combo&&window.bkc_selected_combo.retour) ? window.bkc_selected_combo.retour.flight_number : '',
             fact_prenom:(document.getElementById('fact-prenom')||{}).value||'',
             fact_nom:(document.getElementById('fact-nom')||{}).value||'',
             fact_email:(document.getElementById('fact-email')||{}).value||'',
