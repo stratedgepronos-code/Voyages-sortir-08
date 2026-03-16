@@ -1,7 +1,8 @@
 <?php
 /**
  * VS08 Voyages — Scanner IA d'hôtel
- * Récupère les infos d'un site hôtelier via Claude API
+ * Récupère les infos d'un site hôtelier via Claude API (recherche web).
+ * Modèle utilisé : Claude Sonnet 4 (claude-sonnet-4-20250514). Surcharge possible via VS08V_CLAUDE_MODEL dans wp-config ou config.cfg.
  */
 class VS08V_HotelScanner {
 
@@ -245,6 +246,7 @@ PROMPT;
         if (empty($api_key) || !is_string($api_key)) {
             wp_send_json_error('Clé API Claude non configurée. Ajoutez CLAUDE_API_KEY=votre_clé dans wp-content/plugins/vs08-voyages/config.cfg (ou VS08V_CLAUDE_KEY dans wp-config.php).');
         }
+        $model = defined('VS08V_CLAUDE_MODEL') ? VS08V_CLAUDE_MODEL : self::MODEL;
 
         try {
         $schema = self::get_search_extraction_schema();
@@ -275,7 +277,7 @@ Règles :
 PROMPT;
 
         $body = [
-            'model'      => self::MODEL,
+            'model'      => $model,
             'max_tokens' => 4000,
             'tools'      => [['type' => 'web_search_20250305', 'name' => 'web_search']],
             'messages'   => [['role' => 'user', 'content' => $prompt]],
@@ -300,6 +302,9 @@ PROMPT;
 
         if ($code !== 200) {
             $err_msg = $api_body['error']['message'] ?? 'Erreur HTTP ' . $code;
+            if ($code === 401 || stripos($err_msg, 'invalid') !== false || stripos($err_msg, 'api_key') !== false) {
+                $err_msg .= ' — Vérifiez la clé dans config.cfg (CLAUDE_API_KEY) et que votre compte Anthropic a des crédits.';
+            }
             wp_send_json_error('Claude : ' . $err_msg);
         }
 
@@ -333,7 +338,7 @@ PROMPT;
                         'anthropic-version' => '2023-06-01',
                     ],
                     'body' => json_encode([
-                        'model'    => self::MODEL,
+                        'model'    => $model,
                         'max_tokens' => 4000,
                         'messages' => $messages,
                     ]),

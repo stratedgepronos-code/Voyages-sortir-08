@@ -28,15 +28,20 @@ define('VS08V_VER',  '2.0.0');
 // ============================================================
 $vs08v_config_file = VS08V_PATH . 'config.cfg';
 if (file_exists($vs08v_config_file)) {
-    $lines = file($vs08v_config_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $raw = @file_get_contents($vs08v_config_file);
+    if ($raw !== false) {
+        $raw = preg_replace('/^\xEF\xBB\xBF/', '', $raw);
+        $lines = preg_split('/\r\n|\r|\n/', $raw);
+    } else {
+        $lines = [];
+    }
     foreach ($lines as $line) {
         $line = trim($line);
-        // Ignorer les commentaires (lignes commençant par # ou ;)
         if (empty($line) || $line[0] === '#' || $line[0] === ';') continue;
         if (strpos($line, '=') !== false) {
             [$key, $val] = explode('=', $line, 2);
             $key = trim($key);
-            $val = trim($val);
+            $val = trim($val, " \t\r\n\"'");
             if ($key === 'DUFFEL_API_KEY' && !defined('VS08_DUFFEL_API_KEY')) {
                 define('VS08_DUFFEL_API_KEY', $val);
             }
@@ -45,6 +50,9 @@ if (file_exists($vs08v_config_file)) {
             }
             if (($key === 'CLAUDE_API_KEY' || $key === 'VS08V_CLAUDE_KEY') && !defined('VS08V_CLAUDE_KEY')) {
                 define('VS08V_CLAUDE_KEY', $val);
+            }
+            if ($key === 'CLAUDE_MODEL' && !defined('VS08V_CLAUDE_MODEL')) {
+                define('VS08V_CLAUDE_MODEL', $val);
             }
             if ($key === 'VS08_SANDBOX_PAYMENT' && !defined('VS08_SANDBOX_PAYMENT')) {
                 define('VS08_SANDBOX_PAYMENT', $val === '1' || $val === 'true' || $val === 'yes');

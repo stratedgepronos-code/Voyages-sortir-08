@@ -85,12 +85,28 @@ class VS08V_HotelBox {
         </style>
 
         <!-- 🤖 SCANNER IA -->
+        <?php
+        $claude_ok = defined('VS08V_CLAUDE_KEY') && is_string(VS08V_CLAUDE_KEY) && strlen(trim(VS08V_CLAUDE_KEY)) > 10;
+        $config_exists = file_exists(defined('VS08V_PATH') ? VS08V_PATH . 'config.cfg' : '');
+        ?>
         <div class="vs08h-scanner-wrap">
             <div class="vs08h-scanner-title">
                 <span>🤖</span>
                 <h3>Remplissage automatique par IA</h3>
             </div>
-            <p class="vs08h-scanner-subtitle">Entrez le nom de l'hôtel : Claude recherche sur plusieurs sites (officiel, Booking, TripAdvisor…) et remplit tous les champs automatiquement.</p>
+            <p class="vs08h-scanner-subtitle">Entrez le nom de l'hôtel : Claude (Sonnet 4, recherche web) remplit les champs automatiquement.</p>
+            <p style="margin:-6px 0 10px;font-size:11px;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <?php if ($claude_ok): ?>
+                <span style="color:#86efac">✅ Clé Claude chargée</span> — les requêtes partent vers l’API (crédits consommés sur votre compte Anthropic).
+                <?php else: ?>
+                <span style="color:#fca5a5">❌ Clé Claude non chargée sur ce serveur</span>
+                <?php if (!$config_exists): ?>
+                    — Fichier <code>config.cfg</code> absent dans <code>wp-content/plugins/vs08-voyages/</code>. Uploadez-le par FTP avec la ligne <code>CLAUDE_API_KEY=sk-ant-...</code>.
+                <?php else: ?>
+                    — Le fichier <code>config.cfg</code> existe mais <code>CLAUDE_API_KEY</code> est absent ou vide. Ajoutez <code>CLAUDE_API_KEY=votre_clé</code> dans config.cfg sur le serveur.
+                <?php endif; ?>
+                <?php endif; ?>
+            </p>
             <!-- Recherche par nom -->
             <div id="vs08h-panel-by-name" class="vs08h-scanner-row" style="flex-wrap:wrap;gap:10px;align-items:flex-end">
                 <div style="flex:1;min-width:180px">
