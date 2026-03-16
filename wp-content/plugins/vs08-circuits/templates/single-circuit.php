@@ -201,6 +201,46 @@ var VS08C_CIRCUIT = <?php echo json_encode([
             </section>
             <?php endif; ?>
 
+            <!-- OPTIONS & SUPPLÉMENTS (sous Hébergement) -->
+            <?php if (!empty($options)): ?>
+            <section class="vc-section vc-options-section">
+                <h2 class="vc-section-title">🎁 Options & suppléments</h2>
+                <p class="vc-options-intro">Personnalisez votre circuit : les montants s’ajoutent au total dans le récapitulatif de réservation.</p>
+                <div class="vc-options-grid">
+                    <?php foreach ($options as $oi => $opt):
+                        $oid = $opt['id'] ?? 'opt_' . $oi;
+                        $type = $opt['type'] ?? 'par_pers';
+                        $prix_opt = floatval($opt['prix'] ?? 0);
+                        $label_opt = esc_html($opt['label'] ?? 'Option');
+                        $suffix = ($type === 'par_pers') ? '/pers.' : '';
+                        $icon = ($type === 'quantite') ? '📦' : '✨';
+                    ?>
+                    <div class="vc-option-card" data-type="<?php echo esc_attr($type); ?>">
+                        <div class="vc-option-card-inner">
+                            <span class="vc-option-card-icon"><?php echo $icon; ?></span>
+                            <div class="vc-option-card-body">
+                                <span class="vc-option-card-label"><?php echo $label_opt; ?></span>
+                                <span class="vc-option-card-price"><?php echo number_format($prix_opt, 0); ?> €<?php echo $suffix; ?></span>
+                            </div>
+                            <div class="vc-option-card-input">
+                                <?php if ($type === 'quantite'): ?>
+                                <select name="vc_opt_<?php echo esc_attr($oid); ?>" class="vc-option-qty" data-id="<?php echo esc_attr($oid); ?>" data-type="<?php echo esc_attr($type); ?>" data-prix="<?php echo esc_attr($prix_opt); ?>" aria-label="Quantité <?php echo $label_opt; ?>">
+                                    <?php for ($q = 0; $q <= 5; $q++): ?><option value="<?php echo $q; ?>"><?php echo $q; ?></option><?php endfor; ?>
+                                </select>
+                                <?php else: ?>
+                                <label class="vc-option-card-check">
+                                    <input type="checkbox" class="vc-option-cb" name="vc_opt_<?php echo esc_attr($oid); ?>" value="1" data-id="<?php echo esc_attr($oid); ?>" data-type="<?php echo esc_attr($type); ?>" data-prix="<?php echo esc_attr($prix_opt); ?>">
+                                    <span class="vc-option-checkbox-visual"></span>
+                                </label>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+            <?php endif; ?>
+
             <!-- INCLUS / NON INCLUS -->
             <section class="vc-section">
                 <h2 class="vc-section-title">✅ Ce qui est inclus</h2>
@@ -362,40 +402,10 @@ var VS08C_CIRCUIT = <?php echo json_encode([
                     <!-- Les chambres seront générées automatiquement par le JS -->
                 </div>
 
-                <!-- Statut vol (recherche Duffel) -->
+                <!-- Statut vol (recherche Duffel + SerpApi) -->
                 <div class="vc-vol-status" id="vc-vol-status" style="display:none; font-size:12px; padding:8px 12px; border-radius:8px; margin-bottom:12px; font-family:'Outfit',sans-serif"></div>
 
-                <?php if (!empty($options)): ?>
-                <!-- Options / Suppléments -->
-                <div class="vc-options-block">
-                    <div class="vc-field" style="margin-bottom:8px"><label>🎁 Options & suppléments</label></div>
-                    <?php foreach ($options as $oi => $opt):
-                        $oid = $opt['id'] ?? 'opt_' . $oi;
-                        $type = $opt['type'] ?? 'par_pers';
-                        $prix_opt = floatval($opt['prix'] ?? 0);
-                        $label_opt = esc_html($opt['label'] ?? 'Option');
-                        if ($type === 'quantite'): ?>
-                    <div class="vc-option-row">
-                        <span class="vc-option-label"><?php echo $label_opt; ?></span>
-                        <span class="vc-option-price"><?php echo number_format($prix_opt, 0); ?> €<?php echo $type === 'par_pers' ? '/pers.' : ''; ?></span>
-                        <select name="vc_opt_<?php echo esc_attr($oid); ?>" class="vc-option-qty" data-id="<?php echo esc_attr($oid); ?>" data-type="<?php echo esc_attr($type); ?>" data-prix="<?php echo esc_attr($prix_opt); ?>">
-                            <?php for ($q = 0; $q <= 5; $q++): ?><option value="<?php echo $q; ?>"><?php echo $q; ?></option><?php endfor; ?>
-                        </select>
-                    </div>
-                        <?php else: ?>
-                    <div class="vc-option-row">
-                        <label class="vc-option-label" style="cursor:pointer;display:flex;align-items:center;gap:8px">
-                            <input type="checkbox" class="vc-option-cb" name="vc_opt_<?php echo esc_attr($oid); ?>" value="1" data-id="<?php echo esc_attr($oid); ?>" data-type="<?php echo esc_attr($type); ?>" data-prix="<?php echo esc_attr($prix_opt); ?>">
-                            <span><?php echo $label_opt; ?></span>
-                        </label>
-                        <span class="vc-option-price"><?php echo number_format($prix_opt, 0); ?> €<?php echo $type === 'par_pers' ? '/pers.' : ''; ?></span>
-                    </div>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </div>
-                <?php endif; ?>
-
-                <!-- Price Result -->
+                <!-- Price Result (options/suppléments inclus via section sous Hébergement) -->
                 <div class="vc-price-result">
                     <div class="vc-price-placeholder" style="text-align:center;color:#9ca3af;font-size:13px;font-family:'Outfit',sans-serif;padding:12px 0">
                         Choisissez date et aéroport → le prix vol sera cherché puis ajouté au total
