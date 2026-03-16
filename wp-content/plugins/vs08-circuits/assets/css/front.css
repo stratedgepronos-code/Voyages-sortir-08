@@ -250,6 +250,18 @@
     .vc-field-row { grid-template-columns:1fr; }
 }
 
+/* ═══ CHECKOUT — Récap WooCommerce ═══ */
+.vs08c-woo-recap { font-family:'Outfit',sans-serif; }
+.vs08c-woo-recap h3,
+.vs08c-woo-recap h4 { font-family:'Playfair Display',serif; margin:12px 0 8px; color:#0f2424; }
+.vs08c-woo-recap h3 { font-size:18px; border-bottom:2px solid #59b7b7; padding-bottom:8px; }
+.vs08c-woo-recap h4 { font-size:14px; color:#59b7b7; text-transform:uppercase; letter-spacing:.5px; border-top:1px solid #e8e4dc; padding-top:12px; }
+.vs08c-woo-recap table { width:100%; border-collapse:collapse; margin-bottom:12px; }
+.vs08c-woo-recap td { padding:6px 8px; font-size:13px; vertical-align:top; border-bottom:1px solid #f0ece4; }
+.vs08c-woo-recap td:first-child { color:#6b7280; }
+.vs08c-woo-recap td:last-child { text-align:right; font-weight:600; white-space:nowrap; color:#0f2424; }
+.vs08c-woo-recap small { font-size:11px; display:block; font-weight:400; color:#9ca3af; }
+
 /* ═══ PRINT — éléments visibles uniquement à l'impression ═══ */
 .vc-print-header,
 .vc-print-footer { display:none; }

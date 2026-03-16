@@ -328,16 +328,36 @@ var BK_CIRCUIT = <?php echo json_encode([
             if (intval($qty) <= 0) continue;
         ?><input type="hidden" name="options[<?php echo esc_attr($oid); ?>]" value="<?php echo esc_attr(intval($qty)); ?>"><?php endforeach; ?>
 
-        <!-- CONFIRMATION -->
+        <!-- ÉTAPE 4 : CONFIRMATION — Récap complet avant paiement (comme golf) -->
         <div class="bkc-section">
-            <h3 class="bkc-section-title"><span class="bkc-step-num">4</span> Confirmation</h3>
-            <label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;font-family:'Outfit',sans-serif;color:#1a3a3a;cursor:pointer;margin-bottom:10px">
-                <input type="checkbox" id="bkc-confirm-info" style="margin-top:3px;flex-shrink:0">
-                Je certifie l'exactitude des informations voyageurs (noms, dates de naissance, passeports).
-            </label>
-            <label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;font-family:'Outfit',sans-serif;color:#1a3a3a;cursor:pointer">
+            <h3 class="bkc-section-title"><span class="bkc-step-num">4</span> Confirmation de votre réservation</h3>
+            <p class="bkc-section-sub">Vérifiez scrupuleusement toutes les informations avant de procéder au paiement.</p>
+
+            <div id="bkc-recap-final" style="border-radius:14px;margin-bottom:20px"></div>
+
+            <div style="background:#fff8f0;border:1.5px solid #f0dcc0;border-radius:12px;padding:16px;margin-bottom:16px">
+                <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start">
+                    <input type="checkbox" id="bkc-confirm-info" style="margin-top:3px;flex-shrink:0">
+                    <span style="font-size:12px;color:#6b5630;font-family:'Outfit',sans-serif;line-height:1.5">
+                        Je certifie que <strong>les noms, prénoms, dates de naissance et informations de passeport</strong> renseignés sont exacts et
+                        correspondent aux pièces d'identité officielles de chaque voyageur.
+                        Je suis informé(e) que toute erreur pourra entraîner un refus d'embarquement
+                        et que les frais de modification de billet seront à ma charge.
+                    </span>
+                </label>
+            </div>
+
+            <label style="display:flex;gap:10px;align-items:flex-start;font-size:12px;font-family:'Outfit',sans-serif;color:#1a3a3a;cursor:pointer;line-height:1.5">
                 <input type="checkbox" id="bkc-cgu" style="margin-top:3px;flex-shrink:0">
-                J'accepte les <a href="<?php echo home_url('/conditions/'); ?>" target="_blank" style="color:#3d9a9a">conditions générales de vente</a>.
+                <span>
+                    J'accepte les <a href="<?php echo home_url('/conditions/'); ?>" target="_blank" style="color:#3d9a9a">conditions générales de vente</a>
+                    et la <a href="<?php echo home_url('/rgpd'); ?>" target="_blank" style="color:#3d9a9a">politique de confidentialité</a>.
+                    Je reconnais avoir pris connaissance du <strong>formulaire d'information standard</strong> prévu par la
+                    <a href="https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32015L2302" target="_blank" rel="noopener" style="color:#3d9a9a">Directive (UE) 2015/2302</a>
+                    relative aux voyages à forfait, ainsi que des conditions d'annulation du séjour.
+                    Conformément à l'article L211-8 du Code du Tourisme, je dispose d'un droit de rétractation
+                    dans les conditions prévues par le contrat.
+                </span>
             </label>
         </div>
     </div>
@@ -466,6 +486,7 @@ var BK_CIRCUIT = <?php echo json_encode([
             circuit_id: BK.circuit_id,
             date: dateRetour,
             aeroport: BK.iata_dest,
+            destination: aero,
             passengers: bkc_vol_nb_pax
         }, function(res){
             if (res && res.success && res.data && res.data.flights && res.data.flights.length) {
@@ -643,11 +664,108 @@ var BK_CIRCUIT = <?php echo json_encode([
     }
     window.bkcSelectCombo = bkcSelectCombo;
 
+    /* ═══ Récap final — confirmation détaillée (comme golf) ═══ */
+    function bkcBuildRecap() {
+        var recap = document.getElementById('bkc-recap-final');
+        if (!recap) return;
+        var S = 'font-family:Outfit,sans-serif;';
+        var section = 'font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#59b7b7;margin:18px 0 8px;padding-top:14px;border-top:1px solid #e8e4dc;' + S;
+        var rowS = 'display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:#4a5568;' + S;
+        var lblS = 'color:#6b7280';
+        var valS = 'font-weight:600;color:#0f2424;text-align:right';
+
+        var html = '<div style="' + S + 'font-size:13px">';
+
+        html += '<div style="background:#f0fafa;border-radius:12px;padding:14px;margin-bottom:4px">';
+        html += '<div style="font-family:Playfair Display,serif;font-weight:700;font-size:17px;color:#0f2424;margin-bottom:4px">🗺️ ' + bkcEsc(BK.titre) + '</div>';
+        html += '<div style="font-size:12px;color:#4a5568;margin-top:2px">🗓️ ' + BK.devis.nb_total + ' voyageur(s) · ' + BK.nb_chambres + ' chambre(s)</div>';
+        html += '</div>';
+
+        html += '<div style="' + section + '">✈️ Vols & Dates</div>';
+        var dateDep = BK.params.date_depart ? bkcFmtDate(BK.params.date_depart) : '—';
+        var dateRet = BK.date_retour ? bkcFmtDate(BK.date_retour) : '—';
+        html += '<div style="' + rowS + '"><span style="' + lblS + '">Date de départ</span><span style="' + valS + '">' + dateDep + '</span></div>';
+        html += '<div style="' + rowS + '"><span style="' + lblS + '">Date de retour</span><span style="' + valS + '">' + dateRet + '</span></div>';
+
+        var volDetail = document.getElementById('bkc-recap-vol-detail');
+        if (volDetail && volDetail.textContent.trim() !== '—') {
+            html += '<div style="' + rowS + '"><span style="' + lblS + '">Vol aller (' + bkcEsc(BK.params.aeroport) + ' → ' + bkcEsc(BK.iata_dest) + ')</span><span style="' + valS + '">' + volDetail.textContent.trim() + '</span></div>';
+        }
+        var retourDetail = document.getElementById('bkc-recap-retour-detail');
+        if (retourDetail && retourDetail.textContent.trim() !== '—') {
+            html += '<div style="' + rowS + '"><span style="' + lblS + '">Vol retour (' + bkcEsc(BK.iata_dest) + ' → ' + bkcEsc(BK.params.aeroport) + ')</span><span style="' + valS + '">' + retourDetail.textContent.trim() + '</span></div>';
+        }
+
+        html += '<div style="' + section + '">👥 Voyageurs</div>';
+        document.querySelectorAll('.bkc-voyageur').forEach(function(row) {
+            var prenom = row.querySelector('input[name*="[prenom]"]');
+            var nom = row.querySelector('input[name*="[nom]"]');
+            var ddn = row.querySelector('input[name*="[ddn]"]');
+            var passeport = row.querySelector('input[name*="[passeport]"]');
+            var nationalite = row.querySelector('input[name*="[nationalite]"]');
+            var chambre = row.querySelector('input[name*="[chambre]"]');
+            if (!prenom || !prenom.value) return;
+            html += '<div style="background:#fff;border:1px solid #e8e4dc;border-radius:10px;padding:10px 12px;margin-bottom:6px">';
+            html += '<div style="font-weight:700;color:#0f2424;font-size:14px;margin-bottom:4px">' + bkcEsc(prenom.value) + ' ' + bkcEsc(nom.value.toUpperCase());
+            if (chambre) html += ' <span style="background:#edf8f8;color:#3d9a9a;padding:1px 6px;border-radius:6px;font-size:10px;margin-left:6px">Ch.' + chambre.value + '</span>';
+            html += '</div>';
+            var details = [];
+            if (ddn && ddn.value) details.push('Né(e) le ' + bkcFmtDate(ddn.value));
+            if (nationalite && nationalite.value) details.push(bkcEsc(nationalite.value));
+            if (passeport && passeport.value) details.push('Passeport : ' + bkcEsc(passeport.value));
+            if (details.length) html += '<div style="font-size:11px;color:#6b7280">' + details.join(' · ') + '</div>';
+            html += '</div>';
+        });
+
+        html += '<div style="' + section + '">📋 Facturation</div>';
+        var fP = document.getElementById('fact-prenom'), fN = document.getElementById('fact-nom');
+        var fE = document.getElementById('fact-email'), fT = document.getElementById('fact-tel');
+        var fA = document.getElementById('fact-adresse'), fCP = document.getElementById('fact-cp'), fV = document.getElementById('fact-ville');
+        if (fP && fN) html += '<div style="color:#0f2424;font-weight:600">' + bkcEsc(fP.value) + ' ' + bkcEsc(fN.value) + '</div>';
+        if (fE) html += '<div style="color:#4a5568">' + bkcEsc(fE.value) + '</div>';
+        if (fT) html += '<div style="color:#4a5568">' + bkcEsc(fT.value) + '</div>';
+        if (fA && fA.value) html += '<div style="color:#4a5568">' + bkcEsc(fA.value) + (fCP && fCP.value ? ', ' + bkcEsc(fCP.value) : '') + (fV && fV.value ? ' ' + bkcEsc(fV.value) : '') + '</div>';
+
+        var total = Math.ceil(parseFloat(BK.devis.total) || 0);
+        html += '<div style="margin-top:18px;padding-top:14px;border-top:2.5px solid #3d9a9a;display:flex;justify-content:space-between;align-items:center">';
+        html += '<span style="font-size:15px;font-weight:700;color:#0f2424">Total circuit</span>';
+        html += '<span style="font-family:Playfair Display,serif;font-size:28px;font-weight:700;color:#3d9a9a">' + bkcFmt(total) + '</span>';
+        html += '</div>';
+
+        if (!BK.payer_tout) {
+            var acomptePct = parseFloat(BK.acompte_pct) || 30;
+            var acompte = Math.ceil(total * acomptePct / 100);
+            html += '<div style="background:#e8f8f0;border-radius:10px;padding:10px;margin-top:8px;text-align:center">';
+            html += '<div style="font-weight:700;font-size:17px;color:#2d8a5a">' + bkcFmt(acompte) + '</div>';
+            html += '<div style="font-size:11px;color:#6b7280">Acompte ' + acomptePct + '% à payer maintenant · Solde ' + BK.delai_solde + ' j. avant départ</div>';
+            html += '</div>';
+        } else {
+            html += '<div style="background:#fff3e0;border-radius:10px;padding:10px;margin-top:8px;text-align:center">';
+            html += '<div style="font-weight:700;font-size:14px;color:#b85c1a">Paiement intégral requis</div>';
+            html += '<div style="font-size:11px;color:#6b7280">Départ dans moins de ' + BK.delai_solde + ' jours</div>';
+            html += '</div>';
+        }
+
+        html += '</div>';
+        recap.innerHTML = html;
+    }
+
+    function bkcFmtDate(dateStr) {
+        if (!dateStr) return '—';
+        var parts = dateStr.split('-');
+        if (parts.length !== 3) return dateStr;
+        var mois = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+        return parseInt(parts[2]) + ' ' + mois[parseInt(parts[1]) - 1] + ' ' + parts[0];
+    }
+
+    bkcBuildRecap();
+
     /* ── Submit ── */
     window.bkcSubmit = function() {
         var errEl = document.getElementById('bkc-error');
+        bkcBuildRecap();
         if (!document.getElementById('bkc-confirm-info').checked) { alert("Veuillez certifier l'exactitude des informations voyageurs."); return; }
-        if (!document.getElementById('bkc-cgu').checked) { alert('Veuillez accepter les conditions générales de vente.'); return; }
+        if (!document.getElementById('bkc-cgu').checked) { alert('Veuillez accepter les conditions générales de vente et la politique de confidentialité.'); return; }
 
         var missing = false;
         document.querySelectorAll('.bkc-required').forEach(function(el){ if(!el.value.trim()){el.style.borderColor='#dc2626';missing=true;}else{el.style.borderColor='';} });

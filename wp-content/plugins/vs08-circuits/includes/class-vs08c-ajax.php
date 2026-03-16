@@ -79,7 +79,8 @@ function vs08c_ajax_get_flight() {
     }
 
     $origin      = $aeroport;
-    $destination = $iata_dest;
+    $destination_override = strtoupper(sanitize_text_field($_POST['destination'] ?? ''));
+    $destination = !empty($destination_override) ? $destination_override : $iata_dest;
 
     // Vérifier que Duffel est disponible (chargé par le plugin vs08-voyages)
     if (!class_exists('VS08_Duffel_API')) {
