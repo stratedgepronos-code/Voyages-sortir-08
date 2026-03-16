@@ -390,8 +390,8 @@ class VS08C_Meta {
                 </div>
 
                 <div class="vs08c-pricing-section" style="margin-top:24px">
-                    <h4>📅 Périodes de départ</h4>
-                    <p class="vs08c-help-block">Définissez les périodes pendant lesquelles le circuit est disponible, et cochez les jours de départ possibles.</p>
+                    <h4>📅 Périodes de départ (Du… Au…)</h4>
+                    <p class="vs08c-help-block">Comme pour les séjours golf : définissez une <strong>période</strong> (date de début → date de fin) pendant laquelle le circuit est disponible, puis cochez les jours de la semaine où un départ est possible. Le calendrier utilisé est celui de VS08.</p>
                     <?php
                     $jours_semaine = [1=>'Lun',2=>'Mar',3=>'Mer',4=>'Jeu',5=>'Ven',6=>'Sam',7=>'Dim'];
                     $dates_periodes = $m['dates_depart'] ?? [];
