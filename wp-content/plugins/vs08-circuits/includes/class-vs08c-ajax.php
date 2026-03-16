@@ -19,6 +19,7 @@ function vs08c_ajax_calculate() {
         'aeroport'    => strtoupper(sanitize_text_field($_POST['aeroport'] ?? '')),
         'prix_vol'    => floatval($_POST['prix_vol'] ?? 0),
         'rooms'       => $_POST['rooms'] ?? '',
+        'options'     => $_POST['options'] ?? '',
     ];
 
     $devis = VS08C_Calculator::calculate($circuit_id, $params);
@@ -41,18 +42,90 @@ function vs08c_ajax_booking_submit() {
     wp_send_json_success($result);
 }
 
-/* ── 3. Recherche de vols (réutilise vs08-voyages si disponible) ── */
+/* ── 3. Recherche de vols (Duffel, comme séjours golf) ── */
 add_action('wp_ajax_vs08c_get_flight',        'vs08c_ajax_get_flight');
 add_action('wp_ajax_nopriv_vs08c_get_flight', 'vs08c_ajax_get_flight');
 
 function vs08c_ajax_get_flight() {
-    // Réutiliser le handler de vs08-voyages s'il existe
-    if (function_exists('vs08v_ajax_get_flight')) {
-        vs08v_ajax_get_flight();
-        return;
-    }
+    while (ob_get_level()) { ob_end_clean(); }
+    @header('Content-Type: application/json; charset=' . get_option('blog_charset'));
+    try {
+        if (!check_ajax_referer('vs08c_nonce', 'nonce', false)) {
+            wp_send_json_error('Session expirée. Rechargez la page.');
+            return;
+        }
+        $circuit_id = intval($_POST['circuit_id'] ?? 0);
+        $date       = sanitize_text_field($_POST['date'] ?? '');
+        $aeroport   = strtoupper(sanitize_text_field($_POST['aeroport'] ?? ''));
+        $passengers = max(1, intval($_POST['passengers'] ?? 1));
 
-    // Sinon, fallback minimal
-    check_ajax_referer('vs08c_nonce', 'nonce');
-    wp_send_json_error('Recherche de vols non disponible. Installez le plugin VS08 Voyages pour activer cette fonctionnalité.');
+        if (!$circuit_id || !$date || !$aeroport) {
+            wp_send_json_error('Paramètres manquants (date, aéroport).');
+            return;
+        }
+        if (get_post_type($circuit_id) !== 'vs08_circuit') {
+            wp_send_json_error('Circuit invalide.');
+            return;
+        }
+
+        $m          = VS08C_Meta::get($circuit_id);
+        $iata_dest  = strtoupper(sanitize_text_field($m['iata_dest'] ?? ''));
+        $duree_j    = max(1, intval($m['duree_jours'] ?? 8));
+        $prix_base  = floatval($m['prix_vol_base'] ?? 0);
+
+        if (empty($iata_dest)) {
+            if ($prix_base > 0) {
+                wp_send_json_success(['prix' => $prix_base, 'note' => 'estimate', 'flights' => []]);
+                return;
+            }
+            wp_send_json_error('Code IATA destination non configuré pour ce circuit.');
+            return;
+        }
+
+        $origin      = $aeroport;
+        $destination = $iata_dest;
+        $date_retour = date('Y-m-d', strtotime($date . ' +' . $duree_j . ' days'));
+
+        if (!class_exists('VS08_Duffel_API')) {
+            if ($prix_base > 0) {
+                wp_send_json_success(['prix' => $prix_base, 'note' => 'estimate', 'flights' => []]);
+                return;
+            }
+            wp_send_json_error('Recherche de vols temporairement indisponible. Utilisez le prix estimé ou réessayez plus tard.');
+            return;
+        }
+
+        $duffel_result = VS08_Duffel_API::search_flights($origin, $destination, $date, $passengers, $date_retour);
+
+        if (is_wp_error($duffel_result)) {
+            if ($prix_base > 0) {
+                wp_send_json_success(['prix' => $prix_base, 'note' => 'estimate', 'flights' => []]);
+                return;
+            }
+            wp_send_json_error($duffel_result->get_error_message());
+            return;
+        }
+
+        $flights = $duffel_result['flights'] ?? [];
+        if (empty($flights)) {
+            if ($prix_base > 0) {
+                wp_send_json_success(['prix' => $prix_base, 'note' => 'estimate', 'flights' => []]);
+                return;
+            }
+            wp_send_json_error('Aucun vol direct trouvé pour cette date / cet aéroport.');
+            return;
+        }
+
+        $prix = $flights[0]['price_per_pax'] ?? $prix_base;
+        wp_send_json_success([
+            'prix'   => round((float) $prix, 2),
+            'note'   => 'realtime',
+            'flights' => $flights,
+        ]);
+    } catch (\Throwable $e) {
+        if (function_exists('error_log')) {
+            error_log('[VS08c get_flight] ' . $e->getMessage());
+        }
+        wp_send_json_error('Erreur lors de la recherche de vols. Réessayez.');
+    }
 }

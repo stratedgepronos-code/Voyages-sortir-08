@@ -115,7 +115,33 @@ class VS08C_Calculator {
             ];
         }
 
-        // ── 5. TAXES ──
+        // ── 5. OPTIONS / SUPPLÉMENTS ──
+        $options_raw = $params['options'] ?? '';
+        $options_circuit = $m['options'] ?? [];
+        if (!empty($options_raw) && !empty($options_circuit)) {
+            $options_decoded = is_string($options_raw) ? json_decode(stripslashes($options_raw), true) : $options_raw;
+            if (is_array($options_decoded)) {
+                foreach ($options_circuit as $opt) {
+                    $id = $opt['id'] ?? '';
+                    $qty = isset($options_decoded[$id]) ? max(0, intval($options_decoded[$id])) : 0;
+                    if ($qty <= 0) continue;
+                    $prix_opt = floatval($opt['prix'] ?? 0);
+                    $type = $opt['type'] ?? 'par_pers';
+                    if ($type === 'par_pers') {
+                        $montant = $prix_opt * $qty * $nb_total;
+                        $result['lines'][] = ['label' => '🎁 ' . ($opt['label'] ?? 'Option'), 'montant' => $montant, 'detail' => $prix_opt . '€/pers × ' . $nb_total . ' pers.'];
+                    } elseif ($type === 'fixe') {
+                        $montant = $prix_opt * $qty;
+                        $result['lines'][] = ['label' => '🎁 ' . ($opt['label'] ?? 'Option'), 'montant' => $montant, 'detail' => $prix_opt . '€ × ' . $qty];
+                    } else {
+                        $montant = $prix_opt * $qty;
+                        $result['lines'][] = ['label' => '🎁 ' . ($opt['label'] ?? 'Option'), 'montant' => $montant, 'detail' => $prix_opt . '€ × ' . $qty];
+                    }
+                }
+            }
+        }
+
+        // ── 6. TAXES ──
         $taxes = floatval($m['prix_taxe'] ?? 0);
         if ($taxes > 0) {
             $result['lines'][] = [
@@ -125,7 +151,7 @@ class VS08C_Calculator {
             ];
         }
 
-        // ── 6. TRANSFERTS ──
+        // ── 7. TRANSFERTS ──
         $transfert = floatval($m['prix_transfert'] ?? 0);
         if ($transfert > 0) {
             $result['lines'][] = [

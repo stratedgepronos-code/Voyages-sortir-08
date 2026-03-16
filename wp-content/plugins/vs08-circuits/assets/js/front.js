@@ -138,14 +138,64 @@ $(document).on('change', '#vc-nb-chambres, #vc-nb-adultes', function(){
 $(document).on('change', '.vc-room-occupants', triggerCalc);
 
 /* ══════════════════════════════════════
-   CALCULATOR — Real-time price
+   CALCULATOR — Real-time price + vol Duffel + options
    ══════════════════════════════════════ */
 var CIRCUIT = window.VS08C_CIRCUIT || {};
 var calcTimer = null;
+var vc_prix_vol = 0;
 
 function triggerCalc(){
     clearTimeout(calcTimer);
     calcTimer = setTimeout(doCalc, 300);
+}
+
+function fetchFlightPrice(){
+    var date = $('#vc-date-depart').val();
+    var aero = $('#vc-aeroport').val();
+    var passengers = parseInt($('#vc-nb-adultes').val()) || 2;
+    var $st = $('#vc-vol-status');
+    if (!date || !aero || !CIRCUIT.id) {
+        $st.hide().removeClass('loading loaded error');
+        vc_prix_vol = CIRCUIT.prix_vol_base || 0;
+        return;
+    }
+    $st.show().removeClass('loaded error').addClass('loading').text('Recherche du prix vol en cours…');
+    $.post(vs08c.ajax_url, {
+        action: 'vs08c_get_flight',
+        nonce: vs08c.nonce,
+        circuit_id: CIRCUIT.id,
+        date: date,
+        aeroport: aero,
+        passengers: passengers
+    }, function(resp){
+        if (resp.success && resp.data && typeof resp.data.prix !== 'undefined') {
+            vc_prix_vol = parseFloat(resp.data.prix) || 0;
+            $st.removeClass('loading error').addClass('loaded')
+                .text(resp.data.note === 'realtime' ? '✅ Vol ' + Math.round(vc_prix_vol) + ' €/pers. (temps réel)' : '~' + Math.round(vc_prix_vol) + ' €/pers. (estimé)');
+        } else {
+            vc_prix_vol = CIRCUIT.prix_vol_base || 0;
+            $st.removeClass('loading loaded').addClass('error').text(resp.data || 'Prix vol non dispo. — Estimation utilisée.');
+        }
+        triggerCalc();
+    }).fail(function(){
+        vc_prix_vol = CIRCUIT.prix_vol_base || 0;
+        $st.removeClass('loading loaded').addClass('error').text('Recherche vol indisponible. Estimation utilisée.').show();
+        triggerCalc();
+    });
+}
+
+function collectOptions(){
+    var o = {};
+    $('.vc-option-cb:checked').each(function(){
+        var id = $(this).data('id');
+        if (id) o[id] = 1;
+    });
+    $('.vc-option-qty').each(function(){
+        var id = $(this).data('id');
+        var qty = parseInt($(this).val(), 10) || 0;
+        if (id && qty > 0) o[id] = qty;
+    });
+    return o;
 }
 
 function doCalc(){
@@ -158,8 +208,9 @@ function doCalc(){
         nb_chambres: parseInt($('#vc-nb-chambres').val()) || 1,
         date_depart: $('#vc-date-depart').val() || '',
         aeroport: $('#vc-aeroport').val() || '',
-        prix_vol: 0,
-        rooms: collectRooms()
+        prix_vol: vc_prix_vol,
+        rooms: collectRooms(),
+        options: JSON.stringify(collectOptions())
     };
 
     $.post(vs08c.ajax_url, data, function(resp){
@@ -184,7 +235,7 @@ function renderPrice(devis){
     if (!$result.length) return;
 
     var html = '<div class="vc-price-lines">';
-    if (devis.lines) {
+    if (devis.lines && devis.lines.length) {
         devis.lines.forEach(function(l){
             html += '<div class="vc-price-line"><span>' + l.label + '</span><span>' + formatPrice(l.montant) + ' €</span></div>';
         });
@@ -208,8 +259,11 @@ function formatPrice(v){
     return parseFloat(v).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
-// Bind calc triggers
-$(document).on('change input', '#vc-aeroport, #vc-date-depart', triggerCalc);
+// Bind: date ou aéroport → recherche vol puis recalc
+$(document).on('change', '#vc-date-depart, #vc-aeroport', function(){
+    fetchFlightPrice();
+});
+$(document).on('change', '.vc-option-cb, .vc-option-qty', triggerCalc);
 
 /* ══════════════════════════════════════
    BOOKING REDIRECT
@@ -224,7 +278,9 @@ $(document).on('click', '.vc-cta-btn', function(e){
         nadultes: $('#vc-nb-adultes').val(),
         nenfants: 0,
         nchamb: $('#vc-nb-chambres').val(),
-        rooms: collectRooms()
+        rooms: collectRooms(),
+        vol: vc_prix_vol,
+        options: encodeURIComponent(JSON.stringify(collectOptions()))
     };
 
     var qs = Object.keys(params).map(function(k){ return k + '=' + encodeURIComponent(params[k]); }).join('&');
@@ -236,8 +292,13 @@ $(document).on('click', '.vc-cta-btn', function(e){
    ══════════════════════════════════════ */
 $(function(){
     if (CIRCUIT.id) {
-        buildRooms(); // Build initial rooms
-        setTimeout(triggerCalc, 500);
+        buildRooms();
+        // Si date + aéroport déjà sélectionnés (ex. retour), lancer la recherche vol
+        if ($('#vc-date-depart').val() && $('#vc-aeroport').val()) {
+            fetchFlightPrice();
+        } else {
+            setTimeout(triggerCalc, 500);
+        }
     }
 });
 

@@ -17,6 +17,11 @@ $flag    = VS08C_Meta::resolve_flag($m);
 $duree   = intval($m['duree'] ?? 7);
 $duree_j = intval($m['duree_jours'] ?? ($duree + 1));
 
+$options_from_url = [];
+if (!empty($_GET['options'])) {
+    $dec = json_decode(stripslashes($_GET['options']), true);
+    if (is_array($dec)) $options_from_url = $dec;
+}
 $params = [
     'date_depart' => sanitize_text_field($_GET['date'] ?? ''),
     'aeroport'    => strtoupper(sanitize_text_field($_GET['aeroport'] ?? '')),
@@ -25,6 +30,7 @@ $params = [
     'nb_chambres' => max(1, intval($_GET['nchamb'] ?? 1)),
     'prix_vol'    => floatval($_GET['vol'] ?? 0),
     'rooms'       => sanitize_text_field($_GET['rooms'] ?? ''),
+    'options'     => !empty($options_from_url) ? json_encode($options_from_url) : '',
 ];
 $nb_total    = $params['nb_adultes'];
 $nb_chambres = $params['nb_chambres'];
@@ -228,25 +234,26 @@ var BK_CIRCUIT = <?php echo json_encode([
             </div>
         </div>
 
-        <!-- ÉTAPE 3 : Options -->
-        <?php $circuit_options = $m['options'] ?? []; if (!empty($circuit_options)): ?>
-        <div class="bkc-section">
-            <h3 class="bkc-section-title"><span class="bkc-step-num">3</span> Options & Suppléments</h3>
-            <?php foreach ($circuit_options as $opt): ?>
-            <div class="bkc-option-row">
-                <span class="bkc-option-label"><?php echo esc_html($opt['label']); ?></span>
-                <span class="bkc-option-price"><?php echo number_format(floatval($opt['prix']), 0); ?> €<?php echo ($opt['type'] ?? '') === 'par_pers' ? '/pers.' : ''; ?></span>
-                <select name="option_<?php echo esc_attr($opt['id']); ?>" style="width:70px;padding:6px;border:1px solid #ddd;border-radius:8px;font-family:'Outfit',sans-serif">
-                    <option value="0">Non</option><option value="1">Oui</option>
-                </select>
-            </div>
-            <?php endforeach; ?>
-        </div>
-        <?php endif; ?>
+        <!-- Options : récap des options choisies sur la page produit (champs cachés pour le POST) -->
+        <?php
+        $circuit_options = $m['options'] ?? [];
+        $options_recap = [];
+        if (!empty($options_from_url) && !empty($circuit_options)) {
+            foreach ($circuit_options as $opt) {
+                $oid = $opt['id'] ?? '';
+                $qty = isset($options_from_url[$oid]) ? max(0, intval($options_from_url[$oid])) : 0;
+                if ($qty > 0) {
+                    $options_recap[] = ['label' => $opt['label'], 'prix' => $opt['prix'], 'type' => $opt['type'] ?? 'par_pers', 'qty' => $qty];
+                }
+            }
+        }
+        foreach ($options_from_url as $oid => $qty):
+            if (intval($qty) <= 0) continue;
+        ?><input type="hidden" name="options[<?php echo esc_attr($oid); ?>]" value="<?php echo esc_attr(intval($qty)); ?>"><?php endforeach; ?>
 
         <!-- CONFIRMATION -->
         <div class="bkc-section">
-            <h3 class="bkc-section-title"><span class="bkc-step-num"><?php echo !empty($circuit_options) ? '4' : '3'; ?></span> Confirmation</h3>
+            <h3 class="bkc-section-title"><span class="bkc-step-num">3</span> Confirmation</h3>
             <label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;font-family:'Outfit',sans-serif;color:#1a3a3a;cursor:pointer;margin-bottom:10px">
                 <input type="checkbox" id="bkc-confirm-info" style="margin-top:3px;flex-shrink:0">
                 Je certifie l'exactitude des informations voyageurs (noms, dates de naissance, passeports).
@@ -266,6 +273,9 @@ var BK_CIRCUIT = <?php echo json_encode([
         <div class="bkc-recap-line"><span>✈️ Aéroport</span><span><?php echo esc_html($params['aeroport'] ?: '—'); ?></span></div>
         <div class="bkc-recap-line"><span>📅 Durée</span><span><?php echo $duree_j; ?>j / <?php echo $duree; ?>n</span></div>
         <div class="bkc-recap-line"><span>👥 Voyageurs</span><span><?php echo $nb_total; ?> pers.</span></div>
+        <?php if (!empty($options_recap)): ?>
+        <div class="bkc-recap-line" style="font-size:12px;color:#6b7280"><span>🎁 Options</span><span><?php echo esc_html(implode(', ', array_map(function($o){ return $o['label']; }, $options_recap))); ?></span></div>
+        <?php endif; ?>
         <div style="height:12px"></div>
         <?php foreach ($devis['lines'] as $line): ?>
         <div class="bkc-recap-line"><span><?php echo esc_html($line['label']); ?></span><span><?php echo number_format($line['montant'], 0, ',', ' '); ?> €</span></div>
@@ -358,7 +368,7 @@ var BK_CIRCUIT = <?php echo json_encode([
             fact_ville:(document.getElementById('fact-ville')||{}).value||''
         };
         document.querySelectorAll('.bkc-voyageur').forEach(function(row){ row.querySelectorAll('input').forEach(function(input){ if(input.name) data[input.name]=input.value; }); });
-        document.querySelectorAll('[name^="option_"]').forEach(function(sel){ var optId=sel.name.replace('option_',''); if(parseInt(sel.value)>0) data['options['+optId+']']=sel.value; });
+        document.querySelectorAll('input[name^="options["]').forEach(function(inp){ var n=inp.getAttribute('name'); var m=n&&n.match(/options\[([^\]]+)\]/); if(m) data['options['+m[1]+']']=inp.value; });
 
         function done(res){if(res&&res.success&&res.data&&res.data.redirect){window.location.href=res.data.redirect;}else{errEl.textContent=(res&&res.data&&typeof res.data==='string')?res.data:'Erreur. Contactez-nous au 03 26 65 28 63.';errEl.style.display='block';submitting=false;btn.disabled=false;btn.textContent='🔒 Procéder au paiement →';load.style.display='none';}}
         function fail(){errEl.textContent='Erreur réseau. Vérifiez votre connexion.';errEl.style.display='block';submitting=false;btn.disabled=false;btn.textContent='🔒 Procéder au paiement →';load.style.display='none';}
