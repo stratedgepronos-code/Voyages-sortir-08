@@ -92,6 +92,8 @@ var BK_CIRCUIT = <?php echo json_encode([
     'ajax_url'       => admin_url('admin-ajax.php'),
     'nonce'          => wp_create_nonce('vs08c_nonce'),
     'date_retour'    => $params['date_depart'] ? date('Y-m-d', strtotime($params['date_depart'].' +'.$duree.' days')) : '',
+    'insurance_pp'   => $insurance_price,
+    'insurance_total'=> $insurance_price * $nb_total,
 ]); ?>;
 </script>
 
@@ -148,6 +150,31 @@ var BK_CIRCUIT = <?php echo json_encode([
 .bkc-btn-prev{padding:15px 24px;background:#fff;color:#0f2424;border:1.5px solid #e5e7eb;border-radius:14px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
 .bkc-btn-prev:hover{border-color:#59b7b7;color:#59b7b7}
 .bkc-step-content{}
+/* ── Assurance (mêmes styles que golf) ── */
+.bk-ins-wrap{background:linear-gradient(135deg,#f0f9fa 0%,#fdf2f8 100%);border:2px solid #59b7b7;border-radius:18px;padding:0;overflow:hidden}
+.bk-ins-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid rgba(89,183,183,.18)}
+.bk-ins-logo{height:32px;width:auto}
+.bk-ins-badge{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;background:linear-gradient(135deg,#e3147a,#c30d66);color:#fff;padding:4px 12px;border-radius:20px;letter-spacing:.5px}
+.bk-ins-body{padding:14px 20px 16px}
+.bk-ins-hook{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:#0f2424;line-height:1.35;margin:0 0 6px}
+.bk-ins-sub{font-family:'Outfit',sans-serif;font-size:12.5px;color:#4b5563;line-height:1.5;margin:0 0 14px}
+.bk-ins-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.bk-ins-card{display:flex;align-items:flex-start;gap:8px;background:rgba(255,255,255,.75);border:1px solid rgba(89,183,183,.2);border-radius:10px;padding:9px 11px}
+.bk-ins-card-icon{font-size:18px;flex-shrink:0}
+.bk-ins-card-label{font-family:'Outfit',sans-serif;font-size:11.5px;font-weight:600;color:#1f2937;line-height:1.3}
+.bk-ins-card-val{font-family:'Outfit',sans-serif;font-size:10.5px;color:#6b7280;line-height:1.3;margin-top:1px}
+.bk-ins-docs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.bk-ins-doc{font-family:'Outfit',sans-serif;font-size:11px;color:#0083a3;text-decoration:none;display:flex;align-items:center;gap:4px;padding:5px 10px;background:rgba(255,255,255,.8);border:1px solid rgba(0,131,163,.2);border-radius:8px;transition:all .2s}
+.bk-ins-doc:hover{background:#e3147a;color:#fff;border-color:#e3147a}
+.bk-ins-footer{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:rgba(255,255,255,.6);border-top:1px solid rgba(89,183,183,.15)}
+.bk-ins-check-label{display:flex;align-items:center;gap:12px;cursor:pointer;flex:1}
+.bk-ins-check-label input[type=checkbox]{width:20px;height:20px;accent-color:#e3147a;flex-shrink:0}
+.bk-ins-check-text{font-family:'Outfit',sans-serif;font-size:13.5px;font-weight:700;color:#0f2424}
+.bk-ins-check-text small{font-weight:400;color:#6b7280;font-size:12px}
+.bk-ins-price{font-family:'Outfit',sans-serif;text-align:right}
+.bk-ins-price-main{font-size:18px;font-weight:800;color:#e3147a}
+.bk-ins-price-detail{font-size:11px;color:#6b7280;margin-top:1px}
+@media(max-width:480px){.bk-ins-grid{grid-template-columns:1fr}.bk-ins-footer{flex-direction:column;gap:12px;align-items:stretch}.bk-ins-price{text-align:left}}
 .bkc-security{text-align:center;margin-top:10px;font-size:11px;color:#999;font-family:'Outfit',sans-serif}
 .bkc-error{background:#fee2e2;color:#dc2626;padding:14px 16px;border-radius:12px;font-size:13px;font-family:'Outfit',sans-serif;margin-bottom:16px;display:none}
 .bkc-loading{display:none;text-align:center;padding:16px}
@@ -255,6 +282,46 @@ var BK_CIRCUIT = <?php echo json_encode([
             <input type="hidden" id="bkc-selected-offer-id" name="selected_offer_id" value="">
             <input type="hidden" id="bkc-selected-vol-delta" name="vol_delta_pax" value="0">
         </div>
+
+        <!-- ══ ASSURANCE VOYAGE ══ -->
+        <?php if ($insurance_price > 0): ?>
+        <div class="bkc-section">
+            <div class="bk-ins-wrap">
+                <div class="bk-ins-header">
+                    <img src="<?php echo defined('VS08V_URL') ? VS08V_URL : ''; ?>assets/img/assurever-logo.png" alt="Assurever" class="bk-ins-logo" onerror="this.style.display='none'">
+                    <span class="bk-ins-badge">GALAXY MULTIRISQUE</span>
+                </div>
+                <div class="bk-ins-body">
+                    <div class="bk-ins-hook">Voyagez l'esprit libre, on s'occupe du reste.</div>
+                    <p class="bk-ins-sub">Annulation toutes causes, rapatriement 24h/24, frais médicaux à l'étranger, bagages… Une couverture complète pour partir sereinement.</p>
+                    <div class="bk-ins-grid">
+                        <div class="bk-ins-card"><span class="bk-ins-card-icon">🚫</span><div><div class="bk-ins-card-label">Annulation toutes causes</div><div class="bk-ins-card-val">Jusqu'à 16 000 € / pers.</div></div></div>
+                        <div class="bk-ins-card"><span class="bk-ins-card-icon">🚑</span><div><div class="bk-ins-card-label">Assistance rapatriement</div><div class="bk-ins-card-val">24h/24 · 7j/7 · Frais réels</div></div></div>
+                        <div class="bk-ins-card"><span class="bk-ins-card-icon">🏥</span><div><div class="bk-ins-card-label">Frais médicaux étranger</div><div class="bk-ins-card-val">Jusqu'à 150 000 €</div></div></div>
+                        <div class="bk-ins-card"><span class="bk-ins-card-icon">🧳</span><div><div class="bk-ins-card-label">Bagages & effets perso.</div><div class="bk-ins-card-val">Jusqu'à 2 000 € / pers.</div></div></div>
+                        <div class="bk-ins-card"><span class="bk-ins-card-icon">⚖️</span><div><div class="bk-ins-card-label">Responsabilité civile</div><div class="bk-ins-card-val">Jusqu'à 1 000 000 €</div></div></div>
+                        <div class="bk-ins-card"><span class="bk-ins-card-icon">✈️</span><div><div class="bk-ins-card-label">Vol manqué</div><div class="bk-ins-card-val">Jusqu'à 80 % du billet</div></div></div>
+                    </div>
+                    <?php if (defined('VS08V_URL')): ?>
+                    <div class="bk-ins-docs">
+                        <a href="<?php echo VS08V_URL; ?>assets/docs/assurever-ipid-galaxy.pdf" target="_blank" class="bk-ins-doc">📄 Fiche produit (IPID)</a>
+                        <a href="<?php echo VS08V_URL; ?>assets/docs/assurever-conditions-galaxy.pdf" target="_blank" class="bk-ins-doc">📄 Conditions générales</a>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <div class="bk-ins-footer">
+                    <label class="bk-ins-check-label">
+                        <input type="checkbox" id="bkc-assurance" onchange="bkcUpdateInsurance()">
+                        <div class="bk-ins-check-text">Oui, je souhaite être protégé(e)<br><small>Assurance Multirisque GALAXY · Assurever / Mutuaide</small></div>
+                    </label>
+                    <div class="bk-ins-price">
+                        <div class="bk-ins-price-main"><?php echo number_format($insurance_price * $nb_total, 2, ',', ' '); ?> €</div>
+                        <div class="bk-ins-price-detail"><?php echo number_format($insurance_price, 2, ',', ' '); ?> € /pers. × <?php echo $nb_total; ?></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- ÉTAPE 2 : Voyageurs groupés par chambre -->
         <div class="bkc-section">
@@ -402,6 +469,7 @@ var BK_CIRCUIT = <?php echo json_encode([
         <?php if (!empty($options_recap)): ?>
         <div class="bkc-recap-line" style="font-size:12px;color:#6b7280"><span>🎁 Options</span><span><?php echo esc_html(implode(', ', array_map(function($o){ return $o['label']; }, $options_recap))); ?></span></div>
         <?php endif; ?>
+        <div class="bkc-recap-line" id="bkc-recap-row-insurance" style="display:none"><span>🛡️ Assurance Multirisques</span><span id="bkc-recap-insurance-val">—</span></div>
         <div style="height:12px"></div>
         <?php foreach ($devis['lines'] as $line): ?>
         <div class="bkc-recap-line"><span><?php echo esc_html($line['label']); ?></span><span><?php echo number_format($line['montant'], 0, ',', ' '); ?> €</span></div>
@@ -426,6 +494,20 @@ var BK_CIRCUIT = <?php echo json_encode([
 (function(){
     var BK = BK_CIRCUIT;
     var submitting = false;
+    var bkc_insurance_check = false;
+
+    window.bkcUpdateInsurance = function() {
+        var chk = document.getElementById('bkc-assurance');
+        bkc_insurance_check = chk && chk.checked;
+        var row = document.getElementById('bkc-recap-row-insurance');
+        var val = document.getElementById('bkc-recap-insurance-val');
+        if (bkc_insurance_check && BK.insurance_total > 0) {
+            if (row) row.style.display = 'flex';
+            if (val) { val.textContent = '+' + bkcFmt(BK.insurance_total); val.style.color = '#e3147a'; }
+        } else {
+            if (row) row.style.display = 'none';
+        }
+    };
 
     /* ── VS08 Calendar pour dates de naissance ── */
     function initDDNCalendars() {
@@ -751,7 +833,11 @@ var BK_CIRCUIT = <?php echo json_encode([
         if (fT) html += '<div style="color:#4a5568">' + bkcEsc(fT.value) + '</div>';
         if (fA && fA.value) html += '<div style="color:#4a5568">' + bkcEsc(fA.value) + (fCP && fCP.value ? ', ' + bkcEsc(fCP.value) : '') + (fV && fV.value ? ' ' + bkcEsc(fV.value) : '') + '</div>';
 
-        var total = Math.ceil(parseFloat(BK.devis.total) || 0);
+        if (bkc_insurance_check && BK.insurance_total > 0) {
+            html += '<div style="' + rowS + '"><span style="' + lblS + '">🛡️ Assurance Multirisques</span><span style="' + valS + ';color:#e3147a">+' + bkcFmt(BK.insurance_total) + '</span></div>';
+        }
+
+        var total = Math.ceil((parseFloat(BK.devis.total) || 0) + (bkc_insurance_check ? (parseFloat(BK.insurance_total) || 0) : 0));
         html += '<div style="margin-top:18px;padding-top:14px;border-top:2.5px solid #3d9a9a;display:flex;justify-content:space-between;align-items:center">';
         html += '<span style="font-size:15px;font-weight:700;color:#0f2424">Total circuit</span>';
         html += '<span style="font-family:Playfair Display,serif;font-size:28px;font-weight:700;color:#3d9a9a">' + bkcFmt(total) + '</span>';
@@ -834,7 +920,8 @@ var BK_CIRCUIT = <?php echo json_encode([
             fact_tel:(document.getElementById('fact-tel')||{}).value||'',
             fact_adresse:(document.getElementById('fact-adresse')||{}).value||'',
             fact_cp:(document.getElementById('fact-cp')||{}).value||'',
-            fact_ville:(document.getElementById('fact-ville')||{}).value||''
+            fact_ville:(document.getElementById('fact-ville')||{}).value||'',
+            assurance: bkc_insurance_check ? '1' : '0'
         };
         document.querySelectorAll('.bkc-voyageur').forEach(function(row){ row.querySelectorAll('input').forEach(function(input){ if(input.name) data[input.name]=input.value; }); });
         document.querySelectorAll('input[name^="options["]').forEach(function(inp){ var n=inp.getAttribute('name'); var m=n&&n.match(/options\[([^\]]+)\]/); if(m) data['options['+m[1]+']']=inp.value; });

@@ -19,6 +19,7 @@ require_once VS08C_PATH . 'includes/class-vs08c-meta.php';
 require_once VS08C_PATH . 'includes/class-vs08c-calculator.php';
 require_once VS08C_PATH . 'includes/class-vs08c-booking.php';
 require_once VS08C_PATH . 'includes/class-vs08c-woo.php';
+require_once VS08C_PATH . 'includes/class-vs08c-contract.php';
 require_once VS08C_PATH . 'includes/class-vs08c-emails.php';
 require_once VS08C_PATH . 'includes/class-vs08c-ajax.php';
 require_once VS08C_PATH . 'includes/class-vs08c-checkout.php';
