@@ -272,6 +272,19 @@ add_filter('woocommerce_order_button_text', function() {
 add_action('vs08_checkout_recap', function() {
     if (!WC()->cart) return;
 
+    // Circuit : récap détaillé (même zone que le golf)
+    foreach (WC()->cart->get_cart() as $item) {
+        $id = $item['product_id'] ?? 0;
+        if (!$id) continue;
+        $data = get_post_meta($id, '_vs08c_booking_data', true);
+        if (!empty($data) && is_array($data) && ($data['type'] ?? '') === 'circuit') {
+            if (class_exists('VS08C_Checkout')) {
+                VS08C_Checkout::output_recap_card();
+            }
+            return;
+        }
+    }
+
     $product_id = null;
     $booking_data = null;
 

@@ -378,56 +378,7 @@ get_header();
                         <!-- Corps -->
                         <div class="bk-ins-body">
                             <div class="bk-ins-hook">Voyagez l'esprit libre, on s'occupe du reste.</div>
-                            <p class="bk-ins-sub">
-                                Annulation toutes causes, rapatriement 24h/24, frais médicaux à l'étranger, bagages…<br>
-                                Une couverture complète pour partir sereinement.
-                            </p>
-
-                            <!-- Grille garanties clés -->
-                            <div class="bk-ins-grid">
-                                <div class="bk-ins-card">
-                                    <span class="bk-ins-card-icon">🚫</span>
-                                    <div>
-                                        <div class="bk-ins-card-label">Annulation toutes causes</div>
-                                        <div class="bk-ins-card-val">Jusqu'à 16 000 € / pers.</div>
-                                    </div>
-                                </div>
-                                <div class="bk-ins-card">
-                                    <span class="bk-ins-card-icon">🚑</span>
-                                    <div>
-                                        <div class="bk-ins-card-label">Assistance rapatriement</div>
-                                        <div class="bk-ins-card-val">24h/24 · 7j/7 · Frais réels</div>
-                                    </div>
-                                </div>
-                                <div class="bk-ins-card">
-                                    <span class="bk-ins-card-icon">🏥</span>
-                                    <div>
-                                        <div class="bk-ins-card-label">Frais médicaux étranger</div>
-                                        <div class="bk-ins-card-val">Jusqu'à 150 000 €</div>
-                                    </div>
-                                </div>
-                                <div class="bk-ins-card">
-                                    <span class="bk-ins-card-icon">🧳</span>
-                                    <div>
-                                        <div class="bk-ins-card-label">Bagages & effets perso.</div>
-                                        <div class="bk-ins-card-val">Jusqu'à 2 000 € / pers.</div>
-                                    </div>
-                                </div>
-                                <div class="bk-ins-card">
-                                    <span class="bk-ins-card-icon">⚖️</span>
-                                    <div>
-                                        <div class="bk-ins-card-label">Responsabilité civile</div>
-                                        <div class="bk-ins-card-val">Jusqu'à 1 000 000 €</div>
-                                    </div>
-                                </div>
-                                <div class="bk-ins-card">
-                                    <span class="bk-ins-card-icon">✈️</span>
-                                    <div>
-                                        <div class="bk-ins-card-label">Vol manqué</div>
-                                        <div class="bk-ins-card-val">Jusqu'à 80 % du billet</div>
-                                    </div>
-                                </div>
-                            </div>
+                            <p class="bk-ins-sub">Annulation selon cause prévue dans le contrat, rapatriement 24h/24, frais médicaux à l'étranger, bagages… Une couverture complète pour partir sereinement.</p>
 
                             <!-- Liens documents -->
                             <div class="bk-ins-docs">

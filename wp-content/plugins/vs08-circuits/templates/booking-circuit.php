@@ -293,15 +293,7 @@ var BK_CIRCUIT = <?php echo json_encode([
                 </div>
                 <div class="bk-ins-body">
                     <div class="bk-ins-hook">Voyagez l'esprit libre, on s'occupe du reste.</div>
-                    <p class="bk-ins-sub">Annulation toutes causes, rapatriement 24h/24, frais médicaux à l'étranger, bagages… Une couverture complète pour partir sereinement.</p>
-                    <div class="bk-ins-grid">
-                        <div class="bk-ins-card"><span class="bk-ins-card-icon">🚫</span><div><div class="bk-ins-card-label">Annulation toutes causes</div><div class="bk-ins-card-val">Jusqu'à 16 000 € / pers.</div></div></div>
-                        <div class="bk-ins-card"><span class="bk-ins-card-icon">🚑</span><div><div class="bk-ins-card-label">Assistance rapatriement</div><div class="bk-ins-card-val">24h/24 · 7j/7 · Frais réels</div></div></div>
-                        <div class="bk-ins-card"><span class="bk-ins-card-icon">🏥</span><div><div class="bk-ins-card-label">Frais médicaux étranger</div><div class="bk-ins-card-val">Jusqu'à 150 000 €</div></div></div>
-                        <div class="bk-ins-card"><span class="bk-ins-card-icon">🧳</span><div><div class="bk-ins-card-label">Bagages & effets perso.</div><div class="bk-ins-card-val">Jusqu'à 2 000 € / pers.</div></div></div>
-                        <div class="bk-ins-card"><span class="bk-ins-card-icon">⚖️</span><div><div class="bk-ins-card-label">Responsabilité civile</div><div class="bk-ins-card-val">Jusqu'à 1 000 000 €</div></div></div>
-                        <div class="bk-ins-card"><span class="bk-ins-card-icon">✈️</span><div><div class="bk-ins-card-label">Vol manqué</div><div class="bk-ins-card-val">Jusqu'à 80 % du billet</div></div></div>
-                    </div>
+                    <p class="bk-ins-sub">Annulation selon cause prévue dans le contrat, rapatriement 24h/24, frais médicaux à l'étranger, bagages… Une couverture complète pour partir sereinement.</p>
                     <?php if (defined('VS08V_URL')): ?>
                     <div class="bk-ins-docs">
                         <a href="<?php echo VS08V_URL; ?>assets/docs/assurever-ipid-galaxy.pdf" target="_blank" class="bk-ins-doc">📄 Fiche produit (IPID)</a>
@@ -323,9 +315,9 @@ var BK_CIRCUIT = <?php echo json_encode([
         </div>
         <?php endif; ?>
 
-        <!-- ÉTAPE 2 : Voyageurs groupés par chambre -->
+        <!-- ÉTAPE 2 : Voyageurs + Facturation (même step) -->
         <div class="bkc-section">
-            <h3 class="bkc-section-title"><span class="bkc-step-num">2</span> Informations voyageurs</h3>
+            <h3 class="bkc-section-title"><span class="bkc-step-num">2</span> Informations voyageurs et coordonnées de facturation</h3>
             <p class="bkc-section-sub"><?php echo $nb_total; ?> voyageur(s) — <?php echo $nb_chambres; ?> chambre(s) — Départ le <?php echo esc_html($date_fmt); ?></p>
 
             <?php
@@ -373,9 +365,8 @@ var BK_CIRCUIT = <?php echo json_encode([
             <?php endfor; ?>
         </div>
 
-        <!-- ÉTAPE 2 : Facturation -->
-        <div class="bkc-section">
-            <h3 class="bkc-section-title"><span class="bkc-step-num">3</span> Coordonnées de facturation</h3>
+        <div class="bkc-section" style="margin-top:24px;padding-top:24px;border-top:1px solid #e5e7eb">
+            <h4 class="bkc-section-title" style="font-size:16px"><span class="bkc-step-num" style="width:24px;height:24px;font-size:12px">2</span> Coordonnées de facturation</h4>
             <p class="bkc-section-sub">Ces informations figureront sur votre facture et permettront à votre conseiller de vous contacter.</p>
             <div class="bkc-fact-grid">
                 <div class="bkc-field"><label>Prénom *</label><input type="text" id="fact-prenom" class="bkc-required" placeholder="Jean" value="<?php echo esc_attr($bk_saved_fact['prenom'] ?? ''); ?>"></div>
@@ -416,7 +407,7 @@ var BK_CIRCUIT = <?php echo json_encode([
         <div id="bkc-step-confirm" style="display:none">
 
         <div class="bkc-section">
-            <h3 class="bkc-section-title"><span class="bkc-step-num">4</span> Confirmation de votre réservation</h3>
+            <h3 class="bkc-section-title"><span class="bkc-step-num">3</span> Confirmation de votre réservation</h3>
             <p class="bkc-section-sub">Vérifiez scrupuleusement toutes les informations avant de procéder au paiement.</p>
 
             <div id="bkc-recap-final" style="border-radius:14px;margin-bottom:20px"></div>
@@ -477,7 +468,7 @@ var BK_CIRCUIT = <?php echo json_encode([
         <div class="bkc-recap-sep"></div>
         <div class="bkc-recap-total">
             <span class="bkc-recap-total-lbl">Total circuit</span>
-            <span class="bkc-recap-total-val"><?php echo number_format($devis['total'], 0, ',', ' '); ?> €</span>
+            <span class="bkc-recap-total-val" id="bkc-recap-total-val"><?php echo number_format($devis['total'], 0, ',', ' '); ?> €</span>
         </div>
         <div style="font-size:11px;color:#6b7280;text-align:right;font-family:'Outfit',sans-serif;margin-top:2px">soit <?php echo number_format($devis['par_pers'], 0, ',', ' '); ?> €/pers.</div>
         <?php if (!$payer_tout && ($devis['acompte'] ?? 0) < ($devis['total'] ?? 0)): ?>
@@ -501,12 +492,16 @@ var BK_CIRCUIT = <?php echo json_encode([
         bkc_insurance_check = chk && chk.checked;
         var row = document.getElementById('bkc-recap-row-insurance');
         var val = document.getElementById('bkc-recap-insurance-val');
+        var totalValEl = document.getElementById('bkc-recap-total-val');
         if (bkc_insurance_check && BK.insurance_total > 0) {
             if (row) row.style.display = 'flex';
             if (val) { val.textContent = '+' + bkcFmt(BK.insurance_total); val.style.color = '#e3147a'; }
         } else {
             if (row) row.style.display = 'none';
         }
+        var base = parseFloat(BK.devis.total) || 0;
+        var add = (bkc_insurance_check && (parseFloat(BK.insurance_total) || 0)) ? (parseFloat(BK.insurance_total) || 0) : 0;
+        if (totalValEl) totalValEl.textContent = bkcFmt(base + add);
     };
 
     /* ── VS08 Calendar pour dates de naissance ── */
