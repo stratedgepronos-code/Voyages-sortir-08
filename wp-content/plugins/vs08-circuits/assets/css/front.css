@@ -124,39 +124,66 @@
 .vc-cta-btn:hover { background:linear-gradient(135deg,#4aa8a8,#2d8a8a); transform:translateY(-1px); box-shadow:0 6px 20px rgba(89,183,183,.35); }
 .vc-cta-btn:disabled { opacity:.5; cursor:not-allowed; }
 
-/* Vol status (recherche Duffel + SerpApi) */
-.vc-vol-status.loading { display:block !important; background:#fff3e8; color:#b85c1a; border:1px solid rgba(232,114,74,.25); }
-.vc-vol-status.loaded { display:block !important; background:#edf8f8; color:#2d8a5a; border:1px solid rgba(61,154,154,.25); font-weight:700; }
-.vc-vol-status.error { display:block !important; background:#fee2e2; color:#dc2626; border:1px solid rgba(220,38,38,.2); }
-
-/* ── OPTIONS & SUPPLÉMENTS (section sous Hébergement) ── */
-.vc-options-section { overflow:hidden; }
-.vc-options-intro { font-size:13px; color:#6b7280; font-family:'Outfit',sans-serif; margin:-8px 0 20px; line-height:1.5; }
-.vc-options-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; }
-.vc-option-card { background:linear-gradient(145deg, #fdfcfa 0%, #f9f6f0 100%); border:1.5px solid rgba(89,183,183,.15); border-radius:16px; overflow:hidden; transition:border-color .25s, box-shadow .25s; }
-.vc-option-card:hover { border-color:rgba(89,183,183,.35); box-shadow:0 6px 24px rgba(89,183,183,.12); }
-.vc-option-card-inner { display:flex; align-items:center; gap:14px; padding:18px; }
-.vc-option-card-icon { font-size:28px; flex-shrink:0; width:48px; height:48px; display:flex; align-items:center; justify-content:center; background:rgba(89,183,183,.12); border-radius:12px; }
-.vc-option-card-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
-.vc-option-card-label { font-size:14px; font-weight:600; color:#0f2424; font-family:'Outfit',sans-serif; line-height:1.3; }
-.vc-option-card-price { font-size:12px; font-weight:700; color:#3d9a9a; font-family:'Outfit',sans-serif; }
-.vc-option-card-input { flex-shrink:0; }
-.vc-option-card-check { display:inline-flex; align-items:center; justify-content:center; cursor:pointer; width:44px; height:44px; border-radius:12px; background:#fff; border:2px solid #e5e7eb; transition:all .2s; }
-.vc-option-card-check:hover { border-color:#59b7b7; background:#edf8f8; }
-.vc-option-card-check input { position:absolute; opacity:0; width:0; height:0; }
-.vc-option-card-check input:checked + .vc-option-checkbox-visual { background:#59b7b7; border-color:#59b7b7; }
-.vc-option-card-check input:checked + .vc-option-checkbox-visual::after { opacity:1; }
-.vc-option-checkbox-visual { width:22px; height:22px; border:2px solid #d1d5db; border-radius:6px; background:#fff; transition:all .2s; position:relative; }
-.vc-option-checkbox-visual::after { content:''; position:absolute; left:6px; top:2px; width:6px; height:11px; border:solid #fff; border-width:0 2px 2px 0; transform:rotate(45deg); opacity:0; }
-.vc-option-card .vc-option-qty { width:56px; padding:10px 8px; border:1.5px solid #e5e7eb; border-radius:10px; font-size:13px; font-family:'Outfit',sans-serif; color:#0f2424; background:#fff; text-align:center; }
-.vc-option-card .vc-option-qty:focus { border-color:#59b7b7; outline:none; }
-
 /* Contact CTA */
 .vc-contact-card { background:linear-gradient(135deg,#0f2424,#1a4a4a); border-radius:18px; padding:24px; text-align:center; }
 .vc-contact-card h3 { color:#fff; font-family:'Playfair Display',serif; font-size:16px; margin:0 0 8px; }
 .vc-contact-card p { color:rgba(255,255,255,.6); font-size:12px; font-family:'Outfit',sans-serif; margin:0 0 14px; }
 .vc-contact-phone { display:inline-flex; align-items:center; gap:8px; color:#7ecece; font-family:'Outfit',sans-serif; font-size:15px; font-weight:700; text-decoration:none; }
 .vc-contact-phone:hover { color:#fff; }
+
+/* ═══ VOL STATUS ═══ */
+.vc-vol-status { font-size:11px; padding:6px 10px; border-radius:8px; font-family:'Outfit',sans-serif; margin-top:5px; display:none; }
+.vc-vol-status.loading { background:#fff3e8; color:#b85c1a; display:block; }
+.vc-vol-status.loaded { background:#e8f8f0; color:#2d8a5a; display:block; }
+.vc-vol-status.error { background:#fee2e2; color:#dc2626; display:block; }
+
+/* ═══ DATE STEP ═══ */
+.vc-date-hint { font-size:12px; color:#6b7280; margin:6px 0 0; font-style:italic; font-family:'Outfit',sans-serif; }
+.vc-step-date:not(.vc-date-active) .vc-date-hint { display:block !important; }
+.vc-step-date.vc-date-active .vc-date-hint { display:none !important; }
+.vc-calc-hint { background:#edf8f8; border:1px solid rgba(89,183,183,.25); border-radius:10px; padding:10px 12px; font-size:12px; color:#1a3a3a; margin-bottom:18px; font-family:'Outfit',sans-serif; }
+
+/* ═══ PRICE LOADING ═══ */
+.vc-price-loading { text-align:center; padding:14px; color:#9ca3af; font-family:'Outfit',sans-serif; font-size:13px; }
+
+/* ═══ REASSURANCE ═══ */
+.vc-reassurance { margin-top:14px; display:flex; flex-direction:column; gap:6px; }
+.vc-reass-item { font-size:11px; color:#6b7280; font-family:'Outfit',sans-serif; }
+
+/* ═══ OPTIONS SECTION — Premium Cards ═══ */
+.vc-options-grid { display:flex; flex-direction:column; gap:10px; }
+.vc-option-card {
+    display:flex; align-items:center; gap:14px;
+    background:#fff; border:1.5px solid #e5e7eb; border-radius:14px;
+    padding:16px 18px; transition:all .3s;
+}
+.vc-option-card:hover { border-color:#b7dfdf; box-shadow:0 2px 12px rgba(89,183,183,.08); }
+.vc-option-card.selected { border-color:#59b7b7; background:#f0fafa; }
+.vc-option-icon {
+    width:40px; height:40px; border-radius:10px;
+    background:linear-gradient(135deg,#edf8f8,#d4f0f0);
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; flex-shrink:0;
+}
+.vc-option-card.selected .vc-option-icon { background:linear-gradient(135deg,#59b7b7,#3d9a9a); }
+.vc-option-info { flex:1; }
+.vc-option-name { font-size:14px; font-weight:700; color:#0f2424; font-family:'Outfit',sans-serif; }
+.vc-option-price { font-size:12px; color:#59b7b7; font-weight:600; font-family:'Outfit',sans-serif; margin-top:2px; }
+
+/* Toggle switch */
+.vc-option-toggle { position:relative; display:inline-block; width:44px; height:24px; flex-shrink:0; cursor:pointer; }
+.vc-option-toggle input { opacity:0; width:0; height:0; }
+.vc-option-slider {
+    position:absolute; inset:0; background:#e0e0e0; border-radius:24px;
+    transition:all .3s;
+}
+.vc-option-slider::before {
+    content:''; position:absolute; width:18px; height:18px;
+    left:3px; bottom:3px; background:#fff; border-radius:50%;
+    transition:all .3s; box-shadow:0 1px 3px rgba(0,0,0,.15);
+}
+.vc-option-toggle input:checked + .vc-option-slider { background:linear-gradient(135deg,#59b7b7,#3d9a9a); }
+.vc-option-toggle input:checked + .vc-option-slider::before { transform:translateX(20px); }
 
 /* ═══ LIGHTBOX ═══ */
 .vc-lightbox { position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,.92); display:none; align-items:center; justify-content:center; }
@@ -176,7 +203,6 @@
     .vc-gallery { grid-template-rows:180px 180px; }
     .vc-inclus-grid { grid-template-columns:1fr; }
     .vc-practical-grid { grid-template-columns:1fr; }
-    .vc-options-grid { grid-template-columns:1fr; }
 }
 @media (max-width:640px) {
     .vc-hero { height:55vh; min-height:400px; }

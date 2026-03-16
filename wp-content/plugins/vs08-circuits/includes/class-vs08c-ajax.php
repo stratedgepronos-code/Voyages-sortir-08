@@ -7,19 +7,17 @@ add_action('wp_ajax_nopriv_vs08c_calculate', 'vs08c_ajax_calculate');
 
 function vs08c_ajax_calculate() {
     check_ajax_referer('vs08c_nonce', 'nonce');
-
     $circuit_id = intval($_POST['circuit_id'] ?? 0);
     if (!$circuit_id) wp_send_json_error('Circuit ID manquant.');
 
     $params = [
         'nb_adultes'  => intval($_POST['nb_adultes'] ?? 2),
-        'nb_enfants'  => intval($_POST['nb_enfants'] ?? 0),
+        'nb_enfants'  => 0,
         'nb_chambres' => intval($_POST['nb_chambres'] ?? 1),
         'date_depart' => sanitize_text_field($_POST['date_depart'] ?? ''),
         'aeroport'    => strtoupper(sanitize_text_field($_POST['aeroport'] ?? '')),
         'prix_vol'    => floatval($_POST['prix_vol'] ?? 0),
         'rooms'       => $_POST['rooms'] ?? '',
-        'options'     => $_POST['options'] ?? '',
     ];
 
     $devis = VS08C_Calculator::calculate($circuit_id, $params);
@@ -32,155 +30,115 @@ add_action('wp_ajax_nopriv_vs08c_booking_submit', 'vs08c_ajax_booking_submit');
 
 function vs08c_ajax_booking_submit() {
     check_ajax_referer('vs08c_nonce', 'nonce');
-
     $result = VS08C_Booking::process_submission();
-
-    if (isset($result['error'])) {
-        wp_send_json_error($result['error']);
-    }
-
+    if (isset($result['error'])) wp_send_json_error($result['error']);
     wp_send_json_success($result);
 }
 
-/* ── 3. Recherche de vols (Duffel + SerpApi, comme séjours golf) ── */
+/* ══════════════════════════════════════════════════════════════
+   3. RECHERCHE DE VOLS CIRCUITS — Duffel + SerpAPI
+   Même logique que vs08v_get_flight mais pour les circuits.
+   Le JS front envoie: circuit_id, date, aeroport, passengers.
+   On calcule la date retour = date + durée nuits du circuit.
+   On cherche le vol A/R le moins cher sur Duffel puis SerpAPI.
+   ══════════════════════════════════════════════════════════════ */
 add_action('wp_ajax_vs08c_get_flight',        'vs08c_ajax_get_flight');
 add_action('wp_ajax_nopriv_vs08c_get_flight', 'vs08c_ajax_get_flight');
 
 function vs08c_ajax_get_flight() {
-    while (ob_get_level()) { ob_end_clean(); }
-    @header('Content-Type: application/json; charset=' . get_option('blog_charset'));
+    check_ajax_referer('vs08c_nonce', 'nonce');
+
+    $circuit_id = intval($_POST['circuit_id'] ?? 0);
+    $date       = sanitize_text_field($_POST['date'] ?? '');
+    $aeroport   = strtoupper(sanitize_text_field($_POST['aeroport'] ?? ''));
+    $passengers = max(1, intval($_POST['passengers'] ?? 1));
+
+    if (!$circuit_id || !$date || !$aeroport) {
+        wp_send_json_error('Paramètres manquants.');
+    }
+
+    $m             = VS08C_Meta::get($circuit_id);
+    $iata_dest     = strtoupper($m['iata_dest'] ?? '');
+    $duree         = intval($m['duree'] ?? 7);
+    $prix_vol_base = floatval($m['prix_vol_base'] ?? 0);
+
+    // Si pas de code IATA destination → fallback prix de base
+    if (empty($iata_dest)) {
+        if ($prix_vol_base > 0) {
+            wp_send_json_success(['prix' => $prix_vol_base, 'note' => 'estimate', 'flights' => []]);
+        }
+        wp_send_json_error('Code IATA destination non configuré.');
+    }
+
+    // Calculer date retour = date aller + nombre de nuits
+    $date_retour = sanitize_text_field($_POST['date_retour'] ?? '');
+    if (empty($date_retour) && $date) {
+        $ts = strtotime($date);
+        if ($ts) $date_retour = date('Y-m-d', strtotime('+' . $duree . ' days', $ts));
+    }
+
+    $origin      = $aeroport;
+    $destination = $iata_dest;
+
+    // Vérifier que Duffel est disponible (chargé par le plugin vs08-voyages)
+    if (!class_exists('VS08_Duffel_API')) {
+        if ($prix_vol_base > 0) {
+            wp_send_json_success(['prix' => $prix_vol_base, 'note' => 'estimate', 'flights' => []]);
+        }
+        wp_send_json_error('Service vols indisponible (Duffel non chargé).');
+    }
+
+    $all_flights = [];
+
+    // ── Recherche Duffel ──
     try {
-        if (!check_ajax_referer('vs08c_nonce', 'nonce', false)) {
-            wp_send_json_error('Session expirée. Rechargez la page.');
-            return;
+        $duffel_result = VS08_Duffel_API::search_flights($origin, $destination, $date, $passengers, $date_retour);
+        if (!is_wp_error($duffel_result) && !empty($duffel_result['flights'])) {
+            foreach ($duffel_result['flights'] as &$f) { $f['source'] = 'duffel'; }
+            unset($f);
+            $all_flights = array_merge($all_flights, $duffel_result['flights']);
         }
-        $circuit_id = intval($_POST['circuit_id'] ?? 0);
-        $date       = sanitize_text_field($_POST['date'] ?? '');
-        $aeroport   = strtoupper(sanitize_text_field($_POST['aeroport'] ?? ''));
-        $passengers = max(1, intval($_POST['passengers'] ?? 1));
+    } catch (\Throwable $e) {
+        error_log('[VS08C Duffel] ' . $e->getMessage());
+    }
 
-        if (!$circuit_id || !$date || !$aeroport) {
-            wp_send_json_error('Paramètres manquants (date, aéroport).');
-            return;
-        }
-        if (get_post_type($circuit_id) !== 'vs08_circuit') {
-            wp_send_json_error('Circuit invalide.');
-            return;
-        }
-
-        $m          = VS08C_Meta::get($circuit_id);
-        $iata_dest  = strtoupper(sanitize_text_field($m['iata_dest'] ?? ''));
-        $duree_j    = max(1, intval($m['duree_jours'] ?? 8));
-        $prix_base  = floatval($m['prix_vol_base'] ?? 0);
-
-        if (empty($iata_dest)) {
-            if ($prix_base > 0) {
-                wp_send_json_success(['prix' => $prix_base, 'note' => 'estimate', 'flights' => []]);
-                return;
-            }
-            wp_send_json_error('Code IATA destination non configuré pour ce circuit.');
-            return;
-        }
-
-        $origin      = $aeroport;
-        $destination = $iata_dest;
-        $date_retour = date('Y-m-d', strtotime($date . ' +' . $duree_j . ' days'));
-
-        if (!class_exists('VS08_Duffel_API')) {
-            if ($prix_base > 0) {
-                wp_send_json_success(['prix' => $prix_base, 'note' => 'estimate', 'flights' => []]);
-                return;
-            }
-            wp_send_json_error('Recherche de vols temporairement indisponible. Utilisez le prix estimé ou réessayez plus tard.');
-            return;
-        }
-
-        $all_flights = [];
-
-        // ── Duffel ──
+    // ── Recherche SerpAPI (Ryanair, low-cost via Google Flights) ──
+    if (class_exists('VS08V_SerpApi')) {
         try {
-            $duffel_result = VS08_Duffel_API::search_flights($origin, $destination, $date, $passengers, $date_retour);
-            if (!is_wp_error($duffel_result) && !empty($duffel_result['flights'])) {
-                $tagged = function_exists('vs08v_tag_flight_source')
-                    ? vs08v_tag_flight_source($duffel_result['flights'], 'duffel')
-                    : $duffel_result['flights'];
-                $all_flights = array_merge($all_flights, $tagged);
+            $serp_result = VS08V_SerpApi::search_flights($origin, $destination, $date, $date_retour, $passengers);
+            if (!is_wp_error($serp_result) && !empty($serp_result['flights'])) {
+                foreach ($serp_result['flights'] as &$f) { $f['source'] = 'serpapi'; }
+                unset($f);
+                $all_flights = array_merge($all_flights, $serp_result['flights']);
             }
         } catch (\Throwable $e) {
-            if (function_exists('error_log')) {
-                error_log('[VS08c get_flight Duffel] ' . $e->getMessage());
-            }
-        }
-
-        // ── SerpApi (Ryanair / low-cost, comme produit golf) ──
-        if (class_exists('VS08_SerpApi') && defined('VS08_SERPAPI_API_KEY') && VS08_SERPAPI_API_KEY !== '') {
-            try {
-                $serpapi_result = VS08_SerpApi::search_flights($origin, $destination, $date, $passengers, $date_retour);
-                if (!is_wp_error($serpapi_result) && !empty($serpapi_result['flights'])) {
-                    $all_flights = array_merge($all_flights, $serpapi_result['flights']);
-                }
-            } catch (\Throwable $e) {
-                if (function_exists('error_log')) {
-                    error_log('[VS08c get_flight SerpApi] ' . $e->getMessage());
-                }
-            }
-        }
-
-        // Dédupliquer et trier par prix (même logique que vs08v_get_flight_result)
-        $flights = function_exists('vs08v_dedup_flights') ? vs08v_dedup_flights($all_flights) : vs08c_dedup_flights_fallback($all_flights);
-
-        if (empty($flights)) {
-            if ($prix_base > 0) {
-                wp_send_json_success(['prix' => $prix_base, 'note' => 'estimate', 'flights' => []]);
-                return;
-            }
-            wp_send_json_error('Aucun vol direct trouvé pour cette date / cet aéroport.');
-            return;
-        }
-
-        $prix = $flights[0]['price_per_pax'] ?? $prix_base;
-        wp_send_json_success([
-            'prix'    => round((float) $prix, 2),
-            'note'    => 'realtime',
-            'flights' => $flights,
-        ]);
-    } catch (\Throwable $e) {
-        if (function_exists('error_log')) {
-            error_log('[VS08c get_flight] ' . $e->getMessage());
-        }
-        wp_send_json_error('Erreur lors de la recherche de vols. Réessayez.');
-    }
-}
-
-/**
- * Fallback déduplication si le plugin Voyages n’est pas chargé (même logique que vs08v_dedup_flights).
- */
-function vs08c_dedup_flights_fallback($flights) {
-    $unique = [];
-    foreach ($flights as $f) {
-        $key_parts = [
-            $f['airline_iata'] ?? '',
-            $f['flight_number'] ?? '',
-            $f['depart_time'] ?? '',
-        ];
-        if (!empty($f['retour_flight'])) {
-            $key_parts[] = $f['retour_flight'];
-            $key_parts[] = $f['retour_depart'] ?? '';
-        }
-        $key = implode('|', $key_parts);
-        if (!isset($unique[$key]) || (isset($f['price_total']) && isset($unique[$key]['price_total']) && $f['price_total'] < $unique[$key]['price_total'])) {
-            $unique[$key] = $f;
+            error_log('[VS08C SerpApi] ' . $e->getMessage());
         }
     }
-    $out = array_values($unique);
-    usort($out, function ($a, $b) {
-        return (int) (($a['price_total'] ?? 0) <=> ($b['price_total'] ?? 0));
-    });
-    $ref = !empty($out) ? ($out[0]['price_per_pax'] ?? 0) : 0;
-    foreach ($out as &$o) {
-        $o['delta_per_pax'] = round(($o['price_per_pax'] ?? 0) - $ref, 2);
-        $o['is_reference']  = (($o['delta_per_pax'] ?? 0) === 0.0);
+
+    // ── Dédupliquer et trier (utilise la fonction du plugin golf si dispo) ──
+    if (function_exists('vs08v_dedup_flights')) {
+        $all_flights = vs08v_dedup_flights($all_flights);
+    } else {
+        usort($all_flights, function($a, $b) {
+            return ($a['price_per_pax'] ?? 9999) <=> ($b['price_per_pax'] ?? 9999);
+        });
     }
-    unset($o);
-    return $out;
+
+    // ── Résultat ──
+    if (empty($all_flights)) {
+        if ($prix_vol_base > 0) {
+            wp_send_json_success(['prix' => $prix_vol_base, 'note' => 'estimate', 'flights' => []]);
+        }
+        wp_send_json_error('Aucun vol trouvé pour cette date.');
+    }
+
+    $cheapest = $all_flights[0];
+    $prix     = floatval($cheapest['price_per_pax'] ?? $prix_vol_base);
+
+    wp_send_json_success([
+        'prix'    => $prix,
+        'note'    => 'live',
+        'flights' => $all_flights,
+    ]);
 }
