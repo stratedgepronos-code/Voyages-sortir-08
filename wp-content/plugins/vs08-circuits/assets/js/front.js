@@ -107,13 +107,21 @@ $(document).on('change','.vc-room-type',function(){updOcc();triggerCalc();});
 $(document).on('change','#vc-nb-chambres, #vc-nb-adultes',buildRooms);
 $(document).on('change','.vc-room-occupants',triggerCalc);
 
+/* ══ OPTIONS — collecte pour la calc card ══ */
+function collectOptions(){
+    var opts={};
+    $('.vc-option-check').each(function(){var id=$(this).attr('data-opt-id');if(id)opts[id]=this.checked?1:0;});
+    return opts;
+}
+
 /* ══ CALCULATOR ══ */
 function triggerCalc(){clearTimeout(calcTimer);calcTimer=setTimeout(doCalc,400);}
 function doCalc(){
     var date=$('#vc-date-depart').val(),aero=$('#vc-aeroport').val();if(!date||!aero)return;
     $('#vc-price-loading').show();
     var rooms=[];$('.vc-room-card').each(function(){rooms.push({type:$(this).find('.vc-room-type').val()||'double',occupants:parseInt($(this).find('.vc-room-occupants').val())||2});});
-    $.post(vs08c.ajax_url,{action:'vs08c_calculate',nonce:vs08c.nonce,circuit_id:CIRCUIT.id,nb_adultes:parseInt($('#vc-nb-adultes').val())||2,nb_enfants:0,nb_chambres:parseInt($('#vc-nb-chambres').val())||1,date_depart:date,aeroport:aero,prix_vol:vc_prix_vol,rooms:JSON.stringify(rooms)},function(r){$('#vc-price-loading').hide();if(!r.success)return;renderPrice(r.data);});
+    var options=collectOptions();
+    $.post(vs08c.ajax_url,{action:'vs08c_calculate',nonce:vs08c.nonce,circuit_id:CIRCUIT.id,nb_adultes:parseInt($('#vc-nb-adultes').val())||2,nb_enfants:0,nb_chambres:parseInt($('#vc-nb-chambres').val())||1,date_depart:date,aeroport:aero,prix_vol:vc_prix_vol,rooms:JSON.stringify(rooms),options:JSON.stringify(options)},function(r){$('#vc-price-loading').hide();if(!r.success)return;renderPrice(r.data);});
 }
 function renderPrice(d){
     var $r=$('#vc-price-result'),h='<div class="vc-price-lines">';
@@ -122,14 +130,14 @@ function renderPrice(d){
     if(d.nb_total>0) h+='<div class="vc-price-pp">'+fmt(d.par_pers)+' € / pers.</div>';
     if(d.acompte&&d.acompte<d.total) h+='<div class="vc-acompte-line"><span>Acompte '+Math.round(d.acompte_pct)+'%</span><span>='+fmt(d.acompte)+' €</span></div>';
     $r.html(h);$('.vc-cta-btn').prop('disabled',false);
-    window.vc_params={date_depart:$('#vc-date-depart').val(),aeroport:$('#vc-aeroport').val(),nb_adultes:$('#vc-nb-adultes').val(),nb_chambres:$('#vc-nb-chambres').val(),prix_vol:vc_prix_vol,rooms:JSON.stringify($('.vc-room-card').map(function(){return{type:$(this).find('.vc-room-type').val(),occupants:parseInt($(this).find('.vc-room-occupants').val())}}).get())};
+    window.vc_params={date_depart:$('#vc-date-depart').val(),aeroport:$('#vc-aeroport').val(),nb_adultes:$('#vc-nb-adultes').val(),nb_chambres:$('#vc-nb-chambres').val(),prix_vol:vc_prix_vol,rooms:JSON.stringify($('.vc-room-card').map(function(){return{type:$(this).find('.vc-room-type').val(),occupants:parseInt($(this).find('.vc-room-occupants').val())}}).get()),options:JSON.stringify(collectOptions())};
 }
 function fmt(v){return parseFloat(v).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,' ');}
 
 /* ══ BOOKING REDIRECT ══ */
-$(document).on('click','.vc-cta-btn',function(e){e.preventDefault();if($(this).prop('disabled')||!window.vc_params)return;var p=window.vc_params;window.location.href=CIRCUIT.booking_url+'?date='+encodeURIComponent(p.date_depart)+'&aeroport='+encodeURIComponent(p.aeroport)+'&nadultes='+p.nb_adultes+'&nenfants=0&nchamb='+p.nb_chambres+'&vol='+p.prix_vol+'&rooms='+encodeURIComponent(p.rooms);});
+$(document).on('click','.vc-cta-btn',function(e){e.preventDefault();if($(this).prop('disabled')||!window.vc_params)return;var p=window.vc_params;var url=CIRCUIT.booking_url+'?date='+encodeURIComponent(p.date_depart)+'&aeroport='+encodeURIComponent(p.aeroport)+'&nadultes='+p.nb_adultes+'&nenfants=0&nchamb='+p.nb_chambres+'&vol='+p.prix_vol+'&rooms='+encodeURIComponent(p.rooms);if(p.options&&p.options!=='{}')url+='&options='+encodeURIComponent(p.options);window.location.href=url;});
 
-/* ══ OPTIONS TOGGLE ══ */
-$(document).on('change','.vc-option-check',function(){$(this).closest('.vc-option-card').toggleClass('selected',this.checked);});
+/* ══ OPTIONS TOGGLE — recalc à chaque changement ══ */
+$(document).on('change','.vc-option-check',function(){$(this).closest('.vc-option-card').toggleClass('selected',this.checked);triggerCalc();});
 
 })(jQuery);

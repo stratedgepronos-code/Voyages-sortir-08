@@ -1,26 +1,24 @@
 ---
-description: Push Git automatique après chaque modification (déploiement Sortirmonde)
+description: Push Git automatique après CHAQUE requête (déploiement Sortirmonde)
 alwaysApply: true
 ---
 
-# Push automatique — Voyages Sortir 08 / Sortirmonde
+# Push auto après chaque request — Sortirmonde
 
-**Règle impérative** : À la fin de **chaque** requête où tu as modifié des fichiers, exécute un commit + push. L'utilisateur ne doit jamais avoir à demander « push ».
+**Règle impérative** : À la fin de **chaque** requête où tu as modifié des fichiers, exécute un commit + push. **PUSH AUTO APRÈS CHAQUE REQUEST** — l'utilisateur ne doit jamais avoir à demander « push ».
 
-Après **toute** modification, création ou suppression de fichiers dans ce projet :
+Après toute modification, création ou suppression de fichiers :
 
-1. **En toute fin de ta réponse** (après ton résumé), exécute **systématiquement** :
-   - `git add .` (ou les chemins concernés)
+1. **En toute fin de réponse** (après le résumé), exécute **systématiquement** :
+   - `git status` puis `git add .` (ou les chemins concernés)
    - `git commit -m "Description courte et claire en français"`
-   - `git push origin master`
-   - Utiliser le paramètre `working_directory` = `g:\Récup\sortir monde` pour chaque commande Shell.
+   - `git push`
+   - Working directory = racine du workspace (projet Sortirmonde).
 
-2. **Objectif** : le push déclenche le déploiement (workflow GitHub). Aucune action manuelle de l'utilisateur.
+2. **Objectif** : push déclenche le déploiement (workflow GitHub). Aucune action manuelle.
 
-3. **Environnement** : PowerShell. Utiliser `;` pour chaîner les commandes (pas `&&`).
+3. **Environnement** : PowerShell. Chaîner avec `;` (pas `&&`).
 
-4. **Remote** : `origin` = `https://github.com/stratedgepronos-code/Voyages-sortir-08.git`, branche = `master`.
+4. **Ne pas pousser** seulement si l'utilisateur demande explicitement de ne pas commit/push, ou si push impossible (expliquer brièvement).
 
-4. **Ne pas pousser** uniquement si l'utilisateur demande explicitement de ne pas commit/push, ou si le dépôt n'a pas de remote / push impossible (expliquer brièvement).
-
-5. **Message de commit** : en français, descriptif (ex. "Checkout: forcer shortcode classique, template + CSS" ou "Footer: lien Voyages Sortir 08").
+5. **Message de commit** : en français, descriptif (ex. "Circuits: options sous itinéraire + calcul calc card").

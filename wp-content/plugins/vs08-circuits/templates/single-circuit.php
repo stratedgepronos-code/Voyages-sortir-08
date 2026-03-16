@@ -178,6 +178,32 @@ var VS08C_CIRCUIT = <?php echo json_encode([
             </section>
             <?php endif; ?>
 
+            <!-- OPTIONS / SUPPLÉMENTS (juste sous l'itinéraire) -->
+            <?php if (!empty($options)): ?>
+            <section class="vc-section vc-options-section">
+                <h2 class="vc-section-title">🎁 Options & suppléments</h2>
+                <p style="font-size:13px;color:#6b7280;font-family:'Outfit',sans-serif;margin:-8px 0 18px">Personnalisez votre circuit : les montants s'ajoutent au total dans le récapitulatif de réservation.</p>
+                <div class="vc-options-grid">
+                    <?php foreach ($options as $opt):
+                        $opt_type_txt = ($opt['type'] ?? 'par_pers') === 'par_pers' ? '/pers.' : (($opt['type'] ?? '') === 'fixe' ? ' forfait' : '/unité');
+                        $prix_fmt = number_format(floatval($opt['prix'] ?? 0), 0, ',', ' ');
+                    ?>
+                    <div class="vc-option-card">
+                        <div class="vc-option-icon">✨</div>
+                        <div class="vc-option-info">
+                            <div class="vc-option-name"><?php echo esc_html($opt['label'] ?? ''); ?></div>
+                            <div class="vc-option-price"><?php echo $prix_fmt; ?> €<?php echo $opt_type_txt; ?></div>
+                        </div>
+                        <label class="vc-option-toggle">
+                            <input type="checkbox" class="vc-option-check" data-opt-id="<?php echo esc_attr($opt['id'] ?? ''); ?>" data-prix="<?php echo floatval($opt['prix'] ?? 0); ?>" data-type="<?php echo esc_attr($opt['type'] ?? 'par_pers'); ?>">
+                            <span class="vc-option-slider"></span>
+                        </label>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+            <?php endif; ?>
+
             <!-- HOTELS -->
             <?php if (!empty($hotels)): ?>
             <section class="vc-section">
@@ -239,32 +265,6 @@ var VS08C_CIRCUIT = <?php echo json_encode([
                     <div class="vc-practical-card">
                         <h4><?php echo $p['icon'] . ' ' . esc_html($p['title']); ?></h4>
                         <p><?php echo esc_html($p['text']); ?></p>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-            </section>
-            <?php endif; ?>
-
-            <!-- OPTIONS / SUPPLÉMENTS -->
-            <?php if (!empty($options)): ?>
-            <section class="vc-section vc-options-section">
-                <h2 class="vc-section-title">🎁 Options & suppléments</h2>
-                <p style="font-size:13px;color:#6b7280;font-family:'Outfit',sans-serif;margin:-8px 0 18px">Personnalisez votre circuit : les montants s'ajoutent au total dans le récapitulatif de réservation.</p>
-                <div class="vc-options-grid">
-                    <?php foreach ($options as $opt):
-                        $opt_type_txt = ($opt['type'] ?? 'par_pers') === 'par_pers' ? '/pers.' : (($opt['type'] ?? '') === 'fixe' ? ' forfait' : '/unité');
-                        $prix_fmt = number_format(floatval($opt['prix'] ?? 0), 0, ',', ' ');
-                    ?>
-                    <div class="vc-option-card">
-                        <div class="vc-option-icon">✨</div>
-                        <div class="vc-option-info">
-                            <div class="vc-option-name"><?php echo esc_html($opt['label'] ?? ''); ?></div>
-                            <div class="vc-option-price"><?php echo $prix_fmt; ?> €<?php echo $opt_type_txt; ?></div>
-                        </div>
-                        <label class="vc-option-toggle">
-                            <input type="checkbox" class="vc-option-check" data-opt-id="<?php echo esc_attr($opt['id'] ?? ''); ?>" data-prix="<?php echo floatval($opt['prix'] ?? 0); ?>" data-type="<?php echo esc_attr($opt['type'] ?? 'par_pers'); ?>">
-                            <span class="vc-option-slider"></span>
-                        </label>
                     </div>
                     <?php endforeach; ?>
                 </div>
