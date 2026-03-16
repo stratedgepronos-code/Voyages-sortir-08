@@ -245,7 +245,8 @@ var BK_CIRCUIT = <?php echo json_encode([
         <!-- ═══ ÉTAPES 1-3 (formulaire) ═══ -->
         <div id="bkc-steps-form">
 
-        <!-- ÉTAPE 1 : Sélection du vol -->
+        <!-- PAGE 1 : ÉTAPE 1 — Vol + Assurance uniquement -->
+        <div id="bkc-step-1" class="bkc-step-page">
         <div class="bkc-section">
             <h3 class="bkc-section-title"><span class="bkc-step-num">1</span> Sélection de votre vol</h3>
             <p class="bkc-section-sub">Choisissez votre combinaison aller-retour parmi les vols disponibles.</p>
@@ -315,7 +316,13 @@ var BK_CIRCUIT = <?php echo json_encode([
         </div>
         <?php endif; ?>
 
-        <!-- ÉTAPE 2 : Voyageurs + Facturation (même step) -->
+        <div class="bkc-nav">
+            <button type="button" class="bkc-btn-next" onclick="bkcGoToStep2()">Continuer →</button>
+        </div>
+        </div><!-- /bkc-step-1 -->
+
+        <!-- PAGE 2 : ÉTAPE 2 — Voyageurs + Facturation (step juste avant confirmation/paiement) -->
+        <div id="bkc-step-2" class="bkc-step-page" style="display:none">
         <div class="bkc-section">
             <h3 class="bkc-section-title"><span class="bkc-step-num">2</span> Informations voyageurs et coordonnées de facturation</h3>
             <p class="bkc-section-sub"><?php echo $nb_total; ?> voyageur(s) — <?php echo $nb_chambres; ?> chambre(s) — Départ le <?php echo esc_html($date_fmt); ?></p>
@@ -396,10 +403,11 @@ var BK_CIRCUIT = <?php echo json_encode([
             if (intval($qty) <= 0) continue;
         ?><input type="hidden" name="options[<?php echo esc_attr($oid); ?>]" value="<?php echo esc_attr(intval($qty)); ?>"><?php endforeach; ?>
 
-        <!-- Bouton vers étape 4 -->
         <div class="bkc-nav">
+            <button type="button" class="bkc-btn-prev" onclick="bkcGoBackToStep1()">← Retour</button>
             <button type="button" class="bkc-btn-next" onclick="bkcGoToConfirm()">Vérifier et confirmer →</button>
         </div>
+        </div><!-- /bkc-step-2 -->
 
         </div><!-- /bkc-steps-form -->
 
@@ -864,11 +872,23 @@ var BK_CIRCUIT = <?php echo json_encode([
         return parseInt(parts[2]) + ' ' + mois[parseInt(parts[1]) - 1] + ' ' + parts[0];
     }
 
-    /* ═══ Navigation étapes : formulaire ↔ confirmation ═══ */
+    /* ═══ Navigation étapes : step 1 ↔ step 2 ↔ confirmation ═══ */
+    window.bkcGoToStep2 = function() {
+        document.getElementById('bkc-step-1').style.display = 'none';
+        document.getElementById('bkc-step-2').style.display = 'block';
+        window.scrollTo({top:0,behavior:'smooth'});
+    };
+
+    window.bkcGoBackToStep1 = function() {
+        document.getElementById('bkc-step-2').style.display = 'none';
+        document.getElementById('bkc-step-1').style.display = 'block';
+        window.scrollTo({top:0,behavior:'smooth'});
+    };
+
     window.bkcGoToConfirm = function() {
         var errEl = document.getElementById('bkc-error');
         var missing = false;
-        document.querySelectorAll('.bkc-required').forEach(function(el){ if(!el.value.trim()){el.style.borderColor='#dc2626';missing=true;}else{el.style.borderColor='';} });
+        document.querySelectorAll('#bkc-step-2 .bkc-required').forEach(function(el){ if(!el.value.trim()){el.style.borderColor='#dc2626';missing=true;}else{el.style.borderColor='';} });
         if (missing) { errEl.textContent='Veuillez remplir tous les champs obligatoires (*).'; errEl.style.display='block'; window.scrollTo({top:errEl.offsetTop-120,behavior:'smooth'}); return; }
         errEl.style.display='none';
         bkcBuildRecap();
@@ -880,6 +900,8 @@ var BK_CIRCUIT = <?php echo json_encode([
     window.bkcGoBack = function() {
         document.getElementById('bkc-step-confirm').style.display = 'none';
         document.getElementById('bkc-steps-form').style.display = 'block';
+        document.getElementById('bkc-step-1').style.display = 'none';
+        document.getElementById('bkc-step-2').style.display = 'block';
         window.scrollTo({top:0,behavior:'smooth'});
     };
 
