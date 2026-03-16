@@ -111,14 +111,34 @@ function vcOnDateSelected(){
 }
 
 /* ══ ROOMS ══ */
+function applyRoomDefaults(){
+    var pax=parseInt($('#vc-nb-adultes').val())||2;
+    if(pax===1){
+        $('#vc-nb-chambres').val(1);
+    }else if(pax===2){
+        $('#vc-nb-chambres').val(1);
+    }else{
+        $('#vc-nb-chambres').val(Math.ceil(pax/2));
+    }
+    buildRooms();
+}
 function buildRooms(){
+    var pax=parseInt($('#vc-nb-adultes').val())||2;
     var n=parseInt($('#vc-nb-chambres').val())||1,$s=$('#vc-rooms-section');$s.empty();
-    for(var i=0;i<n;i++) $s.append('<div class="vc-room-card" data-room="'+i+'"><div class="vc-room-header"><span class="vc-room-title">🛏️ Chambre '+(i+1)+'</span></div><div class="vc-field-row"><div class="vc-field"><label>Type</label><select class="vc-room-type"><option value="double">Double (max 2)</option><option value="simple">Individuelle (1)</option>'+(hasTriple?'<option value="triple">Triple (max 3)</option>':'')+'</select></div><div class="vc-field"><label>Occupants</label><select class="vc-room-occupants"><option value="1">1</option><option value="2" selected>2</option></select></div></div></div>');
+    var defaultType=(pax===1)?'simple':'double';
+    var defaultOcc=(pax===1)?1:Math.min(2,pax);
+    for(var i=0;i<n;i++){
+        var remaining=pax;$('.vc-room-card').each(function(){remaining-=parseInt($(this).find('.vc-room-occupants').val())||0;});
+        var selSimple=(defaultType==='simple')?' selected':'';
+        var selDouble=(defaultType==='double')?' selected':'';
+        $s.append('<div class="vc-room-card" data-room="'+i+'"><div class="vc-room-header"><span class="vc-room-title">🛏️ Chambre '+(i+1)+'</span></div><div class="vc-field-row"><div class="vc-field"><label>Type</label><select class="vc-room-type"><option value="double"'+selDouble+'>Double (max 2)</option><option value="simple"'+selSimple+'>Individuelle (1)</option>'+(hasTriple?'<option value="triple">Triple (max 3)</option>':'')+'</select></div><div class="vc-field"><label>Occupants</label><select class="vc-room-occupants"><option value="1"'+(defaultOcc===1?' selected':'')+'>1</option><option value="2"'+(defaultOcc===2?' selected':'')+'>2</option></select></div></div></div>');
+    }
     updOcc();triggerCalc();
 }
 function updOcc(){$('.vc-room-card').each(function(){var t=$(this).find('.vc-room-type').val(),$o=$(this).find('.vc-room-occupants'),mx=t==='simple'?1:(t==='triple'?3:2),c=parseInt($o.val())||2;$o.empty();for(var n=1;n<=mx;n++)$o.append('<option value="'+n+'"'+(n===Math.min(c,mx)?' selected':'')+'>'+n+'</option>');if(t==='simple')$o.val(1);});}
 $(document).on('change','.vc-room-type',function(){updOcc();triggerCalc();});
-$(document).on('change','#vc-nb-chambres, #vc-nb-adultes',buildRooms);
+$(document).on('change','#vc-nb-adultes',applyRoomDefaults);
+$(document).on('change','#vc-nb-chambres',buildRooms);
 $(document).on('change','.vc-room-occupants',triggerCalc);
 
 /* ══ OPTIONS — collecte pour la calc card ══ */
