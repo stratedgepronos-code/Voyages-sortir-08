@@ -1,0 +1,19 @@
+# Copiez ce fichier en config.cfg et remplissez les clés.
+# config.cfg est ignoré par Git (clés secrètes).
+
+# Vols (obligatoire pour les séjours golf)
+DUFFEL_API_KEY=duffel_live_XXXXXXXXXXXXXXXX
+
+# Vols low-cost / Ryanair (optionnel)
+SERPAPI_API_KEY=
+
+# Recherche IA hôtel & golf (évite "invalid x-api-key")
+# Créez une clé sur https://console.anthropic.com/
+CLAUDE_API_KEY=sk-ant-api03-xxxx
+
+# Paiement Paybox Mail (optionnel)
+# PAYBOX_MAIL_APP_KEY=
+# PAYBOX_MAIL_SECRET_KEY=
+
+# Tests : déverrouille la dernière étape si token invalide
+# VS08_SANDBOX_PAYMENT=0

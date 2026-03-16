@@ -243,7 +243,7 @@ PROMPT;
 
         $api_key = defined('VS08V_CLAUDE_KEY') ? VS08V_CLAUDE_KEY : self::API_KEY;
         if (empty($api_key) || !is_string($api_key)) {
-            wp_send_json_error('Clé API Claude non configurée. Définissez VS08V_CLAUDE_KEY dans wp-config.php ou vérifiez la configuration.');
+            wp_send_json_error('Clé API Claude non configurée. Ajoutez CLAUDE_API_KEY=votre_clé dans wp-content/plugins/vs08-voyages/config.cfg (ou VS08V_CLAUDE_KEY dans wp-config.php).');
         }
 
         try {

@@ -23,6 +23,7 @@ define('VS08V_VER',  '2.0.0');
 // Format attendu dans config.cfg :
 //   DUFFEL_API_KEY=duffel_live_XXXXXXXXXXXXXXXX
 //   SERPAPI_API_KEY=xxxx   (optionnel : vols Ryanair / low-cost via Google Flights)
+//   CLAUDE_API_KEY=sk-ant-api03-xxxx   (recherche IA hôtel/golf — clé Anthropic, sinon "invalid x-api-key")
 //   VS08_SANDBOX_PAYMENT=1   (optionnel : déverrouille la dernière étape si "token invalide" en test)
 // ============================================================
 $vs08v_config_file = VS08V_PATH . 'config.cfg';
@@ -41,6 +42,9 @@ if (file_exists($vs08v_config_file)) {
             }
             if ($key === 'SERPAPI_API_KEY' && !defined('VS08_SERPAPI_API_KEY')) {
                 define('VS08_SERPAPI_API_KEY', $val);
+            }
+            if (($key === 'CLAUDE_API_KEY' || $key === 'VS08V_CLAUDE_KEY') && !defined('VS08V_CLAUDE_KEY')) {
+                define('VS08V_CLAUDE_KEY', $val);
             }
             if ($key === 'VS08_SANDBOX_PAYMENT' && !defined('VS08_SANDBOX_PAYMENT')) {
                 define('VS08_SANDBOX_PAYMENT', $val === '1' || $val === 'true' || $val === 'yes');
