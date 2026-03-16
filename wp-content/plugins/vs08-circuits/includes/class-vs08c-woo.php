@@ -186,7 +186,7 @@ class VS08C_Woo {
     }
 }
 
-// Copier booking_data dans les items de commande
+// Copier booking_data dans les items de commande ET sur la commande tout de suite (pour espace membre + redirection)
 add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_item_key, $values, $order) {
     try {
         $pid = $item->get_product_id();
@@ -195,6 +195,9 @@ add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_
         if (!empty($bd) && is_array($bd)) {
             $item->add_meta_data('_vs08c_booking_data', $bd, true);
             $item->add_meta_data('_vs08c_circuit_id', $bd['circuit_id'] ?? 0, true);
+            if ($order && is_object($order)) {
+                $order->update_meta_data('_vs08c_booking_data', $bd);
+            }
         }
     } catch (Throwable $e) {
         error_log('VS08C checkout_create_order_line_item: ' . $e->getMessage());

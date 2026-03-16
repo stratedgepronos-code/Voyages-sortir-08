@@ -280,25 +280,55 @@ add_action('woocommerce_order_status_changed', function($order_id, $old_status, 
     }
 }, 10, 3);
 
-// Après paiement (CB, chèque, virement) : rediriger vers le voyage dans l'espace client au lieu de la page WooCommerce
+// Redirection après résa : envoyer directement vers l'espace membre (évite thank you WooCommerce + bug "ça charge et rien ne se passe")
+add_filter('woocommerce_get_checkout_order_received_url', function($url, $order) {
+    if (!$order || !is_object($order)) return $url;
+    $order_id = $order->get_id();
+    if (!$order_id) return $url;
+    if (!is_user_logged_in() || (int) $order->get_customer_id() !== (int) get_current_user_id()) return $url;
+    if ($order->get_meta('_vs08v_booking_data')) {
+        return VS08V_Traveler_Space::voyage_url($order_id);
+    }
+    if ($order->get_meta('_vs08c_booking_data')) {
+        return VS08V_Traveler_Space::voyage_url($order_id);
+    }
+    foreach ($order->get_items() as $item) {
+        if ($item->get_meta('_vs08c_booking_data')) {
+            return VS08V_Traveler_Space::voyage_url($order_id);
+        }
+    }
+    $parent_id = (int) $order->get_meta('_vs08v_order_solde_parent');
+    if ($parent_id) {
+        return VS08V_Traveler_Space::voyage_url($parent_id);
+    }
+    return $url;
+}, 10, 2);
+
+// Si quelqu'un arrive quand même sur order-received (lien direct, ancien lien) : rediriger vers l'espace membre
 add_action('template_redirect', function() {
     if (!function_exists('is_wc_endpoint_url') || !is_wc_endpoint_url('order-received')) {
         return;
     }
     $order_id = absint(get_query_var('order-received'));
-    if (!$order_id) {
-        return;
-    }
+    if (!$order_id) return;
     $order = wc_get_order($order_id);
     if (!$order || !is_user_logged_in() || (int) $order->get_customer_id() !== (int) get_current_user_id()) {
         return;
     }
-    // Commande principale
     if ($order->get_meta('_vs08v_booking_data')) {
         wp_safe_redirect(VS08V_Traveler_Space::voyage_url($order_id));
         exit;
     }
-    // Commande solde : rediriger vers le voyage parent
+    if ($order->get_meta('_vs08c_booking_data')) {
+        wp_safe_redirect(VS08V_Traveler_Space::voyage_url($order_id));
+        exit;
+    }
+    foreach ($order->get_items() as $item) {
+        if ($item->get_meta('_vs08c_booking_data')) {
+            wp_safe_redirect(VS08V_Traveler_Space::voyage_url($order_id));
+            exit;
+        }
+    }
     $parent_id = (int) $order->get_meta('_vs08v_order_solde_parent');
     if ($parent_id) {
         wp_safe_redirect(VS08V_Traveler_Space::voyage_url($parent_id));
