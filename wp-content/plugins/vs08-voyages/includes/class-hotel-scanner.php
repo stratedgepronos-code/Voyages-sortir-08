@@ -219,7 +219,12 @@ PROMPT;
      * les infos sur plusieurs sites et retourne le JSON structuré.
      */
     public static function ajax_scan_by_name() {
-        check_ajax_referer('vs08v_scan_hotel', 'nonce');
+        try {
+            check_ajax_referer('vs08v_scan_hotel', 'nonce');
+        } catch (Exception $e) {
+            wp_send_json_error('Session expirée. Rechargez la page et réessayez.');
+            return;
+        }
         if (!current_user_can('edit_posts')) {
             wp_send_json_error('Permission refusée');
         }
@@ -237,7 +242,11 @@ PROMPT;
         }
 
         $api_key = defined('VS08V_CLAUDE_KEY') ? VS08V_CLAUDE_KEY : self::API_KEY;
+        if (empty($api_key) || !is_string($api_key)) {
+            wp_send_json_error('Clé API Claude non configurée. Définissez VS08V_CLAUDE_KEY dans wp-config.php ou vérifiez la configuration.');
+        }
 
+        try {
         $schema = self::get_search_extraction_schema();
 
         $prompt = <<<PROMPT
@@ -362,6 +371,12 @@ PROMPT;
         }
 
         wp_send_json_success($data);
+        } catch (\Throwable $e) {
+            if (function_exists('error_log')) {
+                error_log('[VS08V HotelScanner ajax_scan_by_name] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            }
+            wp_send_json_error('Erreur inattendue : ' . (defined('WP_DEBUG') && WP_DEBUG ? $e->getMessage() : 'Réessayez ou rechargez la page.'));
+        }
     }
 
     /**

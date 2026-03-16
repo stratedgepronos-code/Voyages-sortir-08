@@ -17,7 +17,7 @@ class VS08V_MetaBoxes {
         $m = self::get($post->ID); ?>
         <?php
         $vs08v_pays_flags = [
-            'Portugal'=>'PT','Espagne'=>'ES','Maroc'=>'MA','Turquie'=>'TR','Irlande'=>'IE',
+            'Portugal'=>'PT','Madère'=>'PT','Espagne'=>'ES','Maroc'=>'MA','Turquie'=>'TR','Irlande'=>'IE',
             'Thaïlande'=>'TH','France'=>'FR','Italie'=>'IT','Grèce'=>'GR','Tunisie'=>'TN',
             'Écosse'=>'GB-SCT','Angleterre'=>'GB-ENG','Pays de Galles'=>'GB-WLS','Royaume-Uni'=>'GB',
             'Allemagne'=>'DE','Autriche'=>'AT','Suisse'=>'CH','Belgique'=>'BE','Pays-Bas'=>'NL',

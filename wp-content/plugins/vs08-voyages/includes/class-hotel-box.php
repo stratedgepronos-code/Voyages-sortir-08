@@ -657,21 +657,26 @@ class VS08V_HotelBox {
             var byNameBtn = document.getElementById('vs08h-by-name-btn');
             if (byNameBtn) {
                 byNameBtn.addEventListener('click', function() {
+                    if (typeof vs08AjaxUrl === 'undefined' || typeof vs08Nonce === 'undefined') {
+                        alert('Configuration manquante. Rechargez la page d\'édition.');
+                        return;
+                    }
                     var nameInput = document.getElementById('vs08h-hotel-name');
                     var locInput = document.getElementById('vs08h-hotel-location');
                     var hotelName = (nameInput && nameInput.value) ? nameInput.value.trim() : '';
                     if (!hotelName) {
-                        status.className = 'vs08h-scanner-status error';
-                        status.style.display = 'flex';
-                        stTxt.textContent = '❌ Entrez le nom de l\'hôtel.';
+                        if (status) { status.className = 'vs08h-scanner-status error'; status.style.display = 'flex'; }
+                        if (stTxt) stTxt.textContent = '❌ Entrez le nom de l\'hôtel.';
                         return;
                     }
                     var location = (locInput && locInput.value) ? locInput.value.trim() : '';
                     byNameBtn.disabled = true;
-                    byNameBtn.querySelector('span:last-child').textContent = 'Recherche en cours...';
-                    document.getElementById('vs08h-progress-wrap').style.display = 'block';
-                    status.style.display = 'none';
-                    progBar.style.width = '25%';
+                    var btnText = byNameBtn.querySelector('#vs08h-by-name-text');
+                    if (btnText) btnText.textContent = 'Recherche en cours...';
+                    var progWrap = document.getElementById('vs08h-progress-wrap');
+                    if (progWrap) progWrap.style.display = 'block';
+                    if (status) status.style.display = 'none';
+                    if (progBar) progBar.style.width = '25%';
 
                     var formData = new FormData();
                     formData.append('action', 'vs08v_scan_hotel_by_name');
@@ -680,30 +685,40 @@ class VS08V_HotelBox {
                     formData.append('location', location);
 
                     fetch(vs08AjaxUrl, { method: 'POST', body: formData })
-                    .then(function(r) { return r.json(); })
+                    .then(function(r) {
+                        if (!r.ok) {
+                            return r.text().then(function(t) {
+                                var msg = t && t.length > 150 ? t.substring(0, 150) + '…' : t;
+                                throw new Error('Serveur ' + r.status + (msg ? ': ' + msg : ''));
+                            });
+                        }
+                        return r.json();
+                    })
                     .then(function(res) {
                         byNameBtn.disabled = false;
-                        byNameBtn.querySelector('span:last-child').textContent = 'Rechercher et remplir avec l\'IA';
-                        document.getElementById('vs08h-progress-wrap').style.display = 'none';
-                        if (!res.success) {
-                            status.className = 'vs08h-scanner-status error';
-                            status.style.display = 'flex';
-                            stTxt.textContent = '❌ ' + (res.data || 'Erreur inconnue');
+                        if (btnText) btnText.textContent = 'Rechercher et remplir avec l\'IA';
+                        if (progWrap) progWrap.style.display = 'none';
+                        if (!res || typeof res.success === 'undefined') {
+                            if (status) { status.className = 'vs08h-scanner-status error'; status.style.display = 'flex'; }
+                            if (stTxt) stTxt.textContent = '❌ Réponse invalide du serveur. Rechargez la page et réessayez.';
                             return;
                         }
-                        progBar.style.width = '100%';
+                        if (!res.success) {
+                            if (status) { status.className = 'vs08h-scanner-status error'; status.style.display = 'flex'; }
+                            if (stTxt) stTxt.textContent = '❌ ' + (res.data || 'Erreur inconnue');
+                            return;
+                        }
+                        if (progBar) progBar.style.width = '100%';
                         fillData(res.data);
-                        status.className = 'vs08h-scanner-status success';
-                        status.style.display = 'flex';
-                        stTxt.textContent = '✅ Données trouvées et remplies ! Vérifiez avant de sauvegarder.';
+                        if (status) { status.className = 'vs08h-scanner-status success'; status.style.display = 'flex'; }
+                        if (stTxt) stTxt.textContent = '✅ Données trouvées et remplies ! Vérifiez avant de sauvegarder.';
                     })
                     .catch(function(err) {
                         byNameBtn.disabled = false;
-                        byNameBtn.querySelector('span:last-child').textContent = 'Rechercher et remplir avec l\'IA';
-                        document.getElementById('vs08h-progress-wrap').style.display = 'none';
-                        status.className = 'vs08h-scanner-status error';
-                        status.style.display = 'flex';
-                        stTxt.textContent = '❌ Erreur : ' + err.message;
+                        if (btnText) btnText.textContent = 'Rechercher et remplir avec l\'IA';
+                        if (progWrap) progWrap.style.display = 'none';
+                        if (status) { status.className = 'vs08h-scanner-status error'; status.style.display = 'flex'; }
+                        if (stTxt) stTxt.textContent = '❌ ' + (err && err.message ? err.message : 'Erreur réseau. Réessayez ou rechargez la page.');
                     });
                 });
             }
