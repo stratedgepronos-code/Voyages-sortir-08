@@ -1,176 +1,387 @@
 <?php
-if (!defined('ABSPATH')) exit;
+/**
+ * Template: Single Circuit
+ * Design: Luxury editorial matching VS08 theme
+ */
 get_header();
 while (have_posts()) : the_post();
     $id = get_the_ID();
-    $m = VS08C_MetaBoxes::get($id);
-    $duree_jours = (int) ($m['duree_jours'] ?? 8);
-    $periodes = $m['periodes'] ?? [];
-    $itineraire = $m['itineraire'] ?? [];
-    $inclus = $m['inclus'] ?? [];
-    $non_inclus = $m['non_inclus'] ?? [];
-    $sous_titre = $m['sous_titre'] ?? '';
-    $galerie = $m['galerie'] ?? [];
-    $prix_min = 0;
-    foreach ($periodes as $p) {
-        $pr = isset($p['prix']) ? floatval($p['prix']) : 0;
-        if ($pr > 0 && ($prix_min === 0 || $pr < $prix_min)) $prix_min = $pr;
-    }
-    $hero_img = !empty($galerie[0]) ? wp_get_attachment_image_url((int)$galerie[0], 'full') : get_the_post_thumbnail_url($id, 'full');
-    $destinations = get_the_terms($id, 'circuit_destination');
-    $themes = get_the_terms($id, 'circuit_theme');
-    $dest_name = $destinations && !is_wp_error($destinations) ? $destinations[0]->name : '';
+    $m  = VS08C_Meta::get($id);
+    $flag = VS08C_Meta::resolve_flag($m);
+    $galerie   = $m['galerie'] ?? [];
+    $jours     = $m['jours'] ?? [];
+    $aeroports = $m['aeroports'] ?? [];
+    $dates     = $m['dates_depart'] ?? [];
+    $options   = $m['options'] ?? [];
+    $hotels    = $m['hotels'] ?? [];
+    $duree_j   = intval($m['duree_jours'] ?? 8);
+    $duree_n   = intval($m['duree'] ?? 7);
+    $hero_img  = !empty($galerie[0]) ? $galerie[0] : get_the_post_thumbnail_url($id, 'full');
+    $pension_labels = ['bb'=>'Petit-déjeuner','dp'=>'Demi-pension','pc'=>'Pension complète (hors boissons)','ai'=>'Tout inclus','mixed'=>'Selon programme'];
+    $transport_labels = ['bus'=>'Bus climatisé','4x4'=>'4x4','voiture'=>'Voiture de location','train'=>'Train','mixed'=>'Transport mixte'];
+    $badge_labels = ['new'=>'Nouveauté','best'=>'Coup de cœur','promo'=>'Promo','derniere'=>'Dernières places'];
+    $etoiles_map = ['2'=>'★★','3'=>'★★★','4'=>'★★★★','5'=>'★★★★★','riad'=>'Riad','camp'=>'Bivouac'];
 ?>
-<div class="sv-page" style="background:#f9f6f0;padding:0 0 60px">
-    <!-- HERO — même style que voyages golf -->
-    <div class="sv-hero" style="background-image:url('<?php echo $hero_img ? esc_url($hero_img) : ''; ?>')">
-        <div class="sv-hero-overlay"></div>
-        <div class="sv-hero-content">
-            <?php if ($dest_name): ?>
-            <div class="sv-hero-dest"><?php echo esc_html($dest_name); ?></div>
-            <?php endif; ?>
-            <h1><?php the_title(); ?></h1>
-            <?php if ($sous_titre): ?><p class="sv-hero-meta" style="margin:0"><span class="sv-meta-chip"><?php echo esc_html($sous_titre); ?></span></p><?php endif; ?>
-            <div class="sv-hero-meta">
-                <span class="sv-meta-chip"><?php echo $duree_jours; ?> jours</span>
-                <?php if ($themes && !is_wp_error($themes)): foreach ($themes as $t): ?>
-                    <span class="sv-meta-chip"><?php echo esc_html($t->name); ?></span>
-                <?php endforeach; endif; ?>
-            </div>
+
+<!-- JS Data -->
+<script>
+var VS08C_CIRCUIT = <?php echo json_encode([
+    'id'          => $id,
+    'titre'       => get_the_title(),
+    'duree'       => $duree_n,
+    'prix_double' => floatval($m['prix_double'] ?? 0),
+    'aeroports'   => $aeroports,
+    'dates'       => $dates,
+    'options'     => $options,
+    'booking_url' => home_url('/reservation-circuit/' . $id),
+]); ?>;
+</script>
+
+<!-- BADGE -->
+<?php if (!empty($m['badge']) && isset($badge_labels[$m['badge']])): ?>
+<div class="vc-badge"><?php echo esc_html($badge_labels[$m['badge']]); ?></div>
+<?php endif; ?>
+
+<!-- ═══ HERO ═══ -->
+<section class="vc-hero" style="background-image:url('<?php echo esc_url($hero_img); ?>')">
+    <div class="vc-hero-overlay"></div>
+    <div class="vc-hero-content">
+        <div class="vc-breadcrumb">
+            <a href="<?php echo home_url(); ?>">Accueil</a> <span>›</span>
+            <a href="<?php echo home_url('/resultats-recherche?type=circuit'); ?>">Circuits</a> <span>›</span>
+            <?php the_title(); ?>
+        </div>
+        <div class="vc-hero-dest"><?php echo esc_html($flag . ' ' . ($m['destination'] ?? '')); ?></div>
+        <h1><?php the_title(); ?></h1>
+        <div class="vc-hero-meta">
+            <span class="vc-meta-chip">📅 <?php echo $duree_j; ?>j / <?php echo $duree_n; ?>n</span>
+            <span class="vc-meta-chip">🍽️ <?php echo esc_html($pension_labels[$m['pension'] ?? ''] ?? ''); ?></span>
+            <span class="vc-meta-chip">🚌 <?php echo esc_html($transport_labels[$m['transport'] ?? ''] ?? ''); ?></span>
+            <span class="vc-meta-chip">✈️ Vol inclus</span>
+            <?php if (!empty($m['guide_lang'])): ?><span class="vc-meta-chip">🗣️ Guide <?php echo esc_html($m['guide_lang']); ?></span><?php endif; ?>
+            <?php if ($m['prix_double'] ?? 0): ?><span class="vc-meta-chip" style="background:rgba(89,183,183,.3);border-color:rgba(89,183,183,.5)">Dès <?php echo number_format($m['prix_double'], 0, ',', ' '); ?> €/pers.</span><?php endif; ?>
         </div>
     </div>
+</section>
 
-    <div class="sv-page-inner">
-        <div class="sv-left-col">
-            <!-- Présentation -->
-            <div class="sv-card" id="sec-presentation">
-                <h2 class="sv-section-title">✦ Ce circuit en quelques mots</h2>
-                <div class="sv-desc"><?php the_content(); ?></div>
-                <div class="sv-highlights">
-                    <div class="sv-hl"><div class="sv-hl-icon">🗓️</div><div class="sv-hl-val" style="font-size:18px;line-height:1.2"><?php echo $duree_jours; ?> jours</div><div class="sv-hl-lbl">Durée</div></div>
-                    <?php if ($dest_name): ?>
-                    <div class="sv-hl"><div class="sv-hl-icon">📍</div><div class="sv-hl-val" style="font-size:14px;line-height:1.2"><?php echo esc_html($dest_name); ?></div><div class="sv-hl-lbl">Destination</div></div>
+<!-- ═══ MAIN CONTENT ═══ -->
+<div class="vc-page">
+    <div class="vc-inner">
+        <!-- LEFT COLUMN -->
+        <div class="vc-main">
+
+            <!-- GALLERY -->
+            <?php if (count($galerie) > 1): ?>
+            <div class="vc-gallery">
+                <?php foreach (array_slice($galerie, 0, 4) as $gi => $img): ?>
+                <div class="vc-gal-item">
+                    <img src="<?php echo esc_url($img); ?>" alt="<?php the_title(); ?> - Photo <?php echo $gi + 1; ?>" loading="lazy">
+                    <?php if ($gi === 3 && count($galerie) > 4): ?>
+                    <div class="vc-gal-more">+<?php echo count($galerie) - 4; ?> photos</div>
                     <?php endif; ?>
-                </div>
-            </div>
-
-            <!-- Itinéraire -->
-            <?php if (!empty($itineraire)): ?>
-            <div class="sv-card" id="sec-programme">
-                <h2 class="sv-section-title">🗓️ Programme jour par jour</h2>
-                <?php foreach ($itineraire as $i => $j): ?>
-                <div class="sv-day">
-                    <p class="sv-day-num">Jour <?php echo $i + 1; ?></p>
-                    <p class="sv-day-title"><?php echo esc_html($j['titre'] ?? ''); ?></p>
-                    <?php if (!empty($j['desc'])): ?><p class="sv-day-desc"><?php echo nl2br(esc_html($j['desc'])); ?></p><?php endif; ?>
                 </div>
                 <?php endforeach; ?>
             </div>
             <?php endif; ?>
 
-            <!-- Inclus / Non inclus -->
-            <?php if (!empty($inclus) || !empty($non_inclus)): ?>
-            <div class="sv-card" id="sec-compris">
-                <h2 class="sv-section-title">✅ Ce qui est compris / non compris</h2>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
-                    <?php if (!empty($inclus)): ?>
-                    <div>
-                        <p style="font-size:11px;font-weight:700;color:#59b7b7;text-transform:uppercase;letter-spacing:1px;margin:0 0 10px">Inclus</p>
-                        <ul style="margin:0;padding:0;list-style:none">
-                            <?php foreach ($inclus as $item): ?><li style="padding:5px 0;font-size:14px;color:#4a5568;font-family:'Outfit',sans-serif;padding-left:18px;position:relative"><span style="position:absolute;left:0;color:#59b7b7">✓</span><?php echo esc_html($item); ?></li><?php endforeach; ?>
-                        </ul>
-                    </div>
-                    <?php endif; ?>
-                    <?php if (!empty($non_inclus)): ?>
-                    <div>
-                        <p style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin:0 0 10px">Non inclus</p>
-                        <ul style="margin:0;padding:0;list-style:none">
-                            <?php foreach ($non_inclus as $item): ?><li style="padding:5px 0;font-size:14px;color:#4a5568;font-family:'Outfit',sans-serif;padding-left:18px;position:relative"><span style="position:absolute;left:0;color:#9ca3af">–</span><?php echo esc_html($item); ?></li><?php endforeach; ?>
-                        </ul>
-                    </div>
-                    <?php endif; ?>
+            <!-- DESCRIPTION + HIGHLIGHTS -->
+            <section class="vc-section">
+                <h2 class="vc-section-title">🗺️ Le circuit</h2>
+                <div class="vc-desc">
+                    <?php echo wp_kses_post(wpautop($m['description'] ?? get_the_excerpt())); ?>
                 </div>
-            </div>
-            <?php endif; ?>
-
-            <!-- Galerie -->
-            <?php if (count($galerie) > 1): $galerie_urls = array_values(array_filter(array_map(function($aid) { return wp_get_attachment_image_url((int)$aid, 'large'); }, array_filter($galerie)))); $nb_gal = count($galerie_urls); ?>
-            <div class="sv-carousel-wrap" id="sec-photos">
-                <h2 class="sv-section-title">📷 Galerie photos</h2>
-                <div class="sv-carousel" id="sv-carousel-circuit">
-                    <div class="sv-carousel-track" id="sv-carousel-track-circuit">
-                        <?php foreach ($galerie_urls as $url): ?><img src="<?php echo esc_url($url); ?>" alt="" loading="lazy"><?php endforeach; ?>
-                    </div>
-                    <button type="button" class="sv-carousel-btn" id="sv-prev-circuit">&#8249;</button>
-                    <button type="button" class="sv-carousel-btn" id="sv-next-circuit">&#8250;</button>
-                    <div class="sv-carousel-counter" id="sv-counter-circuit">1 / <?php echo $nb_gal; ?></div>
-                </div>
-                <div class="sv-dots" id="sv-dots-circuit">
-                    <?php for ($i = 0; $i < $nb_gal; $i++): ?><div class="sv-dot<?php echo $i === 0 ? ' active' : ''; ?>" data-index="<?php echo $i; ?>"></div><?php endfor; ?>
-                </div>
-            </div>
-            <script>
-            (function(){
-                var track = document.getElementById('sv-carousel-track-circuit');
-                var counter = document.getElementById('sv-counter-circuit');
-                var dots = document.querySelectorAll('#sv-dots-circuit .sv-dot');
-                var total = track ? track.children.length : 0;
-                var idx = 0;
-                function update(){
-                    if (!track || total === 0) return;
-                    idx = (idx % total + total) % total;
-                    track.style.transform = 'translateX(-' + (idx * 100) + '%)';
-                    if (counter) counter.textContent = (idx + 1) + ' / ' + total;
-                    dots.forEach(function(d, i){ d.classList.toggle('active', i === idx); });
-                }
-                var prev = document.getElementById('sv-prev-circuit');
-                var next = document.getElementById('sv-next-circuit');
-                if (prev) prev.addEventListener('click', function(){ idx--; update(); });
-                if (next) next.addEventListener('click', function(){ idx++; update(); });
-                dots.forEach(function(d){ d.addEventListener('click', function(){ idx = parseInt(d.getAttribute('data-index'), 10); update(); }); });
-            })();
-            </script>
-            <?php endif; ?>
-        </div>
-
-        <!-- Colonne droite sticky — même style que voyages -->
-        <div class="sv-right-col">
-            <div class="sv-calc-card">
-                <p class="sv-calc-title">Réserver ce circuit</p>
-                <p class="sv-calc-sub">Prix par personne selon la période. Recherche de vol à l’étape suivante.</p>
-                <div class="sv-price-box">
-                    <p class="sv-price-from">À partir de</p>
-                    <?php if ($prix_min > 0): ?>
-                    <p class="sv-price-main"><?php echo number_format($prix_min, 0, ',', ' '); ?> €</p>
-                    <p class="sv-price-per">par personne</p>
-                    <?php else: ?>
-                    <p class="sv-price-main">Sur devis</p>
-                    <?php endif; ?>
-                </div>
-                <?php if (!empty($periodes)): ?>
-                <div style="font-size:11px;color:#9ca3af;margin-bottom:6px;font-family:'Outfit',sans-serif">Prix par période</div>
-                <?php foreach ($periodes as $p):
-                    $prix = isset($p['prix']) ? floatval($p['prix']) : 0;
-                    if ($prix <= 0) continue;
-                    $label = $p['label'] ?? '';
-                    $deb = !empty($p['date_debut']) ? date_i18n('j M', strtotime($p['date_debut'])) : '';
-                    $fin = !empty($p['date_fin']) ? date_i18n('j M', strtotime($p['date_fin'])) : '';
+                <?php
+                $points = array_filter(array_map('trim', explode("\n", $m['points_forts'] ?? '')));
+                if (!empty($points)):
                 ?>
-                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f2f4;font-size:13px;font-family:'Outfit',sans-serif">
-                    <span style="color:#4a5568"><?php echo esc_html($label ?: $deb . ' – ' . $fin); ?></span>
-                    <strong style="color:#3d9a9a"><?php echo number_format($prix, 0, ',', ' '); ?> €</strong>
+                <div class="vc-highlights">
+                    <?php foreach (array_slice($points, 0, 4) as $pt): ?>
+                    <div class="vc-hl">
+                        <div class="vc-hl-icon">✨</div>
+                        <div style="font-size:13px;color:#1a3a3a;font-family:'Outfit',sans-serif;font-weight:600"><?php echo esc_html($pt); ?></div>
+                    </div>
+                    <?php endforeach; ?>
                 </div>
-                <?php endforeach; ?>
                 <?php endif; ?>
-                <a href="<?php echo esc_url(home_url('/reservation/')); ?>?circuit=<?php echo $id; ?>" class="sv-btn-reserver" style="margin-top:16px">Réserver ce circuit →</a>
-                <div class="sv-reassurance">
-                    <div class="sv-reass"><span class="sv-reass-icon">🛡️</span><span>Assurance en option</span></div>
-                    <div class="sv-reass"><span class="sv-reass-icon">✈️</span><span>Recherche de vol à l’étape suivante</span></div>
+
+                <!-- Highlights row -->
+                <div class="vc-highlights" style="margin-top:14px">
+                    <div class="vc-hl">
+                        <div class="vc-hl-icon">📅</div>
+                        <div class="vc-hl-val"><?php echo $duree_j; ?>J/<?php echo $duree_n; ?>N</div>
+                        <div class="vc-hl-lbl">Durée</div>
+                    </div>
+                    <div class="vc-hl">
+                        <div class="vc-hl-icon">👥</div>
+                        <div class="vc-hl-val"><?php echo intval($m['group_min'] ?? 2); ?>-<?php echo intval($m['group_max'] ?? 20); ?></div>
+                        <div class="vc-hl-lbl">Personnes</div>
+                    </div>
+                    <div class="vc-hl">
+                        <div class="vc-hl-icon">🗣️</div>
+                        <div class="vc-hl-val"><?php echo esc_html($m['guide_lang'] ?? 'FR'); ?></div>
+                        <div class="vc-hl-lbl">Guide</div>
+                    </div>
                 </div>
+            </section>
+
+            <!-- ITINERARY -->
+            <?php if (!empty($jours)): ?>
+            <section class="vc-section">
+                <h2 class="vc-section-title">🗓️ Programme jour par jour</h2>
+                <div class="vc-itinerary">
+                    <?php foreach ($jours as $ji => $jour):
+                        if (empty($jour['titre'])) continue;
+                    ?>
+                    <div class="vc-day">
+                        <div class="vc-day-header">
+                            <span class="vc-day-num">Jour <?php echo $ji + 1; ?></span>
+                            <span class="vc-day-title"><?php echo esc_html($jour['titre']); ?></span>
+                            <span class="vc-day-toggle">▾</span>
+                        </div>
+                        <div class="vc-day-body">
+                            <?php if (!empty($jour['description'])): ?>
+                            <div class="vc-day-desc"><?php echo nl2br(esc_html($jour['description'])); ?></div>
+                            <?php endif; ?>
+
+                            <div class="vc-day-info">
+                                <?php if (!empty($jour['repas'])): ?>
+                                <span class="vc-day-info-item">🍽️ <?php echo esc_html($jour['repas']); ?></span>
+                                <?php endif; ?>
+                                <?php if (!empty($jour['nuit'])): ?>
+                                <span class="vc-day-info-item">🏨 <?php echo esc_html($jour['nuit']); ?></span>
+                                <?php endif; ?>
+                                <?php if (!empty($jour['transport'])): ?>
+                                <span class="vc-day-info-item">🚌 <?php echo esc_html($jour['transport']); ?></span>
+                                <?php endif; ?>
+                            </div>
+
+                            <?php if (!empty($jour['tags'])):
+                                $tags = array_filter(array_map('trim', explode(',', $jour['tags'])));
+                            ?>
+                            <div class="vc-day-tags">
+                                <?php foreach ($tags as $tag): ?>
+                                <span class="vc-day-tag"><?php echo esc_html($tag); ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                            <?php endif; ?>
+
+                            <?php if (!empty($jour['image'])): ?>
+                            <div class="vc-day-image">
+                                <img src="<?php echo esc_url($jour['image']); ?>" alt="Jour <?php echo $ji + 1; ?>" loading="lazy">
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+            <?php endif; ?>
+
+            <!-- HOTELS -->
+            <?php if (!empty($hotels)): ?>
+            <section class="vc-section">
+                <h2 class="vc-section-title">🏨 Hébergements</h2>
+                <div class="vc-hotels-list">
+                    <?php foreach ($hotels as $hotel):
+                        if (empty($hotel['nom'])) continue;
+                        $stars = $etoiles_map[$hotel['etoiles'] ?? '4'] ?? '';
+                    ?>
+                    <div class="vc-hotel-card">
+                        <div class="vc-hotel-icon">🏨</div>
+                        <div class="vc-hotel-info">
+                            <div class="vc-hotel-name"><?php echo esc_html($hotel['nom']); ?> <span class="vc-hotel-stars"><?php echo $stars; ?></span></div>
+                            <div class="vc-hotel-detail"><?php echo esc_html($hotel['ville'] ?? ''); ?></div>
+                        </div>
+                        <div class="vc-hotel-nights"><?php echo intval($hotel['nuits'] ?? 1); ?> nuit<?php echo intval($hotel['nuits'] ?? 1) > 1 ? 's' : ''; ?></div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+            <?php endif; ?>
+
+            <!-- INCLUS / NON INCLUS -->
+            <section class="vc-section">
+                <h2 class="vc-section-title">✅ Ce qui est inclus</h2>
+                <div class="vc-inclus-grid">
+                    <div class="vc-inclus-col">
+                        <h4>✅ Inclus</h4>
+                        <ul class="vc-inclus-list">
+                            <?php foreach (array_filter(array_map('trim', explode("\n", $m['inclus'] ?? ''))) as $item): ?>
+                            <li><span class="vc-check">✓</span> <?php echo esc_html($item); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                    <div class="vc-inclus-col">
+                        <h4>❌ Non inclus</h4>
+                        <ul class="vc-inclus-list">
+                            <?php foreach (array_filter(array_map('trim', explode("\n", $m['non_inclus'] ?? ''))) as $item): ?>
+                            <li><span class="vc-cross">✕</span> <?php echo esc_html($item); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PRACTICAL INFO -->
+            <?php
+            $practical = [];
+            if (!empty($m['formalites'])) $practical[] = ['icon' => '🛂', 'title' => 'Formalités', 'text' => $m['formalites']];
+            if (!empty($m['sante']))      $practical[] = ['icon' => '💉', 'title' => 'Santé / Vaccins', 'text' => $m['sante']];
+            if (!empty($m['climat']))     $practical[] = ['icon' => '🌤️', 'title' => 'Climat', 'text' => $m['climat']];
+            if (!empty($m['monnaie']))    $practical[] = ['icon' => '💱', 'title' => 'Monnaie & Pourboires', 'text' => $m['monnaie']];
+            if (!empty($practical)):
+            ?>
+            <section class="vc-section">
+                <h2 class="vc-section-title">ℹ️ Informations pratiques</h2>
+                <div class="vc-practical-grid">
+                    <?php foreach ($practical as $p): ?>
+                    <div class="vc-practical-card">
+                        <h4><?php echo $p['icon'] . ' ' . esc_html($p['title']); ?></h4>
+                        <p><?php echo esc_html($p['text']); ?></p>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+            <?php endif; ?>
+
+            <!-- CONDITIONS -->
+            <?php if (!empty($m['annulation'])): ?>
+            <section class="vc-section">
+                <h2 class="vc-section-title">⚠️ Conditions d'annulation</h2>
+                <div class="vc-desc">
+                    <p><?php echo nl2br(esc_html($m['annulation'])); ?></p>
+                </div>
+            </section>
+            <?php endif; ?>
+
+        </div>
+
+        <!-- ═══ STICKY SIDEBAR — CALCULATOR ═══ -->
+        <div class="vc-calc-col">
+            <div class="vc-calc-card">
+                <div class="vc-calc-title">Réserver ce circuit</div>
+                <div class="vc-calc-sub"><?php echo esc_html($flag . ' ' . get_the_title()); ?> — <?php echo $duree_j; ?>j/<?php echo $duree_n; ?>n</div>
+
+                <!-- Date -->
+                <div class="vc-field">
+                    <label>📅 Date de départ <span class="vc-required-dot">*</span></label>
+                    <select id="vc-date-depart">
+                        <option value="">— Choisir une date —</option>
+                        <?php
+                        // Générer les dates depuis les périodes
+                        $periodes = $dates; // $dates = $m['dates_depart']
+                        $generated_dates = [];
+                        foreach ($periodes as $per) {
+                            if (($per['statut'] ?? '') === 'complet') continue;
+                            $debut = $per['date_debut'] ?? '';
+                            $fin   = $per['date_fin'] ?? '';
+                            if (!$debut || !$fin) continue;
+                            $ts_debut = strtotime($debut);
+                            $ts_fin   = strtotime($fin);
+                            if (!$ts_debut || !$ts_fin) continue;
+                            $jours_ok = $per['jours_depart'] ?? [1,2,3,4,5,6,7];
+                            if (empty($jours_ok)) $jours_ok = [1,2,3,4,5,6,7];
+                            $supp   = floatval($per['supp'] ?? 0);
+                            $statut = $per['statut'] ?? 'ouvert';
+
+                            // Parcourir chaque jour de la période
+                            $current = $ts_debut;
+                            while ($current <= $ts_fin) {
+                                // Vérifier que la date est dans le futur
+                                if ($current > time()) {
+                                    // Jour de la semaine PHP: 1=Lun ... 7=Dim
+                                    $dow = (int) date('N', $current);
+                                    if (in_array($dow, $jours_ok)) {
+                                        $date_str = date('Y-m-d', $current);
+                                        if (!isset($generated_dates[$date_str])) {
+                                            $generated_dates[$date_str] = [
+                                                'date'   => $date_str,
+                                                'supp'   => $supp,
+                                                'statut' => $statut,
+                                            ];
+                                        }
+                                    }
+                                }
+                                $current = strtotime('+1 day', $current);
+                            }
+                        }
+                        // Trier par date
+                        ksort($generated_dates);
+                        $jours_noms = [1=>'Lun',2=>'Mar',3=>'Mer',4=>'Jeu',5=>'Ven',6=>'Sam',7=>'Dim'];
+                        foreach ($generated_dates as $gd):
+                            $ts = strtotime($gd['date']);
+                            $dow = (int) date('N', $ts);
+                            $supp_txt = $gd['supp'] > 0 ? ' (+' . intval($gd['supp']) . '€/pers)' : '';
+                            $garanti = $gd['statut'] === 'garanti' ? ' ✅ Garanti' : '';
+                            $label = ($jours_noms[$dow] ?? '') . '. ' . date('d/m/Y', $ts) . $supp_txt . $garanti;
+                        ?>
+                        <option value="<?php echo esc_attr($gd['date']); ?>"><?php echo esc_html($label); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Aéroport -->
+                <div class="vc-field">
+                    <label>✈️ Aéroport de départ <span class="vc-required-dot">*</span></label>
+                    <select id="vc-aeroport">
+                        <option value="">— Choisir —</option>
+                        <?php foreach ($aeroports as $a):
+                            $supp = floatval($a['supp'] ?? 0);
+                            $lbl = strtoupper($a['code']) . ' — ' . ($a['label'] ?? '');
+                            if ($supp > 0) $lbl .= ' (+' . intval($supp) . '€)';
+                        ?>
+                        <option value="<?php echo esc_attr(strtoupper($a['code'])); ?>"><?php echo esc_html($lbl); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Voyageurs (adultes uniquement) -->
+                <div class="vc-field">
+                    <label>👥 Nombre de voyageurs</label>
+                    <select id="vc-nb-adultes">
+                        <?php for ($i = 1; $i <= 10; $i++): ?>
+                        <option value="<?php echo $i; ?>" <?php selected($i, 2); ?>><?php echo $i; ?> voyageur<?php echo $i > 1 ? 's' : ''; ?></option>
+                        <?php endfor; ?>
+                    </select>
+                </div>
+
+                <!-- Nombre de chambres -->
+                <div class="vc-field">
+                    <label>🛏️ Nombre de chambres</label>
+                    <select id="vc-nb-chambres">
+                        <?php for ($i = 1; $i <= 8; $i++): ?>
+                        <option value="<?php echo $i; ?>"><?php echo $i; ?> chambre<?php echo $i > 1 ? 's' : ''; ?></option>
+                        <?php endfor; ?>
+                    </select>
+                </div>
+
+                <!-- Chambres auto-générées -->
+                <div class="vc-rooms-section" id="vc-rooms-section">
+                    <!-- Les chambres seront générées automatiquement par le JS -->
+                </div>
+
+                <!-- Price Result -->
+                <div class="vc-price-result">
+                    <div style="text-align:center;color:#aaa;font-size:13px;font-family:'Outfit',sans-serif;padding:12px 0">
+                        Sélectionnez une date et un aéroport<br>pour voir le prix
+                    </div>
+                </div>
+
+                <!-- CTA -->
+                <button class="vc-cta-btn" disabled>
+                    Réserver ce circuit →
+                </button>
+            </div>
+
+            <!-- Contact Card -->
+            <div class="vc-contact-card">
+                <h3>Un conseiller à votre écoute</h3>
+                <p>Personnalisez ce circuit selon vos envies</p>
+                <a href="tel:0326652863" class="vc-contact-phone">📞 03 26 65 28 63</a>
             </div>
         </div>
+
     </div>
 </div>
-<?php
-endwhile;
-get_footer();
+
+<?php endwhile; get_footer(); ?>

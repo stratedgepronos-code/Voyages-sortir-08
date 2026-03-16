@@ -1,0 +1,293 @@
+/* ═══════════════════════════════════════════
+   VS08 Circuits — Admin Styles
+   Clean, lisible, intuitif pour tout admin
+   ═══════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+
+.vs08c-admin-wrap {
+    font-family: 'Outfit', -apple-system, sans-serif;
+    margin: -6px -12px;
+}
+
+/* ── Tabs ── */
+.vs08c-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    background: #f0f0f0;
+    padding: 10px 12px 0;
+    border-bottom: 2px solid #e0e0e0;
+}
+.vs08c-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    transition: all .2s;
+}
+.vs08c-tab:hover { background: #e8e8e8; color: #333; }
+.vs08c-tab.active {
+    background: #fff;
+    color: #1a3a3a;
+    border-color: #e0e0e0;
+    border-bottom-color: #fff;
+    margin-bottom: -2px;
+    padding-bottom: 12px;
+}
+.vs08c-tab .dashicons { font-size: 16px; width: 16px; height: 16px; color: #59b7b7; }
+
+/* ── Panels ── */
+.vs08c-panel {
+    display: none;
+    padding: 24px 20px;
+    background: #fff;
+}
+.vs08c-panel.active { display: block; }
+
+.vs08c-panel-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a3a3a;
+    margin: 0 0 18px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #edf8f8;
+}
+.vs08c-help-block {
+    font-size: 13px;
+    color: #888;
+    margin: -8px 0 16px;
+    font-style: italic;
+}
+
+/* ── Field Grid ── */
+.vs08c-field-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+}
+.vs08c-field-row .vs08c-w2 { grid-column: span 2; }
+
+.vs08c-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #1a3a3a;
+    margin-bottom: 6px;
+    letter-spacing: .3px;
+}
+.vs08c-field input[type="text"],
+.vs08c-field input[type="number"],
+.vs08c-field input[type="date"],
+.vs08c-field input[type="url"],
+.vs08c-field select,
+.vs08c-field textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+    color: #333;
+    background: #fafafa;
+    transition: border-color .2s, box-shadow .2s;
+    box-sizing: border-box;
+}
+.vs08c-field input:focus,
+.vs08c-field select:focus,
+.vs08c-field textarea:focus {
+    border-color: #59b7b7;
+    box-shadow: 0 0 0 3px rgba(89,183,183,.15);
+    outline: none;
+    background: #fff;
+}
+.vs08c-field textarea { resize: vertical; min-height: 80px; }
+.vs08c-help {
+    font-size: 11px;
+    color: #aaa;
+    margin: 4px 0 0;
+    font-style: italic;
+}
+
+/* ── Repeaters ── */
+.vs08c-repeater { display: flex; flex-direction: column; gap: 8px; }
+
+.vs08c-repeater-item {
+    background: #fafafa;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 10px;
+    padding: 12px 14px;
+    transition: border-color .2s;
+}
+.vs08c-repeater-item:hover { border-color: #c8e8e8; }
+
+.vs08c-compact { gap: 10px !important; align-items: end; }
+.vs08c-compact .vs08c-field { margin-bottom: 0; }
+
+button.vs08c-remove-repeater,
+button.vs08c-remove-jour {
+    background: #fee2e2;
+    border: none;
+    color: #dc2626;
+    font-size: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background .2s;
+    align-self: end;
+    margin-bottom: 2px;
+}
+button.vs08c-remove-repeater:hover,
+button.vs08c-remove-jour:hover { background: #fca5a5; }
+
+/* ── Itinerary Days ── */
+.vs08c-jour { background: #fff; border: 1.5px solid #e0e0e0; border-radius: 12px; overflow: hidden; }
+
+.vs08c-jour-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #f0fafa, #f8f8f8);
+    cursor: pointer;
+    user-select: none;
+}
+.vs08c-jour-handle {
+    cursor: grab;
+    color: #bbb;
+    font-size: 18px;
+}
+.vs08c-jour-num {
+    font-weight: 700;
+    font-size: 14px;
+    color: #3d9a9a;
+    flex: 1;
+}
+.vs08c-jour-toggle {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 20px;
+    transition: transform .3s;
+}
+.vs08c-jour.collapsed .vs08c-jour-body { display: none; }
+.vs08c-jour.collapsed .vs08c-jour-toggle { transform: rotate(-90deg); }
+
+.vs08c-jour-body { padding: 16px; border-top: 1px solid #eee; }
+
+/* ── Gallery ── */
+.vs08c-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    min-height: 60px;
+}
+.vs08c-gallery-item {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    aspect-ratio: 3/2;
+    cursor: grab;
+}
+.vs08c-gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.vs08c-gallery-remove {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(220,38,38,.85);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity .2s;
+}
+.vs08c-gallery-item:hover .vs08c-gallery-remove { opacity: 1; }
+
+/* ── Image Upload Field ── */
+.vs08c-image-field { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vs08c-img-preview img { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+
+/* ── Pricing Sections ── */
+.vs08c-pricing-section {
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 20px;
+}
+.vs08c-pricing-section h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a3a3a;
+    margin: 0 0 14px;
+}
+
+/* ── WP Editor override ── */
+.vs08c-panel .wp-editor-wrap { border-radius: 8px; overflow: hidden; }
+
+/* ── VS08 Calendar Triggers (admin) ── */
+.vs08c-cal-wrap { position: relative; }
+.vs08c-cal-trigger {
+    padding: 9px 12px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: 'Outfit', sans-serif;
+    color: #9ca3af;
+    background: #fafafa;
+    transition: border-color .2s, box-shadow .2s;
+    white-space: nowrap;
+}
+.vs08c-cal-trigger:hover { border-color: #59b7b7; }
+.vs08c-cal-trigger.has-value {
+    color: #0f2424;
+    font-weight: 600;
+    border-color: #3d9a9a;
+    background: #edf8f8;
+}
+/* Calendar popup positioning */
+.vs08c-cal-wrap .vs-cal {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 99999;
+    margin-top: 4px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.18);
+    border-radius: 14px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 782px) {
+    .vs08c-field-row { grid-template-columns: 1fr; }
+    .vs08c-field-row .vs08c-w2 { grid-column: span 1; }
+    .vs08c-tabs { flex-direction: column; }
+    .vs08c-tab { border-radius: 8px; border-bottom: 1px solid transparent; }
+    .vs08c-tab.active { margin-bottom: 0; padding-bottom: 10px; }
+}
