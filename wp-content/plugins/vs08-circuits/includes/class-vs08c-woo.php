@@ -22,10 +22,10 @@ class VS08C_Woo {
 
         $product_name = sprintf(
             'Réservation Circuit — %s — %s (%s — %d pers.)',
-            $data['circuit_titre'],
+            $data['circuit_titre'] ?? 'Circuit',
             date('d/m/Y', strtotime($data['params']['date_depart'] ?? 'now')),
             $label_type,
-            $data['devis']['nb_total']
+            (int) ($data['devis']['nb_total'] ?? 1)
         );
 
         // Vérifier doublon
@@ -72,11 +72,13 @@ class VS08C_Woo {
     }
 
     private static function build_description($data, $payer_tout, $acompte_pct) {
-        $total   = $data['total'];
-        $acompte = $data['acompte'];
-        $params  = $data['params'];
-        $devis   = $data['devis'];
-        $m       = VS08C_Meta::get($data['circuit_id']);
+        $circuit_id = (int) ($data['circuit_id'] ?? 0);
+        if (!$circuit_id) return '';
+        $total   = (float) ($data['total'] ?? 0);
+        $acompte = (float) ($data['acompte'] ?? 0);
+        $params  = $data['params'] ?? [];
+        $devis   = $data['devis'] ?? [];
+        $m       = VS08C_Meta::get($circuit_id);
 
         $pension_labels   = ['bb'=>'Petit-déjeuner','dp'=>'Demi-pension','pc'=>'Pension complète (hors boissons)','ai'=>'Tout inclus','mixed'=>'Selon programme'];
         $transport_labels = ['bus'=>'Bus climatisé','4x4'=>'4x4','voiture'=>'Voiture de location','train'=>'Train','mixed'=>'Transport mixte'];
@@ -95,7 +97,7 @@ class VS08C_Woo {
             <h3>📋 Récapitulatif de votre réservation</h3>
 
             <table>
-                <tr><td><strong>🗺️ Circuit</strong></td><td><?php echo esc_html($flag . ' ' . $data['circuit_titre']); ?></td></tr>
+                <tr><td><strong>🗺️ Circuit</strong></td><td><?php echo esc_html($flag . ' ' . ($data['circuit_titre'] ?? 'Circuit')); ?></td></tr>
                 <tr><td><strong>📍 Destination</strong></td><td><?php echo esc_html($m['destination'] ?? ''); ?></td></tr>
                 <tr><td><strong>📅 Date de départ</strong></td><td><?php echo esc_html(date('d/m/Y', strtotime($params['date_depart'] ?? 'now'))); ?></td></tr>
                 <tr><td><strong>✈️ Aéroport</strong></td><td><?php echo esc_html(strtoupper($params['aeroport'] ?? '')); ?></td></tr>
@@ -115,7 +117,7 @@ class VS08C_Woo {
                 <?php if (!empty($m['guide_lang'])): ?>
                 <tr><td><strong>🗣️ Guide</strong></td><td><?php echo esc_html($m['guide_lang']); ?></td></tr>
                 <?php endif; ?>
-                <tr><td><strong>👥 Voyageurs</strong></td><td><?php echo esc_html($devis['nb_total']); ?> personne(s)</td></tr>
+                <tr><td><strong>👥 Voyageurs</strong></td><td><?php echo (int)($devis['nb_total'] ?? 0); ?> personne(s)</td></tr>
                 <tr><td><strong>🛏️ Chambres</strong></td><td><?php echo $nb_chambres; ?> chambre(s)</td></tr>
             </table>
 
@@ -186,26 +188,34 @@ class VS08C_Woo {
 
 // Copier booking_data dans les items de commande
 add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_item_key, $values, $order) {
-    $pid = $item->get_product_id();
-    if (!$pid) return;
-    $bd = get_post_meta($pid, '_vs08c_booking_data', true);
-    if (!empty($bd) && is_array($bd)) {
-        $item->add_meta_data('_vs08c_booking_data', $bd, true);
-        $item->add_meta_data('_vs08c_circuit_id', $bd['circuit_id'] ?? 0, true);
+    try {
+        $pid = $item->get_product_id();
+        if (!$pid) return;
+        $bd = get_post_meta($pid, '_vs08c_booking_data', true);
+        if (!empty($bd) && is_array($bd)) {
+            $item->add_meta_data('_vs08c_booking_data', $bd, true);
+            $item->add_meta_data('_vs08c_circuit_id', $bd['circuit_id'] ?? 0, true);
+        }
+    } catch (Throwable $e) {
+        error_log('VS08C checkout_create_order_line_item: ' . $e->getMessage());
     }
 }, 10, 4);
 
 // Copier sur la commande
 add_action('woocommerce_checkout_update_order_meta', function($order_id) {
-    $order = wc_get_order($order_id);
-    if (!$order || $order->get_meta('_vs08c_booking_data')) return;
-    foreach ($order->get_items() as $item) {
-        $data = $item->get_meta('_vs08c_booking_data');
-        if (!empty($data) && is_array($data)) {
-            $order->update_meta_data('_vs08c_booking_data', $data);
-            $order->save();
-            break;
+    try {
+        $order = wc_get_order($order_id);
+        if (!$order || $order->get_meta('_vs08c_booking_data')) return;
+        foreach ($order->get_items() as $item) {
+            $data = $item->get_meta('_vs08c_booking_data');
+            if (!empty($data) && is_array($data)) {
+                $order->update_meta_data('_vs08c_booking_data', $data);
+                $order->save();
+                break;
+            }
         }
+    } catch (Throwable $e) {
+        error_log('VS08C checkout_update_order_meta: ' . $e->getMessage());
     }
 }, 10, 2);
 

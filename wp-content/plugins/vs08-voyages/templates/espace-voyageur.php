@@ -63,7 +63,66 @@ get_header();
                 echo '<div class="ev-alert">Voyage introuvable ou accès refusé.</div>';
             } else {
                 $order      = wc_get_order($order_id);
-                $data       = VS08V_Traveler_Space::get_booking_data_from_order($order);
+                $data       = VS08V_Traveler_Space::get_booking_data_from_order($order, true);
+                $is_circuit = isset($data['type']) && $data['type'] === 'circuit';
+                if ($is_circuit): // ── Détail Circuit (contrat de vente, récap) ──
+                    $params     = $data['params'] ?? [];
+                    $devis      = $data['devis'] ?? [];
+                    $fact       = $data['facturation'] ?? [];
+                    $voyageurs  = $data['voyageurs'] ?? [];
+                    $circuit_id = (int)($data['circuit_id'] ?? 0);
+                    $m          = class_exists('VS08C_Meta') ? VS08C_Meta::get($circuit_id) : [];
+                    $destination = $m['destination'] ?? '';
+                    $total      = (float)($data['total'] ?? 0);
+                    $contract_url = VS08V_Traveler_Space::get_contract_url($order_id);
+                    $galerie    = $m['galerie'] ?? [];
+                    $cover      = !empty($galerie[0]) ? $galerie[0] : '';
+                    $duree_n    = (int)($m['duree'] ?? 7);
+                    $duree_j    = (int)($m['duree_jours'] ?? ($duree_n + 1));
+                    $date_retour = !empty($params['date_depart']) ? date('d/m/Y', strtotime($params['date_depart'] . ' +' . $duree_n . ' days')) : '';
+                    $pension_labels = ['bb'=>'Petit-déjeuner','dp'=>'Demi-pension','pc'=>'Pension complète','ai'=>'Tout inclus','mixed'=>'Selon programme'];
+                    $transport_labels = ['bus'=>'Bus climatisé','4x4'=>'4x4','voiture'=>'Voiture','train'=>'Train','mixed'=>'Transport mixte'];
+                    $pension_label = $pension_labels[$m['pension'] ?? ''] ?? '';
+                    $transport_label = $transport_labels[$m['transport'] ?? ''] ?? '';
+            ?>
+            <a href="<?php echo esc_url(VS08V_Traveler_Space::base_url()); ?>" class="ev-back">&larr; Retour à mes voyages</a>
+            <div class="ev-detail-hero" <?php if ($cover): ?>style="background-image:linear-gradient(180deg,rgba(26,58,58,.45) 0%,rgba(26,58,58,.7) 100%),url(<?php echo esc_url($cover); ?>)"<?php endif; ?>>
+                <div class="ev-detail-hero-content">
+                    <h1><?php echo esc_html($data['circuit_titre'] ?? 'Circuit'); ?></h1>
+                    <p>N° VS08-<?php echo $order_id; ?> · Départ le <?php echo !empty($params['date_depart']) ? esc_html(date('d/m/Y', strtotime($params['date_depart']))) : '—'; ?></p>
+                </div>
+                <span class="ev-badge ev-badge-circuit">Circuit</span>
+            </div>
+            <div class="ev-voyage-blocks">
+                <section class="ev-voyage-block">
+                    <h2>Récapitulatif</h2>
+                    <table class="vs08v-recap-table">
+                        <tr><th>Destination</th><td><?php echo esc_html($destination); ?></td></tr>
+                        <tr><th>Date de départ</th><td><?php echo !empty($params['date_depart']) ? esc_html(date('d/m/Y', strtotime($params['date_depart']))) : '—'; ?></td></tr>
+                        <tr><th>Durée</th><td><?php echo $duree_j; ?> jours / <?php echo $duree_n; ?> nuits</td></tr>
+                        <?php if ($pension_label): ?><tr><th>Formule</th><td><?php echo esc_html($pension_label); ?></td></tr><?php endif; ?>
+                        <?php if ($transport_label): ?><tr><th>Transport</th><td><?php echo esc_html($transport_label); ?></td></tr><?php endif; ?>
+                        <tr><th>Voyageurs</th><td><?php echo (int)($devis['nb_total'] ?? 0); ?> personne(s)</td></tr>
+                        <tr><th>Montant total</th><td><strong><?php echo number_format($total, 2, ',', ' '); ?> €</strong></td></tr>
+                    </table>
+                    <?php if (!empty($voyageurs)): ?>
+                    <h3>Participants</h3>
+                    <ul class="vs08v-voyageurs-list">
+                        <?php foreach ($voyageurs as $v): ?>
+                        <li><?php echo esc_html(($v['prenom'] ?? '') . ' ' . strtoupper($v['nom'] ?? '')); ?>
+                            <?php if (!empty($v['date_naissance'])): ?> · Né(e) le <?php echo esc_html(date('d/m/Y', strtotime($v['date_naissance']))); ?><?php endif; ?>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <?php endif; ?>
+                </section>
+                <section class="ev-voyage-block">
+                    <h2>Contrat de vente</h2>
+                    <p>Téléchargez ou consultez votre contrat de vente.</p>
+                    <a href="<?php echo esc_url($contract_url); ?>" target="_blank" rel="noopener" class="ev-btn ev-btn-primary">Voir le contrat de vente</a>
+                </section>
+            </div>
+            <?php else: // ── Détail Golf (existant) ──
                 $solde_info = VS08V_Traveler_Space::get_solde_info($order_id);
                 $params     = $data['params'] ?? [];
                 $devis      = $data['devis'] ?? [];
@@ -554,6 +613,7 @@ get_header();
             })();
             </script>
 
+            <?php endif; ?>
             <?php } ?>
 
         <?php elseif ($view === 'profil'): ?>
@@ -963,20 +1023,30 @@ get_header();
                         $d    = $item['booking_data'];
                         $p    = $d['params'] ?? [];
                         $dv   = $d['devis'] ?? [];
-                        $vid  = (int)($d['voyage_id'] ?? 0);
-                        $mm   = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($vid) : [];
-                        $gal  = $mm['galerie'] ?? [];
-                        $img  = !empty($gal[0]) ? $gal[0] : '';
-                        $dest = $mm['destination'] ?? '';
-                        $hnom = $mm['hotel_nom'] ?? ($mm['hotel']['nom'] ?? '');
-                        $si   = VS08V_Traveler_Space::get_solde_info($ord->get_id());
-                        $lnk  = VS08V_Traveler_Space::voyage_url($ord->get_id());
+                        $is_circuit = isset($item['type']) && $item['type'] === 'circuit';
+                        if ($is_circuit):
+                            $cid = (int)($d['circuit_id'] ?? 0);
+                            $mm = class_exists('VS08C_Meta') ? VS08C_Meta::get($cid) : [];
+                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : '';
+                            $dest = $mm['destination'] ?? ''; $hnom = '';
+                            $titre = $d['circuit_titre'] ?? 'Circuit';
+                            $si = null;
+                        else:
+                            $vid = (int)($d['voyage_id'] ?? 0);
+                            $mm = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($vid) : [];
+                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : '';
+                            $dest = $mm['destination'] ?? ''; $hnom = $mm['hotel_nom'] ?? ($mm['hotel']['nom'] ?? '');
+                            $titre = $d['voyage_titre'] ?? 'Séjour golf';
+                            $si = VS08V_Traveler_Space::get_solde_info($ord->get_id());
+                        endif;
+                        $lnk = VS08V_Traveler_Space::voyage_url($ord->get_id());
                     ?>
                     <a href="<?php echo esc_url($lnk); ?>" class="ev-card-link">
                         <article class="ev-trip-card">
                             <div class="ev-trip-img" <?php if($img): ?>style="background-image:url(<?php echo esc_url($img); ?>)"<?php endif; ?>>
-                                <?php if(!$img): ?><span class="ev-trip-placeholder">⛳</span><?php endif; ?>
+                                <?php if(!$img): ?><span class="ev-trip-placeholder"><?php echo $is_circuit ? '🗺️' : '⛳'; ?></span><?php endif; ?>
                                 <span class="ev-badge ev-badge-upcoming">À venir</span>
+                                <?php if ($is_circuit): ?><span class="ev-badge ev-badge-circuit">Circuit</span><?php endif; ?>
                                 <?php if ($si && $si['solde_due']): ?>
                                 <span class="ev-badge ev-badge-solde">Solde à régler<?php if (!empty($si['solde_date'])): ?><span class="ev-badge-solde-date">avant le <?php echo esc_html($si['solde_date']); ?></span><?php endif; ?></span>
                                 <?php elseif ($si && !empty($si['soldé_paye'])): ?>
@@ -984,14 +1054,14 @@ get_header();
                                 <?php endif; ?>
                             </div>
                             <div class="ev-trip-body">
-                                <h3><?php echo esc_html($d['voyage_titre'] ?? 'Séjour golf'); ?></h3>
+                                <h3><?php echo esc_html($titre); ?></h3>
                                 <p class="ev-trip-meta"><?php echo $p['date_depart'] ? esc_html(date('d/m/Y', strtotime($p['date_depart']))) : ''; ?><?php if($dest): ?> — <?php echo esc_html($dest); ?><?php endif; ?></p>
                                 <?php if($hnom): ?><p class="ev-trip-hotel"><?php echo esc_html($hnom); ?></p><?php endif; ?>
                                 <p class="ev-trip-pax"><?php echo (int)($dv['nb_total'] ?? 0); ?> voyageur(s) · VS08-<?php echo $ord->get_id(); ?></p>
                                 <?php if ($si && $si['solde_due']): ?>
                                 <p class="ev-trip-solde">Solde : <?php echo number_format($si['solde'], 0, ',', ' '); ?> €<?php if (!empty($si['solde_date'])): ?> avant le <?php echo esc_html($si['solde_date']); ?><?php endif; ?></p>
                                 <?php endif; ?>
-                                <span class="ev-trip-cta">Voir le voyage →</span>
+                                <span class="ev-trip-cta"><?php echo $is_circuit ? 'Voir le circuit →' : 'Voir le voyage →'; ?></span>
                             </div>
                         </article>
                     </a>
@@ -1007,30 +1077,30 @@ get_header();
                 <?php else: ?>
                     <div class="ev-grid">
                     <?php foreach ($past as $item):
-                        $ord  = $item['order'];
-                        $d    = $item['booking_data'];
-                        $p    = $d['params'] ?? [];
-                        $dv   = $d['devis'] ?? [];
-                        $vid  = (int)($d['voyage_id'] ?? 0);
-                        $mm   = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($vid) : [];
-                        $gal  = $mm['galerie'] ?? [];
-                        $img  = !empty($gal[0]) ? $gal[0] : '';
-                        $dest = $mm['destination'] ?? '';
-                        $hnom = $mm['hotel_nom'] ?? ($mm['hotel']['nom'] ?? '');
-                        $lnk  = VS08V_Traveler_Space::voyage_url($ord->get_id());
+                        $ord = $item['order']; $d = $item['booking_data']; $p = $d['params'] ?? []; $dv = $d['devis'] ?? [];
+                        $is_circuit = isset($item['type']) && $item['type'] === 'circuit';
+                        if ($is_circuit):
+                            $cid = (int)($d['circuit_id'] ?? 0); $mm = class_exists('VS08C_Meta') ? VS08C_Meta::get($cid) : [];
+                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : ''; $dest = $mm['destination'] ?? ''; $hnom = ''; $titre = $d['circuit_titre'] ?? 'Circuit';
+                        else:
+                            $vid = (int)($d['voyage_id'] ?? 0); $mm = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($vid) : [];
+                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : ''; $dest = $mm['destination'] ?? ''; $hnom = $mm['hotel_nom'] ?? ($mm['hotel']['nom'] ?? ''); $titre = $d['voyage_titre'] ?? 'Séjour golf';
+                        endif;
+                        $lnk = VS08V_Traveler_Space::voyage_url($ord->get_id());
                     ?>
                     <a href="<?php echo esc_url($lnk); ?>" class="ev-card-link">
                         <article class="ev-trip-card">
                             <div class="ev-trip-img" <?php if($img): ?>style="background-image:url(<?php echo esc_url($img); ?>)"<?php endif; ?>>
-                                <?php if(!$img): ?><span class="ev-trip-placeholder">⛳</span><?php endif; ?>
+                                <?php if(!$img): ?><span class="ev-trip-placeholder"><?php echo $is_circuit ? '🗺️' : '⛳'; ?></span><?php endif; ?>
                                 <span class="ev-badge ev-badge-past">Passé</span>
+                                <?php if ($is_circuit): ?><span class="ev-badge ev-badge-circuit">Circuit</span><?php endif; ?>
                             </div>
                             <div class="ev-trip-body">
-                                <h3><?php echo esc_html($d['voyage_titre'] ?? 'Séjour golf'); ?></h3>
+                                <h3><?php echo esc_html($titre); ?></h3>
                                 <p class="ev-trip-meta"><?php echo $p['date_depart'] ? esc_html(date('d/m/Y', strtotime($p['date_depart']))) : ''; ?><?php if($dest): ?> — <?php echo esc_html($dest); ?><?php endif; ?></p>
                                 <?php if($hnom): ?><p class="ev-trip-hotel"><?php echo esc_html($hnom); ?></p><?php endif; ?>
                                 <p class="ev-trip-pax"><?php echo (int)($dv['nb_total'] ?? 0); ?> voyageur(s) · VS08-<?php echo $ord->get_id(); ?></p>
-                                <span class="ev-trip-cta">Revoir le voyage →</span>
+                                <span class="ev-trip-cta"><?php echo $is_circuit ? 'Revoir le circuit →' : 'Revoir le voyage →'; ?></span>
                             </div>
                         </article>
                     </a>
@@ -1046,24 +1116,25 @@ get_header();
                 <?php else: ?>
                     <div class="ev-grid">
                     <?php foreach ($voyage_orders as $item):
-                        $ord  = $item['order'];
-                        $d    = $item['booking_data'];
-                        $p    = $d['params'] ?? [];
-                        $dv   = $d['devis'] ?? [];
-                        $vid  = (int)($d['voyage_id'] ?? 0);
-                        $mm   = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($vid) : [];
-                        $gal  = $mm['galerie'] ?? [];
-                        $img  = !empty($gal[0]) ? $gal[0] : '';
-                        $dest = $mm['destination'] ?? '';
-                        $hnom = $mm['hotel_nom'] ?? ($mm['hotel']['nom'] ?? '');
-                        $si   = $item['is_upcoming'] ? VS08V_Traveler_Space::get_solde_info($ord->get_id()) : null;
-                        $lnk  = VS08V_Traveler_Space::voyage_url($ord->get_id());
+                        $ord = $item['order']; $d = $item['booking_data']; $p = $d['params'] ?? []; $dv = $d['devis'] ?? [];
+                        $is_circuit = isset($item['type']) && $item['type'] === 'circuit';
+                        if ($is_circuit):
+                            $cid = (int)($d['circuit_id'] ?? 0); $mm = class_exists('VS08C_Meta') ? VS08C_Meta::get($cid) : [];
+                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : ''; $dest = $mm['destination'] ?? ''; $hnom = ''; $titre = $d['circuit_titre'] ?? 'Circuit';
+                            $si = null;
+                        else:
+                            $vid = (int)($d['voyage_id'] ?? 0); $mm = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($vid) : [];
+                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : ''; $dest = $mm['destination'] ?? ''; $hnom = $mm['hotel_nom'] ?? ($mm['hotel']['nom'] ?? ''); $titre = $d['voyage_titre'] ?? 'Séjour golf';
+                            $si = $item['is_upcoming'] ? VS08V_Traveler_Space::get_solde_info($ord->get_id()) : null;
+                        endif;
+                        $lnk = VS08V_Traveler_Space::voyage_url($ord->get_id());
                     ?>
                     <a href="<?php echo esc_url($lnk); ?>" class="ev-card-link">
                         <article class="ev-trip-card">
                             <div class="ev-trip-img" <?php if($img): ?>style="background-image:url(<?php echo esc_url($img); ?>)"<?php endif; ?>>
-                                <?php if(!$img): ?><span class="ev-trip-placeholder">⛳</span><?php endif; ?>
+                                <?php if(!$img): ?><span class="ev-trip-placeholder"><?php echo $is_circuit ? '🗺️' : '⛳'; ?></span><?php endif; ?>
                                 <span class="ev-badge <?php echo $item['is_upcoming'] ? 'ev-badge-upcoming' : 'ev-badge-past'; ?>"><?php echo $item['is_upcoming'] ? 'À venir' : 'Passé'; ?></span>
+                                <?php if ($is_circuit): ?><span class="ev-badge ev-badge-circuit">Circuit</span><?php endif; ?>
                                 <?php if ($si && $si['solde_due']): ?>
                                 <span class="ev-badge ev-badge-solde">Solde à régler<?php if (!empty($si['solde_date'])): ?><span class="ev-badge-solde-date">avant le <?php echo esc_html($si['solde_date']); ?></span><?php endif; ?></span>
                                 <?php elseif ($si && !empty($si['soldé_paye'])): ?>
@@ -1071,11 +1142,11 @@ get_header();
                                 <?php endif; ?>
                             </div>
                             <div class="ev-trip-body">
-                                <h3><?php echo esc_html($d['voyage_titre'] ?? 'Séjour golf'); ?></h3>
+                                <h3><?php echo esc_html($titre); ?></h3>
                                 <p class="ev-trip-meta"><?php echo $p['date_depart'] ? esc_html(date('d/m/Y', strtotime($p['date_depart']))) : ''; ?><?php if($dest): ?> — <?php echo esc_html($dest); ?><?php endif; ?></p>
                                 <?php if($hnom): ?><p class="ev-trip-hotel"><?php echo esc_html($hnom); ?></p><?php endif; ?>
                                 <p class="ev-trip-pax"><?php echo (int)($dv['nb_total'] ?? 0); ?> voyageur(s) · VS08-<?php echo $ord->get_id(); ?></p>
-                                <span class="ev-trip-cta">Voir le voyage →</span>
+                                <span class="ev-trip-cta"><?php echo $is_circuit ? 'Voir le circuit →' : 'Voir le voyage →'; ?></span>
                             </div>
                         </article>
                     </a>

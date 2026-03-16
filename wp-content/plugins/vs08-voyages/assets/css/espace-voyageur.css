@@ -297,6 +297,7 @@ body.admin-bar .ev-main {
 .ev-badge-solde    { top: auto; bottom: .75rem; background: var(--ev-coral); color: #fff; display: inline-flex; flex-direction: column; align-items: flex-end; line-height: 1.25; }
 .ev-badge-solde .ev-badge-solde-date { font-size: .65rem; font-weight: 500; opacity: .95; margin-top: .15rem; }
 .ev-badge-solde-paid { top: auto; bottom: .75rem; background: #22c55e; color: #fff; }
+.ev-badge-circuit   { background: #1a5f7a; color: #fff; }
 
 .ev-trip-body {
     flex: 1;

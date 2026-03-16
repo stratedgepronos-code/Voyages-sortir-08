@@ -23,7 +23,7 @@ class VS08V_Traveler_Space {
         $today  = date('Y-m-d');
 
         foreach ($orders as $order) {
-            $data = self::get_booking_data_from_order($order);
+            $data = self::get_booking_data_from_order($order, true);
             if (!$data) {
                 continue;
             }
@@ -34,13 +34,18 @@ class VS08V_Traveler_Space {
                 'booking_data' => $data,
                 'date_depart'  => $depart,
                 'is_upcoming'  => $depart && $depart >= $today,
+                'type'         => isset($data['type']) && $data['type'] === 'circuit' ? 'circuit' : 'voyage',
             ];
         }
 
         return $result;
     }
 
-    public static function get_booking_data_from_order($order) {
+    /**
+     * Données de réservation (Golf ou Circuit) pour une commande.
+     * Si $include_circuit est true, retourne aussi les commandes Circuit (_vs08c_booking_data) avec 'type' => 'circuit'.
+     */
+    public static function get_booking_data_from_order($order, $include_circuit = false) {
         if (is_numeric($order)) {
             $order = wc_get_order($order);
         }
@@ -55,6 +60,20 @@ class VS08V_Traveler_Space {
             $data = $item->get_meta('_vs08v_booking_data');
             if (!empty($data) && is_array($data)) {
                 return $data;
+            }
+        }
+        if ($include_circuit && class_exists('VS08C_Contract')) {
+            $data = $order->get_meta('_vs08c_booking_data');
+            if (!empty($data) && is_array($data)) {
+                $data['type'] = 'circuit';
+                return $data;
+            }
+            foreach ($order->get_items() as $item) {
+                $data = $item->get_meta('_vs08c_booking_data');
+                if (!empty($data) && is_array($data)) {
+                    $data['type'] = 'circuit';
+                    return $data;
+                }
             }
         }
         return null;
@@ -147,7 +166,7 @@ class VS08V_Traveler_Space {
         if ((int) $order->get_customer_id() !== (int) get_current_user_id()) {
             return false;
         }
-        return self::get_booking_data_from_order($order) !== null;
+        return self::get_booking_data_from_order($order, true) !== null;
     }
 
     /**
@@ -310,7 +329,21 @@ class VS08V_Traveler_Space {
         if (!self::current_user_can_view_order($order_id)) {
             wp_die('Accès refusé.');
         }
-        $html = VS08V_Contract::generate($order_id);
+        $order = wc_get_order($order_id);
+        $is_circuit = $order && $order->get_meta('_vs08c_booking_data');
+        if (!$is_circuit) {
+            foreach ($order->get_items() as $item) {
+                if ($item->get_meta('_vs08c_booking_data')) {
+                    $is_circuit = true;
+                    break;
+                }
+            }
+        }
+        if ($is_circuit && class_exists('VS08C_Contract')) {
+            $html = VS08C_Contract::generate($order_id);
+        } else {
+            $html = VS08V_Contract::generate($order_id);
+        }
         if (empty($html)) {
             wp_die('Contrat non disponible.');
         }
