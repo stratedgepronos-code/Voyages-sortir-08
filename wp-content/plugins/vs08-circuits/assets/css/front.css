@@ -250,8 +250,22 @@
     .vc-field-row { grid-template-columns:1fr; }
 }
 
+/* ═══ PRINT — éléments visibles uniquement à l'impression ═══ */
+.vc-print-header,
+.vc-print-footer { display:none; }
+
 /* ═══ IMPRESSION / PDF — circuit propre ═══ */
 @media print {
+    /* ── En-tête de marque ── */
+    .vc-print-header { display:flex !important; align-items:center; justify-content:space-between; padding:12px 30px; border-bottom:2px solid #59b7b7; margin-bottom:0; }
+    .vc-print-logo { height:36px; width:auto; }
+    .vc-print-header-right { display:flex; flex-direction:column; align-items:flex-end; gap:2px; font-family:'Outfit', Arial, sans-serif; font-size:10px; color:#6b7280; }
+    /* ── Pied de page de marque ── */
+    .vc-print-footer { display:flex !important; flex-direction:column; align-items:center; gap:2px; padding:14px 30px 8px; border-top:1px solid #ddd; margin-top:16px; font-family:'Outfit', Arial, sans-serif; font-size:9px; color:#9ca3af; text-align:center; }
+    /* Force couleurs */
+    * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+
+    /* ── Masquer tout ce qui est inutile en print ── */
     .vc-calc-col,
     .vc-actions-card,
     .vc-devis-card,
@@ -260,27 +274,94 @@
     .vc-cta-btn,
     .vc-day-toggle,
     .vc-practical-card-toggle,
-    .vc-practical-card-header::after,
     .vc-option-toggle,
+    .vc-option-slider,
     .vc-lightbox,
     .vc-gal-more,
+    .vc-breadcrumb,
     .no-print,
-    #vc-step2 .vc-field,
-    #vc-rooms-section { display:none !important; }
-    .vc-practical-card-body[hidden],
-    .vc-practical-card-body { display:block !important; visibility:visible !important; padding:8px 16px 12px !important; }
-    .vc-practical-card-header { padding-bottom:4px; border-bottom:1px solid #e5e7eb; margin-bottom:0; }
+    /* Thème header / footer / admin bar */
+    #wpadminbar,
+    .header, #header, .nav-bar, .announce, .mega-nav,
+    footer, .ft, .site-footer, #colophon
+    { display:none !important; visibility:hidden !important; height:0 !important; overflow:hidden !important; }
+
+    /* ── Reset page ── */
+    html, body { background:#fff !important; color:#1a1a1a !important; margin:0 !important; padding:0 !important; font-family:'Outfit', Arial, sans-serif !important; font-size:12px !important; line-height:1.5 !important; }
+    a { color:inherit !important; text-decoration:none !important; }
+
+    /* ── Hero compact avec image ── */
+    .vc-hero { min-height:180px !important; height:180px !important; page-break-after:avoid; }
+    .vc-hero-overlay { background:linear-gradient(to top, rgba(15,36,36,.85) 0%, rgba(15,36,36,.2) 60%, transparent 100%) !important; }
+    .vc-hero-content { padding:0 30px 20px !important; }
+    .vc-hero h1 { font-size:24px !important; margin-bottom:10px !important; }
+    .vc-hero-dest { font-size:11px !important; margin-bottom:8px !important; padding:3px 10px !important; }
+    .vc-hero-meta { gap:6px !important; }
+    .vc-meta-chip { font-size:10px !important; padding:3px 8px !important; background:rgba(255,255,255,.15) !important; border-color:rgba(255,255,255,.2) !important; }
+
+    /* ── Layout : 1 colonne, pas de sidebar ── */
+    .vc-page { background:#fff !important; padding:0 !important; }
+    .vc-inner { display:block !important; padding:0 30px !important; max-width:100% !important; }
+    .vc-main { max-width:100% !important; width:100% !important; }
+
+    /* ── Gallery : 1 seule image, petite ── */
+    .vc-gallery { display:block !important; margin-bottom:16px !important; }
+    .vc-gal-item { display:none !important; }
+    .vc-gal-item:first-child { display:block !important; border-radius:10px !important; overflow:hidden !important; height:160px !important; }
+    .vc-gal-item:first-child img { height:160px !important; object-fit:cover !important; }
+
+    /* ── Sections propres ── */
+    .vc-section { box-shadow:none !important; border:none !important; border-bottom:1px solid #e0e0e0 !important; border-radius:0 !important; padding:16px 0 !important; margin-bottom:0 !important; page-break-inside:avoid; }
+    .vc-section-title { font-size:15px !important; margin-bottom:10px !important; color:#0f2424 !important; }
+    .vc-desc p { font-size:12px !important; line-height:1.6 !important; margin-bottom:8px !important; color:#333 !important; }
+
+    /* ── Points forts ── */
+    .vc-highlights { gap:8px !important; margin-top:10px !important; }
+    .vc-hl { padding:8px !important; background:#f5f5f5 !important; border:1px solid #e0e0e0 !important; }
+    .vc-hl-icon { font-size:16px !important; margin-bottom:2px !important; }
+    .vc-hl-val { font-size:15px !important; }
+    .vc-hl-lbl { font-size:8px !important; }
+
+    /* ── Itinéraire : tout déplié ── */
     .vc-day-body { display:block !important; visibility:visible !important; }
-    .vc-day { break-inside:avoid; }
-    .vc-page { background:#fff !important; padding:20px 0 !important; }
-    .vc-section { box-shadow:none !important; border:1px solid #ddd !important; break-inside:avoid; padding:20px !important; margin-bottom:16px !important; }
-    .vc-hero { min-height:200px; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .vc-hero-overlay { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .vc-inner { grid-template-columns:1fr !important; padding:0 20px !important; max-width:100%; }
-    .vc-main { max-width:100%; }
-    .vc-gallery { break-inside:avoid; }
-    .vc-desc p { margin-bottom:10px; }
-    body { background:#fff !important; color:#111 !important; }
-    a { color:#111 !important; }
-    .vc-price-result { border:1px solid #ddd; }
+    .vc-day { page-break-inside:avoid; margin-bottom:12px !important; padding-left:14px !important; }
+    .vc-day::before { width:8px !important; height:8px !important; left:-5px !important; top:5px !important; }
+    .vc-day-header { gap:8px !important; }
+    .vc-day-num { font-size:9px !important; min-width:40px !important; }
+    .vc-day-title { font-size:13px !important; }
+    .vc-day-desc { font-size:11px !important; line-height:1.5 !important; }
+    .vc-day-info { gap:6px !important; }
+    .vc-day-info-item { font-size:10px !important; padding:2px 6px !important; }
+    .vc-day-image { max-height:120px !important; margin-top:8px !important; }
+    .vc-day-image img { height:120px !important; }
+    .vc-day-tags { margin-top:4px !important; }
+    .vc-day-tag { font-size:9px !important; padding:2px 6px !important; }
+
+    /* ── Options : afficher sans toggle ── */
+    .vc-option-card { border:1px solid #e0e0e0 !important; border-radius:8px !important; padding:10px 12px !important; page-break-inside:avoid; }
+    .vc-option-icon { width:28px !important; height:28px !important; font-size:14px !important; border-radius:6px !important; }
+    .vc-option-name { font-size:12px !important; }
+    .vc-option-price { font-size:11px !important; color:#333 !important; }
+
+    /* ── Hôtels ── */
+    .vc-hotel-card { padding:10px !important; border:1px solid #e0e0e0 !important; border-radius:8px !important; page-break-inside:avoid; background:#fafafa !important; }
+    .vc-hotel-name { font-size:12px !important; }
+    .vc-hotel-detail { font-size:10px !important; }
+    .vc-hotel-nights { font-size:9px !important; padding:2px 6px !important; }
+
+    /* ── Inclus / Non inclus ── */
+    .vc-inclus-grid { gap:12px !important; }
+    .vc-inclus-col h4 { font-size:12px !important; margin-bottom:6px !important; }
+    .vc-inclus-list li { font-size:11px !important; margin-bottom:3px !important; }
+
+    /* ── Infos pratiques : tout déplié ── */
+    .vc-practical-card { border:1px solid #e0e0e0 !important; border-radius:8px !important; page-break-inside:avoid; background:#fafafa !important; }
+    .vc-practical-card-header { cursor:default !important; padding:8px 12px !important; }
+    .vc-practical-card-title { font-size:12px !important; }
+    .vc-practical-card-body,
+    .vc-practical-card-body[hidden] { display:block !important; visibility:visible !important; padding:4px 12px 10px !important; }
+    .vc-practical-card-body p { font-size:11px !important; line-height:1.5 !important; color:#333 !important; }
+
+    /* ── Conditions d'annulation ── */
+    .vc-section:last-child { border-bottom:none !important; }
 }

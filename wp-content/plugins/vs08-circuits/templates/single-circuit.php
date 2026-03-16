@@ -38,6 +38,15 @@ var VS08C_CIRCUIT = <?php echo json_encode([
 ]); ?>;
 </script>
 
+<!-- PRINT HEADER (visible uniquement à l'impression) -->
+<div class="vc-print-header">
+    <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/img/logo.png'); ?>" alt="<?php bloginfo('name'); ?>" class="vc-print-logo">
+    <div class="vc-print-header-right">
+        <span>voyagessortir08.fr</span>
+        <span>03 26 65 28 63</span>
+    </div>
+</div>
+
 <!-- BADGE -->
 <?php if (!empty($m['badge']) && isset($badge_labels[$m['badge']])): ?>
 <div class="vc-badge"><?php echo esc_html($badge_labels[$m['badge']]); ?></div>
@@ -382,6 +391,12 @@ var VS08C_CIRCUIT = <?php echo json_encode([
         </div>
 
     </div>
+</div>
+
+<!-- PRINT FOOTER (visible uniquement à l'impression) -->
+<div class="vc-print-footer">
+    <span>Voyages Sortir Charleville-Mézières — 03 26 65 28 63 — contact@voyagessortir08.fr — voyagessortir08.fr</span>
+    <span>Document généré le <?php echo date('d/m/Y'); ?> — Ce document n'a pas de valeur contractuelle.</span>
 </div>
 
 <?php endwhile; get_footer(); ?>
