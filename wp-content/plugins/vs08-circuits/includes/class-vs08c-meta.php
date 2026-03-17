@@ -371,22 +371,86 @@ class VS08C_Meta {
 
                 <div class="vs08c-pricing-section" style="margin-top:24px">
                     <h4>✈️ Aéroports de départ</h4>
-                    <p class="vs08c-help-block">Ajoutez les aéroports disponibles. Le supplément vol est par rapport au prix vol de base ci-dessus.</p>
+                    <p class="vs08c-help-block">Chaque aéroport peut avoir plusieurs périodes. <strong>Chaque période</strong> a ses propres dates (du… au…) et ses propres jours d'ouverture (cocher les jours avec vol direct pour cette période). Si vous ne cochez rien pour une période, les jours par défaut de l'aéroport s'appliquent. Avant/après les périodes = fermé pour cet aéroport.</p>
                     <div id="vs08c-airports-list" class="vs08c-repeater">
-                        <?php $aeroports = $m['aeroports'] ?? [];
-                        if (empty($aeroports)) $aeroports = [['code' => 'ORY', 'label' => 'Paris Orly', 'supp' => '0']];
-                        foreach ($aeroports as $ai => $aero): ?>
-                        <div class="vs08c-repeater-item vs08c-airport-item">
-                            <div class="vs08c-field-row vs08c-compact">
+                        <?php
+                        $jours_semaine = [1=>'Lun',2=>'Mar',3=>'Mer',4=>'Jeu',5=>'Ven',6=>'Sam',7=>'Dim'];
+                        $aeroports = $m['aeroports'] ?? [];
+                        if (empty($aeroports)) $aeroports = [['code' => 'ORY', 'label' => 'Paris Orly', 'supp' => '0', 'periodes_vol' => [], 'jours_direct' => [1,2,3,4,5,6,7]]];
+                        foreach ($aeroports as $ai => $aero):
+                            $periodes = $aero['periodes_vol'] ?? [];
+                            if (empty($periodes)) $periodes = [['date_debut'=>'','date_fin'=>'','jours_direct'=>[1,2,3,4,5,6,7]]];
+                            $jours_direct = $aero['jours_direct'] ?? [1,2,3,4,5,6,7];
+                        ?>
+                        <div class="vs08c-repeater-item vs08c-airport-item" data-aero-idx="<?php echo $ai; ?>" style="padding:16px;margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;background:#fafafa">
+                            <div class="vs08c-field-row vs08c-compact" style="margin-bottom:12px">
                                 <div class="vs08c-field"><label>Code IATA</label><input type="text" name="vs08c[aeroports][<?php echo $ai; ?>][code]" value="<?php echo esc_attr($aero['code'] ?? ''); ?>" placeholder="ORY" style="text-transform:uppercase"></div>
                                 <div class="vs08c-field"><label>Nom aéroport</label><input type="text" name="vs08c[aeroports][<?php echo $ai; ?>][label]" value="<?php echo esc_attr($aero['label'] ?? ''); ?>" placeholder="Paris Orly"></div>
                                 <div class="vs08c-field"><label>Supp. vol (€/pers)</label><input type="number" name="vs08c[aeroports][<?php echo $ai; ?>][supp]" value="<?php echo esc_attr($aero['supp'] ?? '0'); ?>" step="0.01"></div>
-                                <button type="button" class="vs08c-remove-repeater" title="Supprimer">✕</button>
+                                <button type="button" class="vs08c-remove-repeater" title="Supprimer cet aéroport">✕ Suppr.</button>
+                            </div>
+                            <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">📅 Vol ouvert (périodes) — avant/après = fermé</div>
+                            <div class="vs08c-aero-periodes" style="margin-bottom:12px">
+                                <?php foreach ($periodes as $p => $per):
+                                    $per_jours = isset($per['jours_direct']) && is_array($per['jours_direct']) ? $per['jours_direct'] : [1,2,3,4,5,6,7];
+                                ?>
+                                <div class="vs08c-periode-row" style="margin-bottom:10px;padding:10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px">
+                                    <div class="vs08c-field-row vs08c-compact" style="margin-bottom:6px">
+                                        <span style="font-size:12px;color:#6b7280">Du</span>
+                                        <input type="date" name="vs08c[aeroports][<?php echo $ai; ?>][periodes_vol][<?php echo $p; ?>][date_debut]" value="<?php echo esc_attr($per['date_debut'] ?? ''); ?>">
+                                        <span style="font-size:12px;color:#6b7280">au</span>
+                                        <input type="date" name="vs08c[aeroports][<?php echo $ai; ?>][periodes_vol][<?php echo $p; ?>][date_fin]" value="<?php echo esc_attr($per['date_fin'] ?? ''); ?>">
+                                        <button type="button" class="button vs08c-rm-periode" title="Supprimer cette période">✕</button>
+                                    </div>
+                                    <div style="font-size:11px;color:#6b7280;margin-bottom:4px">Jours avec vol direct pour cette période :</div>
+                                    <div style="display:flex;flex-wrap:wrap;gap:6px 12px">
+                                        <?php foreach ($jours_semaine as $num => $lib): ?>
+                                        <label style="font-size:12px;display:inline-flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="vs08c[aeroports][<?php echo $ai; ?>][periodes_vol][<?php echo $p; ?>][jours_direct][]" value="<?php echo $num; ?>" <?php checked(in_array($num, $per_jours)); ?>><?php echo $lib; ?></label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <button type="button" class="button vs08c-add-periode-aero" data-aero-idx="<?php echo $ai; ?>" style="margin-bottom:10px;font-size:11px">+ Ajouter une période</button>
+                            <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">📆 Jours avec vol direct (défaut aéroport)</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:6px 12px">
+                                <?php foreach ($jours_semaine as $num => $lib): ?>
+                                <label style="font-size:12px;display:inline-flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="vs08c[aeroports][<?php echo $ai; ?>][jours_direct][]" value="<?php echo $num; ?>" <?php checked(in_array($num, $jours_direct)); ?>><?php echo $lib; ?></label>
+                                <?php endforeach; ?>
                             </div>
                         </div>
                         <?php endforeach; ?>
                     </div>
                     <button type="button" id="vs08c-add-airport" class="button">＋ Ajouter un aéroport</button>
+                    <script>
+                    (function(){
+                        var root = document.getElementById('vs08c-airports-list');
+                        if (!root) return;
+                        root.addEventListener('click', function(ev) {
+                            var btn = ev.target && ev.target.closest && ev.target.closest('.vs08c-add-periode-aero');
+                            if (!btn) return;
+                            ev.preventDefault(); ev.stopPropagation();
+                            var block = btn.closest('.vs08c-airport-item');
+                            if (!block) return;
+                            var idx = block.getAttribute('data-aero-idx');
+                            var container = block.querySelector('.vs08c-aero-periodes');
+                            if (!container || idx === null) return;
+                            var p = container.querySelectorAll('.vs08c-periode-row').length;
+                            var jours = [1,2,3,4,5,6,7], libs = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+                            var cbs = '';
+                            for (var j = 0; j < 7; j++) cbs += '<label style="font-size:12px;display:inline-flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="vs08c[aeroports]['+idx+'][periodes_vol]['+p+'][jours_direct][]" value="'+jours[j]+'" checked> '+libs[j]+'</label>';
+                            var row = document.createElement('div');
+                            row.className = 'vs08c-periode-row';
+                            row.style.cssText = 'margin-bottom:10px;padding:10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px';
+                            row.innerHTML = '<div class="vs08c-field-row vs08c-compact" style="margin-bottom:6px"><span style="font-size:12px;color:#6b7280">Du</span><input type="date" name="vs08c[aeroports]['+idx+'][periodes_vol]['+p+'][date_debut]"><span style="font-size:12px;color:#6b7280">au</span><input type="date" name="vs08c[aeroports]['+idx+'][periodes_vol]['+p+'][date_fin]"><button type="button" class="button vs08c-rm-periode" title="Supprimer cette période">✕</button></div><div style="font-size:11px;color:#6b7280;margin-bottom:4px">Jours avec vol direct pour cette période :</div><div style="display:flex;flex-wrap:wrap;gap:6px 12px">'+cbs+'</div>';
+                            container.appendChild(row);
+                        });
+                        root.addEventListener('click', function(ev) {
+                            if (!ev.target || !ev.target.classList.contains('vs08c-rm-periode')) return;
+                            ev.target.closest('.vs08c-periode-row').remove();
+                        });
+                    })();
+                    </script>
                 </div>
 
                 <div class="vs08c-pricing-section" style="margin-top:24px">
@@ -602,16 +666,38 @@ class VS08C_Meta {
             }
         }
 
-        // Aéroports
+        // Aéroports (avec périodes vol et jours d'ouverture par aéroport, comme séjours golf)
         $m['aeroports'] = [];
         if (!empty($raw['aeroports']) && is_array($raw['aeroports'])) {
             foreach ($raw['aeroports'] as $aero) {
                 if (!is_array($aero) || empty($aero['code'])) continue;
-                $m['aeroports'][] = [
+                $out = [
                     'code'  => strtoupper(sanitize_text_field($aero['code'] ?? '')),
                     'label' => sanitize_text_field($aero['label'] ?? ''),
                     'supp'  => floatval($aero['supp'] ?? 0),
                 ];
+                if (!empty($aero['periodes_vol']) && is_array($aero['periodes_vol'])) {
+                    $out['periodes_vol'] = array_values(array_map(function ($p) {
+                        $date_debut = sanitize_text_field($p['date_debut'] ?? '');
+                        $date_fin   = sanitize_text_field($p['date_fin'] ?? '');
+                        if ($date_debut === '' && $date_fin === '') return null;
+                        $jours = [];
+                        if (!empty($p['jours_direct']) && is_array($p['jours_direct'])) {
+                            $jours = array_values(array_map('intval', array_filter($p['jours_direct'])));
+                        }
+                        return ['date_debut' => $date_debut, 'date_fin' => $date_fin, 'jours_direct' => $jours];
+                    }, array_filter($aero['periodes_vol'], function ($p) {
+                        return is_array($p) && (isset($p['date_debut']) || isset($p['date_fin']));
+                    })));
+                } else {
+                    $out['periodes_vol'] = [];
+                }
+                if (!empty($aero['jours_direct']) && is_array($aero['jours_direct'])) {
+                    $out['jours_direct'] = array_values(array_map('intval', array_filter($aero['jours_direct'])));
+                } else {
+                    $out['jours_direct'] = [1, 2, 3, 4, 5, 6, 7];
+                }
+                $m['aeroports'][] = $out;
             }
         }
 

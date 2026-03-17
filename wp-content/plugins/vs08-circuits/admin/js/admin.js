@@ -167,12 +167,24 @@ function addRepeaterItem(listId, templateFn){
 
 $('#vs08c-add-airport').on('click', function(){
     addRepeaterItem('vs08c-airports-list', function(i){
-        return '<div class="vs08c-repeater-item vs08c-airport-item"><div class="vs08c-field-row vs08c-compact">'
+        var period0 = '<div class="vs08c-periode-row" style="margin-bottom:10px;padding:10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px">'
+            + '<div class="vs08c-field-row vs08c-compact" style="margin-bottom:6px"><span style="font-size:12px;color:#6b7280">Du</span><input type="date" name="vs08c[aeroports]['+i+'][periodes_vol][0][date_debut]"><span style="font-size:12px;color:#6b7280">au</span><input type="date" name="vs08c[aeroports]['+i+'][periodes_vol][0][date_fin]"><button type="button" class="button vs08c-rm-periode" title="Supprimer cette période">✕</button></div>'
+            + '<div style="font-size:11px;color:#6b7280;margin-bottom:4px">Jours avec vol direct pour cette période :</div>'
+            + '<div style="display:flex;flex-wrap:wrap;gap:6px 12px">'
+            + ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(function(lib,j){ return '<label style="font-size:12px;display:inline-flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="vs08c[aeroports]['+i+'][periodes_vol][0][jours_direct][]" value="'+(j+1)+'" checked> '+lib+'</label>'; }).join('')
+            + '</div></div>';
+        var joursDef = [1,2,3,4,5,6,7].map(function(n){ return '<label style="font-size:12px;display:inline-flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="vs08c[aeroports]['+i+'][jours_direct][]" value="'+n+'" checked> '+['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'][n-1]+'</label>'; }).join('');
+        return '<div class="vs08c-repeater-item vs08c-airport-item" data-aero-idx="'+i+'" style="padding:16px;margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;background:#fafafa">'
+            + '<div class="vs08c-field-row vs08c-compact" style="margin-bottom:12px">'
             + '<div class="vs08c-field"><label>Code IATA</label><input type="text" name="vs08c[aeroports]['+i+'][code]" placeholder="ORY" style="text-transform:uppercase"></div>'
             + '<div class="vs08c-field"><label>Nom aéroport</label><input type="text" name="vs08c[aeroports]['+i+'][label]" placeholder="Paris Orly"></div>'
             + '<div class="vs08c-field"><label>Supp. vol (€/pers)</label><input type="number" name="vs08c[aeroports]['+i+'][supp]" value="0" step="0.01"></div>'
-            + '<button type="button" class="vs08c-remove-repeater" title="Supprimer">✕</button>'
-            + '</div></div>';
+            + '<button type="button" class="vs08c-remove-repeater" title="Supprimer cet aéroport">✕ Suppr.</button></div>'
+            + '<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">📅 Vol ouvert (périodes) — avant/après = fermé</div>'
+            + '<div class="vs08c-aero-periodes" style="margin-bottom:12px">'+period0+'</div>'
+            + '<button type="button" class="button vs08c-add-periode-aero" data-aero-idx="'+i+'" style="margin-bottom:10px;font-size:11px">+ Ajouter une période</button>'
+            + '<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">📆 Jours avec vol direct (défaut aéroport)</div>'
+            + '<div style="display:flex;flex-wrap:wrap;gap:6px 12px">'+joursDef+'</div></div>';
     });
 });
 
