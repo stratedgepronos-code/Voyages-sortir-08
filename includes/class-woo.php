@@ -24,10 +24,10 @@ class VS08V_Woo {
 
         $product_name = sprintf(
             'Réservation — %s — %s (%s — %d pers.)',
-            $data['voyage_titre'],
+            $data['voyage_titre'] ?? 'Séjour',
             date('d/m/Y', strtotime($data['params']['date_depart'] ?? 'now')),
             $label_type,
-            $data['devis']['nb_total']
+            (int) ($data['devis']['nb_total'] ?? 1)
         );
 
         // Chercher un produit existant avec le même hash
@@ -76,11 +76,13 @@ class VS08V_Woo {
     }
 
     private static function build_product_description($data, $payer_tout, $acompte_pct) {
-        $total = $data['total'];
-        $acompte = $data['acompte'];
-        $params = $data['params'];
-        $devis = $data['devis'];
-        $m = VS08V_MetaBoxes::get($data['voyage_id']);
+        $total = $data['total'] ?? 0;
+        $acompte = $data['acompte'] ?? 0;
+        $params = $data['params'] ?? [];
+        $devis = $data['devis'] ?? [];
+        $voyage_id = (int) ($data['voyage_id'] ?? 0);
+        if (!$voyage_id) return '';
+        $m = VS08V_MetaBoxes::get($voyage_id);
 
         $pension_labels = ['bb'=>'Petit-déjeuner','dp'=>'Demi-pension','pc'=>'Pension complète','ai'=>'Tout inclus'];
         $hotel_nom    = $m['hotel_nom'] ?? ($m['hotel']['nom'] ?? '');
@@ -113,13 +115,13 @@ class VS08V_Woo {
             </table>
             <h4>💰 Détail du prix</h4>
             <table>
-            <?php foreach ($devis['lines'] as $line): ?>
-                <tr><td><?php echo esc_html($line['label']); ?><br><small><?php echo esc_html($line['detail']??''); ?></small></td><td><?php echo number_format($line['montant'],2,',',' '); ?> €</td></tr>
+            <?php foreach (($devis['lines'] ?? []) as $line): ?>
+                <tr><td><?php echo esc_html($line['label'] ?? ''); ?><br><small><?php echo esc_html($line['detail']??''); ?></small></td><td><?php echo number_format((float)($line['montant']??0),2,',',' '); ?> €</td></tr>
             <?php endforeach; ?>
-            <?php foreach ($data['options'] as $opt): ?>
+            <?php foreach (($data['options'] ?? []) as $opt): ?>
                 <tr><td>Option : <?php echo esc_html($opt['label']); ?> (x<?php echo $opt['qty'];?>)</td><td><?php echo number_format($opt['prix'],2,',',' '); ?> €</td></tr>
             <?php endforeach; ?>
-            <?php if ($data['assurance'] > 0): ?>
+            <?php if (($data['assurance'] ?? 0) > 0): ?>
                 <tr><td>Assurance annulation</td><td><?php echo number_format($data['assurance'],2,',',' '); ?> €</td></tr>
             <?php endif; ?>
                 <tr style="font-weight:bold;border-top:2px solid #333"><td>TOTAL VOYAGE</td><td><?php echo number_format($total,2,',',' '); ?> €</td></tr>
@@ -136,25 +138,37 @@ class VS08V_Woo {
 
 // Copier les booking_data dans les meta de l'item de commande (pas seulement le produit)
 add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_item_key, $values, $order) {
-    $product_id = $item->get_product_id();
-    if (!$product_id) return;
-    $booking_data = get_post_meta($product_id, '_vs08v_booking_data', true);
-    if (!empty($booking_data) && is_array($booking_data)) {
-        $item->add_meta_data('_vs08v_booking_data', $booking_data, true);
-        $item->add_meta_data('_vs08v_voyage_id', $booking_data['voyage_id'] ?? 0, true);
+    try {
+        $product_id = $item->get_product_id();
+        if (!$product_id) return;
+        $booking_data = get_post_meta($product_id, '_vs08v_booking_data', true);
+        if (!empty($booking_data) && is_array($booking_data)) {
+            $item->add_meta_data('_vs08v_booking_data', $booking_data, true);
+            $item->add_meta_data('_vs08v_voyage_id', $booking_data['voyage_id'] ?? 0, true);
+        }
+    } catch (\Throwable $e) {
+        if (function_exists('error_log')) {
+            error_log('VS08 checkout_create_order_line_item: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+        }
     }
 }, 10, 4);
 
 // Après création de la commande, copier booking_data sur la commande (pour admin Gestion Dossiers)
 add_action('woocommerce_checkout_update_order_meta', function($order_id) {
-    $order = wc_get_order($order_id);
-    if (!$order || $order->get_meta('_vs08v_booking_data')) return;
-    foreach ($order->get_items() as $item) {
-        $data = $item->get_meta('_vs08v_booking_data');
-        if (!empty($data) && is_array($data)) {
-            $order->update_meta_data('_vs08v_booking_data', $data);
-            $order->save();
-            break;
+    try {
+        $order = wc_get_order($order_id);
+        if (!$order || $order->get_meta('_vs08v_booking_data')) return;
+        foreach ($order->get_items() as $item) {
+            $data = $item->get_meta('_vs08v_booking_data');
+            if (!empty($data) && is_array($data)) {
+                $order->update_meta_data('_vs08v_booking_data', $data);
+                $order->save();
+                break;
+            }
+        }
+    } catch (\Throwable $e) {
+        if (function_exists('error_log')) {
+            error_log('VS08 checkout_update_order_meta: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
         }
     }
 }, 10, 2);
