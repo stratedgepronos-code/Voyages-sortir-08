@@ -280,61 +280,57 @@ add_action('woocommerce_order_status_changed', function($order_id, $old_status, 
     }
 }, 10, 3);
 
-// Redirection après résa : envoyer directement vers l'espace membre (évite thank you WooCommerce + bug "ça charge et rien ne se passe")
+// Helper : cette commande doit rediriger vers l'espace membre ?
+function vs08v_order_redirect_to_espace_membre($order) {
+    if (!$order || !is_object($order)) return false;
+    if ($order->get_meta('_vs08v_booking_data')) return true;
+    if ($order->get_meta('_vs08c_booking_data')) return true;
+    foreach ($order->get_items() as $item) {
+        if ($item->get_meta('_vs08c_booking_data')) return true;
+    }
+    if ((int) $order->get_meta('_vs08v_order_solde_parent')) return true;
+    return false;
+}
+
+// Redirection après résa : URL de remerciement = espace membre (Golf + Circuit)
 add_filter('woocommerce_get_checkout_order_received_url', function($url, $order) {
-    if (!$order || !is_object($order)) return $url;
+    if (!is_user_logged_in() || !$order || (int) $order->get_customer_id() !== (int) get_current_user_id()) return $url;
     $order_id = $order->get_id();
     if (!$order_id) return $url;
-    if (!is_user_logged_in() || (int) $order->get_customer_id() !== (int) get_current_user_id()) return $url;
-    if ($order->get_meta('_vs08v_booking_data')) {
+    if (vs08v_order_redirect_to_espace_membre($order)) {
         return VS08V_Traveler_Space::voyage_url($order_id);
-    }
-    if ($order->get_meta('_vs08c_booking_data')) {
-        return VS08V_Traveler_Space::voyage_url($order_id);
-    }
-    foreach ($order->get_items() as $item) {
-        if ($item->get_meta('_vs08c_booking_data')) {
-            return VS08V_Traveler_Space::voyage_url($order_id);
-        }
-    }
-    $parent_id = (int) $order->get_meta('_vs08v_order_solde_parent');
-    if ($parent_id) {
-        return VS08V_Traveler_Space::voyage_url($parent_id);
     }
     return $url;
 }, 10, 2);
 
-// Si quelqu'un arrive quand même sur order-received (lien direct, ancien lien) : rediriger vers l'espace membre
-add_action('template_redirect', function() {
-    if (!function_exists('is_wc_endpoint_url') || !is_wc_endpoint_url('order-received')) {
-        return;
+// Même redirection quand "aucun paiement requis" (virement, chèque, etc.)
+add_filter('woocommerce_checkout_no_payment_needed_redirect', function($url, $order) {
+    if (!is_user_logged_in() || !$order || (int) $order->get_customer_id() !== (int) get_current_user_id()) return $url;
+    $order_id = $order->get_id();
+    if (!$order_id) return $url;
+    if (vs08v_order_redirect_to_espace_membre($order)) {
+        return VS08V_Traveler_Space::voyage_url($order_id);
     }
-    $order_id = absint(get_query_var('order-received'));
+    return $url;
+}, 10, 2);
+
+// Dès qu'on arrive sur la page "order-received" (thank you) : rediriger vers l'espace membre (priorité 1 = avant tout rendu)
+add_action('template_redirect', function() {
+    if (!function_exists('wc_get_page_id')) return;
+    $checkout_id = wc_get_page_id('checkout');
+    if (!$checkout_id || !is_page($checkout_id)) return;
+    global $wp;
+    $endpoint = get_option('woocommerce_checkout_order_received_endpoint', 'order-received');
+    if (empty($wp->query_vars[$endpoint])) return;
+    $order_id = absint($wp->query_vars[$endpoint]);
     if (!$order_id) return;
     $order = wc_get_order($order_id);
-    if (!$order || !is_user_logged_in() || (int) $order->get_customer_id() !== (int) get_current_user_id()) {
-        return;
-    }
-    if ($order->get_meta('_vs08v_booking_data')) {
-        wp_safe_redirect(VS08V_Traveler_Space::voyage_url($order_id));
-        exit;
-    }
-    if ($order->get_meta('_vs08c_booking_data')) {
-        wp_safe_redirect(VS08V_Traveler_Space::voyage_url($order_id));
-        exit;
-    }
-    foreach ($order->get_items() as $item) {
-        if ($item->get_meta('_vs08c_booking_data')) {
-            wp_safe_redirect(VS08V_Traveler_Space::voyage_url($order_id));
-            exit;
-        }
-    }
-    $parent_id = (int) $order->get_meta('_vs08v_order_solde_parent');
-    if ($parent_id) {
-        wp_safe_redirect(VS08V_Traveler_Space::voyage_url($parent_id));
-        exit;
-    }
-}, 5);
+    if (!$order) return;
+    if (!is_user_logged_in() || (int) $order->get_customer_id() !== (int) get_current_user_id()) return;
+    if (!vs08v_order_redirect_to_espace_membre($order)) return;
+    wp_safe_redirect(VS08V_Traveler_Space::voyage_url($order_id));
+    exit;
+}, 1);
 
 // Cron rappel solde (J-14 et J-3)
 add_action('vs08v_solde_reminder_cron', function() {
