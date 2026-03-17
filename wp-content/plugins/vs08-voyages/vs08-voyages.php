@@ -314,15 +314,12 @@ add_filter('woocommerce_checkout_no_payment_needed_redirect', function($url, $or
     return $url;
 }, 10, 2);
 
-// Dès qu'on arrive sur la page "order-received" (thank you) : rediriger vers l'espace membre (priorité 1 = avant tout rendu)
+// Dès qu'on arrive sur la page "order-received" (thank you) : rediriger vers l'espace membre
+// is_wc_endpoint_url couvre checkout classique ET bloc Order Confirmation
 add_action('template_redirect', function() {
-    if (!function_exists('wc_get_page_id')) return;
-    $checkout_id = wc_get_page_id('checkout');
-    if (!$checkout_id || !is_page($checkout_id)) return;
-    global $wp;
-    $endpoint = get_option('woocommerce_checkout_order_received_endpoint', 'order-received');
-    if (empty($wp->query_vars[$endpoint])) return;
-    $order_id = absint($wp->query_vars[$endpoint]);
+    if (!function_exists('is_wc_endpoint_url') || !is_wc_endpoint_url('order-received')) return;
+    $endpoint_slug = get_option('woocommerce_checkout_order_received_endpoint', 'order-received');
+    $order_id = absint(get_query_var($endpoint_slug));
     if (!$order_id) return;
     $order = wc_get_order($order_id);
     if (!$order) return;
@@ -330,6 +327,16 @@ add_action('template_redirect', function() {
     if (!vs08v_order_redirect_to_espace_membre($order)) return;
     wp_safe_redirect(VS08V_Traveler_Space::voyage_url($order_id));
     exit;
+}, 1);
+
+// Secours : si la redirection PHP n'a pas eu lieu (cache, bloc, autre), redirection JavaScript sur la page thank you
+add_action('woocommerce_thankyou', function($order_id) {
+    if (!$order_id || !is_user_logged_in()) return;
+    $order = wc_get_order($order_id);
+    if (!$order || (int) $order->get_customer_id() !== (int) get_current_user_id()) return;
+    if (!vs08v_order_redirect_to_espace_membre($order)) return;
+    $url = VS08V_Traveler_Space::voyage_url($order_id);
+    echo '<script>window.location.replace("' . esc_js(esc_url($url)) . '");</script>';
 }, 1);
 
 // Cron rappel solde (J-14 et J-3)
