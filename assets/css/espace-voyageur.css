@@ -298,6 +298,7 @@ body.admin-bar .ev-main {
 .ev-badge-solde .ev-badge-solde-date { font-size: .65rem; font-weight: 500; opacity: .95; margin-top: .15rem; }
 .ev-badge-solde-paid { top: auto; bottom: .75rem; background: #22c55e; color: #fff; }
 .ev-badge-circuit   { background: #1a5f7a; color: #fff; }
+.ev-badge-voyage    { background: var(--ev-teal); color: #fff; }
 
 .ev-trip-body {
     flex: 1;
@@ -415,6 +416,64 @@ body.admin-bar .ev-main {
 }
 .ev-detail-hero-badge-solde {
     background: #22c55e;
+}
+
+/* Bloc dossier unifié (circuit + golf) : même mise en page que la référence */
+.ev-voyage-blocks {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+.ev-voyage-block {
+    background: var(--ev-white);
+    border-radius: var(--ev-radius);
+    box-shadow: var(--ev-shadow);
+    padding: 1.75rem 2rem;
+}
+.ev-voyage-block h2 {
+    font-family: var(--ev-font-display);
+    font-size: 1.2rem;
+    color: var(--ev-dark);
+    margin: 0 0 1.25rem;
+    padding-bottom: .6rem;
+    border-bottom: 1px solid var(--ev-border);
+}
+.ev-voyage-block h3 {
+    font-size: 1rem;
+    color: var(--ev-dark);
+    margin: 1.25rem 0 0.5rem;
+}
+.ev-voyage-block p {
+    margin: 0 0 1rem;
+    font-size: .95rem;
+    color: var(--ev-gray);
+}
+.vs08v-recap-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .95rem;
+}
+.vs08v-recap-table th,
+.vs08v-recap-table td {
+    padding: .5rem .75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--ev-gray-light);
+}
+.vs08v-recap-table th {
+    color: var(--ev-gray);
+    font-weight: 600;
+    width: 38%;
+}
+.vs08v-voyageurs-list {
+    list-style: disc;
+    margin: .5rem 0 0 1.25rem;
+    padding: 0;
+}
+.vs08v-voyageurs-list li {
+    padding: .35rem 0;
+    font-size: .95rem;
+    color: var(--ev-dark);
 }
 
 /* ── Detail grid ── */

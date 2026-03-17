@@ -169,73 +169,61 @@ get_header();
                 <div class="ev-detail-hero-badge">Solde à régler</div>
                 <?php elseif ($solde_info && !empty($solde_info['soldé_paye'])): ?>
                 <div class="ev-detail-hero-badge ev-detail-hero-badge-solde">Soldé</div>
+                <?php else: ?>
+                <span class="ev-badge ev-detail-hero-badge ev-badge-voyage">Séjour golf</span>
                 <?php endif; ?>
+            </div>
+
+            <!-- Bloc unique dossier (même mise en page que circuit) : Récapitulatif + Participants + Contrat -->
+            <div class="ev-voyage-blocks">
+                <section class="ev-voyage-block">
+                    <h2>Récapitulatif</h2>
+                    <table class="vs08v-recap-table">
+                        <tr><th>Destination</th><td><?php echo esc_html((string)($destination ?? '')); ?></td></tr>
+                        <tr><th>Date de départ</th><td><?php echo !empty($params['date_depart'] ?? '') ? esc_html(date('d/m/Y', strtotime($params['date_depart']))) : '—'; ?></td></tr>
+                        <?php if ($date_retour): ?>
+                        <tr><th>Date de retour</th><td><?php echo esc_html((string)($date_retour ?? '')); ?></td></tr>
+                        <?php endif; ?>
+                        <?php if ($hotel_nom): ?>
+                        <tr><th>Hébergement</th><td><?php echo esc_html((string)($hotel_nom ?? '')); ?><?php if ($hotel_etoiles): ?> <?php echo str_repeat('★', (int)$hotel_etoiles); ?><?php endif; ?></td></tr>
+                        <?php endif; ?>
+                        <?php if ($pension_label): ?>
+                        <tr><th>Formule</th><td><?php echo esc_html((string)($pension_label ?? '')); ?></td></tr>
+                        <?php endif; ?>
+                        <tr><th>Voyageurs</th><td><?php echo $nb_voyageurs; ?> personne(s)</td></tr>
+                        <?php if ($aeroport_depart): ?>
+                        <tr><th>Aéroport de départ</th><td><?php echo esc_html(strtoupper((string)($aeroport_depart ?? ''))); ?></td></tr>
+                        <?php endif; ?>
+                        <?php if (!empty($params['vol_aller_num'])): ?>
+                        <tr><th>Vol aller</th><td><?php echo esc_html((string)($params['vol_aller_num'] ?? '')); ?> — <?php echo esc_html((string)($params['vol_aller_depart'] ?? '')); ?> → <?php echo esc_html((string)($params['vol_aller_arrivee'] ?? '')); ?></td></tr>
+                        <?php endif; ?>
+                        <?php if (!empty($params['vol_retour_num'])): ?>
+                        <tr><th>Vol retour</th><td><?php echo esc_html((string)($params['vol_retour_num'] ?? '')); ?> — <?php echo esc_html((string)($params['vol_retour_depart'] ?? '')); ?> → <?php echo esc_html((string)($params['vol_retour_arrivee'] ?? '')); ?></td></tr>
+                        <?php endif; ?>
+                        <tr><th>Montant total</th><td><strong><?php echo number_format($total, 2, ',', ' '); ?> €</strong></td></tr>
+                    </table>
+                    <?php if (!empty($voyageurs)): ?>
+                    <h3>Participants</h3>
+                    <ul class="vs08v-voyageurs-list">
+                        <?php foreach ($voyageurs as $v): ?>
+                        <li><?php echo esc_html(($v['prenom'] ?? '') . ' ' . strtoupper($v['nom'] ?? '')); ?>
+                            <?php $ddn = $v['ddn'] ?? $v['date_naissance'] ?? ''; if ($ddn): ?> · Né(e) le <?php echo esc_html(date('d/m/Y', strtotime($ddn))); ?><?php endif; ?>
+                            <?php if (!empty($v['passeport'])): ?> · Passeport <?php echo esc_html((string)($v['passeport'])); ?><?php endif; ?>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <?php endif; ?>
+                </section>
+                <section class="ev-voyage-block">
+                    <h2>Contrat de vente</h2>
+                    <p>Téléchargez ou consultez votre contrat de vente.</p>
+                    <a href="<?php echo esc_url($contract_url); ?>" target="_blank" rel="noopener" class="ev-btn ev-btn-primary">Voir le contrat de vente</a>
+                </section>
             </div>
 
             <div class="ev-detail-grid">
 
-                <!-- Récapitulatif -->
-                <section class="ev-card ev-card-recap">
-                    <h2>Récapitulatif du séjour</h2>
-                    <div class="ev-recap-rows">
-                        <div class="ev-recap-row"><span>Destination</span><strong><?php echo esc_html((string)($destination ?? '')); ?></strong></div>
-                        <div class="ev-recap-row"><span>Date de départ</span><strong><?php echo !empty($params['date_depart'] ?? '') ? esc_html(date('d/m/Y', strtotime($params['date_depart']))) : '—'; ?></strong></div>
-                        <?php if ($date_retour): ?>
-                        <div class="ev-recap-row"><span>Date de retour</span><strong><?php echo esc_html((string)($date_retour ?? '')); ?></strong></div>
-                        <?php endif; ?>
-                        <?php if ($hotel_nom): ?>
-                        <div class="ev-recap-row"><span>Hébergement</span><strong><?php echo esc_html((string)($hotel_nom ?? '')); ?><?php if ($hotel_etoiles): ?> <?php echo str_repeat('★', (int)$hotel_etoiles); ?><?php endif; ?></strong></div>
-                        <?php endif; ?>
-                        <?php if ($pension_label): ?>
-                        <div class="ev-recap-row"><span>Pension</span><strong><?php echo esc_html((string)($pension_label ?? '')); ?></strong></div>
-                        <?php endif; ?>
-                        <div class="ev-recap-row"><span>Voyageurs</span><strong><?php echo $nb_voyageurs; ?> personne(s)</strong></div>
-                        <?php if ($aeroport_depart): ?>
-                        <div class="ev-recap-row"><span>Aéroport de départ</span><strong><?php echo esc_html(strtoupper((string)($aeroport_depart ?? ''))); ?></strong></div>
-                        <?php endif; ?>
-                        <?php if ($aeroport_dest): ?>
-                        <div class="ev-recap-row"><span>Aéroport de destination</span><strong><?php echo esc_html(strtoupper((string)($aeroport_dest ?? ''))); ?></strong></div>
-                        <?php endif; ?>
-                        <?php if (!empty($params['vol_aller_num'])): ?>
-                        <div class="ev-recap-row"><span>Vol aller</span><strong><?php echo esc_html((string)($params['vol_aller_num'] ?? '')); ?> — <?php echo esc_html((string)($params['vol_aller_depart'] ?? '')); ?> → <?php echo esc_html((string)($params['vol_aller_arrivee'] ?? '')); ?></strong></div>
-                        <?php endif; ?>
-                        <?php if (!empty($params['vol_retour_num'])): ?>
-                        <div class="ev-recap-row"><span>Vol retour</span><strong><?php echo esc_html((string)($params['vol_retour_num'] ?? '')); ?> — <?php echo esc_html((string)($params['vol_retour_depart'] ?? '')); ?> → <?php echo esc_html((string)($params['vol_retour_arrivee'] ?? '')); ?></strong></div>
-                        <?php endif; ?>
-                        <div class="ev-recap-row ev-recap-total"><span>Montant total</span><strong><?php echo number_format($total, 2, ',', ' '); ?> €</strong></div>
-                    </div>
-                </section>
-
-                <div class="ev-cards-pax-docs">
-                <!-- Participants (gauche) -->
-                <?php if (!empty($voyageurs)): ?>
-                <section class="ev-card ev-card-pax">
-                    <h2>Participants</h2>
-                    <div class="ev-pax-list">
-                        <?php foreach ($voyageurs as $i => $v):
-                            $is_golfeur = (isset($v['type']) && $v['type'] === 'golfeur') || (!isset($v['type']) && $i < (int)($params['nb_golfeurs'] ?? 1));
-                            $type_label = $is_golfeur ? 'Golfeur' : 'Non golfeur';
-                            $ddn = $v['ddn'] ?? $v['date_naissance'] ?? '';
-                        ?>
-                        <div class="ev-pax-item">
-                            <div class="ev-pax-num"><?php echo $i + 1; ?></div>
-                            <div class="ev-pax-info">
-                                <strong><?php echo esc_html(($v['prenom'] ?? '') . ' ' . strtoupper($v['nom'] ?? '')); ?></strong>
-                                <span class="ev-pax-type ev-pax-type-<?php echo $is_golfeur ? 'golfeur' : 'nongolfeur'; ?>"><?php echo esc_html($type_label); ?></span>
-                                <?php if ($ddn): ?>
-                                    <span>Né(e) le <?php echo esc_html(date('d/m/Y', strtotime($ddn))); ?></span>
-                                <?php endif; ?>
-                                <?php if (!empty($v['passeport'])): ?>
-                                    <span>Passeport <?php echo esc_html((string)($v['passeport'] ?? '')); ?></span>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                </section>
-                <?php endif; ?>
-
-                <!-- Documents (droite) -->
+                <!-- Documents (upload) -->
                 <section class="ev-card ev-card-docs">
                     <h2>Documents</h2>
                     <a href="<?php echo esc_url($contract_url); ?>" target="_blank" rel="noopener" class="ev-btn ev-btn-outline">Voir / imprimer le contrat de vente</a>
