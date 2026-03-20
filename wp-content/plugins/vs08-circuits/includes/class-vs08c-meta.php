@@ -349,6 +349,10 @@ class VS08C_Meta {
                             <input type="number" name="vs08c[prix_vol_base]" value="<?php echo esc_attr($m['prix_vol_base'] ?? ''); ?>" step="0.01" placeholder="0">
                             <p class="vs08c-help">Si 0, le prix vol sera cherché via l'API</p>
                         </div>
+                        <div class="vs08c-field"><label>Prix bagage (€/pers.)</label>
+                            <input type="number" name="vs08c[prix_bagage]" value="<?php echo esc_attr($m['prix_bagage'] ?? ''); ?>" step="0.01" placeholder="0">
+                            <p class="vs08c-help">Bagage en soute par passager (optionnel)</p>
+                        </div>
                         <div class="vs08c-field"><label>Taxes & Frais de dossier</label>
                             <input type="number" name="vs08c[prix_taxe]" value="<?php echo esc_attr($m['prix_taxe'] ?? ''); ?>" step="0.01" placeholder="0">
                         </div>
@@ -631,7 +635,7 @@ class VS08C_Meta {
         foreach ($text_fields as $f) {
             $m[$f] = sanitize_text_field($raw[$f] ?? '');
         }
-        $num_fields = ['duree_jours','duree','group_min','group_max','prix_double','prix_simple_supp','prix_triple','prix_vol_base','prix_taxe','prix_transfert','reduc_enfant','acompte_pct','delai_solde'];
+        $num_fields = ['duree_jours','duree','group_min','group_max','prix_double','prix_simple_supp','prix_triple','prix_vol_base','prix_bagage','prix_taxe','prix_transfert','reduc_enfant','acompte_pct','delai_solde'];
         foreach ($num_fields as $f) {
             $m[$f] = floatval($raw[$f] ?? 0);
         }

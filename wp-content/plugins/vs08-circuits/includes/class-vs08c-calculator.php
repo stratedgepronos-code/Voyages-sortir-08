@@ -161,6 +161,16 @@ class VS08C_Calculator {
             ];
         }
 
+        // ── 8. BAGAGE ──
+        $bagage = floatval($m['prix_bagage'] ?? 0);
+        if ($bagage > 0) {
+            $result['lines'][] = [
+                'label'   => '🧳 Bagage (soute)',
+                'montant' => $bagage * $nb_total,
+                'detail'  => $bagage . '€/pers × ' . $nb_total . ' pers.',
+            ];
+        }
+
         // ── TOTAL ──
         $total = 0;
         foreach ($result['lines'] as $line) {
