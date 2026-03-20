@@ -171,11 +171,35 @@ class VS08C_Calculator {
             ];
         }
 
-        // ── TOTAL ──
+        // ── SOUS-TOTAL (avant marge) ──
         $total = 0;
         foreach ($result['lines'] as $line) {
             $total += $line['montant'];
         }
+
+        // ── 9. MARGE (globale ou onglet circuit selon réglages) ──
+        $mg            = VS08C_Marge::get_effective_for_circuit((int) $circuit_id);
+        $marge_type    = $mg['marge_type'];
+        $marge_pct     = $mg['marge_pct'];
+        $marge_montant = $mg['marge_montant'];
+        $marge_value   = 0;
+        if ($marge_type === 'montant' && $marge_montant > 0) {
+            $marge_value = $marge_montant;
+            $result['lines'][] = [
+                'label'   => '📊 Marge',
+                'montant' => $marge_value,
+                'detail'  => 'Forfait',
+            ];
+        } elseif (($marge_type === 'pct' || $marge_type === '') && $marge_pct > 0) {
+            $marge_value = round($total * $marge_pct / 100, 2);
+            $result['lines'][] = [
+                'label'   => '📊 Marge (' . $marge_pct . ' %)',
+                'montant' => $marge_value,
+                'detail'  => $marge_pct . '% du sous-total',
+            ];
+        }
+        $total += $marge_value;
+
         $result['total']    = round($total, 2);
         $result['par_pers'] = $nb_total > 0 ? round($total / $nb_total, 2) : 0;
 

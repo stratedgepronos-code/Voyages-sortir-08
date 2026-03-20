@@ -23,6 +23,7 @@ require_once VS08C_PATH . 'includes/class-vs08c-contract.php';
 require_once VS08C_PATH . 'includes/class-vs08c-emails.php';
 require_once VS08C_PATH . 'includes/class-vs08c-ajax.php';
 require_once VS08C_PATH . 'includes/class-vs08c-checkout.php';
+require_once VS08C_PATH . 'includes/class-vs08c-marge.php';
 
 /* ─── Init ─── */
 add_action('init', ['VS08C_CPT', 'register']);
@@ -30,6 +31,8 @@ add_action('init', ['VS08C_CPT', 'register']);
 /* Admin meta boxes */
 add_action('add_meta_boxes', ['VS08C_Meta', 'register']);
 add_action('save_post', ['VS08C_Meta', 'save'], 10, 2);
+add_action('admin_menu', ['VS08C_Marge', 'register_menu']);
+add_action('admin_init', ['VS08C_Marge', 'register_settings']);
 
 /* Admin assets */
 add_action('admin_enqueue_scripts', 'vs08c_admin_assets');

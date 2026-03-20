@@ -116,6 +116,7 @@ class VS08C_Meta {
                 <button type="button" class="vs08c-tab" data-tab="gallery"><span class="dashicons dashicons-format-gallery"></span> Galerie</button>
                 <button type="button" class="vs08c-tab" data-tab="inclus"><span class="dashicons dashicons-yes-alt"></span> Inclus / Non inclus</button>
                 <button type="button" class="vs08c-tab" data-tab="pricing"><span class="dashicons dashicons-money-alt"></span> Tarifs & Aéroports</button>
+                <button type="button" class="vs08c-tab" data-tab="marge"><span class="dashicons dashicons-chart-area"></span> Marge</button>
                 <button type="button" class="vs08c-tab" data-tab="hotels"><span class="dashicons dashicons-building"></span> Hébergements</button>
                 <button type="button" class="vs08c-tab" data-tab="practical"><span class="dashicons dashicons-info"></span> Infos pratiques</button>
             </nav>
@@ -543,6 +544,50 @@ class VS08C_Meta {
                 </div>
             </div>
 
+            <!-- ═══════ TAB: MARGE ═══════ -->
+            <div class="vs08c-panel" data-panel="marge">
+                <h3 class="vs08c-panel-title">Marge</h3>
+                <?php
+                $marge_globale = class_exists('VS08C_Marge') && VS08C_Marge::is_global_mode();
+                if ($marge_globale) :
+                    $gt = get_option('vs08c_marge_type', 'pct');
+                    $gp = get_option('vs08c_marge_pct', 15);
+                    $gm = get_option('vs08c_marge_montant', 0);
+                    $lib = ($gt === 'montant' && floatval($gm) > 0)
+                        ? sprintf(__('Marge globale : %s € forfait', 'vs08-circuits'), number_format_i18n((float) $gm, 2))
+                        : sprintf(__('Marge globale : %s %%', 'vs08-circuits'), number_format_i18n((float) $gp, 1));
+                    ?>
+                <div class="notice notice-info inline" style="margin:0 0 1em;padding:12px;">
+                    <p><strong><?php echo esc_html($lib); ?></strong></p>
+                    <p><?php echo esc_html__('La marge est définie pour tous les circuits dans', 'vs08-circuits'); ?>
+                        <a href="<?php echo esc_url(admin_url('edit.php?post_type=vs08_circuit&page=vs08c-marge')); ?>"><?php echo esc_html__('Circuits → Marge circuits', 'vs08-circuits'); ?></a>.</p>
+                </div>
+                <?php else : ?>
+                <p class="vs08c-help-block">La marge s'applique au total (tarifs vols + prix backend). Elle est incluse dans le prix affiché au client. Par défaut 15% en pourcentage. Pour une seule marge sur tout le site, utilisez <a href="<?php echo esc_url(admin_url('edit.php?post_type=vs08_circuit&page=vs08c-marge')); ?>">Marge circuits</a>.</p>
+                <?php endif; ?>
+                <div class="vs08c-field-row" <?php echo $marge_globale ? 'style="opacity:.55;pointer-events:none;" aria-hidden="true"' : ''; ?>>
+                    <div class="vs08c-field"><label>Type de marge</label>
+                        <select name="vs08c[marge_type]" <?php echo $marge_globale ? 'disabled' : ''; ?>>
+                            <option value="pct" <?php selected($m['marge_type'] ?? 'pct', 'pct'); ?>>Pourcentage</option>
+                            <option value="montant" <?php selected($m['marge_type'] ?? '', 'montant'); ?>>Montant total forfaitaire</option>
+                        </select>
+                    </div>
+                    <div class="vs08c-field"><label>Marge (%)</label>
+                        <input type="number" name="vs08c[marge_pct]" value="<?php echo esc_attr($m['marge_pct'] ?? '15'); ?>" min="0" max="100" step="0.5" placeholder="15" <?php echo $marge_globale ? 'disabled' : ''; ?>>
+                        <p class="vs08c-help">Utilisé si type = Pourcentage. Appliqué au total avant marge.</p>
+                    </div>
+                    <div class="vs08c-field"><label>Marge (€ forfait)</label>
+                        <input type="number" name="vs08c[marge_montant]" value="<?php echo esc_attr($m['marge_montant'] ?? ''); ?>" min="0" step="0.01" placeholder="0" <?php echo $marge_globale ? 'disabled' : ''; ?>>
+                        <p class="vs08c-help">Utilisé si type = Montant forfaitaire. Ajouté au total.</p>
+                    </div>
+                </div>
+                <?php if ($marge_globale) : ?>
+                <input type="hidden" name="vs08c[marge_type]" value="<?php echo esc_attr($m['marge_type'] ?? 'pct'); ?>" />
+                <input type="hidden" name="vs08c[marge_pct]" value="<?php echo esc_attr($m['marge_pct'] ?? '15'); ?>" />
+                <input type="hidden" name="vs08c[marge_montant]" value="<?php echo esc_attr($m['marge_montant'] ?? ''); ?>" />
+                <?php endif; ?>
+            </div>
+
             <!-- ═══════ TAB: HÉBERGEMENTS ═══════ -->
             <div class="vs08c-panel" data-panel="hotels">
                 <h3 class="vs08c-panel-title">Hébergements du circuit</h3>
@@ -632,11 +677,11 @@ class VS08C_Meta {
 
         // Sanitize
         $m = [];
-        $text_fields = ['pays','flag','destination','guide_lang','pension','transport','badge','statut','iata_dest','themes','simple_supp_type'];
+        $text_fields = ['pays','flag','destination','guide_lang','pension','transport','badge','statut','iata_dest','themes','simple_supp_type','marge_type'];
         foreach ($text_fields as $f) {
             $m[$f] = sanitize_text_field($raw[$f] ?? '');
         }
-        $num_fields = ['duree_jours','duree','group_min','group_max','prix_double','prix_simple_supp','prix_triple','prix_vol_base','prix_bagage','prix_taxe','prix_transfert','reduc_enfant','acompte_pct','delai_solde'];
+        $num_fields = ['duree_jours','duree','group_min','group_max','prix_double','prix_simple_supp','prix_triple','prix_vol_base','prix_bagage','prix_taxe','prix_transfert','reduc_enfant','acompte_pct','delai_solde','marge_pct','marge_montant'];
         foreach ($num_fields as $f) {
             $m[$f] = floatval($raw[$f] ?? 0);
         }
