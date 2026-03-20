@@ -391,6 +391,7 @@ class VS08C_Meta {
                                 <div class="vs08c-field"><label>Code IATA</label><input type="text" name="vs08c[aeroports][<?php echo $ai; ?>][code]" value="<?php echo esc_attr($aero['code'] ?? ''); ?>" placeholder="ORY" style="text-transform:uppercase"></div>
                                 <div class="vs08c-field"><label>Nom aéroport</label><input type="text" name="vs08c[aeroports][<?php echo $ai; ?>][label]" value="<?php echo esc_attr($aero['label'] ?? ''); ?>" placeholder="Paris Orly"></div>
                                 <div class="vs08c-field"><label>Supp. vol (€/pers)</label><input type="number" name="vs08c[aeroports][<?php echo $ai; ?>][supp]" value="<?php echo esc_attr($aero['supp'] ?? '0'); ?>" step="0.01"></div>
+                                <button type="button" class="button vs08c-duplicate-aero" title="Dupliquer cet aéroport (même périodes)">📋 Dupliquer</button>
                                 <button type="button" class="vs08c-remove-repeater" title="Supprimer cet aéroport">✕ Suppr.</button>
                             </div>
                             <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">📅 Vol ouvert (périodes) — avant/après = fermé</div>

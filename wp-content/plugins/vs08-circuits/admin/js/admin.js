@@ -179,6 +179,7 @@ $('#vs08c-add-airport').on('click', function(){
             + '<div class="vs08c-field"><label>Code IATA</label><input type="text" name="vs08c[aeroports]['+i+'][code]" placeholder="ORY" style="text-transform:uppercase"></div>'
             + '<div class="vs08c-field"><label>Nom aéroport</label><input type="text" name="vs08c[aeroports]['+i+'][label]" placeholder="Paris Orly"></div>'
             + '<div class="vs08c-field"><label>Supp. vol (€/pers)</label><input type="number" name="vs08c[aeroports]['+i+'][supp]" value="0" step="0.01"></div>'
+            + '<button type="button" class="button vs08c-duplicate-aero" title="Dupliquer cet aéroport (même périodes)">📋 Dupliquer</button>'
             + '<button type="button" class="vs08c-remove-repeater" title="Supprimer cet aéroport">✕ Suppr.</button></div>'
             + '<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">📅 Vol ouvert (périodes) — avant/après = fermé</div>'
             + '<div class="vs08c-aero-periodes" style="margin-bottom:12px">'+period0+'</div>'
@@ -186,6 +187,24 @@ $('#vs08c-add-airport').on('click', function(){
             + '<div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">📆 Jours avec vol direct (défaut aéroport)</div>'
             + '<div style="display:flex;flex-wrap:wrap;gap:6px 12px">'+joursDef+'</div></div>';
     });
+});
+
+// Dupliquer un aéroport (même périodes et jours)
+$(document).on('click', '.vs08c-duplicate-aero', function(){
+    var $block = $(this).closest('.vs08c-airport-item');
+    if (!$block.length) return;
+    var $list = $('#vs08c-airports-list');
+    var newIdx = $list.children('.vs08c-airport-item').length;
+    var oldIdx = $block.attr('data-aero-idx');
+    var $clone = $block.clone();
+    $clone.attr('data-aero-idx', newIdx);
+    $clone.find('.vs08c-add-periode-aero').attr('data-aero-idx', newIdx);
+    $clone.find('input, select').each(function(){
+        var n = $(this).attr('name');
+        if (n) $(this).attr('name', n.replace(new RegExp('vs08c\\[aeroports\\]\\['+oldIdx+'\\]', 'g'), 'vs08c[aeroports]['+newIdx+']'));
+    });
+    $list.append($clone);
+    $('html,body').animate({scrollTop: $clone.offset().top - 100}, 400);
 });
 
 /* ══════════════════════════════════════
