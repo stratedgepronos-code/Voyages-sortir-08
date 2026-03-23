@@ -49,7 +49,7 @@ $ft_slide_count = count($ft_bg_slides);
     --ft-pad:clamp(24px,5vw,80px);
 }
 
-/* Bloc vague + footer : fond sur TOUTE la hauteur + pleine largeur écran */
+/* Bloc footer : fond sur toute la hauteur + pleine largeur écran */
 .ft-wrap{
     position:relative;left:50%;transform:translateX(-50%);
     width:100vw;max-width:100vw;overflow:hidden;
@@ -74,10 +74,6 @@ $ft_slide_count = count($ft_bg_slides);
     position:absolute;inset:0;z-index:2;
     background:rgba(8,12,20,.93);
 }
-
-/* ── Transition wave ── */
-.ft-wave-top{position:relative;z-index:3;height:80px;overflow:hidden;background:transparent;line-height:0}
-.ft-wave-top svg{display:block;width:100%;height:100%;vertical-align:bottom}
 
 /* ── Footer root (fond transparent : voile + photo dessous) ── */
 .ft-root{
@@ -119,7 +115,7 @@ $ft_slide_count = count($ft_bg_slides);
     50%{opacity:.9;transform:scale(1.15)}
 }
 
-/* Ligne lumineuse animée (placée au-dessus de la barre confiance, pas sous la vague) */
+/* Ligne lumineuse animée (au-dessus de la barre confiance) */
 .ft-beam-wrap{
     position:relative;z-index:4;height:0;margin:0;padding:0 var(--ft-pad);
     overflow:visible;
@@ -153,7 +149,7 @@ $ft_slide_count = count($ft_bg_slides);
 /* ── Main columns — pleine largeur ── */
 .ft-cols{
     width:100%;
-    padding:48px var(--ft-pad) 48px;
+    padding:64px var(--ft-pad) 48px;
     display:grid;
     grid-template-columns:1.5fr 1fr 1fr 1.3fr;
     gap:clamp(32px,4vw,64px);
@@ -330,7 +326,7 @@ $ft_slide_count = count($ft_bg_slides);
 </style>
 
 <!-- ═══════════════════════════════════════════════════════════════
-     FOOTER (vague + contenu : fond commun sur toute la hauteur)
+     FOOTER (fond commun sur toute la hauteur — sans séparateur vague)
      ═══════════════════════════════════════════════════════════════ -->
 <div class="ft-wrap">
     <div class="ft-bg-scene" aria-hidden="true">
@@ -342,11 +338,6 @@ $ft_slide_count = count($ft_bg_slides);
         </div>
         <?php endif; ?>
         <div class="ft-bg-veil"></div>
-    </div>
-    <div class="ft-wave-top">
-        <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
-            <path d="M0,40 C240,80 480,0 720,50 C960,100 1200,10 1440,45 L1440,80 L0,80 Z" fill="#080c14"/>
-        </svg>
     </div>
 
 <footer class="ft-root">
