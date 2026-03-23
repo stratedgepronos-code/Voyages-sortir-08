@@ -247,8 +247,8 @@
 
 /* ══════════════════════════════════════
    RECAP SÉJOUR — Sélecteurs renforcés
-   Généré par VS08V_Checkout::output_vs08_recap_card() / VS08C_Checkout::output_recap_card()
-   Structure : .vs08v-checkout-recap-wrapper > .vs08v-checkout-recap-card > .vs08v-woo-recap | .vs08c-woo-recap
+   Généré par VS08V_Checkout::output_vs08_recap_card()
+   Structure : .vs08v-checkout-recap-wrapper > .vs08v-checkout-recap-card > .vs08v-woo-recap
 ══════════════════════════════════════ */
 .vs08v-checkout-recap-wrapper,
 .vs08-order-review .vs08v-checkout-recap-wrapper,
@@ -339,60 +339,6 @@
 	color: var(--dark-mid) !important;
 	padding: 2px 0 !important;
 	font-family: var(--font) !important;
-}
-
-/* ══════════════════════════════════════
-   RECAP CIRCUIT — mêmes styles que le recap voyage
-══════════════════════════════════════ */
-.vs08v-checkout-recap-card .vs08c-woo-recap,
-.vs08v-checkout-recap-wrapper .vs08c-woo-recap {
-	margin: 0 !important;
-	font-family: var(--font) !important;
-}
-.vs08v-checkout-recap-card .vs08c-woo-recap h3,
-.vs08v-checkout-recap-wrapper .vs08c-woo-recap h3 {
-	font-family: var(--font-display) !important;
-	font-size: 1.05em !important;
-	margin-top: 0 !important;
-	margin-bottom: 6px !important;
-	color: var(--teal-darker) !important;
-	font-weight: 700 !important;
-	line-height: 1.3 !important;
-}
-.vs08v-checkout-recap-card .vs08c-woo-recap h4,
-.vs08v-checkout-recap-wrapper .vs08c-woo-recap h4 {
-	font-family: var(--font-display) !important;
-	margin: 8px 0 3px !important;
-	font-size: .85em !important;
-	color: var(--dark) !important;
-	font-weight: 600 !important;
-}
-.vs08v-checkout-recap-card .vs08c-woo-recap table,
-.vs08v-checkout-recap-wrapper .vs08c-woo-recap table {
-	margin-bottom: 4px !important;
-	width: 100% !important;
-	border-collapse: collapse !important;
-	border: none !important;
-	background: transparent !important;
-	box-shadow: none !important;
-}
-.vs08v-checkout-recap-card .vs08c-woo-recap td,
-.vs08v-checkout-recap-wrapper .vs08c-woo-recap td,
-.vs08v-checkout-recap-card .vs08c-woo-recap th,
-.vs08v-checkout-recap-wrapper .vs08c-woo-recap th {
-	padding: 3px 6px !important;
-	font-size: 12.5px !important;
-	color: var(--dark-mid) !important;
-	line-height: 1.4 !important;
-	font-family: var(--font) !important;
-	border: none !important;
-	background: transparent !important;
-	vertical-align: top !important;
-}
-.vs08v-checkout-recap-card .vs08c-woo-recap td:last-child,
-.vs08v-checkout-recap-wrapper .vs08c-woo-recap td:last-child {
-	color: var(--dark) !important;
-	font-weight: 600 !important;
 }
 
 /* ══════════════════════════════════════

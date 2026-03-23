@@ -48,11 +48,6 @@ var VS08C_CIRCUIT = <?php echo json_encode([
 <section class="vc-hero" style="background-image:url('<?php echo esc_url($hero_img); ?>')">
     <div class="vc-hero-overlay"></div>
     <div class="vc-hero-content">
-        <div class="vc-breadcrumb">
-            <a href="<?php echo home_url(); ?>">Accueil</a> <span>›</span>
-            <a href="<?php echo home_url('/resultats-recherche?type=circuit'); ?>">Circuits</a> <span>›</span>
-            <?php the_title(); ?>
-        </div>
         <div class="vc-hero-dest"><?php echo esc_html($flag . ' ' . ($m['destination'] ?? '')); ?></div>
         <h1><?php the_title(); ?></h1>
         <div class="vc-hero-meta">

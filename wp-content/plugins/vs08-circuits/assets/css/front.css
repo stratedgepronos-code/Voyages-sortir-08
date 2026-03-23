@@ -9,9 +9,6 @@
 .vc-hero { position:relative; height:72vh; min-height:520px; display:flex; align-items:flex-end; background-size:cover; background-position:center; }
 .vc-hero-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(15,36,36,.95) 0%, rgba(15,36,36,.35) 55%, transparent 100%); }
 .vc-hero-content { position:relative; z-index:2; padding:0 80px 60px; width:100%; }
-.vc-breadcrumb { font-size:12px; color:rgba(255,255,255,.45); font-family:'Outfit',sans-serif; margin-bottom:14px; }
-.vc-breadcrumb a { color:rgba(255,255,255,.45); text-decoration:none; } .vc-breadcrumb a:hover { color:#7ecece; }
-.vc-breadcrumb span { margin:0 8px; }
 .vc-hero-dest { display:inline-flex; align-items:center; gap:8px; background:rgba(89,183,183,.2); border:1px solid rgba(89,183,183,.35); color:#7ecece; padding:5px 14px; border-radius:100px; font-size:12px; font-weight:700; font-family:'Outfit',sans-serif; margin-bottom:14px; }
 .vc-hero h1 { font-size:clamp(30px,4.5vw,54px); color:#fff; font-family:'Playfair Display',serif; line-height:1.1; margin-bottom:18px; max-width:760px; }
 .vc-hero-meta { display:flex; gap:10px; flex-wrap:wrap; }
@@ -290,7 +287,6 @@
     .vc-option-slider,
     .vc-lightbox,
     .vc-gal-more,
-    .vc-breadcrumb,
     .no-print,
     /* Thème header / footer / admin bar */
     #wpadminbar,

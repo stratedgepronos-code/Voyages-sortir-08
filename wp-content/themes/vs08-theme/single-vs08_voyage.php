@@ -29,7 +29,7 @@ $hero_img     = !empty($galerie[0]) ? $galerie[0] : get_the_post_thumbnail_url($
 $flag_raw     = $m['flag'] ?? '';
 if (empty($flag_raw) && !empty($m['pays'])) {
     $vs08v_pays_map = [
-        'Portugal'=>'PT','Madère'=>'PT','Espagne'=>'ES','Maroc'=>'MA','Turquie'=>'TR','Irlande'=>'IE',
+        'Portugal'=>'PT','Espagne'=>'ES','Maroc'=>'MA','Turquie'=>'TR','Irlande'=>'IE',
         'Thaïlande'=>'TH','France'=>'FR','Italie'=>'IT','Grèce'=>'GR','Tunisie'=>'TN',
         'Écosse'=>'GB','Angleterre'=>'GB','Pays de Galles'=>'GB','Royaume-Uni'=>'GB',
         'Allemagne'=>'DE','Autriche'=>'AT','Suisse'=>'CH','Belgique'=>'BE','Pays-Bas'=>'NL',
