@@ -79,6 +79,7 @@ class VS08V_REST {
             'passengers'  => $request->get_param('passengers'),
             'destination' => $request->get_param('destination'),
         ];
+        $params = self::merge_missing_from_body($request, $params, ['voyage_id', 'date', 'aeroport', 'date_retour', 'passengers', 'destination']);
         $r = vs08v_get_flight_result($params);
         return new WP_REST_Response(
             ['success' => $r['success'], 'data' => $r['data']],
@@ -100,6 +101,7 @@ class VS08V_REST {
             'rooms'          => $request->get_param('rooms'),
             'airline_iata'   => $request->get_param('airline_iata'),
         ];
+        $params = self::merge_missing_from_body($request, $params, ['voyage_id', 'date_depart', 'aeroport', 'nb_golfeurs', 'nb_nongolfeurs', 'type_chambre', 'nb_chambres', 'prix_vol', 'rooms', 'airline_iata', 'options']);
         $r = vs08v_calculate_result($params);
         return new WP_REST_Response(
             ['success' => $r['success'], 'data' => $r['data']],
@@ -177,5 +179,34 @@ class VS08V_REST {
                 ['Content-Type' => 'application/json']
             );
         }
+    }
+
+    /**
+     * Repli : jQuery.post (form-urlencoded) parfois non reflété dans get_param() selon l’hébergeur — fusion depuis le corps brut.
+     *
+     * @param string[] $keys Clés à compléter si vides.
+     */
+    private static function merge_missing_from_body(WP_REST_Request $request, array $params, array $keys) {
+        $parsed = $request->get_body_params();
+        if (empty($parsed) || !is_array($parsed)) {
+            $jp = $request->get_json_params();
+            $parsed = is_array($jp) ? $jp : [];
+        }
+        if (empty($parsed) && $request->get_body() !== '') {
+            $parsed = [];
+            parse_str((string) $request->get_body(), $parsed);
+        }
+        if (!is_array($parsed) || empty($parsed)) {
+            return $params;
+        }
+        foreach ($keys as $k) {
+            $cur = array_key_exists($k, $params) ? $params[$k] : null;
+            if ($cur === '' || $cur === null) {
+                if (array_key_exists($k, $parsed)) {
+                    $params[$k] = $parsed[$k];
+                }
+            }
+        }
+        return $params;
     }
 }

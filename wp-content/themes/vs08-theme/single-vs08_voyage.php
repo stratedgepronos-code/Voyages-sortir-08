@@ -1357,7 +1357,16 @@ function svFetchVol(){
         svFlightsData = res.data.flights || [];
         svAirlineIata = (svFlightsData.length > 0 && svFlightsData[0].airline_iata) ? svFlightsData[0].airline_iata : '';
         var nbVols = svFlightsData.length;
+        // Estimation serveur (prix_vol_base) : pas de lignes Duffel mais prix valide — le cache accueil est mis à jour côté PHP
         if (nbVols === 0) {
+            var estPrix = parseFloat(res.data.prix || 0) || 0;
+            if (estPrix > 0 && res.data.note === 'estimate') {
+                svVolReady = true;
+                if (st) { st.className = 'sv-vol-st loaded'; st.textContent = '✅ Tarif vol indicatif (à partir de) — aucun vol direct listé pour cette recherche'; }
+                svSetCalendarConfirmEnabled(true);
+                svUpdate();
+                return;
+            }
             svVolReady = false;
             if (st) { st.className = 'sv-vol-st error'; st.textContent = '❌ Aucun vol direct trouvé pour cette date / cet aéroport.'; }
             document.getElementById('sv-price-box').style.display='none';
