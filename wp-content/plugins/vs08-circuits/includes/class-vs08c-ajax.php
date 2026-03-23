@@ -1,6 +1,27 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
+/**
+ * Cache opportuniste prix vol / pers. pour circuits (14 j) — même principe que les séjours golf.
+ */
+function vs08c_maybe_update_vol_min_cache($circuit_id, $prix_per_pax) {
+    $circuit_id = (int) $circuit_id;
+    $prix       = round(floatval($prix_per_pax), 2);
+    if ($circuit_id <= 0 || $prix <= 0) {
+        return;
+    }
+    $cache_key  = '_vs08c_vol_min_cache';
+    $existing   = get_post_meta($circuit_id, $cache_key, true);
+    $old_prix   = isset($existing['prix']) ? floatval($existing['prix']) : 0;
+    $old_ts     = isset($existing['ts']) ? intval($existing['ts']) : 0;
+    $expires    = 14 * DAY_IN_SECONDS;
+    $is_expired = (time() - $old_ts) > $expires;
+    $is_cheaper = ($old_prix <= 0 || $prix < $old_prix);
+    if ($is_expired || $is_cheaper) {
+        update_post_meta($circuit_id, $cache_key, ['prix' => $prix, 'ts' => time()]);
+    }
+}
+
 /* ── 1. Calcul du devis en temps réel ── */
 add_action('wp_ajax_vs08c_calculate',        'vs08c_ajax_calculate');
 add_action('wp_ajax_nopriv_vs08c_calculate', 'vs08c_ajax_calculate');
@@ -22,6 +43,10 @@ function vs08c_ajax_calculate() {
     ];
 
     $devis = VS08C_Calculator::calculate($circuit_id, $params);
+    $pv    = floatval($params['prix_vol'] ?? 0);
+    if ($pv > 0) {
+        vs08c_maybe_update_vol_min_cache($circuit_id, $pv);
+    }
     wp_send_json_success($devis);
 }
 
@@ -66,6 +91,7 @@ function vs08c_ajax_get_flight() {
     // Si pas de code IATA destination → fallback prix de base
     if (empty($iata_dest)) {
         if ($prix_vol_base > 0) {
+            vs08c_maybe_update_vol_min_cache($circuit_id, $prix_vol_base);
             wp_send_json_success(['prix' => $prix_vol_base, 'note' => 'estimate', 'flights' => []]);
         }
         wp_send_json_error('Code IATA destination non configuré.');
@@ -158,6 +184,7 @@ function vs08c_ajax_get_flight() {
     // ── Résultat ──
     if (empty($all_flights)) {
         if ($prix_vol_base > 0) {
+            vs08c_maybe_update_vol_min_cache($circuit_id, $prix_vol_base);
             wp_send_json_success(['prix' => $prix_vol_base, 'note' => 'estimate', 'flights' => []]);
         }
         wp_send_json_error('Aucun vol trouvé pour cette date.');
@@ -167,6 +194,9 @@ function vs08c_ajax_get_flight() {
     // Toujours utiliser price_per_pax (prix par personne) : total_amount Duffel est pour tous les passagers
     $prix = floatval($cheapest['price_per_pax'] ?? $prix_vol_base);
     $currency = $cheapest['currency'] ?? 'EUR';
+    if ($prix > 0) {
+        vs08c_maybe_update_vol_min_cache($circuit_id, $prix);
+    }
 
     wp_send_json_success([
         'prix'     => $prix,

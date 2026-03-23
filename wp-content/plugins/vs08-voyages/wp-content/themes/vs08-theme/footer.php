@@ -86,12 +86,12 @@ $theme_uri = get_template_directory_uri();
     <div class="ft-col">
         <h5>Séjours Golf</h5>
         <ul>
-            <li><a href="<?php echo esc_url(home_url('/sejours-golf/')); ?>">Portugal — Algarve</a></li>
-            <li><a href="<?php echo esc_url(home_url('/sejours-golf/')); ?>">Espagne — Marbella</a></li>
-            <li><a href="<?php echo esc_url(home_url('/sejours-golf/')); ?>">Maroc — Marrakech</a></li>
-            <li><a href="<?php echo esc_url(home_url('/sejours-golf/')); ?>">Turquie — Belek</a></li>
-            <li><a href="<?php echo esc_url(home_url('/sejours-golf/')); ?>">Irlande — Kerry</a></li>
-            <li><a href="<?php echo esc_url(home_url('/sejours-golf/')); ?>">Thaïlande — Phuket</a></li>
+            <li><a href="<?php echo esc_url(home_url('/resultats-recherche?dest=algarve')); ?>">Portugal — Algarve</a></li>
+            <li><a href="<?php echo esc_url(home_url('/resultats-recherche?dest=marbella')); ?>">Espagne — Marbella</a></li>
+            <li><a href="<?php echo esc_url(home_url('/resultats-recherche?dest=marrakech')); ?>">Maroc — Marrakech</a></li>
+            <li><a href="<?php echo esc_url(home_url('/resultats-recherche?dest=belek')); ?>">Turquie — Belek</a></li>
+            <li><a href="<?php echo esc_url(home_url('/resultats-recherche?dest=kerry')); ?>">Irlande — Kerry</a></li>
+            <li><a href="<?php echo esc_url(home_url('/resultats-recherche?dest=phuket')); ?>">Thaïlande — Phuket</a></li>
         </ul>
     </div>
     <div class="ft-col">
@@ -126,9 +126,9 @@ $theme_uri = get_template_directory_uri();
 <div class="ft-bot"><div class="ft-bot-in">
     <p class="ft-cp">© <?php echo esc_html(date('Y')); ?> <a href="<?php echo esc_url(home_url('/')); ?>">Voyages Sortir 08</a> — Tous droits réservés</p>
     <nav class="ft-lg">
-        <a href="<?php echo esc_url(home_url('/cgv/')); ?>">CGV</a>
+        <a href="<?php echo esc_url(home_url('/conditions/')); ?>">CGV</a>
         <a href="<?php echo esc_url(home_url('/mentions-legales/')); ?>">Mentions légales</a>
-        <a href="<?php echo esc_url(home_url('/politique-confidentialite/')); ?>">Confidentialité</a>
+        <a href="<?php echo esc_url(home_url('/rgpd/')); ?>">Confidentialité</a>
     </nav>
 </div></div>
 </footer>

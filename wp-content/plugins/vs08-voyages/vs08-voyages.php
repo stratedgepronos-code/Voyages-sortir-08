@@ -76,6 +76,7 @@ if (file_exists($vs08v_config_file)) {
 // Chargement des modules
 require_once VS08V_PATH . 'includes/class-post-type.php';
 require_once VS08V_PATH . 'includes/class-meta-boxes.php';
+require_once VS08V_PATH . 'includes/class-search.php';
 require_once VS08V_PATH . 'includes/class-hotel-box.php';
 require_once VS08V_PATH . 'includes/class-hotel-scanner.php';
 require_once VS08V_PATH . 'includes/class-golf-box.php';
@@ -101,6 +102,7 @@ try {
 }
 
 // Init
+VS08V_Search::register();
 VS08V_REST::register();
 VS08V_Traveler_Space::register();
 VS08V_Admin_Dossiers::register();

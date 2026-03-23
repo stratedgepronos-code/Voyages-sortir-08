@@ -80,6 +80,27 @@ function vs08v_dedup_flights($flights) {
 }
 
 /**
+ * Cache opportuniste prix vol / pers. (14 j) — remplacé si un visiteur trouve moins cher.
+ */
+function vs08v_maybe_update_vol_min_cache($voyage_id, $prix_per_pax) {
+    $voyage_id = (int) $voyage_id;
+    $prix      = round(floatval($prix_per_pax), 2);
+    if ($voyage_id <= 0 || $prix <= 0) {
+        return;
+    }
+    $cache_key  = '_vs08v_vol_min_cache';
+    $existing   = get_post_meta($voyage_id, $cache_key, true);
+    $old_prix   = isset($existing['prix']) ? floatval($existing['prix']) : 0;
+    $old_ts     = isset($existing['ts']) ? intval($existing['ts']) : 0;
+    $expires    = 14 * DAY_IN_SECONDS;
+    $is_expired = (time() - $old_ts) > $expires;
+    $is_cheaper = ($old_prix <= 0 || $prix < $old_prix);
+    if ($is_expired || $is_cheaper) {
+        update_post_meta($voyage_id, $cache_key, ['prix' => $prix, 'ts' => time()]);
+    }
+}
+
+/**
  * Logique métier recherche vols — retourne ['success' => bool, 'data' => ...] pour AJAX et REST.
  * Fusionne Duffel + SerpApi, déduplique et trie par prix.
  * @param array $input Clé/valeurs (voyage_id, date, date_retour, aeroport, passengers, destination).
@@ -115,6 +136,7 @@ function vs08v_get_flight_result($input = null) {
 
     if (!class_exists('VS08_Duffel_API')) {
         if ($prix_vol_base > 0) {
+            vs08v_maybe_update_vol_min_cache($voyage_id, $prix_vol_base);
             return ['success' => true, 'data' => ['prix' => $prix_vol_base, 'note' => 'estimate', 'flights' => []]];
         }
         return ['success' => false, 'data' => 'Service vols indisponible. Réessayez plus tard.'];
@@ -152,6 +174,7 @@ function vs08v_get_flight_result($input = null) {
 
     if (empty($flights)) {
         if ($prix_vol_base > 0) {
+            vs08v_maybe_update_vol_min_cache($voyage_id, $prix_vol_base);
             return ['success' => true, 'data' => ['prix' => $prix_vol_base, 'note' => 'estimate', 'flights' => []]];
         }
         return ['success' => false, 'data' => 'Aucun vol direct trouvé pour cette date / cet aéroport.'];
@@ -159,24 +182,8 @@ function vs08v_get_flight_result($input = null) {
 
     $prix = $flights[0]['price_per_pax'] ?? 0;
     $ref  = $flights[0]['price_per_pax'] ?? $prix;
-
-    // Cache opportuniste : stocker le prix vol minimum jamais vu pour ce produit
-    if ($prix > 0 && $voyage_id > 0) {
-        $cache_key = '_vs08v_vol_min_cache';
-        $existing  = get_post_meta($voyage_id, $cache_key, true);
-        $old_prix  = isset($existing['prix']) ? floatval($existing['prix']) : 0;
-        $old_ts    = isset($existing['ts'])   ? intval($existing['ts'])     : 0;
-        $expires   = 14 * DAY_IN_SECONDS;
-
-        $is_expired = (time() - $old_ts) > $expires;
-        $is_cheaper = ($old_prix <= 0 || $prix < $old_prix);
-
-        if ($is_expired || $is_cheaper) {
-            update_post_meta($voyage_id, $cache_key, [
-                'prix' => round($prix, 2),
-                'ts'   => time(),
-            ]);
-        }
+    if ($prix > 0) {
+        vs08v_maybe_update_vol_min_cache($voyage_id, $prix);
     }
 
     return [
@@ -245,6 +252,10 @@ function vs08v_calculate_result($input = null) {
     ];
     try {
         $devis = VS08V_Calculator::calculate($voyage_id, $params);
+        $pv    = floatval($params['prix_vol'] ?? 0);
+        if ($pv > 0) {
+            vs08v_maybe_update_vol_min_cache($voyage_id, $pv);
+        }
         return ['success' => true, 'data' => $devis];
     } catch (\Throwable $e) {
         if (function_exists('error_log')) error_log('[VS08 calculate] ' . $e->getMessage());

@@ -200,6 +200,7 @@ body.home,body.page-template-default{background:#fff!important}
 .scard-price .price-label{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.5px}
 .scard-price .price-amount{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--teal-dark);line-height:1}
 .scard-price .price-per{font-size:10px;color:var(--gray)}
+.scard-price-hint{font-size:10px;color:var(--gray);line-height:1.45;margin-top:8px;max-width:260px;opacity:.92}
 .scard-btn{display:flex;align-items:center;gap:6px;background:var(--dark);color:#fff;padding:12px 24px;border-radius:100px;font-size:14px;font-weight:700;transition:all .3s;white-space:nowrap;text-decoration:none}
 .scard-btn:hover{background:var(--teal-dark);transform:translateY(-2px);box-shadow:0 8px 24px rgba(89,183,183,.3);color:#fff}
 .scard-golfs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
@@ -717,24 +718,42 @@ document.addEventListener('DOMContentLoaded', function() {
             <?php if (class_exists('VS08V_Homepage_Editor') && VS08V_Homepage_Editor::render_home_cards()) : ?>
                 <?php echo VS08V_Homepage_Editor::render_home_cards(); ?>
             <?php else :
+                $fp_cdc_badge_map   = ['new'=>'Nouveauté','promo'=>'Promo','best'=>'Best-seller','derniere'=>'Dernières places'];
+                $fp_cdc_niveau_map  = ['debutant'=>'Débutant','intermediaire'=>'Intermédiaire','confirme'=>'Confirmé','tous'=>'Tous niveaux'];
+                $fp_cdc_pension_map = ['bb'=>'Petit-déj.','dp'=>'Demi-pension','pc'=>'Pension complète','ai'=>'All inclusive','mixed'=>'Formule mixte'];
                 $fp_voyages_cdc = new WP_Query(['post_type'=>'vs08_voyage','post_status'=>'publish','posts_per_page'=>4,'orderby'=>'date','order'=>'DESC']);
                 $fp_cdc_first = true;
                 while ($fp_voyages_cdc->have_posts()) : $fp_voyages_cdc->the_post();
                     $fp_pid   = get_the_ID();
                     $fp_m     = get_post_meta($fp_pid, 'vs08v_data', true) ?: [];
                     $fp_img   = get_the_post_thumbnail_url($fp_pid, 'large') ?: (!empty($fp_m['galerie'][0]) ? $fp_m['galerie'][0] : 'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=800&q=80');
-                    $fp_prix_data = class_exists('VS08V_Search') ? VS08V_Search::compute_prix_appel($fp_m, $fp_pid) : ['prix' => 0];
-                    $fp_prix = $fp_prix_data['prix'] > 0 ? number_format($fp_prix_data['prix'], 0, ',', ' ').'€' : (!empty($fp_m['prix_double']) ? number_format((float)$fp_m['prix_double'], 0, ',', ' ').'€' : '—');
+                    $fp_prix_data   = class_exists('VS08V_Search') ? VS08V_Search::compute_prix_appel($fp_m, $fp_pid) : ['prix' => 0, 'has_vol' => false, 'vol_estimate' => false];
+                    $fp_prix_num    = (int) ($fp_prix_data['prix'] ?? 0);
+                    $fp_price_hint  = '';
+                    if ($fp_prix_num > 0) {
+                        $fp_prix = number_format($fp_prix_num, 0, ',', ' ') . '€';
+                        if (!empty($fp_prix_data['has_vol'])) {
+                            $fp_price_hint = 'Basé sur le meilleur tarif vol récemment vu sur le site (mis à jour si un client trouve moins cher).';
+                        } elseif (!empty($fp_prix_data['vol_estimate'])) {
+                            $fp_price_hint = 'Vol estimé agence — une recherche sur la fiche actualise le « dès » avec un tarif réel si plus avantageux.';
+                        }
+                    } else {
+                        $fp_prix = '—';
+                        $fp_price_hint = 'Indicatif après choix des dates et de l’aéroport sur la fiche séjour (vol + hôtel + green fees).';
+                    }
                     $fp_pays  = trim(($fp_m['flag'] ?? '').' '.($fp_m['pays'] ?? ''));
-                    $fp_hotel = ($fp_m['hotel_nom'] ?? '').(!empty($fp_m['hotel_etoiles']) ? ' '.str_repeat('★', (int)$fp_m['hotel_etoiles']) : '');
-                    $fp_nuits = !empty($fp_m['duree']) ? (int)$fp_m['duree'].'N' : '';
-                    $fp_jours = !empty($fp_m['duree_jours']) ? (int)$fp_m['duree_jours'].' jours' : '';
-                    $fp_excerpt = has_excerpt($fp_pid) ? get_the_excerpt() : wp_trim_words(strip_tags(get_the_content()), 20);
+                    $fp_nuits = !empty($fp_m['duree']) ? (int) $fp_m['duree'] . 'N' : '';
+                    $fp_desc_c = trim((string) ($fp_m['desc_courte'] ?? ''));
+                    $fp_excerpt = $fp_desc_c !== '' ? $fp_desc_c : (has_excerpt($fp_pid) ? get_the_excerpt() : wp_trim_words(strip_tags(get_the_content()), 22));
                     $fp_golfs = $fp_m['golfs'] ?? [];
+                    $fp_bd_raw = $fp_m['badge'] ?? '';
+                    $fp_bd_key = ($fp_bd_raw !== '' && $fp_bd_raw !== null) ? $fp_bd_raw : ($fp_cdc_first ? 'best' : '');
+                    $fp_bd_label = ($fp_bd_key !== '' && isset($fp_cdc_badge_map[$fp_bd_key])) ? $fp_cdc_badge_map[$fp_bd_key] : '';
+                    $fp_bd_class = ($fp_bd_key === 'new') ? 'badge-new' : (($fp_bd_key === 'promo' || $fp_bd_key === 'derniere') ? 'badge-promo' : 'badge-best');
                     ?>
                 <div class="scard <?php echo $fp_cdc_first ? 'scard-featured ' : ''; ?>anim">
                     <div class="scard-img">
-                        <?php if($fp_cdc_first): ?><div class="scard-badges"><span class="badge badge-best">Best-seller</span></div><?php endif; ?>
+                        <?php if ($fp_bd_label !== '') : ?><div class="scard-badges"><span class="badge <?php echo esc_attr($fp_bd_class); ?>"><?php echo esc_html($fp_bd_label); ?></span></div><?php endif; ?>
                         <img src="<?php echo esc_url($fp_img); ?>" alt="<?php echo esc_attr(get_the_title()); ?>" loading="lazy">
                     </div>
                     <div class="scard-body">
@@ -744,7 +763,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="scard-highlights">
                             <?php if($fp_nuits): ?><span class="scard-chip">🌙 <?php echo esc_html($fp_nuits); ?></span><?php endif; ?>
                             <?php if(!empty($fp_golfs)): ?><span class="scard-chip">⛳ <?php echo count($fp_golfs); ?> parcours</span><?php endif; ?>
-                            <?php if(!empty($fp_m['hotel_nom'])): ?><span class="scard-chip chip-gold">🏨 <?php echo esc_html($fp_m['hotel_nom']); ?></span><?php endif; ?>
+                            <?php if(!empty($fp_m['hotel_nom'])): ?><span class="scard-chip chip-gold">🏨 <?php echo esc_html($fp_m['hotel_nom']); ?><?php if(!empty($fp_m['hotel_etoiles'])): ?><?php echo ' ' . esc_html(str_repeat('★', (int) $fp_m['hotel_etoiles'])); ?><?php endif; ?></span><?php endif; ?>
+                            <?php
+                            $fp_nv = $fp_m['niveau'] ?? '';
+                            if ($fp_nv && isset($fp_cdc_niveau_map[$fp_nv])) :
+                                ?><span class="scard-chip">🏌️ <?php echo esc_html($fp_cdc_niveau_map[$fp_nv]); ?></span><?php
+                            endif;
+                            $fp_pen = $fp_m['pension'] ?? '';
+                            if ($fp_pen && isset($fp_cdc_pension_map[$fp_pen])) :
+                                ?><span class="scard-chip">🍽️ <?php echo esc_html($fp_cdc_pension_map[$fp_pen]); ?></span><?php
+                            endif;
+                            if (($fp_m['buggy'] ?? '') === 'inclus') :
+                                ?><span class="scard-chip">🛞 Buggy inclus</span><?php
+                            endif;
+                            ?>
                         </div>
                         <?php if(!empty($fp_golfs)): ?>
                         <div class="scard-golfs">
@@ -755,7 +787,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         <?php endif; ?>
                         <div class="scard-divider"></div>
                         <div class="scard-footer">
-                            <div class="scard-price"><span class="price-label">Dès</span><span class="price-amount"><?php echo esc_html($fp_prix); ?></span><span class="price-per">/personne · tout compris</span></div>
+                            <div class="scard-price">
+                                <span class="price-label">À partir de</span>
+                                <span class="price-amount"><?php echo esc_html($fp_prix); ?></span>
+                                <span class="price-per">/personne · tout compris</span>
+                                <?php if ($fp_price_hint !== '') : ?><p class="scard-price-hint"><?php echo esc_html($fp_price_hint); ?></p><?php endif; ?>
+                            </div>
                             <a href="<?php echo esc_url(get_permalink()); ?>" class="scard-btn"><?php echo $fp_cdc_first ? 'Voir ce séjour' : 'Voir'; ?> →</a>
                         </div>
                     </div>
@@ -785,8 +822,17 @@ document.addEventListener('DOMContentLoaded', function() {
             $fp_gid    = get_the_ID();
             $fp_gm     = get_post_meta($fp_gid, 'vs08v_data', true) ?: [];
             $fp_gimg   = get_the_post_thumbnail_url($fp_gid, 'medium_large') ?: (!empty($fp_gm['galerie'][0]) ? $fp_gm['galerie'][0] : '');
-            $fp_gprix_data = class_exists('VS08V_Search') ? VS08V_Search::compute_prix_appel($fp_gm, $fp_gid) : ['prix' => 0];
-            $fp_gprix  = $fp_gprix_data['prix'] > 0 ? number_format($fp_gprix_data['prix'], 0, ',', ' ').'€' : (!empty($fp_gm['prix_double']) ? number_format((float)$fp_gm['prix_double'], 0, ',', ' ').'€' : '');
+            $fp_gprix_data = class_exists('VS08V_Search') ? VS08V_Search::compute_prix_appel($fp_gm, $fp_gid) : ['prix' => 0, 'has_vol' => false, 'vol_estimate' => false];
+            $fp_gprix_n = (int) ($fp_gprix_data['prix'] ?? 0);
+            $fp_gprix  = $fp_gprix_n > 0 ? number_format($fp_gprix_n, 0, ',', ' ') . '€' : '';
+            $fp_gprice_hint = '';
+            if ($fp_gprix_n > 0) {
+                if (!empty($fp_gprix_data['has_vol'])) {
+                    $fp_gprice_hint = 'Vol inclus (dernier meilleur tarif vu sur le site).';
+                } elseif (!empty($fp_gprix_data['vol_estimate'])) {
+                    $fp_gprice_hint = 'Vol estimé — actualisé après recherche.';
+                }
+            }
             $fp_gpays  = trim(($fp_gm['flag'] ?? '').' '.($fp_gm['pays'] ?? ''));
             $fp_gnuits = !empty($fp_gm['duree']) ? (int)$fp_gm['duree'].'N' : '';
             $fp_ggolfs = $fp_gm['golfs'] ?? [];
@@ -823,11 +869,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <?php endif; ?>
                     <div class="sh-foot" style="margin-top:auto">
-                        <?php if($fp_gprix): ?>
-                        <span class="sh-price" style="color:var(--gold)">dès <?php echo esc_html($fp_gprix); ?></span>
+                        <?php if ($fp_gprix !== '') : ?>
+                        <span class="sh-price" style="color:var(--gold)">à partir de <?php echo esc_html($fp_gprix); ?></span>
                         <span class="sh-per">/pers. · tout compris</span>
-                        <?php else: ?>
-                        <span class="sh-per" style="color:rgba(255,255,255,.4)">Prix sur demande</span>
+                        <?php if ($fp_gprice_hint !== '') : ?><span class="sh-per" style="display:block;margin-top:6px;font-size:9px;opacity:.75"><?php echo esc_html($fp_gprice_hint); ?></span><?php endif; ?>
+                        <?php else : ?>
+                        <span class="sh-per" style="color:rgba(255,255,255,.45)">Tarif après dates &amp; aéroport sur la fiche</span>
                         <?php endif; ?>
                     </div>
                 </div>

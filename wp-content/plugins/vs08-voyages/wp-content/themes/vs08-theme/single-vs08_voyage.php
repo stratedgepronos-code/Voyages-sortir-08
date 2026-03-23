@@ -29,7 +29,7 @@ $hero_img     = !empty($galerie[0]) ? $galerie[0] : get_the_post_thumbnail_url($
 $flag_raw     = $m['flag'] ?? '';
 if (empty($flag_raw) && !empty($m['pays'])) {
     $vs08v_pays_map = [
-        'Portugal'=>'PT','Madère'=>'PT','Espagne'=>'ES','Maroc'=>'MA','Turquie'=>'TR','Irlande'=>'IE',
+        'Portugal'=>'PT','Espagne'=>'ES','Maroc'=>'MA','Turquie'=>'TR','Irlande'=>'IE',
         'Thaïlande'=>'TH','France'=>'FR','Italie'=>'IT','Grèce'=>'GR','Tunisie'=>'TN',
         'Écosse'=>'GB','Angleterre'=>'GB','Pays de Galles'=>'GB','Royaume-Uni'=>'GB',
         'Allemagne'=>'DE','Autriche'=>'AT','Suisse'=>'CH','Belgique'=>'BE','Pays-Bas'=>'NL',
@@ -79,7 +79,12 @@ $aeroports_js = array_values(array_map(function($a){
     return $a;
 }, $aeroports));
 ?>
-<script>var VS08V_VOYAGE=<?php echo json_encode(['id'=>$id,'titre'=>get_the_title(),'duree'=>$duree,'prix_double'=>floatval($m['prix_double']??0),'prix_simple_supp'=>floatval($m['prix_simple_supp']??0),'prix_triple'=>floatval($m['prix_triple']??0),'prix_greenfees'=>floatval($m['prix_greenfees']??0),'reduction_nongolf'=>floatval($m['reduction_nongolfeur']??30),'prix_vol_base'=>floatval($m['prix_vol_base']??0),'prix_taxe'=>floatval($m['prix_taxe']??0),'prix_transfert'=>floatval($m['prix_transfert']??0),'acompte_pct'=>floatval($m['acompte_pct']??30),'acompte_mode'=>($m['acompte_mode']??'pct'),'acompte_eur'=>floatval($m['acompte_eur']??0),'delai_solde'=>intval($m['delai_solde']??30),'iata_dest'=>strtoupper((string)($m['iata_dest']??'')),'statut'=>$m['statut']??'actif','aeroports'=>$aeroports_js,'booking_url'=>home_url('/reservation/'.$id),'transfert_type'=>$transfert_type,'transfert_label'=>$transfert_labels[$transfert_type]??'','voiture_details'=>($transfert_type==='voiture')?($m['voiture_details']??[]):[],'voiture_periodes'=>($transfert_type==='voiture')?array_values($m['voiture_periodes']??[]):[]]); ?>;</script>
+<?php
+$periodes_fermees_vente_js = array_values(array_map(function($p) {
+    return ['date_debut' => (string)($p['date_debut'] ?? ''), 'date_fin' => (string)($p['date_fin'] ?? '')];
+}, array_filter($m['periodes_fermees_vente'] ?? [], function($p) { return !empty($p['date_debut']) || !empty($p['date_fin']); })));
+?>
+<script>var VS08V_VOYAGE=<?php echo json_encode(['id'=>$id,'titre'=>get_the_title(),'duree'=>$duree,'prix_double'=>floatval($m['prix_double']??0),'prix_simple_supp'=>floatval($m['prix_simple_supp']??0),'prix_triple'=>floatval($m['prix_triple']??0),'prix_greenfees'=>floatval($m['prix_greenfees']??0),'reduction_nongolf'=>floatval($m['reduction_nongolfeur']??0),'prix_vol_base'=>floatval($m['prix_vol_base']??0),'prix_taxe'=>floatval($m['prix_taxe']??0),'prix_transfert'=>floatval($m['prix_transfert']??0),'acompte_pct'=>floatval($m['acompte_pct']??30),'acompte_mode'=>($m['acompte_mode']??'pct'),'acompte_eur'=>floatval($m['acompte_eur']??0),'delai_solde'=>intval($m['delai_solde']??30),'iata_dest'=>strtoupper((string)($m['iata_dest']??'')),'statut'=>$m['statut']??'actif','aeroports'=>$aeroports_js,'periodes_fermees_vente'=>$periodes_fermees_vente_js,'booking_url'=>home_url('/reservation/'.$id),'transfert_type'=>$transfert_type,'transfert_label'=>$transfert_labels[$transfert_type]??'','voiture_details'=>($transfert_type==='voiture')?($m['voiture_details']??[]):[],'voiture_periodes'=>($transfert_type==='voiture')?array_values($m['voiture_periodes']??[]):[]]); ?>;</script>
 
 <style>
 /* ═══════════════════════════════════════════════
@@ -159,8 +164,9 @@ $aeroports_js = array_values(array_map(function($a){
 ═══════════════════════════════════════════════ */
 .sv-right-col{position:sticky;top:70px;display:flex;flex-direction:column;gap:14px;align-self:start;transition:top .1s}
 
-/* Calc card — scroll isolé au survol : max-height + overflow pour que la molette ne scroll que la card */
-.sv-calc-card{background:#fff;border-radius:18px;padding:24px;box-shadow:0 4px 28px rgba(0,0,0,.1);overflow-y:auto;overflow-x:visible;max-height:min(85vh, 720px);overscroll-behavior:contain}
+/* Calc card : scroll isolé au survol (molette = scroll uniquement la card), barre masquée */
+.sv-calc-card{background:#fff;border-radius:18px;padding:24px;box-shadow:0 4px 28px rgba(0,0,0,.1);overflow-y:auto;overflow-x:visible;max-height:min(85vh,720px);overscroll-behavior:contain;scrollbar-width:none;-ms-overflow-style:none}
+.sv-calc-card::-webkit-scrollbar{display:none}
 .sv-calc-title{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:#0f2424;margin:0 0 3px}
 .sv-calc-sub{font-size:11px;color:#9ca3af;font-family:'Outfit',sans-serif;margin:0 0 16px}
 .sv-calc-order-hint{background:#edf8f8;border:1px solid rgba(89,183,183,.25);border-radius:10px;padding:10px 12px;font-size:12px;color:#1a3a3a;margin-bottom:14px;font-family:'Outfit',sans-serif}
@@ -909,6 +915,7 @@ function svScrollTo(id){
     });
 })();
 
+
 // ── CALCULATEUR ───────────────────────────────
 var svPrixVol=0, svPrixVolRef=0, svFlightsData=[], svTimer=null, svAirlineIata='';
 
@@ -949,6 +956,20 @@ function svUpdateStickyBar(priceText){
     if(el) el.textContent = priceText || '—';
 }
 
+// Retourne true si la date (YYYY-MM-DD) est dans une période fermée à la vente (tous aéroports)
+function svDateInClosedPeriod(dateStr) {
+    if (!dateStr || !VS08V_VOYAGE.periodes_fermees_vente || !VS08V_VOYAGE.periodes_fermees_vente.length) return false;
+    var t = new Date(dateStr + 'T12:00:00').getTime();
+    for (var i = 0; i < VS08V_VOYAGE.periodes_fermees_vente.length; i++) {
+        var deb = VS08V_VOYAGE.periodes_fermees_vente[i].date_debut, fin = VS08V_VOYAGE.periodes_fermees_vente[i].date_fin;
+        if (!deb && !fin) continue;
+        var tDeb = deb ? new Date(deb + 'T00:00:00').getTime() : 0;
+        var tFin = fin ? new Date(fin + 'T23:59:59').getTime() : 9e12;
+        if (t >= tDeb && t <= tFin) return true;
+    }
+    return false;
+}
+
 // Retourne true si la date (YYYY-MM-DD) est autorisée pour l'aéroport (périodes + jours par période)
 function svDateAllowedForAeroport(dateStr, code) {
     if (!code || !VS08V_VOYAGE.aeroports || !dateStr) return true;
@@ -975,6 +996,7 @@ function svDateAllowedForAeroport(dateStr, code) {
 }
 
 // Liste des dates autorisées pour un aéroport (YYYY-MM-DD) sur 2 ans à partir d'aujourd'hui
+// Exclut les dates situées dans une période fermée à la vente (tous aéroports)
 function svGetAllowedDatesForAeroport(code) {
     if (!code || !VS08V_VOYAGE.aeroports) return null;
     var a = VS08V_VOYAGE.aeroports.find(function(x){ return (x.code||'').toUpperCase() === (code||'').toUpperCase(); });
@@ -988,7 +1010,7 @@ function svGetAllowedDatesForAeroport(code) {
                 if (d < today) continue;
                 var yyyy = d.getFullYear(), mm = String(d.getMonth() + 1).padStart(2,'0'), dd = String(d.getDate()).padStart(2,'0');
                 var dtStr = yyyy + '-' + mm + '-' + dd;
-                if (svDateAllowedForAeroport(dtStr, code)) out.push(dtStr);
+                if (svDateAllowedForAeroport(dtStr, code) && !svDateInClosedPeriod(dtStr)) out.push(dtStr);
             }
         }
     }
@@ -1062,7 +1084,7 @@ function svOnAeroportChange(){
         } else if (window.svCalDate) {
             var cal = window.svCalDate;
             var dateVal = document.getElementById('sv-date-depart') ? document.getElementById('sv-date-depart').value : '';
-            if (dateVal && !svDateAllowedForAeroport(dateVal, code)) {
+            if (dateVal && (!svDateAllowedForAeroport(dateVal, code) || svDateInClosedPeriod(dateVal))) {
                 var inp = document.getElementById('sv-date-depart');
                 if (inp) inp.value = '';
                 cal.selected = null;
@@ -1092,7 +1114,7 @@ function svOnAeroportChange(){
         }
     }
     var dateVal = document.getElementById('sv-date-depart') ? document.getElementById('sv-date-depart').value : '';
-    if (dateVal && !svDateAllowedForAeroport(dateVal, code)) {
+    if (dateVal && (!svDateAllowedForAeroport(dateVal, code) || svDateInClosedPeriod(dateVal))) {
         var inp = document.getElementById('sv-date-depart');
         if (inp) inp.value = '';
         if (window.svCalDate) {
@@ -1113,9 +1135,9 @@ function svOnDateChange(){
     if (date) {
         var aeroSel = document.getElementById('sv-aeroport');
         var code = aeroSel ? aeroSel.value : '';
-        if (code && !svDateAllowedForAeroport(date, code)) {
+        if (code && (!svDateAllowedForAeroport(date, code) || svDateInClosedPeriod(date))) {
             dateEl.value = '';
-            if (feedback) { feedback.textContent = 'Pas de vol direct ce jour-là depuis cet aéroport.'; feedback.style.display = 'block'; }
+            if (feedback) { feedback.textContent = svDateInClosedPeriod(date) ? 'Cette date est en période fermée à la vente.' : 'Pas de vol direct ce jour-là depuis cet aéroport.'; feedback.style.display = 'block'; }
             if (step2) step2.style.display = 'none';
             return;
         }
@@ -1246,6 +1268,22 @@ document.addEventListener('DOMContentLoaded', function(){
         });
     });
 });
+
+// Scroll isolé sur la calc-card : souris sur la card = molette scroll uniquement la card (pas la page)
+document.addEventListener('DOMContentLoaded', function(){
+    var card = document.querySelector('.sv-calc-card');
+    if (!card) return;
+    card.addEventListener('wheel', function(e) {
+        var st = card.scrollTop, sh = card.scrollHeight, ch = card.clientHeight, maxScroll = sh - ch;
+        if (maxScroll <= 0) return;
+        var delta = e.deltaY, atTop = st <= 0, atBottom = st >= maxScroll - 1;
+        if ((delta > 0 && !atBottom) || (delta < 0 && !atTop)) {
+            e.preventDefault();
+            card.scrollTop = Math.max(0, Math.min(maxScroll, st + delta));
+        }
+    }, { passive: false });
+});
+
 function svQty(id, delta){
     var valEl=document.getElementById('qval-'+id); if(!valEl) return;
     var v=parseInt(valEl.textContent)||1;
