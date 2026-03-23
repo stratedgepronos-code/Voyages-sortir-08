@@ -24,9 +24,9 @@ add_action('wp_enqueue_scripts', function() {
     wp_enqueue_style('vs08-header-mega', get_template_directory_uri() . '/assets/css/header-mega.css', ['vs08-main'], '1.3');
     wp_enqueue_style('vs08-footer-terminal', get_template_directory_uri() . '/assets/css/footer-terminal.css', ['vs08-main'], '1.0');
     if (is_front_page()) {
-        wp_enqueue_style('vs08-front-page-v2', get_template_directory_uri() . '/assets/css/front-page-v2.css', ['vs08-main'], '2.0');
-        wp_enqueue_style('vs08-section-univers', get_template_directory_uri() . '/assets/css/section-univers.css', [], '1.0.0');
-        wp_enqueue_script('vs08-section-univers-js', get_template_directory_uri() . '/assets/js/section-univers.js', [], '1.0.0', true);
+        /* Déploiement #373 — feat(homepage) : homepage-v3 + front-page-v2 (cartes dynamiques BDD) */
+        wp_enqueue_style('vs08-homepage-v3', get_template_directory_uri() . '/assets/css/homepage-v3.css', ['vs08-main', 'vs08-header-mega'], '1.0');
+        wp_enqueue_style('vs08-front-page-v2', get_template_directory_uri() . '/assets/css/front-page-v2.css', ['vs08-homepage-v3'], '2.0');
     }
     if (function_exists('is_checkout') && is_checkout() && !is_wc_endpoint_url('order-received')) {
         wp_enqueue_style('vs08-checkout', get_template_directory_uri() . '/assets/css/checkout.css', ['vs08-main'], '4.7');
@@ -35,6 +35,14 @@ add_action('wp_enqueue_scripts', function() {
     wp_enqueue_script('vs08-main', get_template_directory_uri() . '/assets/js/main.js', [], '1.3', true);
     wp_enqueue_script('vs08-footer-terminal', get_template_directory_uri() . '/assets/js/footer-terminal.js', [], '1.0', true);
 });
+
+/* Ne pas charger stats.wp.com (Jetpack) — évite ERR_BLOCKED_BY_CLIENT en admin si extension bloque la requête */
+add_filter('script_loader_tag', function($tag, $handle, $src) {
+    if (strpos($src, 'stats.wp.com') !== false) {
+        return '';
+    }
+    return $tag;
+}, 10, 3);
 
 /* Checkout : masquer le bloc code promo */
 add_filter('woocommerce_coupon_enabled', function() {
@@ -263,6 +271,19 @@ add_filter('woocommerce_order_button_text', function() {
  */
 add_action('vs08_checkout_recap', function() {
     if (!WC()->cart) return;
+
+    // Circuit : récap détaillé (même zone que le golf)
+    foreach (WC()->cart->get_cart() as $item) {
+        $id = $item['product_id'] ?? 0;
+        if (!$id) continue;
+        $data = get_post_meta($id, '_vs08c_booking_data', true);
+        if (!empty($data) && is_array($data) && ($data['type'] ?? '') === 'circuit') {
+            if (class_exists('VS08C_Checkout')) {
+                VS08C_Checkout::output_recap_card();
+            }
+            return;
+        }
+    }
 
     $product_id = null;
     $booking_data = null;

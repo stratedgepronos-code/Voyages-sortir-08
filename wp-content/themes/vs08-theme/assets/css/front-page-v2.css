@@ -120,6 +120,9 @@ h1,h2,h3,h4,h5,h6{font-family:'Playfair Display',serif;line-height:1.2}
 .section-link{color:var(--teal-dark);font-weight:600;font-size:14px;white-space:nowrap;transition:all .2s}
 .section-link:hover{color:var(--teal);letter-spacing:.3px}
 
+/* Cartes accueil : visibles même si le JS .visible (IntersectionObserver) ne tourne pas */
+.sejours-section .cards-grid .scard.anim,
+.departs-section .departs-grid .dcard.anim{opacity:1!important;transform:none!important}
 .cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-bottom:48px}
 .scard{background:#fff;border:1.5px solid var(--gray-light);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:transform .4s,box-shadow .4s,border-color .3s;position:relative}
 .scard:hover{transform:translateY(-8px);box-shadow:0 30px 70px rgba(0,0,0,.14);border-color:var(--teal)}
