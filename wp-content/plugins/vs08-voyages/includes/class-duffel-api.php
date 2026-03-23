@@ -17,32 +17,177 @@ class VS08_Duffel_API {
     const API_BASE  = 'https://api.duffel.com';
     const CACHE_TTL = 1200; // 20 * 60 (évite MINUTE_IN_SECONDS si non défini)
 
-    /* ──────────────────────────────────────────────
-     * RECHERCHE DE VOLS (inchangée)
-     * ────────────────────────────────────────────── */
-    public static function search_flights($origin, $destination, $date, $passengers = 1, $date_retour = '') {
+    /**
+     * Convertit un montant dans la devise du site (EUR) si l'API Duffel renvoie une autre devise
+     * (ex. facturation Duffel en GBP → affichage correct en € sur le site).
+     *
+     * @param float  $amount   Montant brut (total_amount = total pour tous les passagers)
+     * @param string $currency Code devise (ex. GBP, USD)
+     * @return float Montant en EUR
+     */
+    private static function _amount_to_eur($amount, $currency) {
+        $currency = strtoupper((string) $currency);
+        if ($currency === 'EUR' || $currency === '') {
+            return $amount;
+        }
+        $converted = apply_filters('vs08_duffel_convert_to_eur', $amount, $currency);
+        if (is_numeric($converted) && (float) $converted !== (float) $amount) {
+            return round((float) $converted, 2);
+        }
+        // Taux indicatifs (à mettre à jour ou utiliser le filtre ci‑dessus pour un taux live)
+        $rates = [
+            'GBP' => 1.18,
+            'USD' => 0.93,
+            'CHF' => 1.05,
+        ];
+        $rate = $rates[$currency] ?? 1;
+        return round($amount * $rate, 2);
+    }
 
-        $cache_key = 'vs08_duffel_' . md5("{$origin}_{$destination}_{$date}_{$passengers}_{$date_retour}");
+    /**
+     * Vérifie escales : nombre de segments et attente max entre deux vols (même slice).
+     *
+     * @param int $max_connections      0 = direct uniquement ; 1 = au plus 1 escale (2 segments)
+     * @param int $max_layover_minutes  Ignoré si max_connections === 0
+     */
+    private static function _slice_valid_for_connection_rules(array $slice, int $max_connections, int $max_layover_minutes): bool {
+        $segs = $slice['segments'] ?? [];
+        $n    = count($segs);
+        if ($n < 1) {
+            return false;
+        }
+        if ($max_connections === 0) {
+            return $n === 1;
+        }
+        if ($n > $max_connections + 1) {
+            return false;
+        }
+        if ($n === 1) {
+            return true;
+        }
+        for ($i = 0; $i < $n - 1; $i++) {
+            $arr = strtotime($segs[$i]['arriving_at'] ?? '');
+            $dep = strtotime($segs[$i + 1]['departing_at'] ?? '');
+            if (!$arr || !$dep || $dep <= $arr) {
+                return false;
+            }
+            $mins = (int) round(($dep - $arr) / 60);
+            if ($mins > $max_layover_minutes) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Même compagnie marketing sur tous les segments des deux slices (A/R).
+     */
+    private static function _roundtrip_same_marketing_carrier_all_segments(array $slice_aller, array $slice_retour): bool {
+        $codes = [];
+        foreach ([$slice_aller, $slice_retour] as $slice) {
+            foreach ($slice['segments'] ?? [] as $seg) {
+                $c = $seg['marketing_carrier']['iata_code'] ?? '';
+                if ($c === '') {
+                    return false;
+                }
+                $codes[] = strtoupper($c);
+            }
+        }
+        if (empty($codes)) {
+            return false;
+        }
+        $first = $codes[0];
+        foreach ($codes as $c) {
+            if ($c !== $first) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Résumé affichage d'un slice (premier départ, dernière arrivée, 1er n° de vol).
+     *
+     * @return array{dep:string,arr:string,depart_time:string,arrive_time:string,duration_min:int,flight_number:string,flight_numbers_all:string,has_connections:bool}|null
+     */
+    private static function _slice_route_summary(array $slice): ?array {
+        $segs = $slice['segments'] ?? [];
+        if (empty($segs)) {
+            return null;
+        }
+        $first = reset($segs);
+        $last  = end($segs);
+        $dep   = $first['departing_at'] ?? '';
+        $arr   = $last['arriving_at'] ?? '';
+        $fn_parts = [];
+        foreach ($segs as $s) {
+            $ac = $s['marketing_carrier']['iata_code'] ?? '';
+            $fn = $s['marketing_carrier_flight_number'] ?? '';
+            $fn_parts[] = trim($ac . $fn);
+        }
+        return [
+            'dep'              => $dep,
+            'arr'              => $arr,
+            'depart_time'      => $dep ? date('H:i', strtotime($dep)) : '--:--',
+            'arrive_time'      => $arr ? date('H:i', strtotime($arr)) : '--:--',
+            'duration_min'     => !empty($slice['duration']) ? self::iso_to_minutes($slice['duration']) : 0,
+            'flight_number'    => $fn_parts[0] ?? '',
+            'flight_numbers_all' => implode(' + ', array_filter($fn_parts)),
+            'has_connections'  => count($segs) > 1,
+        ];
+    }
+
+    /* ──────────────────────────────────────────────
+     * RECHERCHE DE VOLS
+     * $opts : return_origin (IATA) = open jaw (retour depuis autre aéroport que l’arrivée aller)
+     *         max_connections (int) = 0 direct, 1 = 1 escale max par tronçon
+     *         max_layover_minutes (int) = attente max entre deux vols (ex. 300 = 5 h)
+     * ────────────────────────────────────────────── */
+    public static function search_flights($origin, $destination, $date, $passengers = 1, $date_retour = '', $opts = []) {
+
+        $opts       = is_array($opts) ? $opts : [];
+        $opt_sig    = md5(wp_json_encode($opts));
+        $cache_key  = 'vs08_duffel_' . md5("{$origin}_{$destination}_{$date}_{$passengers}_{$date_retour}_{$opt_sig}");
         $cached    = get_transient($cache_key);
-        if ($cached !== false) return $cached;
+        if ($cached !== false) {
+            // Convertir les montants en EUR si le cache contient une autre devise (ex. ancien cache en GBP)
+            $pax = isset($cached['passengers']) ? max(1, (int) $cached['passengers']) : 1;
+            if (!empty($cached['flights'])) {
+                foreach ($cached['flights'] as &$f) {
+                    if (!empty($f['currency']) && strtoupper($f['currency']) !== 'EUR') {
+                        $total = self::_amount_to_eur($f['price_total'] ?? 0, $f['currency']);
+                        $f['price_total']   = $total;
+                        $f['price_per_pax'] = $pax > 0 ? round($total / $pax, 2) : $total;
+                        $f['currency']      = 'EUR';
+                    }
+                }
+                unset($f);
+            }
+            return $cached;
+        }
 
         $api_key = defined('VS08_DUFFEL_API_KEY') ? VS08_DUFFEL_API_KEY : '';
         if (empty($api_key)) {
             return new WP_Error('no_api_key', 'Clé Duffel manquante.');
         }
 
+        $max_connections      = isset($opts['max_connections']) ? max(0, min(2, (int) $opts['max_connections'])) : 0;
+        $max_layover_minutes  = isset($opts['max_layover_minutes']) ? max(30, (int) $opts['max_layover_minutes']) : 300;
+        $return_origin        = !empty($opts['return_origin']) ? strtoupper(sanitize_text_field((string) $opts['return_origin'])) : '';
+
         $slices = [[
             'origin'          => strtoupper($origin),
             'destination'     => strtoupper($destination),
             'departure_date'  => $date,
-            'max_connections' => 0,
+            'max_connections' => $max_connections,
         ]];
         if (!empty($date_retour)) {
+            $ret_depart_from = $return_origin !== '' ? $return_origin : strtoupper($destination);
             $slices[] = [
-                'origin'          => strtoupper($destination),
+                'origin'          => $ret_depart_from,
                 'destination'     => strtoupper($origin),
                 'departure_date'  => $date_retour,
-                'max_connections' => 0,
+                'max_connections' => $max_connections,
             ];
         }
 
@@ -79,92 +224,107 @@ class VS08_Duffel_API {
 
         $raw_offers = $body['data']['offers'] ?? [];
         if (empty($raw_offers)) {
-            return new WP_Error('no_flights', 'Aucun vol direct trouvé.');
+            return new WP_Error('no_flights', 'Aucun vol trouvé pour ces critères.');
         }
 
         $is_roundtrip = !empty($date_retour);
-        $offers = [];
+        $offers       = [];
 
         foreach ($raw_offers as $offer) {
             $slices = $offer['slices'] ?? [];
 
             // ── ALLER-RETOUR : vérifier les 2 slices ──
             if ($is_roundtrip) {
-                // Il faut exactement 2 slices (aller + retour)
-                if (count($slices) !== 2) continue;
+                if (count($slices) !== 2) {
+                    continue;
+                }
 
                 $slice_aller  = $slices[0];
                 $slice_retour = $slices[1];
 
-                // Les 2 doivent être directs (1 seul segment chacun)
-                if (count($slice_aller['segments'] ?? []) !== 1) continue;
-                if (count($slice_retour['segments'] ?? []) !== 1) continue;
+                if (!self::_slice_valid_for_connection_rules($slice_aller, $max_connections, $max_layover_minutes)) {
+                    continue;
+                }
+                if (!self::_slice_valid_for_connection_rules($slice_retour, $max_connections, $max_layover_minutes)) {
+                    continue;
+                }
+                if (!self::_roundtrip_same_marketing_carrier_all_segments($slice_aller, $slice_retour)) {
+                    continue;
+                }
+
+                $sum_aller  = self::_slice_route_summary($slice_aller);
+                $sum_retour = self::_slice_route_summary($slice_retour);
+                if (!$sum_aller || !$sum_retour) {
+                    continue;
+                }
 
                 $seg_aller  = $slice_aller['segments'][0];
-                $seg_retour = $slice_retour['segments'][0];
-
-                // Même compagnie sur l'aller ET le retour
-                $airline_aller  = $seg_aller['marketing_carrier']['iata_code'] ?? '';
-                $airline_retour = $seg_retour['marketing_carrier']['iata_code'] ?? '';
-                if ($airline_aller !== $airline_retour) continue;
-
-                $airline   = $seg_aller['marketing_carrier'] ?? [];
-                $dep       = $seg_aller['departing_at'] ?? '';
-                $arr       = $seg_aller['arriving_at'] ?? '';
-                $dep_ret   = $seg_retour['departing_at'] ?? '';
-                $arr_ret   = $seg_retour['arriving_at'] ?? '';
-                $price_raw = floatval($offer['total_amount'] ?? 0);
+                $airline    = $seg_aller['marketing_carrier'] ?? [];
+                $offer_currency = $offer['total_currency'] ?? 'EUR';
+                $price_raw      = floatval($offer['total_amount'] ?? 0);
+                $price_raw      = self::_amount_to_eur($price_raw, $offer_currency);
 
                 $offers[] = [
-                    'offer_id'       => $offer['id'],
-                    'airline_name'   => $airline['name'] ?? 'Compagnie inconnue',
-                    'airline_iata'   => $airline['iata_code'] ?? '',
-                    'flight_number'  => ($airline['iata_code'] ?? '') . ($seg_aller['marketing_carrier_flight_number'] ?? ''),
-                    'depart_at'      => $dep,
-                    'arrive_at'      => $arr,
-                    'depart_time'    => $dep ? date('H:i', strtotime($dep)) : '--:--',
-                    'arrive_time'    => $arr ? date('H:i', strtotime($arr)) : '--:--',
-                    'duration_min'   => !empty($slice_aller['duration']) ? self::iso_to_minutes($slice_aller['duration']) : 0,
-                    // Retour
-                    'retour_flight'  => ($airline['iata_code'] ?? '') . ($seg_retour['marketing_carrier_flight_number'] ?? ''),
-                    'retour_depart'  => $dep_ret ? date('H:i', strtotime($dep_ret)) : '--:--',
-                    'retour_arrive'  => $arr_ret ? date('H:i', strtotime($arr_ret)) : '--:--',
-                    'retour_duration'=> !empty($slice_retour['duration']) ? self::iso_to_minutes($slice_retour['duration']) : 0,
-                    // Prix = total A/R pour tous les passagers
-                    'price_total'    => $price_raw,
-                    'price_per_pax'  => $passengers > 0 ? round($price_raw / $passengers, 2) : $price_raw,
-                    'currency'       => $offer['total_currency'] ?? 'EUR',
-                    'bags_included'  => !empty($offer['conditions']['change_before_departure']['allowed']),
-                    'is_roundtrip'   => true,
+                    'offer_id'        => $offer['id'],
+                    'airline_name'    => $airline['name'] ?? 'Compagnie inconnue',
+                    'airline_iata'    => $airline['iata_code'] ?? '',
+                    'flight_number'   => $sum_aller['flight_number'],
+                    'flight_detail'   => $sum_aller['flight_numbers_all'],
+                    'depart_at'       => $sum_aller['dep'],
+                    'arrive_at'       => $sum_aller['arr'],
+                    'depart_time'     => $sum_aller['depart_time'],
+                    'arrive_time'     => $sum_aller['arrive_time'],
+                    'duration_min'    => $sum_aller['duration_min'],
+                    'has_connections' => $sum_aller['has_connections'] || $sum_retour['has_connections'],
+                    'retour_flight'   => $sum_retour['flight_number'],
+                    'retour_flights_detail' => $sum_retour['flight_numbers_all'],
+                    'retour_depart'   => $sum_retour['depart_time'],
+                    'retour_arrive'   => $sum_retour['arrive_time'],
+                    'retour_duration' => $sum_retour['duration_min'],
+                    'open_jaw'        => ($return_origin !== ''),
+                    'price_total'     => $price_raw,
+                    'price_per_pax'   => $passengers > 0 ? round($price_raw / $passengers, 2) : $price_raw,
+                    'currency'        => 'EUR',
+                    'bags_included'   => !empty($offer['conditions']['change_before_departure']['allowed']),
+                    'is_roundtrip'    => true,
                 ];
 
-            // ── ALLER SIMPLE (comportement original) ──
+            // ── ALLER SIMPLE ──
             } else {
                 $slice = $slices[0] ?? null;
-                if (!$slice) continue;
-                if (count($slice['segments'] ?? []) !== 1) continue;
+                if (!$slice) {
+                    continue;
+                }
+                if (!self::_slice_valid_for_connection_rules($slice, $max_connections, $max_layover_minutes)) {
+                    continue;
+                }
+                $sum = self::_slice_route_summary($slice);
+                if (!$sum) {
+                    continue;
+                }
                 $segment = $slice['segments'][0];
-
-                $airline   = $segment['marketing_carrier'] ?? [];
-                $dep       = $segment['departing_at'] ?? '';
-                $arr       = $segment['arriving_at'] ?? '';
-                $price_raw = floatval($offer['total_amount'] ?? 0);
+                $airline = $segment['marketing_carrier'] ?? [];
+                $offer_currency = $offer['total_currency'] ?? 'EUR';
+                $price_raw      = floatval($offer['total_amount'] ?? 0);
+                $price_raw      = self::_amount_to_eur($price_raw, $offer_currency);
 
                 $offers[] = [
-                    'offer_id'      => $offer['id'],
-                    'airline_name'  => $airline['name']      ?? 'Compagnie inconnue',
-                    'airline_iata'  => $airline['iata_code'] ?? '',
-                    'flight_number' => ($airline['iata_code'] ?? '') . ($segment['marketing_carrier_flight_number'] ?? ''),
-                    'depart_at'     => $dep,
-                    'arrive_at'     => $arr,
-                    'depart_time'   => $dep ? date('H:i', strtotime($dep)) : '--:--',
-                    'arrive_time'   => $arr ? date('H:i', strtotime($arr)) : '--:--',
-                    'duration_min'  => !empty($slice['duration']) ? self::iso_to_minutes($slice['duration']) : 0,
-                    'price_total'   => $price_raw,
-                    'price_per_pax' => $passengers > 0 ? round($price_raw / $passengers, 2) : $price_raw,
-                    'currency'      => $offer['total_currency'] ?? 'EUR',
-                    'bags_included' => !empty($offer['conditions']['change_before_departure']['allowed']),
-                    'is_roundtrip'  => false,
+                    'offer_id'        => $offer['id'],
+                    'airline_name'    => $airline['name'] ?? 'Compagnie inconnue',
+                    'airline_iata'    => $airline['iata_code'] ?? '',
+                    'flight_number'   => $sum['flight_number'],
+                    'flight_detail'   => $sum['flight_numbers_all'],
+                    'depart_at'       => $sum['dep'],
+                    'arrive_at'       => $sum['arr'],
+                    'depart_time'     => $sum['depart_time'],
+                    'arrive_time'     => $sum['arrive_time'],
+                    'duration_min'    => $sum['duration_min'],
+                    'has_connections' => $sum['has_connections'],
+                    'price_total'     => $price_raw,
+                    'price_per_pax'   => $passengers > 0 ? round($price_raw / $passengers, 2) : $price_raw,
+                    'currency'        => 'EUR',
+                    'bags_included'   => !empty($offer['conditions']['change_before_departure']['allowed']),
+                    'is_roundtrip'    => false,
                 ];
             }
         }
@@ -187,7 +347,7 @@ class VS08_Duffel_API {
         usort($offers, fn($a, $b) => $a['price_total'] <=> $b['price_total']);
 
         if (empty($offers)) {
-            return new WP_Error('no_flights', 'Aucun vol direct disponible.');
+            return new WP_Error('no_flights', 'Aucun vol ne correspond (direct, escales ou même compagnie A/R).');
         }
 
         $ref_price_pax = $offers[0]['price_per_pax'] ?? 0;

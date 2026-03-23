@@ -81,6 +81,7 @@ var BK_CIRCUIT = <?php echo json_encode([
     'titre'          => $titre,
     'duree'          => $duree,
     'iata_dest'      => strtoupper($m['iata_dest'] ?? ''),
+    'iata_retour_depart' => (!empty($m['vol_open_jaw']) && !empty($m['iata_retour_depart'])) ? strtoupper($m['iata_retour_depart']) : '',
     'nb_total'       => $nb_total,
     'nb_chambres'    => $nb_chambres,
     'params'         => $params,
@@ -574,14 +575,13 @@ var BK_CIRCUIT = <?php echo json_encode([
             return;
         }
 
-        var dateRetour = BK.date_retour || bkcAddDays(date, BK.duree || 7);
-
         function bkcPostFlight(payload, done) {
             var ajaxData = { action: 'vs08c_get_flight', nonce: BK.nonce };
             for (var k in payload) ajaxData[k] = payload[k];
             jQuery.post(BK.ajax_url, ajaxData).done(done).fail(function(){ done({ success: false }); });
         }
 
+        /* Une seule requête : l’API renvoie des offres A/R complètes (open jaw & escales gérés côté serveur). */
         bkcPostFlight({
             circuit_id: BK.circuit_id,
             date: date,
@@ -592,20 +592,8 @@ var BK_CIRCUIT = <?php echo json_encode([
                 bkc_flights_data = res.data.flights;
             }
             bkc_aller_loaded = true;
-            bkcTryBuildCombos();
-        });
-
-        bkcPostFlight({
-            circuit_id: BK.circuit_id,
-            date: dateRetour,
-            aeroport: BK.iata_dest,
-            destination: aero,
-            passengers: bkc_vol_nb_pax
-        }, function(res){
-            if (res && res.success && res.data && res.data.flights && res.data.flights.length) {
-                bkc_retour_data = res.data.flights;
-            }
             bkc_retour_loaded = true;
+            bkc_retour_data = [];
             bkcTryBuildCombos();
         });
     })();
@@ -625,21 +613,41 @@ var BK_CIRCUIT = <?php echo json_encode([
         if (loading) loading.style.display = 'none';
 
         if (!bkc_flights_data.length && !bkc_retour_data.length) {
-            if (errDiv) { errDiv.style.display = 'block'; errDiv.textContent = 'Aucun vol direct disponible pour cette combinaison. Contactez-nous au 03 26 65 28 63.'; }
+            if (errDiv) { errDiv.style.display = 'block'; errDiv.textContent = 'Aucun vol disponible pour cette combinaison. Contactez-nous au 03 26 65 28 63.'; }
             return;
         }
 
         var combos = [];
-        bkc_flights_data.forEach(function(a) {
-            bkc_retour_data.filter(function(r){ return r.airline_iata === a.airline_iata; }).forEach(function(r) {
-                combos.push({ aller:a, retour:r, airline_name:a.airline_name, airline_iata:a.airline_iata, total_delta:(a.delta_per_pax||0)+(r.delta_per_pax||0) });
-            });
-        });
 
-        if (!combos.length) {
+        /* Offres aller-retour complètes (Duffel / SerpApi) */
+        if (bkc_flights_data.length && bkc_flights_data[0].is_roundtrip) {
             bkc_flights_data.forEach(function(a) {
-                combos.push({ aller:a, retour:null, airline_name:a.airline_name, airline_iata:a.airline_iata, total_delta:a.delta_per_pax||0 });
+                combos.push({
+                    aller: a,
+                    retour: {
+                        flight_number: a.retour_flight,
+                        depart_time: a.retour_depart,
+                        arrive_time: a.retour_arrive,
+                        duration_min: a.retour_duration,
+                        airline_iata: a.airline_iata,
+                        airline_name: a.airline_name
+                    },
+                    airline_name: a.airline_name,
+                    airline_iata: a.airline_iata,
+                    total_delta: a.delta_per_pax || 0
+                });
             });
+        } else {
+            bkc_flights_data.forEach(function(a) {
+                bkc_retour_data.filter(function(r){ return r.airline_iata === a.airline_iata; }).forEach(function(r) {
+                    combos.push({ aller:a, retour:r, airline_name:a.airline_name, airline_iata:a.airline_iata, total_delta:(a.delta_per_pax||0)+(r.delta_per_pax||0) });
+                });
+            });
+            if (!combos.length) {
+                bkc_flights_data.forEach(function(a) {
+                    combos.push({ aller:a, retour:null, airline_name:a.airline_name, airline_iata:a.airline_iata, total_delta:a.delta_per_pax||0 });
+                });
+            }
         }
 
         combos.sort(function(a,b){ return a.total_delta - b.total_delta; });
@@ -760,7 +768,8 @@ var BK_CIRCUIT = <?php echo json_encode([
             if (retourDetail) {
                 var rAirline = c.retour.airline_name ? ' · ' + c.retour.airline_name : '';
                 var rTimes = (c.retour.depart_time && c.retour.arrive_time) ? ' · ' + c.retour.depart_time + ' → ' + c.retour.arrive_time : '';
-                retourDetail.textContent = (BK.iata_dest||'') + ' → ' + (BK.params.aeroport||'') + rAirline + rTimes;
+                var retFrom = (BK.iata_retour_depart && String(BK.iata_retour_depart).trim()) ? String(BK.iata_retour_depart).trim() : (BK.iata_dest||'');
+                retourDetail.textContent = (retFrom||'') + ' → ' + (BK.params.aeroport||'') + rAirline + rTimes;
             }
         }
 
@@ -806,7 +815,8 @@ var BK_CIRCUIT = <?php echo json_encode([
         }
         var retourDetail = document.getElementById('bkc-recap-retour-detail');
         if (retourDetail && retourDetail.textContent.trim() !== '—') {
-            html += '<div style="' + rowS + '"><span style="' + lblS + '">Vol retour (' + bkcEsc(BK.iata_dest) + ' → ' + bkcEsc(BK.params.aeroport) + ')</span><span style="' + valS + '">' + retourDetail.textContent.trim() + '</span></div>';
+            var retLab = (BK.iata_retour_depart && String(BK.iata_retour_depart).trim()) ? String(BK.iata_retour_depart).trim() : (BK.iata_dest||'');
+            html += '<div style="' + rowS + '"><span style="' + lblS + '">Vol retour (' + bkcEsc(retLab) + ' → ' + bkcEsc(BK.params.aeroport) + ')</span><span style="' + valS + '">' + retourDetail.textContent.trim() + '</span></div>';
         }
 
         html += '<div style="' + section + '">👥 Voyageurs</div>';

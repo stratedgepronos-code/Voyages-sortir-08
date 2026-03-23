@@ -206,13 +206,43 @@ class VS08C_Meta {
                     </div>
                 </div>
                 <div class="vs08c-field-row">
-                    <div class="vs08c-field"><label>✈️ Code IATA destination</label>
-                        <input type="text" name="vs08c[iata_dest]" value="<?php echo esc_attr($m['iata_dest'] ?? ''); ?>" placeholder="Ex: RAK" style="text-transform:uppercase">
-                        <p class="vs08c-help">Code de l'aéroport d'arrivée pour la recherche de vols</p>
+                    <div class="vs08c-field"><label>✈️ Code IATA destination (arrivée aller)</label>
+                        <input type="text" name="vs08c[iata_dest]" value="<?php echo esc_attr($m['iata_dest'] ?? ''); ?>" placeholder="Ex: MEX, RAK" style="text-transform:uppercase">
+                        <p class="vs08c-help">Aéroport d’arrivée du vol aller depuis la France / Europe</p>
                     </div>
                     <div class="vs08c-field"><label>🔗 Thématiques</label>
                         <input type="text" name="vs08c[themes]" value="<?php echo esc_attr($m['themes'] ?? ''); ?>" placeholder="Culture, Nature, Aventure, Désert...">
                         <p class="vs08c-help">Séparés par des virgules</p>
+                    </div>
+                </div>
+                <div class="vs08c-field-row vs08c-vol-avance" style="margin-top:12px;padding:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px">
+                    <div class="vs08c-field vs08c-w2">
+                        <label><strong>Vol open jaw</strong> (arrivée ≠ départ du retour)</label>
+                        <p class="vs08c-help" style="margin:4px 0 8px">Ex. : aller Paris → Mexico (MEX), retour Cancun (CUN) → Paris. Sinon laisser décoché : retour depuis le même IATA que l’arrivée aller.</p>
+                        <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">
+                            <input type="checkbox" name="vs08c[vol_open_jaw]" value="1" <?php checked(!empty($m['vol_open_jaw'])); ?> />
+                            Activer l’open jaw
+                        </label>
+                    </div>
+                    <div class="vs08c-field">
+                        <label>IATA départ du retour</label>
+                        <input type="text" name="vs08c[iata_retour_depart]" value="<?php echo esc_attr($m['iata_retour_depart'] ?? ''); ?>" placeholder="Ex: CUN" style="text-transform:uppercase" maxlength="4">
+                        <p class="vs08c-help">Obligatoire si open jaw (ex. CUN si arrivée MEX)</p>
+                    </div>
+                </div>
+                <div class="vs08c-field-row" style="margin-top:10px;padding:14px;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px">
+                    <div class="vs08c-field vs08c-w2">
+                        <label><strong>Escales autorisées</strong> (exception — même compagnie A/R)</label>
+                        <p class="vs08c-help" style="margin:4px 0 8px">Par défaut : vols directs uniquement. Si coché : au plus <strong>1 escale</strong> par tronçon, avec attente max entre deux vols (Duffel + SerpApi filtrés).</p>
+                        <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">
+                            <input type="checkbox" name="vs08c[vol_escales_autorisees]" value="1" <?php checked(!empty($m['vol_escales_autorisees'])); ?> />
+                            Autoriser escales avec attente limitée
+                        </label>
+                    </div>
+                    <div class="vs08c-field">
+                        <label>Attente max entre vols (heures)</label>
+                        <input type="number" name="vs08c[vol_escale_max_heures]" value="<?php echo esc_attr($m['vol_escale_max_heures'] ?? '5'); ?>" min="1" max="24" step="0.5">
+                        <p class="vs08c-help">Ex. 5 h (défaut)</p>
                     </div>
                 </div>
             </div>
@@ -677,11 +707,13 @@ class VS08C_Meta {
 
         // Sanitize
         $m = [];
-        $text_fields = ['pays','flag','destination','guide_lang','pension','transport','badge','statut','iata_dest','themes','simple_supp_type','marge_type'];
+        $text_fields = ['pays','flag','destination','guide_lang','pension','transport','badge','statut','iata_dest','iata_retour_depart','themes','simple_supp_type','marge_type'];
         foreach ($text_fields as $f) {
             $m[$f] = sanitize_text_field($raw[$f] ?? '');
         }
-        $num_fields = ['duree_jours','duree','group_min','group_max','prix_double','prix_simple_supp','prix_triple','prix_vol_base','prix_bagage','prix_taxe','prix_transfert','reduc_enfant','acompte_pct','delai_solde','marge_pct','marge_montant'];
+        $m['vol_open_jaw']             = !empty($raw['vol_open_jaw']) ? 1 : 0;
+        $m['vol_escales_autorisees']   = !empty($raw['vol_escales_autorisees']) ? 1 : 0;
+        $num_fields = ['duree_jours','duree','group_min','group_max','prix_double','prix_simple_supp','prix_triple','prix_vol_base','prix_bagage','prix_taxe','prix_transfert','reduc_enfant','acompte_pct','delai_solde','marge_pct','marge_montant','vol_escale_max_heures'];
         foreach ($num_fields as $f) {
             $m[$f] = floatval($raw[$f] ?? 0);
         }

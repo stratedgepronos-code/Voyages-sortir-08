@@ -22,15 +22,18 @@ class VS08_SerpApi {
      * @param string $date        Date aller YYYY-MM-DD
      * @param int    $passengers  Nombre de passagers
      * @param string $date_retour Date retour YYYY-MM-DD (vide = aller simple)
+     * @param array  $opts        return_origin (open jaw), max_connections (>0 → 1 escale max côté Serp), max_layover_minutes
      * @return array|WP_Error Même structure que Duffel : ['flights' => [...], 'ref_price_per_pax' => ..., 'passengers' => ..., 'origin' => ..., 'destination' => ..., 'date' => ..., 'fetched_at' => ...]
      */
-    public static function search_flights($origin, $destination, $date, $passengers = 1, $date_retour = '') {
+    public static function search_flights($origin, $destination, $date, $passengers = 1, $date_retour = '', $opts = []) {
         $origin      = strtoupper($origin);
         $destination = strtoupper($destination);
         $passengers  = max(1, intval($passengers));
         $is_roundtrip = !empty($date_retour);
+        $opts        = is_array($opts) ? $opts : [];
+        $opt_sig     = md5(wp_json_encode($opts));
 
-        $cache_key = 'vs08_serpapi_' . md5("{$origin}_{$destination}_{$date}_{$passengers}_{$date_retour}");
+        $cache_key = 'vs08_serpapi_' . md5("{$origin}_{$destination}_{$date}_{$passengers}_{$date_retour}_{$opt_sig}");
         $cached = get_transient($cache_key);
         if ($cached !== false) {
             return $cached;
@@ -42,9 +45,9 @@ class VS08_SerpApi {
         }
 
         if ($is_roundtrip) {
-            $result = self::_search_roundtrip($origin, $destination, $date, $date_retour, $passengers, $api_key);
+            $result = self::_search_roundtrip($origin, $destination, $date, $date_retour, $passengers, $api_key, $opts);
         } else {
-            $result = self::_search_oneway($origin, $destination, $date, $passengers, $api_key);
+            $result = self::_search_oneway($origin, $destination, $date, $passengers, $api_key, $opts);
         }
 
         if (is_wp_error($result)) {
@@ -79,7 +82,10 @@ class VS08_SerpApi {
      *
      * @return array ['items' => [ ['airline_iata' => ..., 'airline_name' => ..., 'flight_number' => ..., 'depart_time' => ..., 'arrive_time' => ..., 'duration_min' => ..., 'price_total' => ... ], ... ]]
      */
-    private static function _search_oneway($origin, $destination, $date, $passengers, $api_key) {
+    private static function _search_oneway($origin, $destination, $date, $passengers, $api_key, $opts = []) {
+        $allow_conn = !empty($opts['max_connections']) && (int) $opts['max_connections'] > 0;
+        $stops      = $allow_conn ? '2' : '1'; // 2 = au plus 1 escale (doc SerpApi)
+
         $params = [
             'engine'        => 'google_flights',
             'api_key'       => $api_key,
@@ -87,7 +93,7 @@ class VS08_SerpApi {
             'arrival_id'    => $destination,
             'outbound_date' => $date,
             'type'          => '2', // one way
-            'stops'         => '1', // nonstop only
+            'stops'         => $stops,
             'adults'        => $passengers,
             'currency'      => 'EUR',
             'gl'            => 'fr',
@@ -113,20 +119,23 @@ class VS08_SerpApi {
             return new WP_Error('serpapi_error', $body['error']);
         }
 
-        $items = self::_parse_serpapi_results($body, $passengers, false);
+        $max_lay = !empty($opts['max_layover_minutes']) ? (int) $opts['max_layover_minutes'] : 0;
+        $items = self::_parse_serpapi_results($body, $passengers, false, $max_lay);
         return ['flights' => $items];
     }
 
     /**
      * Deux recherches one-way (aller + retour) puis appariement par compagnie.
+     * Open jaw : retour depuis return_origin (ex. CUN) vers origin au lieu de destination→origin.
      */
-    private static function _search_roundtrip($origin, $destination, $date_out, $date_back, $passengers, $api_key) {
-        $out = self::_search_oneway($origin, $destination, $date_out, $passengers, $api_key);
+    private static function _search_roundtrip($origin, $destination, $date_out, $date_back, $passengers, $api_key, $opts = []) {
+        $out = self::_search_oneway($origin, $destination, $date_out, $passengers, $api_key, $opts);
         if (is_wp_error($out)) {
             return $out;
         }
 
-        $back = self::_search_oneway($destination, $origin, $date_back, $passengers, $api_key);
+        $ret_from = !empty($opts['return_origin']) ? strtoupper(sanitize_text_field((string) $opts['return_origin'])) : $destination;
+        $back = self::_search_oneway($ret_from, $origin, $date_back, $passengers, $api_key, $opts);
         if (is_wp_error($back)) {
             return $back;
         }
@@ -189,9 +198,10 @@ class VS08_SerpApi {
      * @param array $body Réponse JSON SerpApi
      * @param int   $passengers
      * @param bool  $roundtrip
+     * @param int   $max_layover_minutes 0 = vol direct uniquement ; >0 = autorise 1 escale si attente ≤ max
      * @return array Liste au format Duffel-like (sans retour si one-way)
      */
-    private static function _parse_serpapi_results($body, $passengers, $roundtrip) {
+    private static function _parse_serpapi_results($body, $passengers, $roundtrip, $max_layover_minutes = 0) {
         $all = array_merge(
             $body['best_flights'] ?? [],
             $body['other_flights'] ?? []
@@ -200,41 +210,70 @@ class VS08_SerpApi {
         $items = [];
         foreach ($all as $option) {
             $flights = $option['flights'] ?? [];
-            if (count($flights) !== 1) continue; // uniquement vol direct
+            $n       = count($flights);
+            if ($max_layover_minutes <= 0 && $n !== 1) {
+                continue;
+            }
+            if ($max_layover_minutes > 0 && ($n < 1 || $n > 2)) {
+                continue;
+            }
+            if ($n === 2) {
+                $a0 = $flights[0]['arrival_airport']['time'] ?? '';
+                $d1 = $flights[1]['departure_airport']['time'] ?? '';
+                $t_arr = $a0 ? strtotime($a0) : 0;
+                $t_dep = $d1 ? strtotime($d1) : 0;
+                if (!$t_arr || !$t_dep || $t_dep <= $t_arr) {
+                    continue;
+                }
+                $lay = (int) round(($t_dep - $t_arr) / 60);
+                if ($lay > $max_layover_minutes) {
+                    continue;
+                }
+            }
 
             $seg = $flights[0];
+            $last = $flights[$n - 1];
             $dep = $seg['departure_airport'] ?? [];
-            $arr = $seg['arrival_airport'] ?? [];
+            $arr = $last['arrival_airport'] ?? [];
             $dep_time_str = $dep['time'] ?? '';
             $arr_time_str = $arr['time'] ?? '';
 
             $flight_number = $seg['flight_number'] ?? '';
-            $airline_iata  = self::_extract_iata_from_flight_number($flight_number);
+            if ($n === 2) {
+                $flight_number = trim($flight_number . ' + ' . ($flights[1]['flight_number'] ?? ''));
+            }
+            $airline_iata  = self::_extract_iata_from_flight_number($seg['flight_number'] ?? '');
             $airline_name  = $seg['airline'] ?? $airline_iata;
 
-            $duration_min = (int) ($seg['duration'] ?? 0);
+            $duration_min = 0;
+            foreach ($flights as $f) {
+                $duration_min += (int) ($f['duration'] ?? 0);
+            }
             $price_total  = (float) ($option['price'] ?? 0);
-            if ($price_total <= 0) continue;
+            if ($price_total <= 0) {
+                continue;
+            }
 
             $dep_ts = $dep_time_str ? strtotime($dep_time_str) : 0;
             $arr_ts = $arr_time_str ? strtotime($arr_time_str) : 0;
 
             $items[] = [
-                'offer_id'      => 'serpapi_' . md5($flight_number . $dep_time_str . $price_total),
-                'airline_name'  => $airline_name,
-                'airline_iata'  => $airline_iata,
-                'flight_number' => $flight_number,
-                'depart_at'     => $dep_time_str,
-                'arrive_at'     => $arr_time_str,
-                'depart_time'   => $dep_ts ? date('H:i', $dep_ts) : '--:--',
-                'arrive_time'   => $arr_ts ? date('H:i', $arr_ts) : '--:--',
-                'duration_min'  => $duration_min,
-                'price_total'   => $price_total,
-                'price_per_pax' => $passengers > 0 ? round($price_total / $passengers, 2) : $price_total,
-                'currency'      => $body['search_parameters']['currency'] ?? 'EUR',
-                'bags_included' => false,
-                'is_roundtrip'  => $roundtrip,
-                'source'        => 'serpapi',
+                'offer_id'        => 'serpapi_' . md5($flight_number . $dep_time_str . $price_total),
+                'airline_name'    => $airline_name,
+                'airline_iata'    => $airline_iata,
+                'flight_number'   => $flight_number,
+                'depart_at'       => $dep_time_str,
+                'arrive_at'       => $arr_time_str,
+                'depart_time'     => $dep_ts ? date('H:i', $dep_ts) : '--:--',
+                'arrive_time'     => $arr_ts ? date('H:i', $arr_ts) : '--:--',
+                'duration_min'    => $duration_min,
+                'has_connections' => $n > 1,
+                'price_total'     => $price_total,
+                'price_per_pax'   => $passengers > 0 ? round($price_total / $passengers, 2) : $price_total,
+                'currency'        => $body['search_parameters']['currency'] ?? 'EUR',
+                'bags_included'   => false,
+                'is_roundtrip'    => $roundtrip,
+                'source'          => 'serpapi',
             ];
         }
 
