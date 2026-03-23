@@ -39,7 +39,6 @@ class VS08V_Homepage_Editor {
             if (!empty($c['badge_html'])) {
                 $out .= '<div class="scard-badges">' . $c['badge_html'] . '</div>';
             }
-            $out .= '<div class="scard-hotel-badge"><span>' . esc_html($c['hotel_nom']) . '</span><span class="stars-sm">' . esc_html($c['etoiles']) . '</span></div>';
             $out .= '<img src="' . esc_url($c['img']) . '" alt="' . esc_attr($c['title']) . '">';
             $out .= '</div>';
             $out .= '<div class="scard-body">';
@@ -53,7 +52,11 @@ class VS08V_Homepage_Editor {
             $out .= '</div>';
             $out .= '<div class="scard-golfs">';
             foreach ($c['golfs'] as $g) {
-                $out .= '<div class="scard-golf-chip"><span class="gchip-icon">⛳</span><div><span class="gchip-name">' . esc_html($g['name']) . '</span><br><span class="gchip-holes">' . esc_html($g['meta']) . '</span></div></div>';
+                $out .= '<div class="scard-golf-chip"><span class="gchip-icon">⛳</span><div><span class="gchip-name">' . esc_html($g['name']) . '</span>';
+                if (!empty($g['meta'])) {
+                    $out .= '<br><span class="gchip-holes">' . esc_html($g['meta']) . '</span>';
+                }
+                $out .= '</div></div>';
             }
             $out .= '</div>';
             $out .= '<div class="scard-divider"></div>';
@@ -249,24 +252,25 @@ class VS08V_Homepage_Editor {
         $badge_html = self::build_badge_html($m['badge'] ?? '');
 
         $golfs = [];
-        $hotel_golfs = $hotel['golfs'] ?? [];
-        if (is_array($hotel_golfs)) {
-            foreach ($hotel_golfs as $g) {
-                if (!is_array($g)) continue;
+        $golfs_src = $m['golfs'] ?? [];
+        if (!is_array($golfs_src) || empty($golfs_src)) {
+            $golfs_src = $hotel['golfs'] ?? [];
+        }
+        if (is_array($golfs_src)) {
+            foreach ($golfs_src as $g) {
+                if (!is_array($g)) {
+                    continue;
+                }
                 $name = trim((string) ($g['nom'] ?? ''));
-                if ($name === '') continue;
+                if ($name === '') {
+                    continue;
+                }
                 $holes = trim((string) ($g['trous'] ?? ''));
-                $diff_map = [
-                    'tous' => 'Tous niveaux',
-                    'debutant' => 'Débutant',
-                    'intermediaire' => 'Intermédiaire',
-                    'confirme' => 'Confirmé',
-                    'champion' => 'Championnat',
-                ];
-                $diff = $diff_map[$g['diff'] ?? ''] ?? '';
-                $meta = trim(($holes ? $holes . ' · ' : '') . ($diff ?: 'Tous niveaux'));
+                $meta  = $holes !== '' ? ($holes . ' trous') : '';
                 $golfs[] = ['name' => $name, 'meta' => $meta];
-                if (count($golfs) >= 3) break;
+                if (count($golfs) >= 3) {
+                    break;
+                }
             }
         }
         if (empty($golfs)) {
@@ -274,7 +278,7 @@ class VS08V_Homepage_Editor {
             if ($nb > 0) {
                 $golfs[] = ['name' => 'Parcours sélectionnés', 'meta' => $nb . ' green fees'];
             } else {
-                $golfs[] = ['name' => 'Parcours partenaires', 'meta' => 'Tous niveaux'];
+                $golfs[] = ['name' => 'Parcours partenaires', 'meta' => ''];
             }
         }
 
@@ -284,23 +288,67 @@ class VS08V_Homepage_Editor {
             $prix = intval($prix_data['prix'] ?? 0);
         }
 
-        $duree = intval($m['duree'] ?? 7);
-        $nb_parcours = intval($m['nb_parcours'] ?? 0);
-        $highlights = ['✈️ Vol inclus', '🌙 ' . max(1, $duree) . ' nuits'];
+        $duree_n = intval($m['duree'] ?? 0);
+        $duree_j = intval($m['duree_jours'] ?? 0);
+        if ($duree_j < 1 && $duree_n > 0) {
+            $duree_j = $duree_n + 1;
+        }
+        $dur_chip = '';
+        if ($duree_j > 0 && $duree_n > 0) {
+            $dur_chip = '🗓️ ' . $duree_j . 'J / ' . $duree_n . 'N';
+        } elseif ($duree_n > 0) {
+            $dur_chip = '🗓️ ' . $duree_n . 'N';
+        } elseif ($duree_j > 0) {
+            $dur_chip = '🗓️ ' . $duree_j . 'J';
+        }
+
+        $golfs_list = $m['golfs'] ?? [];
+        $nb_parcours = is_array($golfs_list) ? count($golfs_list) : 0;
+        if ($nb_parcours < 1) {
+            $nb_parcours = intval($m['nb_parcours'] ?? 0);
+        }
+
+        $transf_map = [
+            'groupes' => '🚌 Transferts groupés',
+            'prives'  => '🚐 Transferts privés',
+            'voiture' => '🚗 Location voiture',
+        ];
+        $transfert_type = (string) ($m['transfert_type'] ?? '');
+        $transf_lbl     = $transf_map[$transfert_type] ?? '';
+
+        $tt = (string) ($m['transport_type'] ?? 'vol');
+        $vol_lbl = '';
+        if ($tt === 'vol' || $tt === '') {
+            $vol_lbl = '✈️ Vols inclus';
+        } elseif ($tt === 'vol_option') {
+            $vol_lbl = '✈️ Vol en option';
+        } elseif ($tt === 'sans_vol') {
+            $vol_lbl = '🏨 Sans vol (hôtel seul)';
+        } elseif ($tt === 'voiture') {
+            $vol_lbl = '🚗 Accès en voiture';
+        }
+
+        $highlights = [];
+        if ($dur_chip !== '') {
+            $highlights[] = $dur_chip;
+        }
         if ($nb_parcours > 0) {
             $highlights[] = '⛳ ' . $nb_parcours . ' parcours';
+        }
+        if ($transf_lbl !== '') {
+            $highlights[] = $transf_lbl;
         }
         $pension_map = ['bb' => '☕ Petit-déjeuner', 'dp' => '🍽️ Demi-pension', 'pc' => '🍽️ Pension complète', 'ai' => '🍽️ Tout inclus'];
         $pension = strtolower((string) ($m['pension'] ?? ''));
         if ($pension && isset($pension_map[$pension])) {
             $highlights[] = $pension_map[$pension];
         }
-        $highlights[] = '🏨 ' . (mb_strlen($hotel_nom) > 18 ? 'Hôtel inclus' : $hotel_nom);
-        $transfert_type = (string) ($m['transfert_type'] ?? '');
-        if ($transfert_type === 'voiture') {
-            $highlights[] = '🚗 Voiture';
-        } elseif (in_array($transfert_type, ['groupes', 'prives'], true)) {
-            $highlights[] = '🚐 Transferts';
+        if ($vol_lbl !== '') {
+            $highlights[] = $vol_lbl;
+        }
+        $highlights[] = '🧳 Bagage soute & sac golf inclus';
+        if (($m['buggy'] ?? '') === 'inclus') {
+            $highlights[] = '🛞 Buggy inclus';
         }
 
         return [
@@ -316,7 +364,7 @@ class VS08V_Homepage_Editor {
             'desc'       => $desc,
             'badge_html' => $badge_html,
             'golfs'      => $golfs,
-            'highlights' => array_slice($highlights, 0, 6),
+            'highlights' => array_slice($highlights, 0, 9),
             'prix'       => $prix,
         ];
     }

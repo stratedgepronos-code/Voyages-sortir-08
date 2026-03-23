@@ -718,9 +718,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <?php if (class_exists('VS08V_Homepage_Editor') && VS08V_Homepage_Editor::render_home_cards()) : ?>
                 <?php echo VS08V_Homepage_Editor::render_home_cards(); ?>
             <?php else :
-                $fp_cdc_badge_map   = ['new'=>'Nouveauté','promo'=>'Promo','best'=>'Best-seller','derniere'=>'Dernières places'];
-                $fp_cdc_niveau_map  = ['debutant'=>'Débutant','intermediaire'=>'Intermédiaire','confirme'=>'Confirmé','tous'=>'Tous niveaux'];
-                $fp_cdc_pension_map = ['bb'=>'Petit-déj.','dp'=>'Demi-pension','pc'=>'Pension complète','ai'=>'All inclusive','mixed'=>'Formule mixte'];
+                $fp_cdc_badge_map    = ['new'=>'Nouveauté','promo'=>'Promo','best'=>'Best-seller','derniere'=>'Dernières places'];
+                $fp_cdc_pension_map  = ['bb'=>'Petit-déj.','dp'=>'Demi-pension','pc'=>'Pension complète','ai'=>'All inclusive','mixed'=>'Formule mixte'];
+                $fp_cdc_transf_map   = ['groupes'=>'🚌 Transferts groupés','prives'=>'🚐 Transferts privés','voiture'=>'🚗 Location voiture'];
                 $fp_voyages_cdc = new WP_Query(['post_type'=>'vs08_voyage','post_status'=>'publish','posts_per_page'=>4,'orderby'=>'date','order'=>'DESC']);
                 $fp_cdc_first = true;
                 while ($fp_voyages_cdc->have_posts()) : $fp_voyages_cdc->the_post();
@@ -742,10 +742,35 @@ document.addEventListener('DOMContentLoaded', function() {
                         $fp_price_hint = 'Indicatif après choix des dates et de l’aéroport sur la fiche séjour (vol + hôtel + green fees).';
                     }
                     $fp_pays  = trim(($fp_m['flag'] ?? '').' '.($fp_m['pays'] ?? ''));
-                    $fp_nuits = !empty($fp_m['duree']) ? (int) $fp_m['duree'] . 'N' : '';
+                    $fp_golfs = $fp_m['golfs'] ?? [];
+                    $fp_nn    = (int) ($fp_m['duree'] ?? 0);
+                    $fp_nj    = (int) ($fp_m['duree_jours'] ?? 0);
+                    if ($fp_nj < 1 && $fp_nn > 0) {
+                        $fp_nj = $fp_nn + 1;
+                    }
+                    $fp_duree_chip = ($fp_nj > 0 && $fp_nn > 0) ? ($fp_nj . 'J / ' . $fp_nn . 'N') : ($fp_nn > 0 ? $fp_nn . 'N' : ($fp_nj > 0 ? $fp_nj . 'J' : ''));
+                    $fp_nb_parc = 0;
+                    if (!empty($fp_golfs) && is_array($fp_golfs)) {
+                        $fp_nb_parc = count($fp_golfs);
+                    }
+                    if ($fp_nb_parc < 1 && !empty($fp_m['nb_parcours'])) {
+                        $fp_nb_parc = (int) $fp_m['nb_parcours'];
+                    }
+                    $fp_tf_key = (string) ($fp_m['transfert_type'] ?? '');
+                    $fp_tf_lbl = $fp_cdc_transf_map[$fp_tf_key] ?? '';
+                    $fp_tt     = (string) ($fp_m['transport_type'] ?? 'vol');
+                    $fp_vol_lbl = '';
+                    if ($fp_tt === 'vol' || $fp_tt === '') {
+                        $fp_vol_lbl = '✈️ Vols inclus';
+                    } elseif ($fp_tt === 'vol_option') {
+                        $fp_vol_lbl = '✈️ Vol en option';
+                    } elseif ($fp_tt === 'sans_vol') {
+                        $fp_vol_lbl = '🏨 Sans vol (hôtel seul)';
+                    } elseif ($fp_tt === 'voiture') {
+                        $fp_vol_lbl = '🚗 Accès en voiture';
+                    }
                     $fp_desc_c = trim((string) ($fp_m['desc_courte'] ?? ''));
                     $fp_excerpt = $fp_desc_c !== '' ? $fp_desc_c : (has_excerpt($fp_pid) ? get_the_excerpt() : wp_trim_words(strip_tags(get_the_content()), 22));
-                    $fp_golfs = $fp_m['golfs'] ?? [];
                     $fp_bd_raw = $fp_m['badge'] ?? '';
                     $fp_bd_key = ($fp_bd_raw !== '' && $fp_bd_raw !== null) ? $fp_bd_raw : ($fp_cdc_first ? 'best' : '');
                     $fp_bd_label = ($fp_bd_key !== '' && isset($fp_cdc_badge_map[$fp_bd_key])) ? $fp_cdc_badge_map[$fp_bd_key] : '';
@@ -761,18 +786,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h3><?php the_title(); ?></h3>
                         <?php if($fp_excerpt): ?><p class="scard-desc"><?php echo esc_html($fp_excerpt); ?></p><?php endif; ?>
                         <div class="scard-highlights">
-                            <?php if($fp_nuits): ?><span class="scard-chip">🌙 <?php echo esc_html($fp_nuits); ?></span><?php endif; ?>
-                            <?php if(!empty($fp_golfs)): ?><span class="scard-chip">⛳ <?php echo count($fp_golfs); ?> parcours</span><?php endif; ?>
-                            <?php if(!empty($fp_m['hotel_nom'])): ?><span class="scard-chip chip-gold">🏨 <?php echo esc_html($fp_m['hotel_nom']); ?><?php if(!empty($fp_m['hotel_etoiles'])): ?><?php echo ' ' . esc_html(str_repeat('★', (int) $fp_m['hotel_etoiles'])); ?><?php endif; ?></span><?php endif; ?>
+                            <?php if ($fp_duree_chip !== '') : ?><span class="scard-chip">🗓️ <?php echo esc_html($fp_duree_chip); ?></span><?php endif; ?>
+                            <?php if ($fp_nb_parc > 0) : ?><span class="scard-chip">⛳ <?php echo esc_html((string) $fp_nb_parc); ?> parcours</span><?php endif; ?>
+                            <?php if ($fp_tf_lbl !== '') : ?><span class="scard-chip chip-gold"><?php echo esc_html($fp_tf_lbl); ?></span><?php endif; ?>
                             <?php
-                            $fp_nv = $fp_m['niveau'] ?? '';
-                            if ($fp_nv && isset($fp_cdc_niveau_map[$fp_nv])) :
-                                ?><span class="scard-chip">🏌️ <?php echo esc_html($fp_cdc_niveau_map[$fp_nv]); ?></span><?php
-                            endif;
                             $fp_pen = $fp_m['pension'] ?? '';
                             if ($fp_pen && isset($fp_cdc_pension_map[$fp_pen])) :
                                 ?><span class="scard-chip">🍽️ <?php echo esc_html($fp_cdc_pension_map[$fp_pen]); ?></span><?php
                             endif;
+                            if ($fp_vol_lbl !== '') :
+                                ?><span class="scard-chip"><?php echo esc_html($fp_vol_lbl); ?></span><?php
+                            endif;
+                            ?><span class="scard-chip">🧳 Bagage soute &amp; sac golf inclus</span><?php
                             if (($fp_m['buggy'] ?? '') === 'inclus') :
                                 ?><span class="scard-chip">🛞 Buggy inclus</span><?php
                             endif;
@@ -817,6 +842,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <?php
         $fp_badge_map = ['new'=>'Nouveauté','promo'=>'Promo','best'=>'Best-seller','derniere'=>'Dernières places'];
         $fp_pension_map = ['bb'=>'Petit-déj.','dp'=>'Demi-pension','pc'=>'Pension comp.','ai'=>'All inclusive','mixed'=>'Selon prog.'];
+        $fp_sh_transf_map = ['groupes'=>'🚌 Transferts groupés','prives'=>'🚐 Transferts privés','voiture'=>'🚗 Location voiture'];
         $fp_golf_q = new WP_Query(['post_type'=>'vs08_voyage','post_status'=>'publish','posts_per_page'=>4,'orderby'=>'date','order'=>'DESC','meta_query'=>[['key'=>'vs08v_data','compare'=>'EXISTS']]]);
         while ($fp_golf_q->have_posts()) : $fp_golf_q->the_post();
             $fp_gid    = get_the_ID();
@@ -834,11 +860,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             $fp_gpays  = trim(($fp_gm['flag'] ?? '').' '.($fp_gm['pays'] ?? ''));
-            $fp_gnuits = !empty($fp_gm['duree']) ? (int)$fp_gm['duree'].'N' : '';
+            $fp_gg_nn = (int) ($fp_gm['duree'] ?? 0);
+            $fp_gg_nj = (int) ($fp_gm['duree_jours'] ?? 0);
+            if ($fp_gg_nj < 1 && $fp_gg_nn > 0) {
+                $fp_gg_nj = $fp_gg_nn + 1;
+            }
+            $fp_gdur_badge = ($fp_gg_nj > 0 && $fp_gg_nn > 0) ? ($fp_gg_nj . 'J / ' . $fp_gg_nn . 'N') : ($fp_gg_nn > 0 ? $fp_gg_nn . 'N' : ($fp_gg_nj > 0 ? $fp_gg_nj . 'J' : ''));
             $fp_ggolfs = $fp_gm['golfs'] ?? [];
-            $fp_gnbgolf = !empty($fp_ggolfs) ? count($fp_ggolfs).' parcours' : (!empty($fp_gm['nb_parcours']) ? (int)$fp_gm['nb_parcours'].' parcours' : '');
-            $fp_ghotel = $fp_gm['hotel_nom'] ?? '';
-            $fp_gstars = !empty($fp_gm['hotel_etoiles']) ? ' '.str_repeat('★', (int)$fp_gm['hotel_etoiles']) : '';
+            $fp_gnbparc = 0;
+            if (!empty($fp_ggolfs) && is_array($fp_ggolfs)) {
+                $fp_gnbparc = count($fp_ggolfs);
+            }
+            if ($fp_gnbparc < 1 && !empty($fp_gm['nb_parcours'])) {
+                $fp_gnbparc = (int) $fp_gm['nb_parcours'];
+            }
+            $fp_gnbgolf = $fp_gnbparc > 0 ? $fp_gnbparc . ' parcours' : '';
+            $fp_gtf = (string) ($fp_gm['transfert_type'] ?? '');
+            $fp_gtfl = $fp_sh_transf_map[$fp_gtf] ?? '';
+            $fp_gtt = (string) ($fp_gm['transport_type'] ?? 'vol');
+            $fp_gvol_chip = '';
+            if ($fp_gtt === 'vol' || $fp_gtt === '') {
+                $fp_gvol_chip = '✈️ Vols inclus';
+            } elseif ($fp_gtt === 'vol_option') {
+                $fp_gvol_chip = '✈️ Vol en option';
+            } elseif ($fp_gtt === 'sans_vol') {
+                $fp_gvol_chip = '🏨 Sans vol';
+            } elseif ($fp_gtt === 'voiture') {
+                $fp_gvol_chip = '🚗 Accès voiture';
+            }
             $fp_gbadge = $fp_gm['badge'] ?? '';
             $fp_gpension = isset($fp_pension_map[$fp_gm['pension'] ?? '']) ? $fp_pension_map[$fp_gm['pension']] : '';
             $fp_gbuggy = ($fp_gm['buggy'] ?? '') === 'inclus';
@@ -848,18 +897,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     <img src="<?php echo esc_url($fp_gimg); ?>" alt="<?php echo esc_attr(get_the_title()); ?>" loading="lazy">
                     <div class="sh-badges">
                         <?php if($fp_gbadge && isset($fp_badge_map[$fp_gbadge])): ?><span class="sh-badge" style="background:rgba(200,164,94,.9);color:#0f2424"><?php echo esc_html($fp_badge_map[$fp_gbadge]); ?></span><?php endif; ?>
-                        <?php if($fp_gnuits): ?><span class="sh-badge" style="background:rgba(11,17,32,.7);color:#fff"><?php echo esc_html($fp_gnuits); ?></span><?php endif; ?>
+                        <?php if($fp_gdur_badge !== ''): ?><span class="sh-badge" style="background:rgba(11,17,32,.7);color:#fff"><?php echo esc_html($fp_gdur_badge); ?></span><?php endif; ?>
                     </div>
                 </div>
                 <div class="sh-card-body">
                     <?php if($fp_gpays): ?><p class="sh-country" style="color:var(--teal)"><?php echo esc_html($fp_gpays); ?></p><?php endif; ?>
                     <h3 class="sh-name"><?php the_title(); ?></h3>
-                    <?php if($fp_ghotel): ?><p style="font-size:11px;color:var(--gold);font-weight:600;margin:2px 0 2px">🏨 <?php echo esc_html($fp_ghotel . $fp_gstars); ?></p><?php endif; ?>
                     <div class="sh-chips">
-                        <?php if($fp_gnbgolf): ?><span class="sh-chip">⛳ <?php echo esc_html($fp_gnbgolf); ?></span><?php endif; ?>
+                        <?php if($fp_gnbgolf !== ''): ?><span class="sh-chip">⛳ <?php echo esc_html($fp_gnbgolf); ?></span><?php endif; ?>
+                        <?php if($fp_gtfl !== ''): ?><span class="sh-chip"><?php echo esc_html($fp_gtfl); ?></span><?php endif; ?>
                         <?php if($fp_gpension): ?><span class="sh-chip">🍽️ <?php echo esc_html($fp_gpension); ?></span><?php endif; ?>
-                        <?php if($fp_gbuggy): ?><span class="sh-chip">🏌️ Buggy inclus</span><?php endif; ?>
-                        <span class="sh-chip">✈️ Vol inclus</span>
+                        <?php if($fp_gvol_chip !== ''): ?><span class="sh-chip"><?php echo esc_html($fp_gvol_chip); ?></span><?php endif; ?>
+                        <span class="sh-chip">🧳 Soute + sac golf</span>
+                        <?php if($fp_gbuggy): ?><span class="sh-chip">🛞 Buggy inclus</span><?php endif; ?>
                     </div>
                     <?php if(!empty($fp_ggolfs)): ?>
                     <div class="sh-golfs">
