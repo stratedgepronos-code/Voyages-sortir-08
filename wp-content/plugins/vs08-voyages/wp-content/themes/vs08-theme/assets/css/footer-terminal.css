@@ -1,0 +1,84 @@
+/* ═══════════════════════════════
+   Footer Terminal — Embarcadère
+   Scène aéroport, avion, ciel
+═══════════════════════════════ */
+.vs08-footer{
+    --ft-text:#d0d8e8;--ft-heading:#fff;--ft-accent:#59b7b7;--ft-accent-light:#7dd3d3;
+    --ft-border:rgba(255,255,255,.07);
+    --fd:'Playfair Display',Georgia,serif;--fb:'Outfit',-apple-system,sans-serif;
+    font-family:var(--fb);position:relative;overflow:visible;background:#0e1220;
+    min-height:520px;margin-bottom:0;
+    display:flex;flex-direction:column;
+    /* Ombre vers le haut : jusqu'en haut du footer */
+    box-shadow:0 -12px 48px rgba(0,0,0,.35),0 -4px 20px rgba(0,0,0,.2);
+}
+.vs08-footer .ft-content{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;z-index:2}
+.vs08-footer .ft-main{flex:1}
+.scene-svg{position:absolute;inset:0;z-index:0;overflow:hidden}
+.scene-svg svg{width:100%;height:100%;display:block}
+
+.takeoff-plane{
+    transform-box:fill-box;
+    transform-origin:center center;
+    will-change:transform,opacity;
+    animation:flyOff 10s linear infinite;
+}
+@keyframes flyOff{
+    0%   {transform:translate(0px,0px) rotate(0deg);opacity:1}
+    30%  {transform:translate(600px,0px) rotate(0deg);opacity:1}
+    45%  {transform:translate(1000px,-8px) rotate(-5deg);opacity:1}
+    65%  {transform:translate(1450px,-180px) rotate(-13deg);opacity:.6}
+    80%  {transform:translate(1800px,-400px) rotate(-14deg);opacity:0}
+    80.01%{transform:translate(0px,0px) rotate(0deg);opacity:0}
+    90%  {transform:translate(0px,0px) rotate(0deg);opacity:0}
+    100% {transform:translate(0px,0px) rotate(0deg);opacity:1}
+}
+.far-plane{transform-box:fill-box;animation:farFly 30s linear infinite}
+@keyframes farFly{0%{transform:translate(0px,0px)}100%{transform:translate(200px,-30px)}}
+
+.child-anim{transform-box:fill-box;animation:childBounce 3s ease-in-out infinite alternate}
+@keyframes childBounce{0%{transform:translateY(0px)}100%{transform:translateY(-4px)}}
+
+.ft-content{position:relative;z-index:5}
+.ft-main{padding:60px 24px 44px;background:linear-gradient(180deg,rgba(10,14,22,.55) 0%,rgba(10,14,22,.82) 30%,rgba(10,14,22,.92) 100%)}
+.ft-grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1.6fr 1fr 1fr 1.2fr;gap:44px}
+
+.ft-brand .logo{display:inline-block;margin-bottom:18px;text-decoration:none}
+.ft-brand .logo img{max-height:52px;width:auto;display:block;object-fit:contain;mix-blend-mode:lighten;background:transparent!important}
+.ft-brand .desc{color:var(--ft-text);font-size:14px;line-height:1.7;margin:0 0 18px}
+.ft-tag{display:inline-block;font-family:var(--fd);font-style:italic;color:var(--ft-accent-light);font-size:13px;padding:7px 14px;border-left:3px solid var(--ft-accent);background:rgba(89,183,183,.06);border-radius:0 8px 8px 0;margin-bottom:18px}
+.ft-trust{display:flex;gap:8px;flex-wrap:wrap}
+.ft-trust b{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ft-text);font-weight:400;background:rgba(255,255,255,.04);padding:4px 9px;border-radius:7px;border:1px solid var(--ft-border)}
+
+.fc h4{font-family:var(--fd);color:var(--ft-heading);font-size:16px;font-weight:600;margin:0 0 18px;padding-bottom:9px;border-bottom:2px solid var(--ft-accent);display:inline-block}
+.fc ul{list-style:none;padding:0;margin:0}.fc li{margin-bottom:10px}
+.fc a{color:var(--ft-text);text-decoration:none;font-size:14px;transition:all .25s;display:inline-block}
+.fc a:hover{color:var(--ft-accent-light);padding-left:10px}
+
+.fct{list-style:none;padding:0;margin:0}
+.fct li{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;font-size:14px;color:var(--ft-text);line-height:1.5}
+.ci{flex-shrink:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border:1px solid var(--ft-border);border-radius:9px;font-size:14px}
+.fct a{color:var(--ft-text);text-decoration:none;transition:color .25s}.fct a:hover{color:var(--ft-accent-light)}
+.fh{font-size:11px;opacity:.6;margin-top:2px}
+
+.fso,.fs{display:flex;gap:8px;margin-top:18px}
+.fso a,.fs a{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid var(--ft-border);color:var(--ft-text);text-decoration:none;transition:all .3s}
+.fso a:hover,.fs a:hover{background:var(--ft-accent);border-color:var(--ft-accent);color:#fff;transform:translateY(-2px);box-shadow:0 4px 16px rgba(89,183,183,.3)}
+
+.fbot,.fb{border-top:1px solid var(--ft-border);padding:14px 24px;position:absolute;bottom:0;left:0;right:0;z-index:5;background:rgba(8,10,18,.95);width:100%;box-sizing:border-box;margin:0}
+.vs08-footer .ft-content{padding-bottom:60px}
+.fbot-in,.fb-in{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.fcopy{font-size:12px;color:var(--ft-text);opacity:.6}.fcopy a{color:var(--ft-text);text-decoration:none}
+.fleg,.fl{display:flex;gap:18px;flex-wrap:wrap}
+.fleg a,.fl a{font-size:12px;color:var(--ft-text);opacity:.5;text-decoration:none;transition:all .25s}.fleg a:hover,.fl a:hover{opacity:1;color:var(--ft-accent-light)}
+
+.ft-wx-canvas{position:absolute;inset:0;z-index:3;pointer-events:none}
+.wx{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);padding:4px 14px;border-radius:30px;color:#fff;font-size:12px}
+.wx-dot{width:5px;height:5px;background:var(--ft-accent);border-radius:50%;animation:wxp 2s ease-in-out infinite}
+@keyframes wxp{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.6)}}
+.wx-city{font-weight:600;font-size:11px}.wx-temp{font-weight:700;color:var(--ft-accent-light)}.wx-desc{opacity:.6;font-size:11px}.wx-sep{width:1px;height:12px;background:rgba(255,255,255,.12)}
+
+/* Bande sous le footer : fond html = même couleur que le footer */
+html{background:#0e1220}
+@media(max-width:960px){.ft-grid{grid-template-columns:1fr 1fr;gap:32px 24px}}
+@media(max-width:600px){.ft-main{padding:44px 18px 32px}.ft-grid{grid-template-columns:1fr;gap:28px}.fbot-in,.fb-in{flex-direction:column;text-align:center}.fleg,.fl{justify-content:center}}

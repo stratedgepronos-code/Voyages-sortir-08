@@ -1,0 +1,5 @@
+# Une ligne = un fichier à ignorer (ex. la capture qui tourne encore).
+# Décommentez la ligne qui correspond au nom du screen sur le serveur :
+# 01.jpg
+# 01.png
+# 02.png
