@@ -33,8 +33,10 @@ jobs:
             echo "=== Attempt $attempt/3 — Deploy plugin ==="
             if sshpass -p "${{ secrets.SSH_PASSWORD }}" rsync -avz --delete \
               --exclude='config.cfg' \
+              --exclude='wp-content/plugins/' \
+              --exclude='wp-content/themes/' \
               -e "ssh ${{ env.SSH_OPTS }}" \
-              . \
+              wp-content/plugins/vs08-voyages/ \
               ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }}:${{ env.WEBROOT }}/wp-content/plugins/vs08-voyages/; then
               echo "Plugin deployed OK" && ok=1 && break
             fi
