@@ -458,14 +458,17 @@ class VS08_Duffel_API {
 
         error_log('[VS08] offer_id expiré → RETRY : re-recherche ' . $flight_number . ' ' . $origin . '→' . $destination . ' le ' . $date);
 
+        $date_retour_retry = sanitize_text_field($search_params['date_retour'] ?? '');
+        $duffel_opts_retry = isset($search_params['duffel_opts']) && is_array($search_params['duffel_opts']) ? $search_params['duffel_opts'] : [];
+        $opt_sig_retry     = md5(wp_json_encode($duffel_opts_retry));
         // ── 6) Supprimer le cache de recherche pour forcer une requête fraîche ──
-        $search_cache_key = 'vs08_duffel_' . md5("{$origin}_{$destination}_{$date}_{$passengers}_");
+        $search_cache_key = 'vs08_duffel_' . md5("{$origin}_{$destination}_{$date}_{$passengers}_{$date_retour_retry}_{$opt_sig_retry}");
         delete_transient($search_cache_key);
         // Supprimer aussi le cache services de l'ancien offer_id
         delete_transient($cache_key);
 
         // ── 7) Relancer la recherche de vols ──────────────────────────
-        $fresh_search = self::search_flights($origin, $destination, $date, $passengers);
+        $fresh_search = self::search_flights($origin, $destination, $date, $passengers, $date_retour_retry, $duffel_opts_retry);
 
         if (is_wp_error($fresh_search)) {
             error_log('[VS08] Re-recherche échouée : ' . $fresh_search->get_error_message());

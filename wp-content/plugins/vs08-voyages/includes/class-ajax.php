@@ -35,19 +35,31 @@ function vs08v_tag_flight_source($flights, $source) {
 }
 
 /**
- * Déduplique par airline_iata + flight_number + depart_time (et retour si A/R). Garde le moins cher.
+ * Normalise un numéro de vol pour la déduplication (AT 639 = AT0639 = AT639).
+ */
+function vs08v_normalize_flight_number($fn) {
+    if ($fn === null || $fn === '') return '';
+    $fn = preg_replace('/\s+/', '', strtoupper((string) $fn));
+    return $fn;
+}
+
+/**
+ * Déduplique par airline_iata + vol normalisé + horaires (et retour si A/R). Garde le moins cher.
+ * Évite les doublons quand le même vol est retourné avec "AT 639" / "AT0639" / "AT639".
  */
 function vs08v_dedup_flights($flights) {
     $unique = [];
     foreach ($flights as $f) {
+        $outbound = vs08v_normalize_flight_number($f['flight_number'] ?? '');
+        $retour   = vs08v_normalize_flight_number($f['retour_flight'] ?? '');
         $key_parts = [
-            $f['airline_iata'] ?? '',
-            $f['flight_number'] ?? '',
-            $f['depart_time'] ?? '',
+            strtoupper((string) ($f['airline_iata'] ?? '')),
+            $outbound,
+            trim((string) ($f['depart_time'] ?? '')),
         ];
         if (!empty($f['retour_flight'])) {
-            $key_parts[] = $f['retour_flight'];
-            $key_parts[] = $f['retour_depart'] ?? '';
+            $key_parts[] = $retour;
+            $key_parts[] = trim((string) ($f['retour_depart'] ?? ''));
         }
         $key = implode('|', $key_parts);
         if (!isset($unique[$key]) || ($f['price_total'] < $unique[$key]['price_total'])) {
@@ -69,7 +81,7 @@ function vs08v_dedup_flights($flights) {
 
 /**
  * Met à jour le cache « prix vol min / pers » vu sur le site (14 jours).
- * Remplace l’ancienne valeur si expirée ou si le nouveau prix est plus bas.
+ * Remplace l'ancienne valeur si expirée ou si le nouveau prix est plus bas.
  * Appelé après recherche vol (API) ou estimation / calcul devis avec vol réel.
  */
 function vs08v_maybe_update_vol_min_cache($voyage_id, $prix_per_pax) {
@@ -127,6 +139,16 @@ function vs08v_get_flight_result($input = null) {
     $destination  = !empty($destination_override) ? $destination_override : $iata_dest;
     $prix_vol_base = floatval(isset($m['prix_vol_base']) ? $m['prix_vol_base'] : 0);
 
+    $flight_opts = [];
+    if (!empty($m['vol_escales_autorisees'])) {
+        $flight_opts['max_connections'] = 1;
+        $h = isset($m['vol_escale_max_heures']) ? floatval($m['vol_escale_max_heures']) : 5;
+        if ($h <= 0) {
+            $h = 5;
+        }
+        $flight_opts['max_layover_minutes'] = max(60, (int) round($h * 60));
+    }
+
     if (!class_exists('VS08_Duffel_API')) {
         if ($prix_vol_base > 0) {
             vs08v_maybe_update_vol_min_cache($voyage_id, $prix_vol_base);
@@ -139,7 +161,7 @@ function vs08v_get_flight_result($input = null) {
 
     // ── Duffel ──
     try {
-        $duffel_result = VS08_Duffel_API::search_flights($origin, $destination, $date, $passengers, $date_retour);
+        $duffel_result = VS08_Duffel_API::search_flights($origin, $destination, $date, $passengers, $date_retour, $flight_opts);
         if (!is_wp_error($duffel_result) && !empty($duffel_result['flights'])) {
             $all_flights = array_merge($all_flights, vs08v_tag_flight_source($duffel_result['flights'], 'duffel'));
         }
@@ -152,7 +174,7 @@ function vs08v_get_flight_result($input = null) {
     // ── SerpApi (Ryanair / low-cost) ──
     if (class_exists('VS08_SerpApi') && defined('VS08_SERPAPI_API_KEY') && VS08_SERPAPI_API_KEY !== '') {
         try {
-            $serpapi_result = VS08_SerpApi::search_flights($origin, $destination, $date, $passengers, $date_retour);
+            $serpapi_result = VS08_SerpApi::search_flights($origin, $destination, $date, $passengers, $date_retour, $flight_opts);
             if (!is_wp_error($serpapi_result) && !empty($serpapi_result['flights'])) {
                 $all_flights = array_merge($all_flights, $serpapi_result['flights']);
             }
@@ -170,7 +192,7 @@ function vs08v_get_flight_result($input = null) {
             vs08v_maybe_update_vol_min_cache($voyage_id, $prix_vol_base);
             return ['success' => true, 'data' => ['prix' => $prix_vol_base, 'note' => 'estimate', 'flights' => []]];
         }
-        return ['success' => false, 'data' => 'Aucun vol direct trouvé pour cette date / cet aéroport.'];
+        return ['success' => false, 'data' => 'Aucun vol trouvé pour cette date / cet aéroport.'];
     }
 
     $prix = $flights[0]['price_per_pax'] ?? 0;

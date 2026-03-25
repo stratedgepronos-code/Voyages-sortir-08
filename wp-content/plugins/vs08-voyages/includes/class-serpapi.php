@@ -55,7 +55,7 @@ class VS08_SerpApi {
         }
 
         if (empty($result['flights'])) {
-            return new WP_Error('no_flights', 'Aucun vol direct trouvé.');
+            return new WP_Error('no_flights', 'Aucun vol trouvé pour ces critères.');
         }
 
         $ref_price_pax = $result['flights'][0]['price_per_pax'] ?? 0;

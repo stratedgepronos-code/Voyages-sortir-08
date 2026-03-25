@@ -17,7 +17,7 @@ class VS08V_MetaBoxes {
         $m = self::get($post->ID); ?>
         <?php
         $vs08v_pays_flags = [
-            'Portugal'=>'PT','Madère'=>'PT','Espagne'=>'ES','Maroc'=>'MA','Turquie'=>'TR','Irlande'=>'IE',
+            'Portugal'=>'PT','Espagne'=>'ES','Maroc'=>'MA','Turquie'=>'TR','Irlande'=>'IE',
             'Thaïlande'=>'TH','France'=>'FR','Italie'=>'IT','Grèce'=>'GR','Tunisie'=>'TN',
             'Écosse'=>'GB-SCT','Angleterre'=>'GB-ENG','Pays de Galles'=>'GB-WLS','Royaume-Uni'=>'GB',
             'Allemagne'=>'DE','Autriche'=>'AT','Suisse'=>'CH','Belgique'=>'BE','Pays-Bas'=>'NL',
@@ -37,6 +37,14 @@ class VS08V_MetaBoxes {
         $current_flag = $m['flag'] ?? '';
         ?>
         <div class="vs08v-field-row">
+            <div class="vs08v-field"><label>Type de voyage</label>
+                <select name="vs08v[type_voyage]">
+                    <option value="">— Choisir —</option>
+                    <?php foreach(['sejour_golf'=>'Séjours Golfique','sejour'=>'Séjours','road_trip'=>'Road Trip','circuit'=>'Circuits','city_trip'=>'City Trip'] as $tv=>$tl): ?>
+                    <option value="<?php echo $tv;?>" <?php selected($m['type_voyage']??'',$tv);?>><?php echo $tl;?></option>
+                    <?php endforeach;?>
+                </select>
+            </div>
             <div class="vs08v-field vs08v-field-2"><label>Destination</label><input type="text" name="vs08v[destination]" value="<?php echo esc_attr($m['destination']??''); ?>" placeholder="Algarve, Portugal"></div>
             <div class="vs08v-field"><label>Pays</label>
                 <select name="vs08v[pays]" id="vs08v-pays-select">
@@ -165,7 +173,7 @@ class VS08V_MetaBoxes {
         <div class="vs08v-stitle">⛳ Green fees & Golf</div>
         <div class="vs08v-field-row">
             <div class="vs08v-field"><label>Forfait green fees /golfeur</label><div class="vs08v-pi"><span>€</span><input type="number" name="vs08v[prix_greenfees]" value="<?php echo esc_attr($m['prix_greenfees']??''); ?>" step="0.01"></div><p class="vs08v-help">Prix total du forfait green fees pour 1 golfeur (tout le séjour). Sera × nb de golfeurs.</p></div>
-            <div class="vs08v-field"><label>Réduction non-golfeur /pers.</label><div class="vs08v-pi"><span>%</span><input type="number" name="vs08v[reduction_nongolfeur]" value="<?php echo esc_attr($m['reduction_nongolfeur']??30); ?>" min="0" max="100"></div><p class="vs08v-help">% de réduction sur le prix green fees pour les accompagnants non-golfeurs</p></div>
+            <div class="vs08v-field"><label>Réduction non-golfeur /pers.</label><div class="vs08v-pi"><span>€</span><input type="number" name="vs08v[reduction_nongolfeur]" value="<?php echo esc_attr($m['reduction_nongolfeur']??'0'); ?>" min="0" step="0.01" placeholder="0"></div><p class="vs08v-help">Montant en € déduit du forfait green fees par accompagnant non-golfeur (ex. 105 → ils paient green_fees − 105€)</p></div>
             <div class="vs08v-field"><label>Prix buggy /buggy (si option)</label><div class="vs08v-pi"><span>€</span><input type="number" name="vs08v[prix_buggy]" value="<?php echo esc_attr($m['prix_buggy']??''); ?>" step="0.01" placeholder="0"></div></div>
         </div>
 
@@ -556,16 +564,28 @@ class VS08V_MetaBoxes {
 
         <div class="vs08v-stitle" style="margin-top:18px">Code IATA destination</div>
         <div class="vs08v-field-row">
-            <div class="vs08v-field"><label>IATA arrivée</label><input type="text" name="vs08v[iata_dest]" value="<?php echo esc_attr( strtoupper( (string) ( $m['iata_dest'] ?? '' ) ) ); ?>" placeholder="FAO" style="text-transform:uppercase"></div>
-            <div class="vs08v-field"><label>Ville arrivée</label><input type="text" name="vs08v[ville_arrivee]" value="<?php echo esc_attr( $m['ville_arrivee'] ?? '' ); ?>" placeholder="Faro"></div>
+            <div class="vs08v-field"><label>IATA arrivée</label><input type="text" name="vs08v[iata_dest]" value="<?php echo esc_attr(strtoupper((string)($m['iata_dest']??''))); ?>" placeholder="FAO" style="text-transform:uppercase"></div>
+            <div class="vs08v-field"><label>Ville arrivée</label><input type="text" name="vs08v[ville_arrivee]" value="<?php echo esc_attr($m['ville_arrivee']??''); ?>" placeholder="Faro"></div>
             <div class="vs08v-field"><label>Type transport</label>
                 <select name="vs08v[transport_type]">
-                    <?php $tt = $m['transport_type'] ?? 'vol'; ?>
-                    <option value="vol" <?php selected( $tt, 'vol' ); ?>>&#x2708;&#xFE0F; Vol inclus</option>
-                    <option value="vol_option" <?php selected( $tt, 'vol_option' ); ?>>&#x2708;&#xFE0F; Vol en option</option>
-                    <option value="sans_vol" <?php selected( $tt, 'sans_vol' ); ?>>&#x1F3E8; Séjour seul (sans vol)</option>
-                    <option value="voiture" <?php selected( $tt, 'voiture' ); ?>>&#x1F697; Location voiture</option>
+                    <option value="vol" <?php selected($m['transport_type']??'vol','vol');?>>✈️ Vol inclus</option>
+                    <option value="vol_option" <?php selected($m['transport_type']??'vol','vol_option');?>>✈️ Vol en option</option>
+                    <option value="sans_vol" <?php selected($m['transport_type']??'vol','sans_vol');?>>🏨 Séjour seul (sans vol)</option>
+                    <option value="voiture" <?php selected($m['transport_type']??'vol','voiture');?>>🚗 Location voiture</option>
                 </select>
+            </div>
+        </div>
+        <div class="vs08v-field-row" style="margin-top:12px;align-items:flex-end;flex-wrap:wrap;gap:12px">
+            <div class="vs08v-field" style="flex:1;min-width:220px">
+                <p class="vs08v-help" style="margin:0 0 8px">Par défaut : <strong>vols directs</strong> uniquement (API Duffel + SerpApi). Si vous cochez ci-dessous : au plus <strong>1 escale</strong> par tronçon, avec attente maximale entre deux vols.</p>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+                    <input type="checkbox" name="vs08v[vol_escales_autorisees]" value="1" <?php checked(!empty($m['vol_escales_autorisees'])); ?> />
+                    Autoriser escales avec attente limitée
+                </label>
+            </div>
+            <div class="vs08v-field" style="flex:0 0 160px">
+                <label>Attente max (h) entre vols</label>
+                <input type="number" name="vs08v[vol_escale_max_heures]" value="<?php echo esc_attr($m['vol_escale_max_heures'] ?? '5'); ?>" min="1" max="24" step="0.5">
             </div>
         </div>
 
@@ -751,6 +771,12 @@ class VS08V_MetaBoxes {
         if (isset($data['iata_dest']) && is_string($data['iata_dest'])) {
             $data['iata_dest'] = strtoupper(trim($data['iata_dest']));
         }
+        $data['vol_escales_autorisees'] = !empty($data['vol_escales_autorisees']) ? 1 : 0;
+        $h_esc = isset($data['vol_escale_max_heures']) ? floatval($data['vol_escale_max_heures']) : 5;
+        if ($h_esc <= 0) {
+            $h_esc = 5;
+        }
+        $data['vol_escale_max_heures'] = min(24, max(1, $h_esc));
         if (!empty($data['aeroports']) && is_array($data['aeroports'])) {
             foreach ($data['aeroports'] as $k => $a) {
                 if (isset($a['code']) && is_string($a['code'])) {
@@ -781,7 +807,6 @@ class VS08V_MetaBoxes {
                 return ['date_debut' => $date_debut, 'date_fin' => $date_fin];
             }, $data['periodes_fermees_vente'])));
         }
-
         // Périodes location voiture : garder uniquement les lignes avec dates, sanitize
         if (!empty($data['voiture_periodes']) && is_array($data['voiture_periodes'])) {
             $data['voiture_periodes'] = array_values(array_filter(array_map(function ($p) {
@@ -821,5 +846,57 @@ class VS08V_MetaBoxes {
 
     public static function get($post_id) {
         return get_post_meta($post_id, 'vs08v_data', true) ?: [];
+    }
+
+    /** Drapeau effectif: meta flag prioritaire, sinon fallback pays/destination */
+    public static function resolve_flag($m) {
+        if (!is_array($m)) return '';
+        $flag = trim((string) ($m['flag'] ?? ''));
+        if ($flag !== '') return $flag;
+
+        $pays = trim((string) ($m['pays'] ?? ''));
+        if ($pays !== '') {
+            $f = self::get_flag_emoji($pays);
+            if ($f !== '') return $f;
+        }
+
+        $dest = trim((string) ($m['destination'] ?? ''));
+        if ($dest !== '') {
+            $f = self::get_flag_emoji($dest);
+            if ($f !== '') return $f;
+        }
+
+        return '';
+    }
+
+    /** Drapeau emoji à partir du nom du pays (fallback si meta flag vide) */
+    public static function get_flag_emoji($pays) {
+        if (empty($pays) || !is_string($pays)) return '';
+        $pays = trim($pays);
+        $map = [
+            'Portugal'=>'PT','Espagne'=>'ES','Maroc'=>'MA','Turquie'=>'TR','Irlande'=>'IE',
+            'Thaïlande'=>'TH','France'=>'FR','Italie'=>'IT','Grèce'=>'GR','Tunisie'=>'TN',
+            'Écosse'=>'GB-SCT','Angleterre'=>'GB-ENG','Pays de Galles'=>'GB-WLS','Royaume-Uni'=>'GB',
+            'Allemagne'=>'DE','Autriche'=>'AT','Suisse'=>'CH','Belgique'=>'BE','Pays-Bas'=>'NL',
+            'Croatie'=>'HR','Monténégro'=>'ME','Bulgarie'=>'BG','Roumanie'=>'RO','Pologne'=>'PL',
+            'République Tchèque'=>'CZ','Slovaquie'=>'SK','Hongrie'=>'HU','Slovénie'=>'SI',
+            'Chypre'=>'CY','Malte'=>'MT','Islande'=>'IS','Norvège'=>'NO','Suède'=>'SE',
+            'Finlande'=>'FI','Danemark'=>'DK','Estonie'=>'EE','Lettonie'=>'LV','Lituanie'=>'LT',
+            'Égypte'=>'EG','Afrique du Sud'=>'ZA','Maurice'=>'MU','Sénégal'=>'SN','Cap-Vert'=>'CV',
+            'Mexique'=>'MX','République Dominicaine'=>'DO','Cuba'=>'CU','Costa Rica'=>'CR',
+            'États-Unis'=>'US','Canada'=>'CA','Brésil'=>'BR','Argentine'=>'AR','Colombie'=>'CO',
+            'Vietnam'=>'VN','Indonésie'=>'ID','Japon'=>'JP','Corée du Sud'=>'KR','Chine'=>'CN',
+            'Inde'=>'IN','Sri Lanka'=>'LK','Maldives'=>'MV','Émirats arabes unis'=>'AE',
+            'Oman'=>'OM','Jordanie'=>'JO','Australie'=>'AU','Nouvelle-Zélande'=>'NZ',
+            'Cambodge'=>'KH','Philippines'=>'PH','Malaisie'=>'MY','Singapour'=>'SG',
+            'Îles Canaries'=>'ES','Canaries'=>'ES','Marrakech'=>'MA','Agadir'=>'MA','Saidia'=>'MA','Tanger'=>'MA',
+            'Majorque'=>'ES','Minorque'=>'ES','Ibiza'=>'ES','Mallorca'=>'ES','Tenerife'=>'ES','Lanzarote'=>'ES','Fuerteventura'=>'ES','Gran Canaria'=>'ES',
+            'Algarve'=>'PT','Madère'=>'PT','Madeira'=>'PT','Lisbonne'=>'PT','Djerba'=>'TN','Tunisie'=>'TN',
+        ];
+        $code = $map[$pays] ?? '';
+        if (empty($code)) return '';
+        $code = strtoupper(substr($code, 0, 2));
+        if (strlen($code) < 2) return '';
+        return mb_chr(0x1F1E6 + ord($code[0]) - 65, 'UTF-8') . mb_chr(0x1F1E6 + ord($code[1]) - 65, 'UTF-8');
     }
 }
