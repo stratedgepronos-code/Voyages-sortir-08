@@ -123,24 +123,24 @@ class VS08_SerpApi {
         $url  = self::API_BASE . '?' . http_build_query($params);
         $log_params = $params;
         unset($log_params['api_key']);
-        error_log('[SerpApi REQ] ' . wp_json_encode($log_params));
+        if (function_exists('vs08v_flog')) { vs08v_flog('[SerpApi REQ] ' . wp_json_encode($log_params)); }
         $response = wp_remote_get($url, ['timeout' => 45]);
         if (is_wp_error($response)) {
-            error_log('[SerpApi ERR] wp_remote_get: ' . $response->get_error_message());
+            if (function_exists('vs08v_flog')) { vs08v_flog('[SerpApi ERR] wp_remote_get: ' . $response->get_error_message()); }
             return $response;
         }
         $code = wp_remote_retrieve_response_code($response);
         $body = json_decode(wp_remote_retrieve_body($response), true);
         if ($code !== 200) {
-            error_log('[SerpApi ERR] HTTP ' . $code . ' — body=' . substr(wp_remote_retrieve_body($response), 0, 300));
+            if (function_exists('vs08v_flog')) { vs08v_flog('[SerpApi ERR] HTTP ' . $code . ' — ' . substr(wp_remote_retrieve_body($response), 0, 300)); }
             return new WP_Error('serpapi_http', 'SerpApi HTTP ' . $code);
         }
         if (!empty($body['error'])) {
-            error_log('[SerpApi ERR] API error: ' . (string) $body['error']);
+            if (function_exists('vs08v_flog')) { vs08v_flog('[SerpApi ERR] ' . (string) $body['error']); }
             return new WP_Error('serpapi_error', (string) $body['error']);
         }
         $nb = count($body['best_flights'] ?? []) + count($body['other_flights'] ?? []);
-        error_log('[SerpApi OK] ' . $nb . ' option(s) retournée(s) — ' . ($params['departure_id'] ?? '?') . ' → ' . ($params['arrival_id'] ?? '?'));
+        if (function_exists('vs08v_flog')) { vs08v_flog('[SerpApi OK] ' . $nb . ' option(s) — ' . ($params['departure_id'] ?? '?') . '→' . ($params['arrival_id'] ?? '?') . ' stops=' . ($params['stops'] ?? 'auto')); }
         return is_array($body) ? $body : new WP_Error('serpapi_bad', 'Réponse SerpApi invalide.');
     }
 
