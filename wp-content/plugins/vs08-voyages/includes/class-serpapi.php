@@ -93,13 +93,15 @@ class VS08_SerpApi {
             'arrival_id'    => $destination,
             'outbound_date' => $date,
             'type'          => '2',
-            'stops'         => ($max_conn > 0) ? '0' : '1',
             'adults'        => $passengers,
             'currency'      => 'EUR',
             'gl'            => 'fr',
             'hl'            => 'fr',
             'sort_by'       => '2',
         ];
+        if ($max_conn <= 0) {
+            $params['stops'] = '1';
+        }
 
         $body = self::_serpapi_request($params);
         if (is_wp_error($body)) {
@@ -119,18 +121,26 @@ class VS08_SerpApi {
     private static function _serpapi_request(array $params) {
         $params['engine'] = 'google_flights';
         $url  = self::API_BASE . '?' . http_build_query($params);
+        $log_params = $params;
+        unset($log_params['api_key']);
+        error_log('[SerpApi REQ] ' . wp_json_encode($log_params));
         $response = wp_remote_get($url, ['timeout' => 45]);
         if (is_wp_error($response)) {
+            error_log('[SerpApi ERR] wp_remote_get: ' . $response->get_error_message());
             return $response;
         }
         $code = wp_remote_retrieve_response_code($response);
         $body = json_decode(wp_remote_retrieve_body($response), true);
         if ($code !== 200) {
+            error_log('[SerpApi ERR] HTTP ' . $code . ' — body=' . substr(wp_remote_retrieve_body($response), 0, 300));
             return new WP_Error('serpapi_http', 'SerpApi HTTP ' . $code);
         }
         if (!empty($body['error'])) {
+            error_log('[SerpApi ERR] API error: ' . (string) $body['error']);
             return new WP_Error('serpapi_error', (string) $body['error']);
         }
+        $nb = count($body['best_flights'] ?? []) + count($body['other_flights'] ?? []);
+        error_log('[SerpApi OK] ' . $nb . ' option(s) retournée(s) — ' . ($params['departure_id'] ?? '?') . ' → ' . ($params['arrival_id'] ?? '?'));
         return is_array($body) ? $body : new WP_Error('serpapi_bad', 'Réponse SerpApi invalide.');
     }
 
@@ -278,20 +288,23 @@ class VS08_SerpApi {
         $max_conn = !empty($opts['max_connections']) ? (int) $opts['max_connections'] : 0;
         $max_lay  = !empty($opts['max_layover_minutes']) ? (int) $opts['max_layover_minutes'] : 0;
 
-        $body = self::_serpapi_request([
+        $rt_params = [
             'api_key'        => $api_key,
             'departure_id'   => $origin,
             'arrival_id'     => $destination,
             'outbound_date'  => $date_out,
             'return_date'    => $date_back,
             'type'           => '1',
-            'stops'          => ($max_conn > 0) ? '0' : '1',
             'adults'         => $passengers,
             'currency'       => 'EUR',
             'gl'             => 'fr',
             'hl'             => 'fr',
             'sort_by'        => '2',
-        ]);
+        ];
+        if ($max_conn <= 0) {
+            $rt_params['stops'] = '1';
+        }
+        $body = self::_serpapi_request($rt_params);
         if (is_wp_error($body)) {
             return $body;
         }

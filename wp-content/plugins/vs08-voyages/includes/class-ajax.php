@@ -111,9 +111,11 @@ function vs08v_dedup_flights($flights) {
  */
 function vs08v_try_serpapi_relaxed($all_flights, $origin, $destination, $date, $passengers, $date_retour, $flight_opts) {
     if (!empty($all_flights)) {
+        error_log('[VS08 flight relaxed] Skip — déjà ' . count($all_flights) . ' vol(s)');
         return $all_flights;
     }
     if (!class_exists('VS08_SerpApi') || !defined('VS08_SERPAPI_API_KEY') || VS08_SERPAPI_API_KEY === '') {
+        error_log('[VS08 flight relaxed] Skip — SerpApi indisponible');
         return $all_flights;
     }
     $relaxed = [
@@ -123,15 +125,19 @@ function vs08v_try_serpapi_relaxed($all_flights, $origin, $destination, $date, $
     if (!empty($flight_opts['return_origin'])) {
         $relaxed['return_origin'] = $flight_opts['return_origin'];
     }
+    error_log('[VS08 flight relaxed] Tentative avec opts=' . wp_json_encode($relaxed));
     try {
         $serp2 = VS08_SerpApi::search_flights($origin, $destination, $date, $passengers, $date_retour, $relaxed);
-        if (!is_wp_error($serp2) && !empty($serp2['flights'])) {
+        if (is_wp_error($serp2)) {
+            error_log('[VS08 flight relaxed] WP_Error: ' . $serp2->get_error_code() . ' — ' . $serp2->get_error_message());
+        } elseif (!empty($serp2['flights'])) {
+            error_log('[VS08 flight relaxed] ' . count($serp2['flights']) . ' vol(s) trouvé(s)');
             return array_merge($all_flights, $serp2['flights']);
+        } else {
+            error_log('[VS08 flight relaxed] 0 vol malgré opts assouplis');
         }
     } catch (\Throwable $e) {
-        if (function_exists('error_log')) {
-            error_log('[VS08 get_flight SerpApi relaxed] ' . $e->getMessage());
-        }
+        error_log('[VS08 flight relaxed] EXCEPTION: ' . $e->getMessage());
     }
     return $all_flights;
 }
@@ -215,34 +221,45 @@ function vs08v_get_flight_result($input = null) {
     }
 
     $all_flights = [];
+    error_log("[VS08 flight] START {$origin} → {$destination} | {$date} → {$date_retour} | pax={$passengers} | opts=" . wp_json_encode($flight_opts));
 
     // ── Duffel ──
     try {
         $duffel_result = VS08_Duffel_API::search_flights($origin, $destination, $date, $passengers, $date_retour, $flight_opts);
-        if (!is_wp_error($duffel_result) && !empty($duffel_result['flights'])) {
+        if (is_wp_error($duffel_result)) {
+            error_log('[VS08 flight] Duffel: WP_Error ' . $duffel_result->get_error_code() . ' — ' . $duffel_result->get_error_message());
+        } elseif (!empty($duffel_result['flights'])) {
+            error_log('[VS08 flight] Duffel: ' . count($duffel_result['flights']) . ' vol(s)');
             $all_flights = array_merge($all_flights, vs08v_tag_flight_source($duffel_result['flights'], 'duffel'));
+        } else {
+            error_log('[VS08 flight] Duffel: 0 vol');
         }
     } catch (\Throwable $e) {
-        if (function_exists('error_log')) {
-            error_log('[VS08 get_flight Duffel] ' . $e->getMessage());
-        }
+        error_log('[VS08 flight] Duffel EXCEPTION: ' . $e->getMessage());
     }
 
-    // ── SerpApi (Ryanair / low-cost) ──
-    if (class_exists('VS08_SerpApi') && defined('VS08_SERPAPI_API_KEY') && VS08_SERPAPI_API_KEY !== '') {
+    // ── SerpApi ──
+    $serp_ok = class_exists('VS08_SerpApi') && defined('VS08_SERPAPI_API_KEY') && VS08_SERPAPI_API_KEY !== '';
+    error_log('[VS08 flight] SerpApi disponible: ' . ($serp_ok ? 'oui (clé ' . substr(VS08_SERPAPI_API_KEY, 0, 8) . '…)' : 'NON'));
+    if ($serp_ok) {
         try {
             $serpapi_result = VS08_SerpApi::search_flights($origin, $destination, $date, $passengers, $date_retour, $flight_opts);
-            if (!is_wp_error($serpapi_result) && !empty($serpapi_result['flights'])) {
+            if (is_wp_error($serpapi_result)) {
+                error_log('[VS08 flight] SerpApi strict: WP_Error ' . $serpapi_result->get_error_code() . ' — ' . $serpapi_result->get_error_message());
+            } elseif (!empty($serpapi_result['flights'])) {
+                error_log('[VS08 flight] SerpApi strict: ' . count($serpapi_result['flights']) . ' vol(s)');
                 $all_flights = array_merge($all_flights, $serpapi_result['flights']);
+            } else {
+                error_log('[VS08 flight] SerpApi strict: 0 vol');
             }
         } catch (\Throwable $e) {
-            if (function_exists('error_log')) {
-                error_log('[VS08 get_flight SerpApi] ' . $e->getMessage());
-            }
+            error_log('[VS08 flight] SerpApi strict EXCEPTION: ' . $e->getMessage());
         }
     }
 
+    error_log('[VS08 flight] Avant relaxed: ' . count($all_flights) . ' vol(s)');
     $all_flights = vs08v_try_serpapi_relaxed($all_flights, $origin, $destination, $date, $passengers, $date_retour, $flight_opts);
+    error_log('[VS08 flight] Après relaxed: ' . count($all_flights) . ' vol(s)');
 
     $flights = vs08v_dedup_flights($all_flights);
 
