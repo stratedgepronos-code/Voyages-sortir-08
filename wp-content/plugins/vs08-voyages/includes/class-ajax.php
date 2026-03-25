@@ -47,6 +47,20 @@ function vs08v_normalize_flight_number($fn) {
  * Déduplique par airline_iata + vol normalisé + horaires (et retour si A/R). Garde le moins cher.
  * Évite les doublons quand le même vol est retourné avec "AT 639" / "AT0639" / "AT639".
  */
+/**
+ * Priorité des sources pour la dédup : Duffel gagne à clé identique (même vol), puis SerpApi.
+ */
+function vs08v_flight_source_rank($source) {
+    $s = strtolower((string) $source);
+    if ($s === 'duffel') {
+        return 0;
+    }
+    if ($s === 'serpapi') {
+        return 1;
+    }
+    return 2;
+}
+
 function vs08v_dedup_flights($flights) {
     $unique = [];
     foreach ($flights as $f) {
@@ -62,8 +76,19 @@ function vs08v_dedup_flights($flights) {
             $key_parts[] = trim((string) ($f['retour_depart'] ?? ''));
         }
         $key = implode('|', $key_parts);
-        if (!isset($unique[$key]) || ($f['price_total'] < $unique[$key]['price_total'])) {
+        if (!isset($unique[$key])) {
             $unique[$key] = $f;
+            continue;
+        }
+        $ex = $unique[$key];
+        $r_new = vs08v_flight_source_rank($f['source'] ?? '');
+        $r_ex  = vs08v_flight_source_rank($ex['source'] ?? '');
+        if ($r_new < $r_ex) {
+            $unique[$key] = $f;
+        } elseif ($r_new === $r_ex) {
+            if (($f['price_total'] ?? 99999999) < ($ex['price_total'] ?? 99999999)) {
+                $unique[$key] = $f;
+            }
         }
     }
     $out = array_values($unique);
