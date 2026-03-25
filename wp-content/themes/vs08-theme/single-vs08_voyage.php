@@ -1336,7 +1336,7 @@ function svFetchVol(){
     if(totalPax < 1) totalPax = 1;
 
     // Badge orange — recherche en cours
-    if(st){ st.className='sv-vol-st loading'; st.textContent='⏳ Recherche vols A/R directs (même compagnie)...'; }
+    if(st){ st.className='sv-vol-st loading'; st.textContent='⏳ Recherche des vols aller-retour (Duffel + Google Flights)…'; }
 
     var restFlight = (window.VS08V && window.VS08V.rest_flight) ? window.VS08V.rest_flight : (window.vs08v && window.vs08v.rest_flight) ? window.vs08v.rest_flight : '';
     var ajaxUrl = (window.VS08V && window.VS08V.ajax_url) ? window.VS08V.ajax_url : (window.vs08v && window.vs08v.ajax_url) ? window.vs08v.ajax_url : '';
@@ -1345,10 +1345,10 @@ function svFetchVol(){
     function onFlightResult(res) {
         if (!res || !res.success) {
             svPrixVol = 0; svVolReady = false;
-            if (st) { st.className = 'sv-vol-st error'; st.textContent = '❌ Aucun vol direct trouvé pour cette date / cet aéroport.'; }
+            if (st) { st.className = 'sv-vol-st error'; st.textContent = '❌ Aucun vol trouvé pour cette date / cet aéroport.'; }
             document.getElementById('sv-price-box').style.display='none';
             document.getElementById('sv-price-loading').style.display='block';
-            document.getElementById('sv-price-loading').textContent='Aucun vol direct disponible — choisissez une autre date ou un autre aéroport.';
+            document.getElementById('sv-price-loading').textContent='Aucun vol disponible — essayez une autre date ou un autre aéroport.';
             svSetCalendarConfirmEnabled(false);
             return;
         }
@@ -1362,31 +1362,31 @@ function svFetchVol(){
             var estPrix = parseFloat(res.data.prix || 0) || 0;
             if (estPrix > 0 && res.data.note === 'estimate') {
                 svVolReady = true;
-                if (st) { st.className = 'sv-vol-st loaded'; st.textContent = '✅ Tarif vol indicatif (à partir de) — aucun vol direct listé pour cette recherche'; }
+                if (st) { st.className = 'sv-vol-st loaded'; st.textContent = '✅ Tarif vol indicatif (à partir de) — détail des lignes au moment de la réservation'; }
                 svSetCalendarConfirmEnabled(true);
                 svUpdate();
                 return;
             }
             svVolReady = false;
-            if (st) { st.className = 'sv-vol-st error'; st.textContent = '❌ Aucun vol direct trouvé pour cette date / cet aéroport.'; }
+            if (st) { st.className = 'sv-vol-st error'; st.textContent = '❌ Aucun vol trouvé pour cette date / cet aéroport.'; }
             document.getElementById('sv-price-box').style.display='none';
             document.getElementById('sv-price-loading').style.display='block';
-            document.getElementById('sv-price-loading').textContent='Aucun vol direct disponible — choisissez une autre date ou un autre aéroport.';
+            document.getElementById('sv-price-loading').textContent='Aucun vol disponible — essayez une autre date ou un autre aéroport.';
             svSetCalendarConfirmEnabled(false);
             return;
         }
         svVolReady = true;
-        var txt = '✅ ' + nbVols + ' vol' + (nbVols>1?'s':'') + ' A/R direct' + (nbVols>1?'s':'');
+        var txt = '✅ ' + nbVols + ' combinaison' + (nbVols>1?'s':'') + ' aller-retour trouvée' + (nbVols>1?'s':'');
         if (st) { st.className = 'sv-vol-st loaded'; st.textContent = txt; }
         svSetCalendarConfirmEnabled(true);
         svUpdate();
     }
     function onFlightFail() {
         svPrixVol = 0; svVolReady = false;
-        if (st) { st.className = 'sv-vol-st error'; st.textContent = '❌ Aucun vol direct trouvé pour cette date / cet aéroport.'; }
+        if (st) { st.className = 'sv-vol-st error'; st.textContent = '❌ Aucun vol trouvé pour cette date / cet aéroport.'; }
         document.getElementById('sv-price-box').style.display='none';
         document.getElementById('sv-price-loading').style.display='block';
-        document.getElementById('sv-price-loading').textContent='Aucun vol direct disponible — choisissez une autre date ou un autre aéroport.';
+        document.getElementById('sv-price-loading').textContent='Aucun vol disponible — essayez une autre date ou un autre aéroport.';
         svSetCalendarConfirmEnabled(false);
     }
 
@@ -1423,7 +1423,7 @@ function svDoCalc(){
     });
     if(!rooms.length||totalGolf+totalNonGolf===0) return;
 
-    // Ne pas afficher de prix ni permettre d'avancer tant que le vol n'a pas été récupéré (ou 0 vol direct)
+    // Ne pas afficher de prix ni permettre d'avancer tant que le vol n'a pas été récupéré
     if(!aero || !svVolReady){
         document.getElementById('sv-price-box').style.display='none';
         document.getElementById('sv-price-loading').style.display='block';

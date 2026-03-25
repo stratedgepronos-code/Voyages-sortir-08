@@ -105,6 +105,40 @@ function vs08v_dedup_flights($flights) {
 }
 
 /**
+ * Si aucun vol (Duffel + SerpApi strict), relance SerpApi avec au plus 1 escale.
+ * Les produits « directs uniquement » filtrent encore Duffel ; SerpApi peut alors proposer charter / TUI (ex. XCR → RAK).
+ */
+function vs08v_try_serpapi_relaxed($all_flights, $origin, $destination, $date, $passengers, $date_retour, $flight_opts) {
+    if (!empty($all_flights)) {
+        return $all_flights;
+    }
+    if (!empty($flight_opts['max_connections'])) {
+        return $all_flights;
+    }
+    if (!class_exists('VS08_SerpApi') || !defined('VS08_SERPAPI_API_KEY') || VS08_SERPAPI_API_KEY === '') {
+        return $all_flights;
+    }
+    $relaxed = [
+        'max_connections'     => 1,
+        'max_layover_minutes' => 480,
+    ];
+    if (!empty($flight_opts['return_origin'])) {
+        $relaxed['return_origin'] = $flight_opts['return_origin'];
+    }
+    try {
+        $serp2 = VS08_SerpApi::search_flights($origin, $destination, $date, $passengers, $date_retour, $relaxed);
+        if (!is_wp_error($serp2) && !empty($serp2['flights'])) {
+            return array_merge($all_flights, $serp2['flights']);
+        }
+    } catch (\Throwable $e) {
+        if (function_exists('error_log')) {
+            error_log('[VS08 get_flight SerpApi relaxed] ' . $e->getMessage());
+        }
+    }
+    return $all_flights;
+}
+
+/**
  * Met à jour le cache « prix vol min / pers » vu sur le site (14 jours).
  * Remplace l'ancienne valeur si expirée ou si le nouveau prix est plus bas.
  * Appelé après recherche vol (API) ou estimation / calcul devis avec vol réel.
@@ -209,6 +243,8 @@ function vs08v_get_flight_result($input = null) {
             }
         }
     }
+
+    $all_flights = vs08v_try_serpapi_relaxed($all_flights, $origin, $destination, $date, $passengers, $date_retour, $flight_opts);
 
     $flights = vs08v_dedup_flights($all_flights);
 
