@@ -79,13 +79,12 @@ class VS08_SerpApi {
     }
 
     /**
-     * Appel SerpApi one-way (type=2, stops=1).
-     *
-     * @return array ['items' => [ ['airline_iata' => ..., 'airline_name' => ..., 'flight_number' => ..., 'depart_time' => ..., 'arrive_time' => ..., 'duration_min' => ..., 'price_total' => ... ], ... ]]
+     * Appel SerpApi one-way (type=2).
+     * stops=0 = tous vols ; le filtrage connections / layover se fait dans _parse_serpapi_results.
      */
     private static function _search_oneway($origin, $destination, $date, $passengers, $api_key, $opts = []) {
-        $allow_conn = !empty($opts['max_connections']) && (int) $opts['max_connections'] > 0;
-        $stops      = $allow_conn ? '2' : '1'; // 2 = au plus 1 escale (doc SerpApi)
+        $max_conn = !empty($opts['max_connections']) ? (int) $opts['max_connections'] : 0;
+        $max_lay  = !empty($opts['max_layover_minutes']) ? (int) $opts['max_layover_minutes'] : 0;
 
         $params = [
             'engine'        => 'google_flights',
@@ -93,13 +92,13 @@ class VS08_SerpApi {
             'departure_id'  => $origin,
             'arrival_id'    => $destination,
             'outbound_date' => $date,
-            'type'          => '2', // one way
-            'stops'         => $stops,
+            'type'          => '2',
+            'stops'         => ($max_conn > 0) ? '0' : '1',
             'adults'        => $passengers,
             'currency'      => 'EUR',
             'gl'            => 'fr',
             'hl'            => 'fr',
-            'sort_by'       => '2', // price
+            'sort_by'       => '2',
         ];
 
         $body = self::_serpapi_request($params);
@@ -107,8 +106,7 @@ class VS08_SerpApi {
             return $body;
         }
 
-        $max_lay = !empty($opts['max_layover_minutes']) ? (int) $opts['max_layover_minutes'] : 0;
-        $items = self::_parse_serpapi_results($body, $passengers, false, $max_lay);
+        $items = self::_parse_serpapi_results($body, $passengers, false, $max_lay, $max_conn);
         return ['flights' => $items];
     }
 
@@ -277,9 +275,8 @@ class VS08_SerpApi {
      * A/R classique (sans open jaw) : type=1 + departure_token (prix A/R Google).
      */
     private static function _search_roundtrip_type1($origin, $destination, $date_out, $date_back, $passengers, $api_key, $opts = []) {
-        $allow_conn = !empty($opts['max_connections']) && (int) $opts['max_connections'] > 0;
-        $stops      = $allow_conn ? '2' : '1';
-        $max_lay    = !empty($opts['max_layover_minutes']) ? (int) $opts['max_layover_minutes'] : 0;
+        $max_conn = !empty($opts['max_connections']) ? (int) $opts['max_connections'] : 0;
+        $max_lay  = !empty($opts['max_layover_minutes']) ? (int) $opts['max_layover_minutes'] : 0;
 
         $body = self::_serpapi_request([
             'api_key'        => $api_key,
@@ -288,7 +285,7 @@ class VS08_SerpApi {
             'outbound_date'  => $date_out,
             'return_date'    => $date_back,
             'type'           => '1',
-            'stops'          => $stops,
+            'stops'          => ($max_conn > 0) ? '0' : '1',
             'adults'         => $passengers,
             'currency'       => 'EUR',
             'gl'             => 'fr',
@@ -439,63 +436,73 @@ class VS08_SerpApi {
 
     /**
      * Parse best_flights + other_flights de la réponse SerpApi.
-     * Chaque option doit avoir un seul segment (vol direct).
      *
-     * @param array $body Réponse JSON SerpApi
+     * @param array $body               Réponse JSON SerpApi
      * @param int   $passengers
      * @param bool  $roundtrip
-     * @param int   $max_layover_minutes 0 = vol direct uniquement ; >0 = autorise 1 escale si attente ≤ max
-     * @return array Liste au format Duffel-like (sans retour si one-way)
+     * @param int   $max_layover_minutes 0 = vol direct uniquement ; >0 = escales acceptées si chaque correspondance ≤ max
+     * @param int   $max_connections     0 = direct ; 1 = 1 escale max ; 2 = 2 escales max
+     * @return array
      */
-    private static function _parse_serpapi_results($body, $passengers, $roundtrip, $max_layover_minutes = 0) {
+    private static function _parse_serpapi_results($body, $passengers, $roundtrip, $max_layover_minutes = 0, $max_connections = 0) {
         $all = array_merge(
             $body['best_flights'] ?? [],
             $body['other_flights'] ?? []
         );
 
+        $max_segments = $max_connections + 1;
+
         $items = [];
         foreach ($all as $option) {
             $flights = $option['flights'] ?? [];
             $n       = count($flights);
-            if ($max_layover_minutes <= 0 && $n !== 1) {
+            if ($n < 1) {
                 continue;
             }
-            if ($max_layover_minutes > 0 && ($n < 1 || $n > 2)) {
+            if ($max_connections <= 0 && $n !== 1) {
                 continue;
             }
-            if ($n === 2) {
-                $a0 = $flights[0]['arrival_airport']['time'] ?? '';
-                $d1 = $flights[1]['departure_airport']['time'] ?? '';
+            if ($n > $max_segments) {
+                continue;
+            }
+
+            $layover_ok = true;
+            for ($i = 1; $i < $n; $i++) {
+                $a0    = $flights[$i - 1]['arrival_airport']['time'] ?? '';
+                $d1    = $flights[$i]['departure_airport']['time'] ?? '';
                 $t_arr = $a0 ? strtotime($a0) : 0;
                 $t_dep = $d1 ? strtotime($d1) : 0;
                 if (!$t_arr || !$t_dep || $t_dep <= $t_arr) {
-                    continue;
+                    $layover_ok = false;
+                    break;
                 }
-                $lay = (int) round(($t_dep - $t_arr) / 60);
-                if ($lay > $max_layover_minutes) {
-                    continue;
+                if ($max_layover_minutes > 0) {
+                    $lay = (int) round(($t_dep - $t_arr) / 60);
+                    if ($lay > $max_layover_minutes) {
+                        $layover_ok = false;
+                        break;
+                    }
                 }
             }
+            if (!$layover_ok) {
+                continue;
+            }
 
-            $seg = $flights[0];
+            $seg  = $flights[0];
             $last = $flights[$n - 1];
-            $dep = $seg['departure_airport'] ?? [];
-            $arr = $last['arrival_airport'] ?? [];
+            $dep  = $seg['departure_airport'] ?? [];
+            $arr  = $last['arrival_airport'] ?? [];
             $dep_time_str = $dep['time'] ?? '';
             $arr_time_str = $arr['time'] ?? '';
 
-            $flight_number = $seg['flight_number'] ?? '';
-            if ($n === 2) {
-                $flight_number = trim($flight_number . ' + ' . ($flights[1]['flight_number'] ?? ''));
-            }
-            $airline_iata  = self::_extract_iata_from_flight_number($seg['flight_number'] ?? '');
-            $airline_name  = $seg['airline'] ?? $airline_iata;
+            $airline_iata = self::_extract_iata_from_flight_number($seg['flight_number'] ?? '');
+            $airline_name = $seg['airline'] ?? $airline_iata;
 
             $duration_min = 0;
             foreach ($flights as $f) {
                 $duration_min += (int) ($f['duration'] ?? 0);
             }
-            $price_total  = (float) ($option['price'] ?? 0);
+            $price_total = (float) ($option['price'] ?? 0);
             if ($price_total <= 0) {
                 continue;
             }
@@ -503,25 +510,25 @@ class VS08_SerpApi {
             $dep_ts = $dep_time_str ? strtotime($dep_time_str) : 0;
             $arr_ts = $arr_time_str ? strtotime($arr_time_str) : 0;
 
-            $fn_parts = [];
+            $fn_parts        = [];
             $segments_detail = [];
             $prev_arr_ts_seg = null;
-            foreach ($flights as $fi => $fl) {
+            foreach ($flights as $fl) {
                 $fn_parts[] = $fl['flight_number'] ?? '';
-                $s_dep_str = $fl['departure_airport']['time'] ?? '';
-                $s_arr_str = $fl['arrival_airport']['time'] ?? '';
-                $s_dep_ts = $s_dep_str ? strtotime($s_dep_str) : 0;
-                $s_arr_ts = $s_arr_str ? strtotime($s_arr_str) : 0;
-                $layover = 0;
+                $s_dep_str  = $fl['departure_airport']['time'] ?? '';
+                $s_arr_str  = $fl['arrival_airport']['time'] ?? '';
+                $s_dep_ts   = $s_dep_str ? strtotime($s_dep_str) : 0;
+                $s_arr_ts   = $s_arr_str ? strtotime($s_arr_str) : 0;
+                $layover    = 0;
                 if ($prev_arr_ts_seg && $s_dep_ts > $prev_arr_ts_seg) {
                     $layover = (int) round(($s_dep_ts - $prev_arr_ts_seg) / 60);
                 }
                 $segments_detail[] = [
-                    'flight'      => $fl['flight_number'] ?? '',
-                    'origin'      => strtoupper($fl['departure_airport']['id'] ?? ''),
-                    'destination'  => strtoupper($fl['arrival_airport']['id'] ?? ''),
-                    'depart_time' => $s_dep_ts ? date('H:i', $s_dep_ts) : '--:--',
-                    'arrive_time' => $s_arr_ts ? date('H:i', $s_arr_ts) : '--:--',
+                    'flight'             => $fl['flight_number'] ?? '',
+                    'origin'             => strtoupper($fl['departure_airport']['id'] ?? ''),
+                    'destination'        => strtoupper($fl['arrival_airport']['id'] ?? ''),
+                    'depart_time'        => $s_dep_ts ? date('H:i', $s_dep_ts) : '--:--',
+                    'arrive_time'        => $s_arr_ts ? date('H:i', $s_arr_ts) : '--:--',
                     'layover_before_min' => $layover,
                 ];
                 $prev_arr_ts_seg = $s_arr_ts;
@@ -529,7 +536,7 @@ class VS08_SerpApi {
             $flight_detail = implode(' + ', array_filter($fn_parts));
 
             $items[] = [
-                'offer_id'        => 'serpapi_' . md5($flight_number . $dep_time_str . $price_total),
+                'offer_id'        => 'serpapi_' . md5(($seg['flight_number'] ?? '') . $dep_time_str . $price_total),
                 'airline_name'    => $airline_name,
                 'airline_iata'    => $airline_iata,
                 'flight_number'   => $seg['flight_number'] ?? '',

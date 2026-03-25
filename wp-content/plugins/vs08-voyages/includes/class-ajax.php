@@ -105,22 +105,20 @@ function vs08v_dedup_flights($flights) {
 }
 
 /**
- * Si aucun vol (Duffel + SerpApi strict), relance SerpApi avec au plus 1 escale.
- * Les produits « directs uniquement » filtrent encore Duffel ; SerpApi peut alors proposer charter / TUI (ex. XCR → RAK).
+ * Si aucun vol après Duffel + SerpApi strict, relance SerpApi avec des critères assouplis :
+ * max 2 escales, 12 h de layover. Un seul appel API au lieu de deux.
+ * Se déclenche même si le produit avait déjà max_connections (ex. 1 escale / 5 h → élargi à 2 / 12 h).
  */
 function vs08v_try_serpapi_relaxed($all_flights, $origin, $destination, $date, $passengers, $date_retour, $flight_opts) {
     if (!empty($all_flights)) {
-        return $all_flights;
-    }
-    if (!empty($flight_opts['max_connections'])) {
         return $all_flights;
     }
     if (!class_exists('VS08_SerpApi') || !defined('VS08_SERPAPI_API_KEY') || VS08_SERPAPI_API_KEY === '') {
         return $all_flights;
     }
     $relaxed = [
-        'max_connections'     => 1,
-        'max_layover_minutes' => 480,
+        'max_connections'     => 2,
+        'max_layover_minutes' => 720,
     ];
     if (!empty($flight_opts['return_origin'])) {
         $relaxed['return_origin'] = $flight_opts['return_origin'];
@@ -133,41 +131,6 @@ function vs08v_try_serpapi_relaxed($all_flights, $origin, $destination, $date, $
     } catch (\Throwable $e) {
         if (function_exists('error_log')) {
             error_log('[VS08 get_flight SerpApi relaxed] ' . $e->getMessage());
-        }
-    }
-    return $all_flights;
-}
-
-/**
- * Si toujours aucun vol : SerpApi avec escales longues (48 h max entre segments).
- * Les produits avec « escale max 5 h » faisaient échouer _summarize_leg / parse sur charters (TUI, etc.).
- */
-function vs08v_try_serpapi_loose_layover($all_flights, $origin, $destination, $date, $passengers, $date_retour, $flight_opts) {
-    if (!empty($all_flights)) {
-        return $all_flights;
-    }
-    if (!class_exists('VS08_SerpApi') || !defined('VS08_SERPAPI_API_KEY') || VS08_SERPAPI_API_KEY === '') {
-        return $all_flights;
-    }
-    $loose = [
-        'max_layover_minutes' => 2880,
-    ];
-    if (!empty($flight_opts['max_connections'])) {
-        $loose['max_connections'] = (int) $flight_opts['max_connections'];
-    } else {
-        $loose['max_connections'] = 1;
-    }
-    if (!empty($flight_opts['return_origin'])) {
-        $loose['return_origin'] = $flight_opts['return_origin'];
-    }
-    try {
-        $serp3 = VS08_SerpApi::search_flights($origin, $destination, $date, $passengers, $date_retour, $loose);
-        if (!is_wp_error($serp3) && !empty($serp3['flights'])) {
-            return array_merge($all_flights, $serp3['flights']);
-        }
-    } catch (\Throwable $e) {
-        if (function_exists('error_log')) {
-            error_log('[VS08 get_flight SerpApi loose layover] ' . $e->getMessage());
         }
     }
     return $all_flights;
@@ -280,7 +243,6 @@ function vs08v_get_flight_result($input = null) {
     }
 
     $all_flights = vs08v_try_serpapi_relaxed($all_flights, $origin, $destination, $date, $passengers, $date_retour, $flight_opts);
-    $all_flights = vs08v_try_serpapi_loose_layover($all_flights, $origin, $destination, $date, $passengers, $date_retour, $flight_opts);
 
     $flights = vs08v_dedup_flights($all_flights);
 

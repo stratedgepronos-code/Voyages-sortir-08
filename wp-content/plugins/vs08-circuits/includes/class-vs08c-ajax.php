@@ -175,9 +175,6 @@ function vs08c_ajax_get_flight() {
     if (function_exists('vs08v_try_serpapi_relaxed')) {
         $all_flights = vs08v_try_serpapi_relaxed($all_flights, $origin, $destination, $date, $passengers, $date_retour, $flight_opts);
     }
-    if (function_exists('vs08v_try_serpapi_loose_layover')) {
-        $all_flights = vs08v_try_serpapi_loose_layover($all_flights, $origin, $destination, $date, $passengers, $date_retour, $flight_opts);
-    }
 
     // ── Dédupliquer et trier (utilise la fonction du plugin golf si dispo) ──
     if (function_exists('vs08v_dedup_flights')) {
