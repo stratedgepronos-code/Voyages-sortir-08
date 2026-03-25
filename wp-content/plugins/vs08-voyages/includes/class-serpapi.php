@@ -257,11 +257,18 @@ class VS08_SerpApi {
             $dep_ts = $dep_time_str ? strtotime($dep_time_str) : 0;
             $arr_ts = $arr_time_str ? strtotime($arr_time_str) : 0;
 
+            $fn_parts = [];
+            foreach ($flights as $fl) {
+                $fn_parts[] = $fl['flight_number'] ?? '';
+            }
+            $flight_detail = implode(' + ', array_filter($fn_parts));
+
             $items[] = [
                 'offer_id'        => 'serpapi_' . md5($flight_number . $dep_time_str . $price_total),
                 'airline_name'    => $airline_name,
                 'airline_iata'    => $airline_iata,
-                'flight_number'   => $flight_number,
+                'flight_number'   => $seg['flight_number'] ?? '',
+                'flight_detail'   => $flight_detail,
                 'depart_at'       => $dep_time_str,
                 'arrive_at'       => $arr_time_str,
                 'depart_time'     => $dep_ts ? date('H:i', $dep_ts) : '--:--',

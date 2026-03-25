@@ -88,8 +88,9 @@ get_header();
 .combo-price-delta{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#3d9a9a;text-align:right}
 .combo-price-delta.ref{color:#2d8a5a;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;background:#e8f8f0;padding:4px 10px;border-radius:20px}
 .combo-price-sub{font-size:13px;color:#9ca3af;text-align:right;margin-top:1px}
-.combo-leg{display:flex;align-items:center;padding:11px 16px}
+.combo-leg{display:flex;align-items:center;padding:11px 16px;flex-wrap:wrap;gap:4px 0}
 .combo-leg:first-child{border-bottom:1px dashed #e5e7eb}
+.combo-leg-meta{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
 .combo-leg-badge{display:inline-flex;align-items:center;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;border-radius:20px;padding:3px 7px;white-space:nowrap;width:62px;justify-content:center}
 .combo-leg-badge.aller{color:#3d9a9a;border:1px solid #b7dfdf;background:#edf8f8}
 .combo-leg-badge.retour{color:#c9972d;border:1px solid #f0d9a8;background:#fdf6e9}
@@ -98,8 +99,8 @@ get_header();
 .combo-leg-line{flex:1;display:flex;align-items:center;gap:4px}
 .combo-leg-dash{flex:1;height:1px;background:#e5e7eb}
 .combo-leg-plane{font-size:14px;color:#59b7b7}
-.combo-leg-dur{font-size:13px;color:#9ca3af;white-space:nowrap;min-width:32px;text-align:right}
-.combo-leg-num{font-size:13px;color:#9ca3af;white-space:nowrap;text-align:right;min-width:58px;margin-left:10px}
+.combo-leg-dur{font-size:13px;color:#9ca3af;white-space:nowrap}
+.combo-leg-num{font-size:13px;color:#9ca3af;white-space:nowrap}
 .combo-check{width:22px;height:22px;background:#3d9a9a;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;opacity:0;transform:scale(.5);transition:opacity .2s,transform .2s;flex-shrink:0;margin-left:10px}
 .combo-card.selected .combo-check{opacity:1;transform:scale(1)}
 .combo-more{text-align:center;padding:11px;font-size:14px;font-weight:600;color:#59b7b7;cursor:pointer;border-top:1px solid #e5e7eb;transition:color .15s;background:#fafafa}
@@ -107,26 +108,37 @@ get_header();
 .bk-flights-hidden{display:none}
 .bk-combo-loading{display:flex;align-items:center;gap:10px;font-size:15px;color:#9ca3af;font-family:'Outfit',sans-serif;padding:20px 0}
 /* ── Badge escale / direct ── */
-.combo-conn-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;letter-spacing:.3px;border-radius:20px;padding:2px 9px;margin-left:auto;white-space:nowrap}
+.combo-conn-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;letter-spacing:.3px;border-radius:20px;padding:2px 9px;white-space:nowrap;flex-shrink:0}
 .combo-conn-badge.direct{color:#2d8a5a;background:#e8f8f0;border:1px solid #b7e4cc}
 .combo-conn-badge.escale{color:#b85c1a;background:#fff4e6;border:1px solid #f0d9a8}
 /* ── Détail escale dépliable ── */
-.combo-conn-detail{display:none;padding:0 16px 10px 80px;font-size:12px;color:#6b7280;line-height:1.6;font-family:'Outfit',sans-serif}
+.combo-conn-detail{display:none;padding:6px 16px 10px 80px;font-size:12px;color:#6b7280;line-height:1.6;font-family:'Outfit',sans-serif;border-top:1px dashed #f0f0f0}
 .combo-conn-detail.open{display:block}
-.combo-conn-toggle{cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:4px}
+.combo-conn-toggle{cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#59b7b7;padding:2px 16px 2px 80px}
 .combo-conn-toggle:hover{color:#0f2424}
-.combo-conn-toggle .chevron{display:inline-block;transition:transform .2s;font-size:10px}
+.combo-conn-toggle .chevron{display:inline-block;transition:transform .2s;font-size:9px}
 .combo-conn-toggle.open .chevron{transform:rotate(180deg)}
-.combo-conn-step{display:flex;align-items:center;gap:6px;padding:3px 0}
+.combo-conn-step{display:flex;align-items:center;gap:6px;padding:2px 0}
 .combo-conn-step .dot{width:6px;height:6px;border-radius:50%;background:#59b7b7;flex-shrink:0}
 .combo-conn-step .dot.layover{background:#f0a030}
-/* ── Filtre vols ── */
-.bk-flight-filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-.bk-flight-filter{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border:1.5px solid #e5e7eb;border-radius:24px;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;transition:all .2s;background:#fff;font-family:'Outfit',sans-serif;user-select:none}
-.bk-flight-filter:hover{border-color:#b7dfdf;color:#3d9a9a}
-.bk-flight-filter.active{border-color:#3d9a9a;color:#3d9a9a;background:#edf8f8}
-.bk-flight-filter .filter-count{font-size:11px;background:#e5e7eb;color:#6b7280;border-radius:10px;padding:1px 7px;font-weight:700;transition:all .2s}
-.bk-flight-filter.active .filter-count{background:#3d9a9a;color:#fff}
+/* ── Layout sidebar + liste ── */
+.bk-flights-layout{display:flex;gap:18px;align-items:flex-start}
+.bk-filters-sidebar{flex:0 0 210px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:14px;padding:16px;position:sticky;top:20px;font-family:'Outfit',sans-serif}
+.bk-flights-main{flex:1;min-width:0}
+.bkf-title{font-size:16px;font-weight:700;color:#0f2424;margin-bottom:14px}
+.bkf-section{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #e5e7eb}
+.bkf-section:last-of-type{border-bottom:none;margin-bottom:8px;padding-bottom:0}
+.bkf-label{font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.bkf-check{display:flex;align-items:center;gap:7px;font-size:13px;color:#4b5563;cursor:pointer;padding:4px 0;transition:color .15s}
+.bkf-check:hover{color:#0f2424}
+.bkf-check input[type=radio]{accent-color:#3d9a9a;margin:0}
+.bkf-n{font-size:11px;background:#e5e7eb;color:#6b7280;border-radius:8px;padding:1px 6px;font-weight:700;margin-left:auto}
+.bkf-range-row{display:flex;justify-content:space-between;margin-bottom:4px}
+.bkf-range-val{font-size:12px;font-weight:600;color:#3d9a9a}
+.bkf-range{width:100%;margin:3px 0;accent-color:#3d9a9a;cursor:pointer}
+.bkf-reset{width:100%;padding:7px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'Outfit',sans-serif}
+.bkf-reset:hover{border-color:#3d9a9a;color:#3d9a9a}
+@media(max-width:768px){.bk-flights-layout{flex-direction:column}.bk-filters-sidebar{flex:none;width:100%;position:static;margin-bottom:12px}}
 /* CARD */
 .bk-card{background:#fff;border-radius:20px;padding:36px;box-shadow:0 4px 24px rgba(0,0,0,.07);margin-bottom:20px}
 .bk-card-title{font-size:24px;font-weight:700;color:#0f2424;font-family:'Playfair Display',serif;margin-bottom:6px}
@@ -277,8 +289,8 @@ get_header();
         <!-- STEP 1 — VOL -->
         <div id="bk-step-1" class="bk-step-content">
             <div class="bk-card">
-                <h2 class="bk-card-title">✈️ Votre vol direct</h2>
-                <p class="bk-card-sub">Le vol le moins cher est inclus dans votre prix. Vous pouvez choisir un autre horaire — le supplément sera ajouté.</p>
+                <h2 class="bk-card-title">✈️ Sélection de votre vol</h2>
+                <p class="bk-card-sub">Choisissez votre combinaison aller-retour parmi les vols disponibles.</p>
 
                 <!-- ROUTE HEADER -->
                 <div class="bk-route-header">
@@ -308,12 +320,40 @@ get_header();
                         <div class="bk-flights-spinner"></div>
                         Recherche des vols aller et retour…
                     </div>
-                    <div class="bk-flight-filters" id="bk-flight-filters" style="display:none">
-                        <div class="bk-flight-filter active" data-filter="all">Tous <span class="filter-count" id="bk-filter-all-n">0</span></div>
-                        <div class="bk-flight-filter" data-filter="direct">✈ Vol direct <span class="filter-count" id="bk-filter-direct-n">0</span></div>
-                        <div class="bk-flight-filter" data-filter="escale">⇄ Avec escale <span class="filter-count" id="bk-filter-escale-n">0</span></div>
+                    <div class="bk-flights-layout" id="bk-flights-layout" style="display:none">
+                        <aside class="bk-filters-sidebar" id="bk-filters-sidebar">
+                            <div class="bkf-title">Filtres</div>
+                            <div class="bkf-section">
+                                <div class="bkf-label">Type de vol</div>
+                                <label class="bkf-check"><input type="radio" name="bkf_type" value="all" checked> Tous <span class="bkf-n" id="bkf-n-all"></span></label>
+                                <label class="bkf-check"><input type="radio" name="bkf_type" value="direct"> ✈ Vol direct <span class="bkf-n" id="bkf-n-direct"></span></label>
+                                <label class="bkf-check"><input type="radio" name="bkf_type" value="escale"> ⇄ Avec escale <span class="bkf-n" id="bkf-n-escale"></span></label>
+                            </div>
+                            <div class="bkf-section">
+                                <div class="bkf-label">Départ aller</div>
+                                <div class="bkf-range-row">
+                                    <span class="bkf-range-val" id="bkf-dep-min-lbl">00:00</span>
+                                    <span class="bkf-range-val" id="bkf-dep-max-lbl">23:59</span>
+                                </div>
+                                <input type="range" class="bkf-range" id="bkf-dep-min" min="0" max="1439" value="0" step="30">
+                                <input type="range" class="bkf-range" id="bkf-dep-max" min="0" max="1439" value="1439" step="30">
+                            </div>
+                            <div class="bkf-section">
+                                <div class="bkf-label">Départ retour</div>
+                                <div class="bkf-range-row">
+                                    <span class="bkf-range-val" id="bkf-ret-min-lbl">00:00</span>
+                                    <span class="bkf-range-val" id="bkf-ret-max-lbl">23:59</span>
+                                </div>
+                                <input type="range" class="bkf-range" id="bkf-ret-min" min="0" max="1439" value="0" step="30">
+                                <input type="range" class="bkf-range" id="bkf-ret-max" min="0" max="1439" value="1439" step="30">
+                            </div>
+                            <button type="button" class="bkf-reset" id="bkf-reset">Réinitialiser</button>
+                        </aside>
+                        <div class="bk-flights-main">
+                            <div id="bk-combo-list"></div>
+                            <div id="bk-combo-no-match" class="bk-flights-error" style="display:none">Aucun vol ne correspond à vos filtres.</div>
+                        </div>
                     </div>
-                    <div id="bk-combo-list"></div>
                     <div id="bk-combo-error" class="bk-flights-error" style="display:none"></div>
                 </div>
 
@@ -1060,7 +1100,12 @@ function bkTryBuildCombos() {
     if (combos.length) combos[0].is_reference = true;
 
     bk_combos_data = combos;
+
+    var layout = document.getElementById('bk-flights-layout');
+    if (layout) layout.style.display = 'flex';
+
     bkRenderCombos(combos);
+    bkInitSidebarFilters();
     bkSelectCombo(0);
 }
 
@@ -1154,11 +1199,25 @@ function bkFmtDuration(min) {
 // RENDU DES COMBINAISONS ALLER+RETOUR
 // ══════════════════════════════════════════════════════════════════════════════
 
-function bkHasConn(f) {
-    return f && f.has_connections === true;
+function bkTimeToMin(t) {
+    if (!t) return 0;
+    var p = (t+'').split(':');
+    return (parseInt(p[0],10)||0)*60 + (parseInt(p[1],10)||0);
+}
+function bkMinToTime(m) {
+    var h = Math.floor(m/60) % 24;
+    var mn = m % 60;
+    return String(h).padStart(2,'0') + ':' + String(mn).padStart(2,'0');
 }
 
-function bkConnBadge(f, type) {
+function bkHasConn(f) {
+    if (!f) return false;
+    if (f.has_connections === true || f.has_connections === 1 || f.has_connections === '1') return true;
+    if (f.flight_detail && f.flight_detail.indexOf('+') !== -1) return true;
+    return false;
+}
+
+function bkConnBadge(f) {
     if (!f) return '';
     var isConn = bkHasConn(f);
     var cls = isConn ? 'escale' : 'direct';
@@ -1174,13 +1233,13 @@ function bkConnDetail(f, idx, legType) {
     var parts = detail.split(/\s*\+\s*/);
     var stepsHtml = '';
     parts.forEach(function(p, i) {
-        stepsHtml += '<div class="combo-conn-step"><span class="dot"></span> ' + bkEsc(p.trim()) + '</div>';
+        stepsHtml += '<div class="combo-conn-step"><span class="dot"></span> Vol ' + bkEsc(p.trim()) + '</div>';
         if (i < parts.length - 1) {
-            stepsHtml += '<div class="combo-conn-step"><span class="dot layover"></span> <em>Escale</em></div>';
+            stepsHtml += '<div class="combo-conn-step"><span class="dot layover"></span> <em>Correspondance</em></div>';
         }
     });
     return '<div class="combo-conn-toggle" id="' + togId + '" onclick="event.stopPropagation();var d=document.getElementById(\'' + id + '\');var t=document.getElementById(\'' + togId + '\');if(d.classList.contains(\'open\')){d.classList.remove(\'open\');t.classList.remove(\'open\')}else{d.classList.add(\'open\');t.classList.add(\'open\')}">'
-        + '<span class="chevron">▼</span> Détails escale'
+        + '<span class="chevron">▼</span> Voir les détails'
         + '</div>'
         + '<div class="combo-conn-detail" id="' + id + '">' + stepsHtml + '</div>';
 }
@@ -1196,22 +1255,20 @@ function bkRenderCombos(combos) {
         if (conn) nbEscale++; else nbDirect++;
     });
 
-    var filtersWrap = document.getElementById('bk-flight-filters');
-    if (filtersWrap && combos.length > 0 && (nbDirect > 0 && nbEscale > 0)) {
-        filtersWrap.style.display = 'flex';
-        var nAll = document.getElementById('bk-filter-all-n');
-        var nDir = document.getElementById('bk-filter-direct-n');
-        var nEsc = document.getElementById('bk-filter-escale-n');
-        if (nAll) nAll.textContent = combos.length;
-        if (nDir) nDir.textContent = nbDirect;
-        if (nEsc) nEsc.textContent = nbEscale;
-    }
+    var nAll = document.getElementById('bkf-n-all');
+    var nDir = document.getElementById('bkf-n-direct');
+    var nEsc = document.getElementById('bkf-n-escale');
+    if (nAll) nAll.textContent = combos.length;
+    if (nDir) nDir.textContent = nbDirect;
+    if (nEsc) nEsc.textContent = nbEscale;
 
     combos.forEach(function(c, idx) {
         var a = c.aller;
         var r = c.retour;
-        var hidden = idx >= 3 ? ' bk-flights-hidden' : '';
         var comboConn = bkHasConn(a) || (r && bkHasConn(r));
+
+        var depMin = bkTimeToMin(a.depart_time);
+        var retMin = r ? bkTimeToMin(r.depart_time) : 0;
 
         var priceHtml = '';
         if (c.is_reference) {
@@ -1233,102 +1290,112 @@ function bkRenderCombos(combos) {
             +   '</div>'
             + '</div>';
 
-        // Leg ALLER
         html += '<div class="combo-leg">'
-            + '<div class="combo-leg-badge aller">Aller</div>'
+            + '<div class="combo-leg-badge aller">ALLER</div>'
             + '<div class="combo-leg-times">'
             +   '<div class="combo-time">' + bkEsc(a.depart_time) + '</div>'
             +   '<div class="combo-leg-line"><div class="combo-leg-dash"></div><div class="combo-leg-plane">✈</div><div class="combo-leg-dash"></div></div>'
             +   '<div class="combo-time">' + bkEsc(a.arrive_time) + '</div>'
             + '</div>'
-            + bkConnBadge(a) + ' '
-            + '<div class="combo-leg-dur">' + bkFmtDuration(a.duration_min) + '</div>'
-            + '<div class="combo-leg-num">' + bkEsc(a.flight_number) + '</div>'
+            + '<div class="combo-leg-meta">'
+            +   bkConnBadge(a)
+            +   '<span class="combo-leg-dur">' + bkFmtDuration(a.duration_min) + '</span>'
+            +   '<span class="combo-leg-num">' + bkEsc(a.flight_number) + '</span>'
+            + '</div>'
             + '</div>'
             + bkConnDetail(a, idx, 'aller');
 
-        // Leg RETOUR
         if (r) {
             html += '<div class="combo-leg">'
-                + '<div class="combo-leg-badge retour">Retour</div>'
+                + '<div class="combo-leg-badge retour">RETOUR</div>'
                 + '<div class="combo-leg-times">'
                 +   '<div class="combo-time">' + bkEsc(r.depart_time) + '</div>'
                 +   '<div class="combo-leg-line"><div class="combo-leg-dash"></div><div class="combo-leg-plane">✈</div><div class="combo-leg-dash"></div></div>'
                 +   '<div class="combo-time">' + bkEsc(r.arrive_time) + '</div>'
                 + '</div>'
-                + bkConnBadge(r) + ' '
-                + '<div class="combo-leg-dur">' + bkFmtDuration(r.duration_min) + '</div>'
-                + '<div class="combo-leg-num">' + bkEsc(r.flight_number) + '</div>'
+                + '<div class="combo-leg-meta">'
+                +   bkConnBadge(r)
+                +   '<span class="combo-leg-dur">' + bkFmtDuration(r.duration_min) + '</span>'
+                +   '<span class="combo-leg-num">' + bkEsc(r.flight_number) + '</span>'
+                + '</div>'
                 + '</div>'
                 + bkConnDetail(r, idx, 'retour');
         }
 
         var card = document.createElement('div');
-        card.className = 'combo-card' + hidden;
+        card.className = 'combo-card';
         card.id = 'combo-card-' + idx;
         card.setAttribute('data-conn', comboConn ? '1' : '0');
+        card.setAttribute('data-dep', depMin);
+        card.setAttribute('data-ret', retMin);
         card.innerHTML = html;
         card.addEventListener('click', (function(i) {
             return function() { bkSelectCombo(i); };
         })(idx));
         list.appendChild(card);
     });
-
-    // Bouton "Afficher plus / Réduire" si > 3 combos
-    if (combos.length > 3) {
-        var more = document.createElement('div');
-        more.className = 'combo-more';
-        more.id = 'bk-combo-more';
-        var extraCount = combos.length - 3;
-        more.textContent = 'Afficher ' + extraCount + ' autre(s) combinaison(s) ▾';
-        more.setAttribute('data-expanded', 'false');
-        more.addEventListener('click', function() {
-            var expanded = this.getAttribute('data-expanded') === 'true';
-            if (expanded) {
-                list.querySelectorAll('.combo-card').forEach(function(el, i) {
-                    if (i >= 3) el.classList.add('bk-flights-hidden');
-                });
-                this.textContent = 'Afficher ' + extraCount + ' autre(s) combinaison(s) ▾';
-                this.setAttribute('data-expanded', 'false');
-            } else {
-                list.querySelectorAll('.bk-flights-hidden').forEach(function(el) {
-                    el.classList.remove('bk-flights-hidden');
-                });
-                this.textContent = 'Réduire ▴';
-                this.setAttribute('data-expanded', 'true');
-            }
-        });
-        list.appendChild(more);
-    }
-
-    bkInitFlightFilters();
 }
 
-function bkInitFlightFilters() {
-    var btns = document.querySelectorAll('.bk-flight-filter');
-    btns.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            btns.forEach(function(b) { b.classList.remove('active'); });
-            this.classList.add('active');
-            var filter = this.getAttribute('data-filter');
-            var cards = document.querySelectorAll('.combo-card');
-            var moreBtn = document.getElementById('bk-combo-more');
-            if (moreBtn) {
-                moreBtn.setAttribute('data-expanded', 'true');
-                moreBtn.textContent = 'Réduire ▴';
+function bkInitSidebarFilters() {
+    var radios = document.querySelectorAll('input[name="bkf_type"]');
+    var depMinR = document.getElementById('bkf-dep-min');
+    var depMaxR = document.getElementById('bkf-dep-max');
+    var retMinR = document.getElementById('bkf-ret-min');
+    var retMaxR = document.getElementById('bkf-ret-max');
+    var resetBtn = document.getElementById('bkf-reset');
+
+    function applyFilters() {
+        var typeVal = 'all';
+        radios.forEach(function(r){ if(r.checked) typeVal = r.value; });
+
+        var dMin = parseInt(depMinR.value,10);
+        var dMax = parseInt(depMaxR.value,10);
+        var rMin = parseInt(retMinR.value,10);
+        var rMax = parseInt(retMaxR.value,10);
+
+        document.getElementById('bkf-dep-min-lbl').textContent = bkMinToTime(dMin);
+        document.getElementById('bkf-dep-max-lbl').textContent = bkMinToTime(dMax);
+        document.getElementById('bkf-ret-min-lbl').textContent = bkMinToTime(rMin);
+        document.getElementById('bkf-ret-max-lbl').textContent = bkMinToTime(rMax);
+
+        var cards = document.querySelectorAll('.combo-card');
+        var visible = 0;
+        cards.forEach(function(card) {
+            var show = true;
+            var conn = card.getAttribute('data-conn');
+            if (typeVal === 'direct' && conn === '1') show = false;
+            if (typeVal === 'escale' && conn === '0') show = false;
+
+            if (show) {
+                var dep = parseInt(card.getAttribute('data-dep'),10);
+                if (dep < dMin || dep > dMax) show = false;
             }
-            cards.forEach(function(card) {
-                card.classList.remove('bk-flights-hidden');
-                if (filter === 'all') {
-                    card.style.display = '';
-                } else if (filter === 'direct') {
-                    card.style.display = card.getAttribute('data-conn') === '0' ? '' : 'none';
-                } else if (filter === 'escale') {
-                    card.style.display = card.getAttribute('data-conn') === '1' ? '' : 'none';
-                }
-            });
+            if (show) {
+                var ret = parseInt(card.getAttribute('data-ret'),10);
+                if (ret < rMin || ret > rMax) show = false;
+            }
+
+            card.style.display = show ? '' : 'none';
+            if (show) visible++;
         });
+
+        var noMatch = document.getElementById('bk-combo-no-match');
+        if (noMatch) noMatch.style.display = visible === 0 ? 'block' : 'none';
+    }
+
+    radios.forEach(function(r){ r.addEventListener('change', applyFilters); });
+    [depMinR, depMaxR, retMinR, retMaxR].forEach(function(el){
+        if (el) el.addEventListener('input', applyFilters);
     });
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            radios.forEach(function(r){ r.checked = r.value === 'all'; });
+            depMinR.value = 0; depMaxR.value = 1439;
+            retMinR.value = 0; retMaxR.value = 1439;
+            applyFilters();
+        });
+    }
 }
 
 
