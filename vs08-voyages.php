@@ -22,7 +22,8 @@ define('VS08V_VER',  '2.0.0');
 //   public_html/wp-content/plugins/vs08-voyages/config.cfg
 // Format attendu dans config.cfg :
 //   DUFFEL_API_KEY=duffel_live_XXXXXXXXXXXXXXXX
-//   SERPAPI_API_KEY=xxxx   (optionnel : vols Ryanair / low-cost via Google Flights)
+//   SERPAPI_API_KEY=xxxx   (recommandé prod : Google Flights ; config.cfg non déployé par Git)
+//   Ou env VS08_SERPAPI_API_KEY / SERPAPI_API_KEY, ou define dans wp-config avant wp-settings
 //   CLAUDE_API_KEY=sk-ant-api03-xxxx   (recherche IA hôtel/golf — clé Anthropic, sinon "invalid x-api-key")
 //   VS08_SANDBOX_PAYMENT=1   (optionnel : déverrouille la dernière étape si "token invalide" en test)
 // ============================================================
@@ -69,6 +70,18 @@ if (file_exists($vs08v_config_file)) {
             if ($key === 'PAYBOX_MAIL_SECRET_KEY' && !defined('VS08_PAYBOX_MAIL_SECRET_KEY')) {
                 define('VS08_PAYBOX_MAIL_SECRET_KEY', $val);
             }
+        }
+    }
+}
+
+if (!defined('VS08_SERPAPI_API_KEY')) {
+    $serp_env = getenv('VS08_SERPAPI_API_KEY');
+    if ($serp_env !== false && $serp_env !== '') {
+        define('VS08_SERPAPI_API_KEY', $serp_env);
+    } else {
+        $serp_env = getenv('SERPAPI_API_KEY');
+        if ($serp_env !== false && $serp_env !== '') {
+            define('VS08_SERPAPI_API_KEY', $serp_env);
         }
     }
 }

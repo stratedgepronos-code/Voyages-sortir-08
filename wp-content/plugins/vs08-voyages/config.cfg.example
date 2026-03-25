@@ -4,8 +4,9 @@
 # Vols (obligatoire pour les séjours golf)
 DUFFEL_API_KEY=duffel_live_XXXXXXXXXXXXXXXX
 
-# Vols low-cost / Ryanair (optionnel)
-SERPAPI_API_KEY=
+# Google Flights via SerpApi — EN PRODUCTION : obligatoire si Duffel ne couvre pas l’aéroport (ex. XCR / charters).
+# Sur Hostinger : ce fichier doit exister sur le serveur ; il n’est pas poussé par Git (secret).
+SERPAPI_API_KEY=votre_cle_serpapi_com
 
 # Recherche IA hôtel & golf (évite "invalid x-api-key")
 # Créez une clé sur https://console.anthropic.com/ et vérifiez que le compte a des crédits.

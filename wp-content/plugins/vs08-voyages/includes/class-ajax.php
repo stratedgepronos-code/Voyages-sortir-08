@@ -251,7 +251,13 @@ function vs08v_get_flight_result($input = null) {
 
     // ── SerpApi ──
     $serp_ok = class_exists('VS08_SerpApi') && defined('VS08_SERPAPI_API_KEY') && VS08_SERPAPI_API_KEY !== '';
-    vs08v_flog('SerpApi disponible: ' . ($serp_ok ? 'oui (clé ' . substr(VS08_SERPAPI_API_KEY, 0, 8) . '…)' : 'NON'));
+    if ($serp_ok) {
+        vs08v_flog('SerpApi: oui (clé ' . substr(VS08_SERPAPI_API_KEY, 0, 8) . '…)');
+    } else {
+        $cfg_path = defined('VS08V_PATH') ? VS08V_PATH . 'config.cfg' : '';
+        $cfg_ok   = $cfg_path !== '' && is_readable($cfg_path);
+        vs08v_flog('SerpApi: NON — clé absente. Sur le serveur : éditer ' . ($cfg_ok ? 'config.cfg (ajouter SERPAPI_API_KEY=...)' : 'wp-content/plugins/vs08-voyages/config.cfg (créer le fichier, voir config.cfg.example)') . ' ; le déploiement Git n’envoie pas config.cfg. Ou variable d’environnement VS08_SERPAPI_API_KEY.');
+    }
     if ($serp_ok) {
         try {
             $serpapi_result = VS08_SerpApi::search_flights($origin, $destination, $date, $passengers, $date_retour, $flight_opts);
