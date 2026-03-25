@@ -118,9 +118,11 @@ get_header();
 .combo-conn-toggle:hover{color:#0f2424}
 .combo-conn-toggle .chevron{display:inline-block;transition:transform .2s;font-size:9px}
 .combo-conn-toggle.open .chevron{transform:rotate(180deg)}
-.combo-conn-step{display:flex;align-items:center;gap:6px;padding:2px 0}
+.combo-conn-step{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:12.5px}
 .combo-conn-step .dot{width:6px;height:6px;border-radius:50%;background:#59b7b7;flex-shrink:0}
 .combo-conn-step .dot.layover{background:#f0a030}
+.combo-conn-step.layover-row{color:#b85c1a;font-style:italic;font-size:11.5px}
+.combo-conn-step .seg-flight{color:#9ca3af;font-size:11px;margin-left:4px}
 /* CARD */
 .bk-card{background:#fff;border-radius:20px;padding:36px;box-shadow:0 4px 24px rgba(0,0,0,.07);margin-bottom:20px}
 .bk-card-title{font-size:24px;font-weight:700;color:#0f2424;font-family:'Playfair Display',serif;margin-bottom:6px}
@@ -1158,19 +1160,40 @@ function bkConnBadge(f) {
     return '<span class="combo-conn-badge ' + cls + '">' + label + '</span>';
 }
 
+function bkFmtLayover(min) {
+    if (!min) return '';
+    var h = Math.floor(min / 60), m = min % 60;
+    if (h > 0 && m > 0) return h + 'h' + String(m).padStart(2,'0');
+    if (h > 0) return h + 'h';
+    return m + 'min';
+}
 function bkConnDetail(f, idx, legType) {
     if (!f || !bkHasConn(f)) return '';
-    var detail = f.flight_detail || f.flight_number || '';
+    var segs = f.segments_detail || [];
     var id = 'conn-detail-' + idx + '-' + legType;
     var togId = 'conn-tog-' + idx + '-' + legType;
-    var parts = detail.split(/\s*\+\s*/);
     var stepsHtml = '';
-    parts.forEach(function(p, i) {
-        stepsHtml += '<div class="combo-conn-step"><span class="dot"></span> Vol ' + bkEsc(p.trim()) + '</div>';
-        if (i < parts.length - 1) {
-            stepsHtml += '<div class="combo-conn-step"><span class="dot layover"></span> <em>Correspondance</em></div>';
-        }
-    });
+
+    if (segs.length > 0) {
+        segs.forEach(function(s, i) {
+            if (i > 0 && s.layover_before_min > 0) {
+                stepsHtml += '<div class="combo-conn-step layover-row"><span class="dot layover"></span> Escale · ' + bkFmtLayover(s.layover_before_min) + ' d\'attente</div>';
+            }
+            stepsHtml += '<div class="combo-conn-step"><span class="dot"></span>'
+                + ' <strong>' + bkEsc(s.origin) + '</strong> ' + bkEsc(s.depart_time)
+                + ' → <strong>' + bkEsc(s.destination) + '</strong> ' + bkEsc(s.arrive_time)
+                + ' <span class="seg-flight">' + bkEsc(s.flight) + '</span>'
+                + '</div>';
+        });
+    } else {
+        var detail = f.flight_detail || f.flight_number || '';
+        var parts = detail.split(/\s*\+\s*/);
+        parts.forEach(function(p, i) {
+            if (i > 0) stepsHtml += '<div class="combo-conn-step"><span class="dot layover"></span> <em>Correspondance</em></div>';
+            stepsHtml += '<div class="combo-conn-step"><span class="dot"></span> Vol ' + bkEsc(p.trim()) + '</div>';
+        });
+    }
+
     return '<div class="combo-conn-toggle" id="' + togId + '" onclick="event.stopPropagation();var d=document.getElementById(\'' + id + '\');var t=document.getElementById(\'' + togId + '\');if(d.classList.contains(\'open\')){d.classList.remove(\'open\');t.classList.remove(\'open\')}else{d.classList.add(\'open\');t.classList.add(\'open\')}">'
         + '<span class="chevron">▼</span> Voir les détails'
         + '</div>'

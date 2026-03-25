@@ -120,10 +120,32 @@ class VS08_Duffel_API {
         $dep   = $first['departing_at'] ?? '';
         $arr   = $last['arriving_at'] ?? '';
         $fn_parts = [];
-        foreach ($segs as $s) {
+        $segments_detail = [];
+        $prev_arr_ts = null;
+        foreach ($segs as $i => $s) {
             $ac = $s['marketing_carrier']['iata_code'] ?? '';
             $fn = $s['marketing_carrier_flight_number'] ?? '';
             $fn_parts[] = trim($ac . $fn);
+
+            $s_dep = $s['departing_at'] ?? '';
+            $s_arr = $s['arriving_at'] ?? '';
+            $s_dep_ts = $s_dep ? strtotime($s_dep) : 0;
+            $s_arr_ts = $s_arr ? strtotime($s_arr) : 0;
+
+            $layover_min = 0;
+            if ($prev_arr_ts && $s_dep_ts > $prev_arr_ts) {
+                $layover_min = (int) round(($s_dep_ts - $prev_arr_ts) / 60);
+            }
+
+            $segments_detail[] = [
+                'flight'      => trim($ac . $fn),
+                'origin'      => strtoupper($s['origin']['iata_code'] ?? ''),
+                'destination'  => strtoupper($s['destination']['iata_code'] ?? ''),
+                'depart_time' => $s_dep ? date('H:i', $s_dep_ts) : '--:--',
+                'arrive_time' => $s_arr ? date('H:i', $s_arr_ts) : '--:--',
+                'layover_before_min' => $layover_min,
+            ];
+            $prev_arr_ts = $s_arr_ts;
         }
         return [
             'dep'              => $dep,
@@ -134,6 +156,7 @@ class VS08_Duffel_API {
             'flight_number'    => $fn_parts[0] ?? '',
             'flight_numbers_all' => implode(' + ', array_filter($fn_parts)),
             'has_connections'  => count($segs) > 1,
+            'segments_detail'  => $segments_detail,
         ];
     }
 
@@ -276,8 +299,10 @@ class VS08_Duffel_API {
                     'arrive_time'     => $sum_aller['arrive_time'],
                     'duration_min'    => $sum_aller['duration_min'],
                     'has_connections' => $sum_aller['has_connections'] || $sum_retour['has_connections'],
+                    'segments_detail' => $sum_aller['segments_detail'],
                     'retour_flight'   => $sum_retour['flight_number'],
                     'retour_flights_detail' => $sum_retour['flight_numbers_all'],
+                    'retour_segments_detail' => $sum_retour['segments_detail'],
                     'retour_depart'   => $sum_retour['depart_time'],
                     'retour_arrive'   => $sum_retour['arrive_time'],
                     'retour_duration' => $sum_retour['duration_min'],
@@ -320,6 +345,7 @@ class VS08_Duffel_API {
                     'arrive_time'     => $sum['arrive_time'],
                     'duration_min'    => $sum['duration_min'],
                     'has_connections' => $sum['has_connections'],
+                    'segments_detail' => $sum['segments_detail'],
                     'price_total'     => $price_raw,
                     'price_per_pax'   => $passengers > 0 ? round($price_raw / $passengers, 2) : $price_raw,
                     'currency'        => 'EUR',

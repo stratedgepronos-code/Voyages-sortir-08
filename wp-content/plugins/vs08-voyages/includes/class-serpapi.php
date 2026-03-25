@@ -258,8 +258,27 @@ class VS08_SerpApi {
             $arr_ts = $arr_time_str ? strtotime($arr_time_str) : 0;
 
             $fn_parts = [];
-            foreach ($flights as $fl) {
+            $segments_detail = [];
+            $prev_arr_ts_seg = null;
+            foreach ($flights as $fi => $fl) {
                 $fn_parts[] = $fl['flight_number'] ?? '';
+                $s_dep_str = $fl['departure_airport']['time'] ?? '';
+                $s_arr_str = $fl['arrival_airport']['time'] ?? '';
+                $s_dep_ts = $s_dep_str ? strtotime($s_dep_str) : 0;
+                $s_arr_ts = $s_arr_str ? strtotime($s_arr_str) : 0;
+                $layover = 0;
+                if ($prev_arr_ts_seg && $s_dep_ts > $prev_arr_ts_seg) {
+                    $layover = (int) round(($s_dep_ts - $prev_arr_ts_seg) / 60);
+                }
+                $segments_detail[] = [
+                    'flight'      => $fl['flight_number'] ?? '',
+                    'origin'      => strtoupper($fl['departure_airport']['id'] ?? ''),
+                    'destination'  => strtoupper($fl['arrival_airport']['id'] ?? ''),
+                    'depart_time' => $s_dep_ts ? date('H:i', $s_dep_ts) : '--:--',
+                    'arrive_time' => $s_arr_ts ? date('H:i', $s_arr_ts) : '--:--',
+                    'layover_before_min' => $layover,
+                ];
+                $prev_arr_ts_seg = $s_arr_ts;
             }
             $flight_detail = implode(' + ', array_filter($fn_parts));
 
@@ -269,6 +288,7 @@ class VS08_SerpApi {
                 'airline_iata'    => $airline_iata,
                 'flight_number'   => $seg['flight_number'] ?? '',
                 'flight_detail'   => $flight_detail,
+                'segments_detail' => $segments_detail,
                 'depart_at'       => $dep_time_str,
                 'arrive_at'       => $arr_time_str,
                 'depart_time'     => $dep_ts ? date('H:i', $dep_ts) : '--:--',

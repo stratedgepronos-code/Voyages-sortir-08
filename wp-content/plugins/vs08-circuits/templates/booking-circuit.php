@@ -233,9 +233,11 @@ var BK_CIRCUIT = <?php echo json_encode([
 .bkc-conn-toggle:hover{color:#0f2424}
 .bkc-conn-toggle .chevron{display:inline-block;transition:transform .2s;font-size:9px}
 .bkc-conn-toggle.open .chevron{transform:rotate(180deg)}
-.bkc-conn-step{display:flex;align-items:center;gap:6px;padding:2px 0}
+.bkc-conn-step{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:12.5px}
 .bkc-conn-step .dot{width:6px;height:6px;border-radius:50%;background:#59b7b7;flex-shrink:0}
 .bkc-conn-step .dot.layover{background:#f0a030}
+.bkc-conn-step.layover-row{color:#b85c1a;font-style:italic;font-size:11.5px}
+.bkc-conn-step .seg-flight{color:#9ca3af;font-size:11px;margin-left:4px}
 /* ── Sidebar filtres — marge gauche ── */
 .bkc-filters-sidebar{position:fixed;top:160px;width:200px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;font-family:'Outfit',sans-serif;box-shadow:0 2px 12px rgba(0,0,0,.06);z-index:50;transition:opacity .3s}
 .bkf-title{font-size:16px;font-weight:700;color:#0f2424;margin-bottom:14px}
@@ -690,6 +692,7 @@ var BK_CIRCUIT = <?php echo json_encode([
                     retour: {
                         flight_number: a.retour_flight,
                         flight_detail: a.retour_flights_detail || a.retour_flight || '',
+                        segments_detail: a.retour_segments_detail || [],
                         depart_time: a.retour_depart,
                         arrive_time: a.retour_arrive,
                         duration_min: a.retour_duration,
@@ -748,19 +751,40 @@ var BK_CIRCUIT = <?php echo json_encode([
         var label = isConn ? '1 escale' : 'Vol direct';
         return '<span class="bkc-conn-badge ' + cls + '">' + label + '</span>';
     }
+    function bkcFmtLayover(min) {
+        if (!min) return '';
+        var h = Math.floor(min / 60), m = min % 60;
+        if (h > 0 && m > 0) return h + 'h' + String(m).padStart(2,'0');
+        if (h > 0) return h + 'h';
+        return m + 'min';
+    }
     function bkcConnDetail(f, idx, legType) {
         if (!f || !bkcHasConn(f)) return '';
-        var detail = f.flight_detail || f.flight_number || '';
+        var segs = f.segments_detail || [];
         var id = 'bkc-conn-detail-' + idx + '-' + legType;
         var togId = 'bkc-conn-tog-' + idx + '-' + legType;
-        var parts = detail.split(/\s*\+\s*/);
         var stepsHtml = '';
-        parts.forEach(function(p, i) {
-            stepsHtml += '<div class="bkc-conn-step"><span class="dot"></span> Vol ' + bkcEsc(p.trim()) + '</div>';
-            if (i < parts.length - 1) {
-                stepsHtml += '<div class="bkc-conn-step"><span class="dot layover"></span> <em>Correspondance</em></div>';
-            }
-        });
+
+        if (segs.length > 0) {
+            segs.forEach(function(s, i) {
+                if (i > 0 && s.layover_before_min > 0) {
+                    stepsHtml += '<div class="bkc-conn-step layover-row"><span class="dot layover"></span> Escale · ' + bkcFmtLayover(s.layover_before_min) + ' d\'attente</div>';
+                }
+                stepsHtml += '<div class="bkc-conn-step"><span class="dot"></span>'
+                    + ' <strong>' + bkcEsc(s.origin) + '</strong> ' + bkcEsc(s.depart_time)
+                    + ' → <strong>' + bkcEsc(s.destination) + '</strong> ' + bkcEsc(s.arrive_time)
+                    + ' <span class="seg-flight">' + bkcEsc(s.flight) + '</span>'
+                    + '</div>';
+            });
+        } else {
+            var detail = f.flight_detail || f.flight_number || '';
+            var parts = detail.split(/\s*\+\s*/);
+            parts.forEach(function(p, i) {
+                if (i > 0) stepsHtml += '<div class="bkc-conn-step"><span class="dot layover"></span> <em>Correspondance</em></div>';
+                stepsHtml += '<div class="bkc-conn-step"><span class="dot"></span> Vol ' + bkcEsc(p.trim()) + '</div>';
+            });
+        }
+
         return '<div class="bkc-conn-toggle" id="' + togId + '" onclick="event.stopPropagation();var d=document.getElementById(\'' + id + '\');var t=document.getElementById(\'' + togId + '\');if(d.classList.contains(\'open\')){d.classList.remove(\'open\');t.classList.remove(\'open\')}else{d.classList.add(\'open\');t.classList.add(\'open\')}">'
             + '<span class="chevron">▼</span> Voir les détails'
             + '</div>'
