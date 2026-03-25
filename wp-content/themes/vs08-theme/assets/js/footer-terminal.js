@@ -36,7 +36,7 @@ function wType(code){
     if([200,386,389,392,395].indexOf(code)>-1) return 'storm';
     return 'cloudy';
 }
-/** Open-Meteo (WMO) → même typologie que wType (wttr.in en secours). */
+/** Open-Meteo (WMO) — pas d’appel wttr.in (réseau / blocages fréquents). */
 function wmoToWeather(code){
     code=+code;
     if(code===0||code===1) return {type:'clear',fr:code===0?'Dégagé':'Principalement dégagé'};
@@ -220,17 +220,6 @@ function fetchWeather(){
         var wm = wmoToWeather(cur.weather_code);
         var feels = cur.apparent_temperature != null ? Math.round(cur.apparent_temperature) : Math.round(cur.temperature_2m);
         renderWxChalons(wm.type, wm.fr, Math.round(cur.temperature_2m), feels, Math.round(cur.wind_speed_10m || 0));
-    })
-    .catch(function(){
-        return fetch('https://wttr.in/Chalons-en-Champagne?format=j1')
-        .then(function(r){if(!r.ok)throw 0;return r.json();})
-        .then(function(data){
-            var c = data.current_condition[0];
-            var type = wType(c.weatherCode);
-            var en = c.weatherDesc[0].value.trim();
-            var fr = wFR[en]||en;
-            renderWxChalons(type, fr, c.temp_C, c.FeelsLikeC, c.windspeedKmph);
-        });
     })
     .catch(function(){
         var hour = new Date().getHours();

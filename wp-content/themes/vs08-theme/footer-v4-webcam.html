@@ -253,7 +253,7 @@ function fetchWiki(articles,cb){
     next();
 }
 
-/* ═══ WEATHER : Open-Meteo (fiable / CORS) puis secours wttr.in ═══ */
+/* ═══ WEATHER : Open-Meteo uniquement (pas wttr.in) ═══ */
 function fetchW(dest,cb){
     var om='https://api.open-meteo.com/v1/forecast?latitude='+dest.lat+'&longitude='+dest.lng+'&current=temperature_2m,apparent_temperature,weather_code&wind_speed_unit=kmh&timezone=auto';
     fetch(om).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(data){
@@ -261,12 +261,7 @@ function fetchW(dest,cb){
         if(!cur||cur.temperature_2m==null)throw 0;
         var wm=wmoToWeather(cur.weather_code);
         cb({type:wm.type,fr:wm.fr,temp_C:Math.round(cur.temperature_2m),FeelsLikeC:Math.round(cur.apparent_temperature!=null?cur.apparent_temperature:cur.temperature_2m)});
-    }).catch(function(){
-        fetch('https://wttr.in/'+dest.q+'?format=j1').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(data){
-            var c=data.current_condition[0],t=wType(c.weatherCode),en=c.weatherDesc[0].value.trim(),fr=wFR[en]||en;
-            cb({type:t,fr:fr,temp_C:c.temp_C,FeelsLikeC:c.FeelsLikeC});
-        }).catch(function(){cb(null)});
-    });
+    }).catch(function(){cb(null)});
 }
 
 /* ═══ NAVIGATION ═══ */

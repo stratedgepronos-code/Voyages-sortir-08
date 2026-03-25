@@ -139,6 +139,41 @@ function vs08v_try_serpapi_relaxed($all_flights, $origin, $destination, $date, $
 }
 
 /**
+ * Si toujours aucun vol : SerpApi avec escales longues (48 h max entre segments).
+ * Les produits avec « escale max 5 h » faisaient échouer _summarize_leg / parse sur charters (TUI, etc.).
+ */
+function vs08v_try_serpapi_loose_layover($all_flights, $origin, $destination, $date, $passengers, $date_retour, $flight_opts) {
+    if (!empty($all_flights)) {
+        return $all_flights;
+    }
+    if (!class_exists('VS08_SerpApi') || !defined('VS08_SERPAPI_API_KEY') || VS08_SERPAPI_API_KEY === '') {
+        return $all_flights;
+    }
+    $loose = [
+        'max_layover_minutes' => 2880,
+    ];
+    if (!empty($flight_opts['max_connections'])) {
+        $loose['max_connections'] = (int) $flight_opts['max_connections'];
+    } else {
+        $loose['max_connections'] = 1;
+    }
+    if (!empty($flight_opts['return_origin'])) {
+        $loose['return_origin'] = $flight_opts['return_origin'];
+    }
+    try {
+        $serp3 = VS08_SerpApi::search_flights($origin, $destination, $date, $passengers, $date_retour, $loose);
+        if (!is_wp_error($serp3) && !empty($serp3['flights'])) {
+            return array_merge($all_flights, $serp3['flights']);
+        }
+    } catch (\Throwable $e) {
+        if (function_exists('error_log')) {
+            error_log('[VS08 get_flight SerpApi loose layover] ' . $e->getMessage());
+        }
+    }
+    return $all_flights;
+}
+
+/**
  * Met à jour le cache « prix vol min / pers » vu sur le site (14 jours).
  * Remplace l'ancienne valeur si expirée ou si le nouveau prix est plus bas.
  * Appelé après recherche vol (API) ou estimation / calcul devis avec vol réel.
@@ -245,6 +280,7 @@ function vs08v_get_flight_result($input = null) {
     }
 
     $all_flights = vs08v_try_serpapi_relaxed($all_flights, $origin, $destination, $date, $passengers, $date_retour, $flight_opts);
+    $all_flights = vs08v_try_serpapi_loose_layover($all_flights, $origin, $destination, $date, $passengers, $date_retour, $flight_opts);
 
     $flights = vs08v_dedup_flights($all_flights);
 

@@ -33,7 +33,7 @@ add_action('wp_enqueue_scripts', function() {
         wp_enqueue_script('vs08-checkout-js', get_template_directory_uri() . '/assets/js/checkout.js', ['jquery'], '4.7', true);
     }
     wp_enqueue_script('vs08-main', get_template_directory_uri() . '/assets/js/main.js', [], '1.3', true);
-    wp_enqueue_script('vs08-footer-terminal', get_template_directory_uri() . '/assets/js/footer-terminal.js', [], '1.0', true);
+    wp_enqueue_script('vs08-footer-terminal', get_template_directory_uri() . '/assets/js/footer-terminal.js', [], '1.2', true);
 });
 
 /* Ne pas charger stats.wp.com (Jetpack) — évite ERR_BLOCKED_BY_CLIENT en admin si extension bloque la requête */

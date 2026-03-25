@@ -139,13 +139,26 @@ VS08V_HotelScanner::register();
 add_action('wp_ajax_vs08v_scan_golf_pdf', ['VS08V_HotelScanner', 'ajax_scan_golf_pdf']);
 add_action('save_post', ['VS08V_MetaBoxes', 'save'], 10, 2);
 add_action('wp_enqueue_scripts', 'vs08v_frontend_assets');
-add_action('wp_print_scripts', function() {
+add_action('wp_enqueue_scripts', function () {
+    /* Thème vs08 : handle réel = vs08-footer-terminal (l’ancien footer-terminal ne matchait pas → wttr.in partait encore) */
+    wp_dequeue_script('vs08-footer-terminal');
+    wp_dequeue_style('vs08-footer-terminal');
+    wp_deregister_script('vs08-footer-terminal');
+    wp_deregister_style('vs08-footer-terminal');
     wp_dequeue_script('footer-terminal');
+    wp_deregister_script('footer-terminal');
+}, 999);
+add_action('wp_print_scripts', function () {
+    wp_dequeue_script('vs08-footer-terminal');
+    wp_dequeue_script('footer-terminal');
+    wp_deregister_script('vs08-footer-terminal');
     wp_deregister_script('footer-terminal');
 }, 100);
 add_action('admin_enqueue_scripts', 'vs08v_admin_assets');
 
 function vs08v_frontend_assets() {
+    wp_dequeue_script('vs08-footer-terminal');
+    wp_dequeue_style('vs08-footer-terminal');
     wp_dequeue_script('footer-terminal');
     wp_deregister_script('footer-terminal');
 
