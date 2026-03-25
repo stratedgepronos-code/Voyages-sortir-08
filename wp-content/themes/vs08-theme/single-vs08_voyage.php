@@ -1336,7 +1336,7 @@ function svFetchVol(){
     if(totalPax < 1) totalPax = 1;
 
     // Badge orange — recherche en cours
-    if(st){ st.className='sv-vol-st loading'; st.textContent='⏳ Recherche des vols aller-retour (Duffel + Google Flights)…'; }
+    if(st){ st.className='sv-vol-st loading'; st.textContent='⏳ Recherche de vols…'; }
 
     var restFlight = (window.VS08V && window.VS08V.rest_flight) ? window.VS08V.rest_flight : (window.vs08v && window.vs08v.rest_flight) ? window.vs08v.rest_flight : '';
     var ajaxUrl = (window.VS08V && window.VS08V.ajax_url) ? window.VS08V.ajax_url : (window.vs08v && window.vs08v.ajax_url) ? window.vs08v.ajax_url : '';
