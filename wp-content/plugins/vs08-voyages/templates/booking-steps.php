@@ -13,6 +13,7 @@ if (!$voyage_id) { wp_redirect(home_url()); exit; }
 $m       = VS08V_MetaBoxes::get($voyage_id);
 $titre   = get_the_title($voyage_id);
 $duree   = intval($m['duree'] ?? 7);
+$flag_display = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : trim((string) ($m['flag'] ?? ''));
 
 // Récupérer les paramètres depuis l'URL
 $params = [
@@ -105,6 +106,27 @@ get_header();
 .combo-more:hover{color:#0f2424}
 .bk-flights-hidden{display:none}
 .bk-combo-loading{display:flex;align-items:center;gap:10px;font-size:15px;color:#9ca3af;font-family:'Outfit',sans-serif;padding:20px 0}
+/* ── Badge escale / direct ── */
+.combo-conn-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;letter-spacing:.3px;border-radius:20px;padding:2px 9px;margin-left:auto;white-space:nowrap}
+.combo-conn-badge.direct{color:#2d8a5a;background:#e8f8f0;border:1px solid #b7e4cc}
+.combo-conn-badge.escale{color:#b85c1a;background:#fff4e6;border:1px solid #f0d9a8}
+/* ── Détail escale dépliable ── */
+.combo-conn-detail{display:none;padding:0 16px 10px 80px;font-size:12px;color:#6b7280;line-height:1.6;font-family:'Outfit',sans-serif}
+.combo-conn-detail.open{display:block}
+.combo-conn-toggle{cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:4px}
+.combo-conn-toggle:hover{color:#0f2424}
+.combo-conn-toggle .chevron{display:inline-block;transition:transform .2s;font-size:10px}
+.combo-conn-toggle.open .chevron{transform:rotate(180deg)}
+.combo-conn-step{display:flex;align-items:center;gap:6px;padding:3px 0}
+.combo-conn-step .dot{width:6px;height:6px;border-radius:50%;background:#59b7b7;flex-shrink:0}
+.combo-conn-step .dot.layover{background:#f0a030}
+/* ── Filtre vols ── */
+.bk-flight-filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.bk-flight-filter{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border:1.5px solid #e5e7eb;border-radius:24px;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;transition:all .2s;background:#fff;font-family:'Outfit',sans-serif;user-select:none}
+.bk-flight-filter:hover{border-color:#b7dfdf;color:#3d9a9a}
+.bk-flight-filter.active{border-color:#3d9a9a;color:#3d9a9a;background:#edf8f8}
+.bk-flight-filter .filter-count{font-size:11px;background:#e5e7eb;color:#6b7280;border-radius:10px;padding:1px 7px;font-weight:700;transition:all .2s}
+.bk-flight-filter.active .filter-count{background:#3d9a9a;color:#fff}
 /* CARD */
 .bk-card{background:#fff;border-radius:20px;padding:36px;box-shadow:0 4px 24px rgba(0,0,0,.07);margin-bottom:20px}
 .bk-card-title{font-size:24px;font-weight:700;color:#0f2424;font-family:'Playfair Display',serif;margin-bottom:6px}
@@ -286,6 +308,11 @@ get_header();
                         <div class="bk-flights-spinner"></div>
                         Recherche des vols aller et retour…
                     </div>
+                    <div class="bk-flight-filters" id="bk-flight-filters" style="display:none">
+                        <div class="bk-flight-filter active" data-filter="all">Tous <span class="filter-count" id="bk-filter-all-n">0</span></div>
+                        <div class="bk-flight-filter" data-filter="direct">✈ Vol direct <span class="filter-count" id="bk-filter-direct-n">0</span></div>
+                        <div class="bk-flight-filter" data-filter="escale">⇄ Avec escale <span class="filter-count" id="bk-filter-escale-n">0</span></div>
+                    </div>
                     <div id="bk-combo-list"></div>
                     <div id="bk-combo-error" class="bk-flights-error" style="display:none"></div>
                 </div>
@@ -377,9 +404,6 @@ get_header();
 
                         <!-- Corps -->
                         <div class="bk-ins-body">
-                            <div class="bk-ins-hook">Voyagez l'esprit libre, on s'occupe du reste.</div>
-                            <p class="bk-ins-sub">Annulation selon cause prévue dans le contrat, rapatriement 24h/24, frais médicaux à l'étranger, bagages… Une couverture complète pour partir sereinement.</p>
-
                             <!-- Liens documents -->
                             <div class="bk-ins-docs">
                                 <a href="<?php echo VS08V_URL; ?>assets/docs/assurever-ipid-galaxy.pdf" target="_blank" class="bk-ins-doc">
@@ -591,7 +615,7 @@ get_header();
                 <?php if ($img_recap): ?><img src="<?php echo esc_url($img_recap); ?>" class="bk-recap-voyage-img" alt=""><?php endif; ?>
                 <div>
                     <div class="bk-recap-voyage-name"><?php echo esc_html($titre); ?></div>
-                    <div class="bk-recap-voyage-dest"><?php echo esc_html(($m['flag']??'').' '.($m['destination']??'')); ?></div>
+                    <div class="bk-recap-voyage-dest"><?php echo esc_html(($flag_display ? $flag_display . ' ' : '').($m['destination']??'')); ?></div>
                 </div>
             </div>
 
@@ -827,7 +851,7 @@ var BK_DATA = <?php echo json_encode([
     'etoiles'         => $etoiles_js,
     'date_retour'     => $date_retour_js,
     'destination'     => $m['destination'] ?? '',
-    'flag'            => $m['flag'] ?? '',
+    'flag'            => $flag_display,
     'saved_voyageurs' => $bk_saved_voyageurs,
     'transfert_type'  => $m['transfert_type'] ?? '',
     'transfert_label' => $bk_tl[$m['transfert_type']??''] ?? '',
@@ -1004,7 +1028,7 @@ function bkTryBuildCombos() {
     if (loading) loading.style.display = 'none';
 
     if (!bk_flights_data.length && !bk_retour_data.length) {
-        if (errDiv) { errDiv.style.display = 'block'; errDiv.textContent = 'Aucun vol direct disponible pour cette combinaison. Contactez-nous au 03 26 65 28 63.'; }
+        if (errDiv) { errDiv.style.display = 'block'; errDiv.textContent = 'Aucun vol disponible pour cette combinaison. Contactez-nous au 03 26 65 28 63.'; }
         return;
     }
 
@@ -1130,17 +1154,65 @@ function bkFmtDuration(min) {
 // RENDU DES COMBINAISONS ALLER+RETOUR
 // ══════════════════════════════════════════════════════════════════════════════
 
+function bkHasConn(f) {
+    return f && f.has_connections === true;
+}
+
+function bkConnBadge(f, type) {
+    if (!f) return '';
+    var isConn = bkHasConn(f);
+    var cls = isConn ? 'escale' : 'direct';
+    var label = isConn ? '1 escale' : 'Vol direct';
+    return '<span class="combo-conn-badge ' + cls + '">' + label + '</span>';
+}
+
+function bkConnDetail(f, idx, legType) {
+    if (!f || !bkHasConn(f)) return '';
+    var detail = f.flight_detail || f.flight_number || '';
+    var id = 'conn-detail-' + idx + '-' + legType;
+    var togId = 'conn-tog-' + idx + '-' + legType;
+    var parts = detail.split(/\s*\+\s*/);
+    var stepsHtml = '';
+    parts.forEach(function(p, i) {
+        stepsHtml += '<div class="combo-conn-step"><span class="dot"></span> ' + bkEsc(p.trim()) + '</div>';
+        if (i < parts.length - 1) {
+            stepsHtml += '<div class="combo-conn-step"><span class="dot layover"></span> <em>Escale</em></div>';
+        }
+    });
+    return '<div class="combo-conn-toggle" id="' + togId + '" onclick="event.stopPropagation();var d=document.getElementById(\'' + id + '\');var t=document.getElementById(\'' + togId + '\');if(d.classList.contains(\'open\')){d.classList.remove(\'open\');t.classList.remove(\'open\')}else{d.classList.add(\'open\');t.classList.add(\'open\')}">'
+        + '<span class="chevron">▼</span> Détails escale'
+        + '</div>'
+        + '<div class="combo-conn-detail" id="' + id + '">' + stepsHtml + '</div>';
+}
+
 function bkRenderCombos(combos) {
     var list = document.getElementById('bk-combo-list');
     if (!list) return;
     list.innerHTML = '';
 
+    var nbDirect = 0, nbEscale = 0;
+    combos.forEach(function(c) {
+        var conn = bkHasConn(c.aller) || (c.retour && bkHasConn(c.retour));
+        if (conn) nbEscale++; else nbDirect++;
+    });
+
+    var filtersWrap = document.getElementById('bk-flight-filters');
+    if (filtersWrap && combos.length > 0 && (nbDirect > 0 && nbEscale > 0)) {
+        filtersWrap.style.display = 'flex';
+        var nAll = document.getElementById('bk-filter-all-n');
+        var nDir = document.getElementById('bk-filter-direct-n');
+        var nEsc = document.getElementById('bk-filter-escale-n');
+        if (nAll) nAll.textContent = combos.length;
+        if (nDir) nDir.textContent = nbDirect;
+        if (nEsc) nEsc.textContent = nbEscale;
+    }
+
     combos.forEach(function(c, idx) {
         var a = c.aller;
         var r = c.retour;
         var hidden = idx >= 3 ? ' bk-flights-hidden' : '';
+        var comboConn = bkHasConn(a) || (r && bkHasConn(r));
 
-        // Prix
         var priceHtml = '';
         if (c.is_reference) {
             priceHtml = '<div class="combo-price-delta ref">Meilleur prix</div>';
@@ -1169,9 +1241,11 @@ function bkRenderCombos(combos) {
             +   '<div class="combo-leg-line"><div class="combo-leg-dash"></div><div class="combo-leg-plane">✈</div><div class="combo-leg-dash"></div></div>'
             +   '<div class="combo-time">' + bkEsc(a.arrive_time) + '</div>'
             + '</div>'
+            + bkConnBadge(a) + ' '
             + '<div class="combo-leg-dur">' + bkFmtDuration(a.duration_min) + '</div>'
             + '<div class="combo-leg-num">' + bkEsc(a.flight_number) + '</div>'
-            + '</div>';
+            + '</div>'
+            + bkConnDetail(a, idx, 'aller');
 
         // Leg RETOUR
         if (r) {
@@ -1182,14 +1256,17 @@ function bkRenderCombos(combos) {
                 +   '<div class="combo-leg-line"><div class="combo-leg-dash"></div><div class="combo-leg-plane">✈</div><div class="combo-leg-dash"></div></div>'
                 +   '<div class="combo-time">' + bkEsc(r.arrive_time) + '</div>'
                 + '</div>'
+                + bkConnBadge(r) + ' '
                 + '<div class="combo-leg-dur">' + bkFmtDuration(r.duration_min) + '</div>'
                 + '<div class="combo-leg-num">' + bkEsc(r.flight_number) + '</div>'
-                + '</div>';
+                + '</div>'
+                + bkConnDetail(r, idx, 'retour');
         }
 
         var card = document.createElement('div');
         card.className = 'combo-card' + hidden;
         card.id = 'combo-card-' + idx;
+        card.setAttribute('data-conn', comboConn ? '1' : '0');
         card.innerHTML = html;
         card.addEventListener('click', (function(i) {
             return function() { bkSelectCombo(i); };
@@ -1208,14 +1285,12 @@ function bkRenderCombos(combos) {
         more.addEventListener('click', function() {
             var expanded = this.getAttribute('data-expanded') === 'true';
             if (expanded) {
-                // Réduire : re-masquer les vols au-delà du 3e
                 list.querySelectorAll('.combo-card').forEach(function(el, i) {
                     if (i >= 3) el.classList.add('bk-flights-hidden');
                 });
                 this.textContent = 'Afficher ' + extraCount + ' autre(s) combinaison(s) ▾';
                 this.setAttribute('data-expanded', 'false');
             } else {
-                // Développer : tout montrer
                 list.querySelectorAll('.bk-flights-hidden').forEach(function(el) {
                     el.classList.remove('bk-flights-hidden');
                 });
@@ -1225,6 +1300,35 @@ function bkRenderCombos(combos) {
         });
         list.appendChild(more);
     }
+
+    bkInitFlightFilters();
+}
+
+function bkInitFlightFilters() {
+    var btns = document.querySelectorAll('.bk-flight-filter');
+    btns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            btns.forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            var filter = this.getAttribute('data-filter');
+            var cards = document.querySelectorAll('.combo-card');
+            var moreBtn = document.getElementById('bk-combo-more');
+            if (moreBtn) {
+                moreBtn.setAttribute('data-expanded', 'true');
+                moreBtn.textContent = 'Réduire ▴';
+            }
+            cards.forEach(function(card) {
+                card.classList.remove('bk-flights-hidden');
+                if (filter === 'all') {
+                    card.style.display = '';
+                } else if (filter === 'direct') {
+                    card.style.display = card.getAttribute('data-conn') === '0' ? '' : 'none';
+                } else if (filter === 'escale') {
+                    card.style.display = card.getAttribute('data-conn') === '1' ? '' : 'none';
+                }
+            });
+        });
+    });
 }
 
 
