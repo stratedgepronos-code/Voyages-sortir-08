@@ -33,7 +33,7 @@ class VS08_SerpApi {
         $opts        = is_array($opts) ? $opts : [];
         $opt_sig     = md5(wp_json_encode($opts));
 
-        $cache_key = 'vs08_serpapi_' . md5("{$origin}_{$destination}_{$date}_{$passengers}_{$date_retour}_{$opt_sig}");
+        $cache_key = 'vs08_serpapi_' . md5("{$origin}_{$destination}_{$date}_{$passengers}_{$date_retour}_{$opt_sig}_v2");
         $cached = get_transient($cache_key);
         if ($cached !== false) {
             return $cached;

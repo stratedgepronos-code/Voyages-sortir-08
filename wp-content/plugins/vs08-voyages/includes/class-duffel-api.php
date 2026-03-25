@@ -170,7 +170,7 @@ class VS08_Duffel_API {
 
         $opts       = is_array($opts) ? $opts : [];
         $opt_sig    = md5(wp_json_encode($opts));
-        $cache_key  = 'vs08_duffel_' . md5("{$origin}_{$destination}_{$date}_{$passengers}_{$date_retour}_{$opt_sig}");
+        $cache_key  = 'vs08_duffel_' . md5("{$origin}_{$destination}_{$date}_{$passengers}_{$date_retour}_{$opt_sig}_v2");
         $cached    = get_transient($cache_key);
         if ($cached !== false) {
             // Convertir les montants en EUR si le cache contient une autre devise (ex. ancien cache en GBP)
@@ -488,7 +488,7 @@ class VS08_Duffel_API {
         $duffel_opts_retry = isset($search_params['duffel_opts']) && is_array($search_params['duffel_opts']) ? $search_params['duffel_opts'] : [];
         $opt_sig_retry     = md5(wp_json_encode($duffel_opts_retry));
         // ── 6) Supprimer le cache de recherche pour forcer une requête fraîche ──
-        $search_cache_key = 'vs08_duffel_' . md5("{$origin}_{$destination}_{$date}_{$passengers}_{$date_retour_retry}_{$opt_sig_retry}");
+        $search_cache_key = 'vs08_duffel_' . md5("{$origin}_{$destination}_{$date}_{$passengers}_{$date_retour_retry}_{$opt_sig_retry}_v2");
         delete_transient($search_cache_key);
         // Supprimer aussi le cache services de l'ancien offer_id
         delete_transient($cache_key);
