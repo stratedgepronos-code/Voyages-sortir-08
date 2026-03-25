@@ -180,6 +180,7 @@ var D = [
 /* ═══ TRAD MÉTÉO ═══ */
 var wFR={'Clear':'Dégagé','Sunny':'Ensoleillé','Partly cloudy':'Partiellement nuageux','Partly Cloudy':'Partiellement nuageux','Cloudy':'Nuageux','Overcast':'Couvert','Mist':'Brumeux','Fog':'Brouillard','Freezing fog':'Brouillard givrant','Patchy rain possible':'Averses possibles','Patchy rain nearby':'Averses éparses','Light drizzle':'Bruine légère','Patchy light drizzle':'Bruine éparse','Heavy drizzle':'Forte bruine','Light rain':'Pluie légère','Moderate rain':'Pluie modérée','Moderate rain at times':'Pluie par moments','Heavy rain':'Forte pluie','Heavy rain at times':'Forte pluie par moments','Light rain shower':'Averse légère','Moderate or heavy rain shower':'Forte averse','Torrential rain shower':'Averse torrentielle','Patchy light rain':'Pluie fine','Patchy light rain with thunder':'Orage léger','Moderate or heavy rain with thunder':'Fort orage','Light freezing rain':'Pluie verglaçante','Moderate or heavy freezing rain':'Forte pluie verglaçante','Patchy snow possible':'Neige possible','Light snow':'Neige légère','Moderate snow':'Neige modérée','Heavy snow':'Forte neige','Blowing snow':'Poudrerie','Blizzard':'Blizzard','Light snow showers':'Averses de neige','Moderate or heavy snow showers':'Fortes averses de neige','Ice pellets':'Grésil','Light sleet':'Neige fondue','Thundery outbreaks possible':'Risque d\'orage','Thundery outbreaks in nearby':'Orages proches'};
 function wType(c){c=+c;if(c===113)return'clear';if([116,119,122].indexOf(c)>-1)return'cloudy';if([143,248,260].indexOf(c)>-1)return'fog';if([176,263,266,281,284,293,296,299,302,305,308,311,314,353,356,359].indexOf(c)>-1)return'rain';if([179,182,185,227,230,323,326,329,332,335,338,350,362,365,368,371,374,377].indexOf(c)>-1)return'snow';if([200,386,389,392,395].indexOf(c)>-1)return'storm';return'cloudy'}
+function wmoToWeather(code){code=+code;if(code===0||code===1)return{type:'clear',fr:code===0?'Dégagé':'Principalement dégagé'};if(code===2)return{type:'cloudy',fr:'Partiellement nuageux'};if(code===3)return{type:'cloudy',fr:'Couvert'};if(code>=45&&code<=48)return{type:'fog',fr:'Brouillard'};if(code>=51&&code<=57)return{type:'rain',fr:code>=56?'Bruine verglaçante':'Bruine'};if(code>=61&&code<=67)return{type:'rain',fr:'Pluie'};if(code>=71&&code<=77)return{type:'snow',fr:'Neige'};if(code>=80&&code<=82)return{type:'rain',fr:'Averses'};if(code>=85&&code<=86)return{type:'snow',fr:'Averses de neige'};if(code>=95&&code<=99)return{type:'storm',fr:'Orage'};return{type:'cloudy',fr:'Nuageux'}}
 function wEm(t){return{clear:'☀️',cloudy:'⛅',fog:'🌫️',rain:'🌧️',snow:'❄️',storm:'⛈️'}[t]||'🌤️'}
 
 /* ═══ CANVAS — PLUIE UNIQUEMENT ═══ */
@@ -252,9 +253,20 @@ function fetchWiki(articles,cb){
     next();
 }
 
-/* ═══ WEATHER ═══ */
-function fetchW(q,cb){
-    fetch('https://wttr.in/'+q+'?format=j1').then(function(r){if(!r.ok)throw 0;return r.json()}).then(cb).catch(function(){cb(null)});
+/* ═══ WEATHER : Open-Meteo (fiable / CORS) puis secours wttr.in ═══ */
+function fetchW(dest,cb){
+    var om='https://api.open-meteo.com/v1/forecast?latitude='+dest.lat+'&longitude='+dest.lng+'&current=temperature_2m,apparent_temperature,weather_code&wind_speed_unit=kmh&timezone=auto';
+    fetch(om).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(data){
+        var cur=data.current;
+        if(!cur||cur.temperature_2m==null)throw 0;
+        var wm=wmoToWeather(cur.weather_code);
+        cb({type:wm.type,fr:wm.fr,temp_C:Math.round(cur.temperature_2m),FeelsLikeC:Math.round(cur.apparent_temperature!=null?cur.apparent_temperature:cur.temperature_2m)});
+    }).catch(function(){
+        fetch('https://wttr.in/'+dest.q+'?format=j1').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(data){
+            var c=data.current_condition[0],t=wType(c.weatherCode),en=c.weatherDesc[0].value.trim(),fr=wFR[en]||en;
+            cb({type:t,fr:fr,temp_C:c.temp_C,FeelsLikeC:c.FeelsLikeC});
+        }).catch(function(){cb(null)});
+    });
 }
 
 /* ═══ NAVIGATION ═══ */
@@ -296,15 +308,13 @@ function go(i){
     });
 
     // 2. MÉTÉO
-    fetchW(dest.q,function(data){
+    fetchW(dest,function(data){
         if(data){
-            var c=data.current_condition[0], t=wType(c.weatherCode);
-            var en=c.weatherDesc[0].value.trim(), fr=wFR[en]||en;
+            var t=data.type, fr=data.fr;
             document.getElementById('wE').textContent=wEm(t);
-            document.getElementById('wT').textContent=c.temp_C+'°C';
+            document.getElementById('wT').textContent=data.temp_C+'°C';
             document.getElementById('wD').textContent=fr;
-            document.getElementById('wW').title=dest.city+', '+dest.country+' · '+dest.lm+' — '+fr+' '+c.temp_C+'°C (ressenti '+c.FeelsLikeC+'°C)';
-            // Pluie Canvas uniquement si rain ou storm
+            document.getElementById('wW').title=dest.city+', '+dest.country+' · '+dest.lm+' — '+fr+' '+data.temp_C+'°C (ressenti '+data.FeelsLikeC+'°C)';
             if(t==='rain') startRain(false);
             else if(t==='storm') startRain(true);
         } else {

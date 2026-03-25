@@ -36,6 +36,21 @@ function wType(code){
     if([200,386,389,392,395].indexOf(code)>-1) return 'storm';
     return 'cloudy';
 }
+/** Open-Meteo (WMO) → même typologie que wType (wttr.in en secours). */
+function wmoToWeather(code){
+    code=+code;
+    if(code===0||code===1) return {type:'clear',fr:code===0?'Dégagé':'Principalement dégagé'};
+    if(code===2) return {type:'cloudy',fr:'Partiellement nuageux'};
+    if(code===3) return {type:'cloudy',fr:'Couvert'};
+    if(code>=45&&code<=48) return {type:'fog',fr:'Brouillard'};
+    if(code>=51&&code<=57) return {type:'rain',fr:code>=56?'Bruine verglaçante':'Bruine'};
+    if(code>=61&&code<=67) return {type:'rain',fr:'Pluie'};
+    if(code>=71&&code<=77) return {type:'snow',fr:'Neige'};
+    if(code>=80&&code<=82) return {type:'rain',fr:'Averses'};
+    if(code>=85&&code<=86) return {type:'snow',fr:'Averses de neige'};
+    if(code>=95&&code<=99) return {type:'storm',fr:'Orage'};
+    return {type:'cloudy',fr:'Nuageux'};
+}
 function wEmoji(t){return{clear:'☀️',cloudy:'⛅',fog:'🌫️',rain:'🌧️',snow:'❄️',storm:'⛈️'}[t]||'🌤️';}
 
 var skyProfiles = {
@@ -183,29 +198,44 @@ function stopWxEffect(){
     if(wxCtx&&wxCvs) wxCtx.clearRect(0,0,wxCvs.width,wxCvs.height);
 }
 
+function renderWxChalons(type, fr, temp, feels, windKmh){
+    var hour = new Date().getHours();
+    var wxE = document.getElementById('wxE'), wxT = document.getElementById('wxT'), wxD = document.getElementById('wxD'), wxW = document.getElementById('wxW');
+    if(wxE) wxE.textContent = wEmoji(type);
+    if(wxT) wxT.textContent = temp+'°C';
+    if(wxD) wxD.textContent = fr;
+    if(wxW) wxW.title = 'Châlons-en-Champagne (51) · '+fr+' · '+temp+'°C (ressenti '+feels+'°C) · Vent '+windKmh+'km/h';
+    applyVisuals(type, hour);
+    if(type==='rain'||type==='storm'||type==='snow') startWxEffect(type);
+    else stopWxEffect();
+}
 function fetchWeather(){
-    fetch('https://wttr.in/Chalons-en-Champagne?format=j1')
-    .then(function(r){if(!r.ok)throw 0;return r.json();})
+    var lat = 48.9564, lon = 4.3673;
+    var om = 'https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&wind_speed_unit=kmh&timezone=Europe%2FParis';
+    fetch(om)
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
     .then(function(data){
-        var c = data.current_condition[0];
-        var code = c.weatherCode;
-        var type = wType(code);
-        var en = c.weatherDesc[0].value.trim();
-        var fr = wFR[en]||en;
-        var temp = c.temp_C;
-        var hour = new Date().getHours();
-        var wxE = document.getElementById('wxE'), wxT = document.getElementById('wxT'), wxD = document.getElementById('wxD'), wxW = document.getElementById('wxW');
-        if(wxE) wxE.textContent = wEmoji(type);
-        if(wxT) wxT.textContent = temp+'°C';
-        if(wxD) wxD.textContent = fr;
-        if(wxW) wxW.title = 'Châlons-en-Champagne (51) · '+fr+' · '+temp+'°C (ressenti '+c.FeelsLikeC+'°C) · Vent '+c.windspeedKmph+'km/h';
-        applyVisuals(type, hour);
-        if(type==='rain'||type==='storm'||type==='snow') startWxEffect(type);
-        else stopWxEffect();
+        var cur = data.current;
+        if(!cur || cur.temperature_2m == null) throw 0;
+        var wm = wmoToWeather(cur.weather_code);
+        var feels = cur.apparent_temperature != null ? Math.round(cur.apparent_temperature) : Math.round(cur.temperature_2m);
+        renderWxChalons(wm.type, wm.fr, Math.round(cur.temperature_2m), feels, Math.round(cur.wind_speed_10m || 0));
+    })
+    .catch(function(){
+        return fetch('https://wttr.in/Chalons-en-Champagne?format=j1')
+        .then(function(r){if(!r.ok)throw 0;return r.json();})
+        .then(function(data){
+            var c = data.current_condition[0];
+            var type = wType(c.weatherCode);
+            var en = c.weatherDesc[0].value.trim();
+            var fr = wFR[en]||en;
+            renderWxChalons(type, fr, c.temp_C, c.FeelsLikeC, c.windspeedKmph);
+        });
     })
     .catch(function(){
         var hour = new Date().getHours();
         applyVisuals('cloudy', hour);
+        stopWxEffect();
         var wxT = document.getElementById('wxT'), wxD = document.getElementById('wxD');
         if(wxT) wxT.textContent = '—';
         if(wxD) wxD.textContent = 'Châlons';
