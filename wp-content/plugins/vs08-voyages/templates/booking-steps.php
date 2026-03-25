@@ -121,24 +121,6 @@ get_header();
 .combo-conn-step{display:flex;align-items:center;gap:6px;padding:2px 0}
 .combo-conn-step .dot{width:6px;height:6px;border-radius:50%;background:#59b7b7;flex-shrink:0}
 .combo-conn-step .dot.layover{background:#f0a030}
-/* ── Layout sidebar + liste ── */
-.bk-flights-layout{display:flex;gap:18px;align-items:flex-start}
-.bk-filters-sidebar{flex:0 0 210px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:14px;padding:16px;position:sticky;top:20px;font-family:'Outfit',sans-serif}
-.bk-flights-main{flex:1;min-width:0}
-.bkf-title{font-size:16px;font-weight:700;color:#0f2424;margin-bottom:14px}
-.bkf-section{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #e5e7eb}
-.bkf-section:last-of-type{border-bottom:none;margin-bottom:8px;padding-bottom:0}
-.bkf-label{font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
-.bkf-check{display:flex;align-items:center;gap:7px;font-size:13px;color:#4b5563;cursor:pointer;padding:4px 0;transition:color .15s}
-.bkf-check:hover{color:#0f2424}
-.bkf-check input[type=radio]{accent-color:#3d9a9a;margin:0}
-.bkf-n{font-size:11px;background:#e5e7eb;color:#6b7280;border-radius:8px;padding:1px 6px;font-weight:700;margin-left:auto}
-.bkf-range-row{display:flex;justify-content:space-between;margin-bottom:4px}
-.bkf-range-val{font-size:12px;font-weight:600;color:#3d9a9a}
-.bkf-range{width:100%;margin:3px 0;accent-color:#3d9a9a;cursor:pointer}
-.bkf-reset{width:100%;padding:7px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'Outfit',sans-serif}
-.bkf-reset:hover{border-color:#3d9a9a;color:#3d9a9a}
-@media(max-width:768px){.bk-flights-layout{flex-direction:column}.bk-filters-sidebar{flex:none;width:100%;position:static;margin-bottom:12px}}
 /* CARD */
 .bk-card{background:#fff;border-radius:20px;padding:36px;box-shadow:0 4px 24px rgba(0,0,0,.07);margin-bottom:20px}
 .bk-card-title{font-size:24px;font-weight:700;color:#0f2424;font-family:'Playfair Display',serif;margin-bottom:6px}
@@ -320,40 +302,7 @@ get_header();
                         <div class="bk-flights-spinner"></div>
                         Recherche des vols aller et retour…
                     </div>
-                    <div class="bk-flights-layout" id="bk-flights-layout" style="display:none">
-                        <aside class="bk-filters-sidebar" id="bk-filters-sidebar">
-                            <div class="bkf-title">Filtres</div>
-                            <div class="bkf-section">
-                                <div class="bkf-label">Type de vol</div>
-                                <label class="bkf-check"><input type="radio" name="bkf_type" value="all" checked> Tous <span class="bkf-n" id="bkf-n-all"></span></label>
-                                <label class="bkf-check"><input type="radio" name="bkf_type" value="direct"> ✈ Vol direct <span class="bkf-n" id="bkf-n-direct"></span></label>
-                                <label class="bkf-check"><input type="radio" name="bkf_type" value="escale"> ⇄ Avec escale <span class="bkf-n" id="bkf-n-escale"></span></label>
-                            </div>
-                            <div class="bkf-section">
-                                <div class="bkf-label">Départ aller</div>
-                                <div class="bkf-range-row">
-                                    <span class="bkf-range-val" id="bkf-dep-min-lbl">00:00</span>
-                                    <span class="bkf-range-val" id="bkf-dep-max-lbl">23:59</span>
-                                </div>
-                                <input type="range" class="bkf-range" id="bkf-dep-min" min="0" max="1439" value="0" step="30">
-                                <input type="range" class="bkf-range" id="bkf-dep-max" min="0" max="1439" value="1439" step="30">
-                            </div>
-                            <div class="bkf-section">
-                                <div class="bkf-label">Départ retour</div>
-                                <div class="bkf-range-row">
-                                    <span class="bkf-range-val" id="bkf-ret-min-lbl">00:00</span>
-                                    <span class="bkf-range-val" id="bkf-ret-max-lbl">23:59</span>
-                                </div>
-                                <input type="range" class="bkf-range" id="bkf-ret-min" min="0" max="1439" value="0" step="30">
-                                <input type="range" class="bkf-range" id="bkf-ret-max" min="0" max="1439" value="1439" step="30">
-                            </div>
-                            <button type="button" class="bkf-reset" id="bkf-reset">Réinitialiser</button>
-                        </aside>
-                        <div class="bk-flights-main">
-                            <div id="bk-combo-list"></div>
-                            <div id="bk-combo-no-match" class="bk-flights-error" style="display:none">Aucun vol ne correspond à vos filtres.</div>
-                        </div>
-                    </div>
+                    <div id="bk-combo-list"></div>
                     <div id="bk-combo-error" class="bk-flights-error" style="display:none"></div>
                 </div>
 
@@ -1100,12 +1049,7 @@ function bkTryBuildCombos() {
     if (combos.length) combos[0].is_reference = true;
 
     bk_combos_data = combos;
-
-    var layout = document.getElementById('bk-flights-layout');
-    if (layout) layout.style.display = 'flex';
-
     bkRenderCombos(combos);
-    bkInitSidebarFilters();
     bkSelectCombo(0);
 }
 
@@ -1199,17 +1143,6 @@ function bkFmtDuration(min) {
 // RENDU DES COMBINAISONS ALLER+RETOUR
 // ══════════════════════════════════════════════════════════════════════════════
 
-function bkTimeToMin(t) {
-    if (!t) return 0;
-    var p = (t+'').split(':');
-    return (parseInt(p[0],10)||0)*60 + (parseInt(p[1],10)||0);
-}
-function bkMinToTime(m) {
-    var h = Math.floor(m/60) % 24;
-    var mn = m % 60;
-    return String(h).padStart(2,'0') + ':' + String(mn).padStart(2,'0');
-}
-
 function bkHasConn(f) {
     if (!f) return false;
     if (f.has_connections === true || f.has_connections === 1 || f.has_connections === '1') return true;
@@ -1249,26 +1182,9 @@ function bkRenderCombos(combos) {
     if (!list) return;
     list.innerHTML = '';
 
-    var nbDirect = 0, nbEscale = 0;
-    combos.forEach(function(c) {
-        var conn = bkHasConn(c.aller) || (c.retour && bkHasConn(c.retour));
-        if (conn) nbEscale++; else nbDirect++;
-    });
-
-    var nAll = document.getElementById('bkf-n-all');
-    var nDir = document.getElementById('bkf-n-direct');
-    var nEsc = document.getElementById('bkf-n-escale');
-    if (nAll) nAll.textContent = combos.length;
-    if (nDir) nDir.textContent = nbDirect;
-    if (nEsc) nEsc.textContent = nbEscale;
-
     combos.forEach(function(c, idx) {
         var a = c.aller;
         var r = c.retour;
-        var comboConn = bkHasConn(a) || (r && bkHasConn(r));
-
-        var depMin = bkTimeToMin(a.depart_time);
-        var retMin = r ? bkTimeToMin(r.depart_time) : 0;
 
         var priceHtml = '';
         if (c.is_reference) {
@@ -1325,9 +1241,6 @@ function bkRenderCombos(combos) {
         var card = document.createElement('div');
         card.className = 'combo-card';
         card.id = 'combo-card-' + idx;
-        card.setAttribute('data-conn', comboConn ? '1' : '0');
-        card.setAttribute('data-dep', depMin);
-        card.setAttribute('data-ret', retMin);
         card.innerHTML = html;
         card.addEventListener('click', (function(i) {
             return function() { bkSelectCombo(i); };
@@ -1336,67 +1249,6 @@ function bkRenderCombos(combos) {
     });
 }
 
-function bkInitSidebarFilters() {
-    var radios = document.querySelectorAll('input[name="bkf_type"]');
-    var depMinR = document.getElementById('bkf-dep-min');
-    var depMaxR = document.getElementById('bkf-dep-max');
-    var retMinR = document.getElementById('bkf-ret-min');
-    var retMaxR = document.getElementById('bkf-ret-max');
-    var resetBtn = document.getElementById('bkf-reset');
-
-    function applyFilters() {
-        var typeVal = 'all';
-        radios.forEach(function(r){ if(r.checked) typeVal = r.value; });
-
-        var dMin = parseInt(depMinR.value,10);
-        var dMax = parseInt(depMaxR.value,10);
-        var rMin = parseInt(retMinR.value,10);
-        var rMax = parseInt(retMaxR.value,10);
-
-        document.getElementById('bkf-dep-min-lbl').textContent = bkMinToTime(dMin);
-        document.getElementById('bkf-dep-max-lbl').textContent = bkMinToTime(dMax);
-        document.getElementById('bkf-ret-min-lbl').textContent = bkMinToTime(rMin);
-        document.getElementById('bkf-ret-max-lbl').textContent = bkMinToTime(rMax);
-
-        var cards = document.querySelectorAll('.combo-card');
-        var visible = 0;
-        cards.forEach(function(card) {
-            var show = true;
-            var conn = card.getAttribute('data-conn');
-            if (typeVal === 'direct' && conn === '1') show = false;
-            if (typeVal === 'escale' && conn === '0') show = false;
-
-            if (show) {
-                var dep = parseInt(card.getAttribute('data-dep'),10);
-                if (dep < dMin || dep > dMax) show = false;
-            }
-            if (show) {
-                var ret = parseInt(card.getAttribute('data-ret'),10);
-                if (ret < rMin || ret > rMax) show = false;
-            }
-
-            card.style.display = show ? '' : 'none';
-            if (show) visible++;
-        });
-
-        var noMatch = document.getElementById('bk-combo-no-match');
-        if (noMatch) noMatch.style.display = visible === 0 ? 'block' : 'none';
-    }
-
-    radios.forEach(function(r){ r.addEventListener('change', applyFilters); });
-    [depMinR, depMaxR, retMinR, retMaxR].forEach(function(el){
-        if (el) el.addEventListener('input', applyFilters);
-    });
-
-    if (resetBtn) {
-        resetBtn.addEventListener('click', function() {
-            radios.forEach(function(r){ r.checked = r.value === 'all'; });
-            depMinR.value = 0; depMaxR.value = 1439;
-            retMinR.value = 0; retMaxR.value = 1439;
-            applyFilters();
-        });
-    }
-}
 
 
 // ══════════════════════════════════════════════════════════════════════════════

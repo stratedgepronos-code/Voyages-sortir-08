@@ -236,10 +236,8 @@ var BK_CIRCUIT = <?php echo json_encode([
 .bkc-conn-step{display:flex;align-items:center;gap:6px;padding:2px 0}
 .bkc-conn-step .dot{width:6px;height:6px;border-radius:50%;background:#59b7b7;flex-shrink:0}
 .bkc-conn-step .dot.layover{background:#f0a030}
-/* ── Layout sidebar + liste ── */
-.bkc-flights-layout{display:flex;gap:18px;align-items:flex-start}
-.bkc-filters-sidebar{flex:0 0 210px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:14px;padding:16px;position:sticky;top:20px;font-family:'Outfit',sans-serif}
-.bkc-flights-main{flex:1;min-width:0}
+/* ── Sidebar filtres — marge gauche ── */
+.bkc-filters-sidebar{position:fixed;top:160px;width:200px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;font-family:'Outfit',sans-serif;box-shadow:0 2px 12px rgba(0,0,0,.06);z-index:50;transition:opacity .3s}
 .bkf-title{font-size:16px;font-weight:700;color:#0f2424;margin-bottom:14px}
 .bkf-section{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #e5e7eb}
 .bkf-section:last-of-type{border-bottom:none;margin-bottom:8px;padding-bottom:0}
@@ -254,11 +252,42 @@ var BK_CIRCUIT = <?php echo json_encode([
 .bkf-reset{width:100%;padding:7px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'Outfit',sans-serif}
 .bkf-reset:hover{border-color:#3d9a9a;color:#3d9a9a}
 @media(max-width:960px){.bkc-inner{grid-template-columns:1fr;padding:0 20px}.bkc-header{grid-column:span 1}.bkc-recap{position:static}}
-@media(max-width:768px){.bkc-flights-layout{flex-direction:column}.bkc-filters-sidebar{flex:none;width:100%;position:static;margin-bottom:12px}}
 @media(max-width:640px){.bkc-inner{padding:0 14px}.bkc-field-row{grid-template-columns:1fr}.bkc-fact-grid{grid-template-columns:1fr}.bkc-fact-grid .full{grid-column:span 1}.bkc-header{flex-direction:column;text-align:center}.bkc-header-chips{justify-content:center}.bkc-route-iata{font-size:20px}.bkc-route-header{padding:10px 14px;gap:10px}}
 </style>
 
-<div class="bkc-wrap"><div class="bkc-inner">
+<div class="bkc-wrap">
+
+    <!-- SIDEBAR FILTRES — positionné dans la marge gauche -->
+    <aside class="bkc-filters-sidebar" id="bkc-filters-sidebar" style="display:none">
+        <div class="bkf-title">Filtres</div>
+        <div class="bkf-section">
+            <div class="bkf-label">Type de vol</div>
+            <label class="bkf-check"><input type="radio" name="bkcf_type" value="all" checked> Tous <span class="bkf-n" id="bkcf-n-all"></span></label>
+            <label class="bkf-check"><input type="radio" name="bkcf_type" value="direct"> ✈ Vol direct <span class="bkf-n" id="bkcf-n-direct"></span></label>
+            <label class="bkf-check"><input type="radio" name="bkcf_type" value="escale"> ⇄ Avec escale <span class="bkf-n" id="bkcf-n-escale"></span></label>
+        </div>
+        <div class="bkf-section">
+            <div class="bkf-label">Départ aller</div>
+            <div class="bkf-range-row">
+                <span class="bkf-range-val" id="bkcf-dep-min-lbl">00:00</span>
+                <span class="bkf-range-val" id="bkcf-dep-max-lbl">23:59</span>
+            </div>
+            <input type="range" class="bkf-range" id="bkcf-dep-min" min="0" max="1439" value="0" step="30">
+            <input type="range" class="bkf-range" id="bkcf-dep-max" min="0" max="1439" value="1439" step="30">
+        </div>
+        <div class="bkf-section">
+            <div class="bkf-label">Départ retour</div>
+            <div class="bkf-range-row">
+                <span class="bkf-range-val" id="bkcf-ret-min-lbl">00:00</span>
+                <span class="bkf-range-val" id="bkcf-ret-max-lbl">23:59</span>
+            </div>
+            <input type="range" class="bkf-range" id="bkcf-ret-min" min="0" max="1439" value="0" step="30">
+            <input type="range" class="bkf-range" id="bkcf-ret-max" min="0" max="1439" value="1439" step="30">
+        </div>
+        <button type="button" class="bkf-reset" id="bkcf-reset">Réinitialiser</button>
+    </aside>
+
+<div class="bkc-inner">
 
     <!-- HEADER -->
     <div class="bkc-header">
@@ -313,40 +342,8 @@ var BK_CIRCUIT = <?php echo json_encode([
                     <div class="bkc-flights-spinner"></div>
                     Recherche des vols aller et retour…
                 </div>
-                <div class="bkc-flights-layout" id="bkc-flights-layout" style="display:none">
-                    <aside class="bkc-filters-sidebar" id="bkc-filters-sidebar">
-                        <div class="bkf-title">Filtres</div>
-                        <div class="bkf-section">
-                            <div class="bkf-label">Type de vol</div>
-                            <label class="bkf-check"><input type="radio" name="bkcf_type" value="all" checked> Tous <span class="bkf-n" id="bkcf-n-all"></span></label>
-                            <label class="bkf-check"><input type="radio" name="bkcf_type" value="direct"> ✈ Vol direct <span class="bkf-n" id="bkcf-n-direct"></span></label>
-                            <label class="bkf-check"><input type="radio" name="bkcf_type" value="escale"> ⇄ Avec escale <span class="bkf-n" id="bkcf-n-escale"></span></label>
-                        </div>
-                        <div class="bkf-section">
-                            <div class="bkf-label">Départ aller</div>
-                            <div class="bkf-range-row">
-                                <span class="bkf-range-val" id="bkcf-dep-min-lbl">00:00</span>
-                                <span class="bkf-range-val" id="bkcf-dep-max-lbl">23:59</span>
-                            </div>
-                            <input type="range" class="bkf-range" id="bkcf-dep-min" min="0" max="1439" value="0" step="30">
-                            <input type="range" class="bkf-range" id="bkcf-dep-max" min="0" max="1439" value="1439" step="30">
-                        </div>
-                        <div class="bkf-section">
-                            <div class="bkf-label">Départ retour</div>
-                            <div class="bkf-range-row">
-                                <span class="bkf-range-val" id="bkcf-ret-min-lbl">00:00</span>
-                                <span class="bkf-range-val" id="bkcf-ret-max-lbl">23:59</span>
-                            </div>
-                            <input type="range" class="bkf-range" id="bkcf-ret-min" min="0" max="1439" value="0" step="30">
-                            <input type="range" class="bkf-range" id="bkcf-ret-max" min="0" max="1439" value="1439" step="30">
-                        </div>
-                        <button type="button" class="bkf-reset" id="bkcf-reset">Réinitialiser</button>
-                    </aside>
-                    <div class="bkc-flights-main">
-                        <div id="bkc-combo-list"></div>
-                        <div id="bkc-combo-no-match" class="bkc-flights-error" style="display:none">Aucun vol ne correspond à vos filtres.</div>
-                    </div>
-                </div>
+                <div id="bkc-combo-list"></div>
+                <div id="bkc-combo-no-match" class="bkc-flights-error" style="display:none">Aucun vol ne correspond à vos filtres.</div>
                 <div id="bkc-combo-error" class="bkc-flights-error" style="display:none"></div>
             </div>
 
@@ -722,11 +719,9 @@ var BK_CIRCUIT = <?php echo json_encode([
         if (combos.length) combos[0].is_reference = true;
         bkc_combos_data = combos;
 
-        var layout = document.getElementById('bkc-flights-layout');
-        if (layout) layout.style.display = 'flex';
-
         bkcRenderCombos(combos);
         bkcInitSidebarFilters();
+        bkcPositionSidebar();
         bkcSelectCombo(0);
     }
 
@@ -912,6 +907,27 @@ var BK_CIRCUIT = <?php echo json_encode([
                 applyFilters();
             });
         }
+    }
+
+    function bkcPositionSidebar() {
+        var sidebar = document.getElementById('bkc-filters-sidebar');
+        var inner = document.querySelector('.bkc-inner');
+        if (!sidebar || !inner) return;
+
+        function pos() {
+            var rect = inner.getBoundingClientRect();
+            var gap = 18;
+            var sidebarW = 200;
+            var spaceLeft = rect.left - gap - sidebarW;
+            if (spaceLeft >= 10) {
+                sidebar.style.left = (rect.left - gap - sidebarW) + 'px';
+                sidebar.style.display = '';
+            } else {
+                sidebar.style.display = 'none';
+            }
+        }
+        pos();
+        window.addEventListener('resize', pos);
     }
 
     function bkcSelectCombo(idx) {
