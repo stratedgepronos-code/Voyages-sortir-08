@@ -208,7 +208,7 @@ var BK_CIRCUIT = <?php echo json_encode([
 .bkc-combo-price-sub{font-size:9px;color:#9ca3af;font-family:'Outfit',sans-serif}
 .bkc-combo-check{width:24px;height:24px;border-radius:50%;background:#59b7b7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;opacity:0;transition:all .2s}
 .bkc-combo-card.selected .bkc-combo-check{opacity:1}
-.bkc-combo-leg{display:flex;align-items:center;gap:10px;padding:6px 0;font-family:'Outfit',sans-serif;font-size:12px;color:#4a5568}
+.bkc-combo-leg{display:flex;align-items:center;gap:10px;padding:6px 0;font-family:'Outfit',sans-serif;font-size:12px;color:#4a5568;flex-wrap:wrap}
 .bkc-combo-leg-badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 8px;border-radius:6px;flex-shrink:0}
 .bkc-combo-leg-badge.aller{background:#edf8f8;color:#3d9a9a}
 .bkc-combo-leg-badge.retour{background:#fff3e8;color:#b85c1a}
@@ -216,12 +216,45 @@ var BK_CIRCUIT = <?php echo json_encode([
 .bkc-combo-leg-line{flex:1;display:flex;align-items:center;gap:4px}
 .bkc-combo-leg-dash{flex:1;height:1px;background:#ddd}
 .bkc-combo-leg-plane{font-size:12px;color:#59b7b7}
-.bkc-combo-leg-dur{font-size:10px;color:#9ca3af;min-width:40px;text-align:center}
-.bkc-combo-leg-num{font-size:10px;color:#bbb;min-width:50px;text-align:right}
+.bkc-combo-leg-meta{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
+.bkc-combo-leg-dur{font-size:10px;color:#9ca3af;white-space:nowrap}
+.bkc-combo-leg-num{font-size:10px;color:#bbb;white-space:nowrap}
 .bkc-combo-more{text-align:center;padding:11px;font-size:14px;font-weight:600;color:#59b7b7;cursor:pointer;border-top:1px solid #e5e7eb;transition:color .15s;background:#fafafa;border-radius:0 0 14px 14px}
 .bkc-combo-more:hover{color:#0f2424}
 .bkc-flights-hidden{display:none}
+/* ── Badge escale / direct ── */
+.bkc-conn-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;letter-spacing:.3px;border-radius:20px;padding:2px 9px;white-space:nowrap;flex-shrink:0}
+.bkc-conn-badge.direct{color:#2d8a5a;background:#e8f8f0;border:1px solid #b7e4cc}
+.bkc-conn-badge.escale{color:#b85c1a;background:#fff4e6;border:1px solid #f0d9a8}
+/* ── Détail escale dépliable ── */
+.bkc-conn-detail{display:none;padding:6px 16px 10px 60px;font-size:12px;color:#6b7280;line-height:1.6;font-family:'Outfit',sans-serif;border-top:1px dashed #f0f0f0}
+.bkc-conn-detail.open{display:block}
+.bkc-conn-toggle{cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#59b7b7;padding:2px 16px 2px 60px}
+.bkc-conn-toggle:hover{color:#0f2424}
+.bkc-conn-toggle .chevron{display:inline-block;transition:transform .2s;font-size:9px}
+.bkc-conn-toggle.open .chevron{transform:rotate(180deg)}
+.bkc-conn-step{display:flex;align-items:center;gap:6px;padding:2px 0}
+.bkc-conn-step .dot{width:6px;height:6px;border-radius:50%;background:#59b7b7;flex-shrink:0}
+.bkc-conn-step .dot.layover{background:#f0a030}
+/* ── Layout sidebar + liste ── */
+.bkc-flights-layout{display:flex;gap:18px;align-items:flex-start}
+.bkc-filters-sidebar{flex:0 0 210px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:14px;padding:16px;position:sticky;top:20px;font-family:'Outfit',sans-serif}
+.bkc-flights-main{flex:1;min-width:0}
+.bkf-title{font-size:16px;font-weight:700;color:#0f2424;margin-bottom:14px}
+.bkf-section{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #e5e7eb}
+.bkf-section:last-of-type{border-bottom:none;margin-bottom:8px;padding-bottom:0}
+.bkf-label{font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.bkf-check{display:flex;align-items:center;gap:7px;font-size:13px;color:#4b5563;cursor:pointer;padding:4px 0;transition:color .15s}
+.bkf-check:hover{color:#0f2424}
+.bkf-check input[type=radio]{accent-color:#3d9a9a;margin:0}
+.bkf-n{font-size:11px;background:#e5e7eb;color:#6b7280;border-radius:8px;padding:1px 6px;font-weight:700;margin-left:auto}
+.bkf-range-row{display:flex;justify-content:space-between;margin-bottom:4px}
+.bkf-range-val{font-size:12px;font-weight:600;color:#3d9a9a}
+.bkf-range{width:100%;margin:3px 0;accent-color:#3d9a9a;cursor:pointer}
+.bkf-reset{width:100%;padding:7px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'Outfit',sans-serif}
+.bkf-reset:hover{border-color:#3d9a9a;color:#3d9a9a}
 @media(max-width:960px){.bkc-inner{grid-template-columns:1fr;padding:0 20px}.bkc-header{grid-column:span 1}.bkc-recap{position:static}}
+@media(max-width:768px){.bkc-flights-layout{flex-direction:column}.bkc-filters-sidebar{flex:none;width:100%;position:static;margin-bottom:12px}}
 @media(max-width:640px){.bkc-inner{padding:0 14px}.bkc-field-row{grid-template-columns:1fr}.bkc-fact-grid{grid-template-columns:1fr}.bkc-fact-grid .full{grid-column:span 1}.bkc-header{flex-direction:column;text-align:center}.bkc-header-chips{justify-content:center}.bkc-route-iata{font-size:20px}.bkc-route-header{padding:10px 14px;gap:10px}}
 </style>
 
@@ -280,7 +313,40 @@ var BK_CIRCUIT = <?php echo json_encode([
                     <div class="bkc-flights-spinner"></div>
                     Recherche des vols aller et retour…
                 </div>
-                <div id="bkc-combo-list"></div>
+                <div class="bkc-flights-layout" id="bkc-flights-layout" style="display:none">
+                    <aside class="bkc-filters-sidebar" id="bkc-filters-sidebar">
+                        <div class="bkf-title">Filtres</div>
+                        <div class="bkf-section">
+                            <div class="bkf-label">Type de vol</div>
+                            <label class="bkf-check"><input type="radio" name="bkcf_type" value="all" checked> Tous <span class="bkf-n" id="bkcf-n-all"></span></label>
+                            <label class="bkf-check"><input type="radio" name="bkcf_type" value="direct"> ✈ Vol direct <span class="bkf-n" id="bkcf-n-direct"></span></label>
+                            <label class="bkf-check"><input type="radio" name="bkcf_type" value="escale"> ⇄ Avec escale <span class="bkf-n" id="bkcf-n-escale"></span></label>
+                        </div>
+                        <div class="bkf-section">
+                            <div class="bkf-label">Départ aller</div>
+                            <div class="bkf-range-row">
+                                <span class="bkf-range-val" id="bkcf-dep-min-lbl">00:00</span>
+                                <span class="bkf-range-val" id="bkcf-dep-max-lbl">23:59</span>
+                            </div>
+                            <input type="range" class="bkf-range" id="bkcf-dep-min" min="0" max="1439" value="0" step="30">
+                            <input type="range" class="bkf-range" id="bkcf-dep-max" min="0" max="1439" value="1439" step="30">
+                        </div>
+                        <div class="bkf-section">
+                            <div class="bkf-label">Départ retour</div>
+                            <div class="bkf-range-row">
+                                <span class="bkf-range-val" id="bkcf-ret-min-lbl">00:00</span>
+                                <span class="bkf-range-val" id="bkcf-ret-max-lbl">23:59</span>
+                            </div>
+                            <input type="range" class="bkf-range" id="bkcf-ret-min" min="0" max="1439" value="0" step="30">
+                            <input type="range" class="bkf-range" id="bkcf-ret-max" min="0" max="1439" value="1439" step="30">
+                        </div>
+                        <button type="button" class="bkf-reset" id="bkcf-reset">Réinitialiser</button>
+                    </aside>
+                    <div class="bkc-flights-main">
+                        <div id="bkc-combo-list"></div>
+                        <div id="bkc-combo-no-match" class="bkc-flights-error" style="display:none">Aucun vol ne correspond à vos filtres.</div>
+                    </div>
+                </div>
                 <div id="bkc-combo-error" class="bkc-flights-error" style="display:none"></div>
             </div>
 
@@ -626,9 +692,11 @@ var BK_CIRCUIT = <?php echo json_encode([
                     aller: a,
                     retour: {
                         flight_number: a.retour_flight,
+                        flight_detail: a.retour_flights_detail || a.retour_flight || '',
                         depart_time: a.retour_depart,
                         arrive_time: a.retour_arrive,
                         duration_min: a.retour_duration,
+                        has_connections: a.has_connections,
                         airline_iata: a.airline_iata,
                         airline_name: a.airline_name
                     },
@@ -653,8 +721,55 @@ var BK_CIRCUIT = <?php echo json_encode([
         combos.sort(function(a,b){ return a.total_delta - b.total_delta; });
         if (combos.length) combos[0].is_reference = true;
         bkc_combos_data = combos;
+
+        var layout = document.getElementById('bkc-flights-layout');
+        if (layout) layout.style.display = 'flex';
+
         bkcRenderCombos(combos);
+        bkcInitSidebarFilters();
         bkcSelectCombo(0);
+    }
+
+    function bkcTimeToMin(t) {
+        if (!t) return 0;
+        var p = (t+'').split(':');
+        return (parseInt(p[0],10)||0)*60 + (parseInt(p[1],10)||0);
+    }
+    function bkcMinToTime(m) {
+        var h = Math.floor(m/60) % 24;
+        var mn = m % 60;
+        return String(h).padStart(2,'0') + ':' + String(mn).padStart(2,'0');
+    }
+    function bkcHasConn(f) {
+        if (!f) return false;
+        if (f.has_connections === true || f.has_connections === 1 || f.has_connections === '1') return true;
+        if (f.flight_detail && f.flight_detail.indexOf('+') !== -1) return true;
+        return false;
+    }
+    function bkcConnBadge(f) {
+        if (!f) return '';
+        var isConn = bkcHasConn(f);
+        var cls = isConn ? 'escale' : 'direct';
+        var label = isConn ? '1 escale' : 'Vol direct';
+        return '<span class="bkc-conn-badge ' + cls + '">' + label + '</span>';
+    }
+    function bkcConnDetail(f, idx, legType) {
+        if (!f || !bkcHasConn(f)) return '';
+        var detail = f.flight_detail || f.flight_number || '';
+        var id = 'bkc-conn-detail-' + idx + '-' + legType;
+        var togId = 'bkc-conn-tog-' + idx + '-' + legType;
+        var parts = detail.split(/\s*\+\s*/);
+        var stepsHtml = '';
+        parts.forEach(function(p, i) {
+            stepsHtml += '<div class="bkc-conn-step"><span class="dot"></span> Vol ' + bkcEsc(p.trim()) + '</div>';
+            if (i < parts.length - 1) {
+                stepsHtml += '<div class="bkc-conn-step"><span class="dot layover"></span> <em>Correspondance</em></div>';
+            }
+        });
+        return '<div class="bkc-conn-toggle" id="' + togId + '" onclick="event.stopPropagation();var d=document.getElementById(\'' + id + '\');var t=document.getElementById(\'' + togId + '\');if(d.classList.contains(\'open\')){d.classList.remove(\'open\');t.classList.remove(\'open\')}else{d.classList.add(\'open\');t.classList.add(\'open\')}">'
+            + '<span class="chevron">▼</span> Voir les détails'
+            + '</div>'
+            + '<div class="bkc-conn-detail" id="' + id + '">' + stepsHtml + '</div>';
     }
 
     function bkcRenderCombos(combos) {
@@ -662,9 +777,25 @@ var BK_CIRCUIT = <?php echo json_encode([
         if (!list) return;
         list.innerHTML = '';
 
+        var nbDirect = 0, nbEscale = 0;
+        combos.forEach(function(c) {
+            var conn = bkcHasConn(c.aller) || (c.retour && bkcHasConn(c.retour));
+            if (conn) nbEscale++; else nbDirect++;
+        });
+
+        var nAll = document.getElementById('bkcf-n-all');
+        var nDir = document.getElementById('bkcf-n-direct');
+        var nEsc = document.getElementById('bkcf-n-escale');
+        if (nAll) nAll.textContent = combos.length;
+        if (nDir) nDir.textContent = nbDirect;
+        if (nEsc) nEsc.textContent = nbEscale;
+
         combos.forEach(function(c, idx) {
             var a = c.aller, r = c.retour;
-            var hidden = idx >= 3 ? ' bkc-flights-hidden' : '';
+            var comboConn = bkcHasConn(a) || (r && bkcHasConn(r));
+            var depMin = bkcTimeToMin(a.depart_time);
+            var retMin = r ? bkcTimeToMin(r.depart_time) : 0;
+
             var priceHtml = '';
             if (c.is_reference) {
                 priceHtml = '<div class="bkc-combo-price-delta ref">Meilleur prix</div>';
@@ -684,56 +815,102 @@ var BK_CIRCUIT = <?php echo json_encode([
                 +'</div></div>';
 
             html += '<div class="bkc-combo-leg">'
-                +'<div class="bkc-combo-leg-badge aller">Aller</div>'
+                +'<div class="bkc-combo-leg-badge aller">ALLER</div>'
                 +'<div class="bkc-combo-leg-times">'
                 +'<div>'+bkcEsc(a.depart_time)+'</div>'
                 +'<div class="bkc-combo-leg-line"><div class="bkc-combo-leg-dash"></div><div class="bkc-combo-leg-plane">✈</div><div class="bkc-combo-leg-dash"></div></div>'
                 +'<div>'+bkcEsc(a.arrive_time)+'</div>'
                 +'</div>'
-                +'<div class="bkc-combo-leg-dur">'+bkcFmtDuration(a.duration_min)+'</div>'
-                +'<div class="bkc-combo-leg-num">'+bkcEsc(a.flight_number)+'</div>'
-                +'</div>';
+                +'<div class="bkc-combo-leg-meta">'
+                +bkcConnBadge(a)
+                +'<span class="bkc-combo-leg-dur">'+bkcFmtDuration(a.duration_min)+'</span>'
+                +'<span class="bkc-combo-leg-num">'+bkcEsc(a.flight_number)+'</span>'
+                +'</div>'
+                +'</div>'
+                +bkcConnDetail(a, idx, 'aller');
 
             if (r) {
                 html += '<div class="bkc-combo-leg">'
-                    +'<div class="bkc-combo-leg-badge retour">Retour</div>'
+                    +'<div class="bkc-combo-leg-badge retour">RETOUR</div>'
                     +'<div class="bkc-combo-leg-times">'
                     +'<div>'+bkcEsc(r.depart_time)+'</div>'
                     +'<div class="bkc-combo-leg-line"><div class="bkc-combo-leg-dash"></div><div class="bkc-combo-leg-plane">✈</div><div class="bkc-combo-leg-dash"></div></div>'
                     +'<div>'+bkcEsc(r.arrive_time)+'</div>'
                     +'</div>'
-                    +'<div class="bkc-combo-leg-dur">'+bkcFmtDuration(r.duration_min)+'</div>'
-                    +'<div class="bkc-combo-leg-num">'+bkcEsc(r.flight_number)+'</div>'
-                    +'</div>';
+                    +'<div class="bkc-combo-leg-meta">'
+                    +bkcConnBadge(r)
+                    +'<span class="bkc-combo-leg-dur">'+bkcFmtDuration(r.duration_min)+'</span>'
+                    +'<span class="bkc-combo-leg-num">'+bkcEsc(r.flight_number)+'</span>'
+                    +'</div>'
+                    +'</div>'
+                    +bkcConnDetail(r, idx, 'retour');
             }
 
             var card = document.createElement('div');
-            card.className = 'bkc-combo-card' + hidden;
+            card.className = 'bkc-combo-card';
             card.id = 'bkc-combo-' + idx;
+            card.setAttribute('data-conn', comboConn ? '1' : '0');
+            card.setAttribute('data-dep', depMin);
+            card.setAttribute('data-ret', retMin);
             card.innerHTML = html;
             card.addEventListener('click', (function(i){ return function(){ bkcSelectCombo(i); }; })(idx));
             list.appendChild(card);
         });
+    }
 
-        if (combos.length > 3) {
-            var more = document.createElement('div');
-            more.className = 'bkc-combo-more';
-            var extra = combos.length - 3;
-            more.textContent = 'Afficher ' + extra + ' autre(s) combinaison(s) ▾';
-            more.setAttribute('data-expanded', 'false');
-            more.addEventListener('click', function() {
-                var exp = this.getAttribute('data-expanded') === 'true';
-                if (exp) {
-                    list.querySelectorAll('.bkc-combo-card').forEach(function(el,i){ if(i>=3) el.classList.add('bkc-flights-hidden'); });
-                    this.textContent = 'Afficher ' + extra + ' autre(s) combinaison(s) ▾';
-                    this.setAttribute('data-expanded','false');
-                } else {
-                    list.querySelectorAll('.bkc-flights-hidden').forEach(function(el){ el.classList.remove('bkc-flights-hidden'); });
-                    this.textContent = 'Réduire ▴';
-                    this.setAttribute('data-expanded','true');
+    function bkcInitSidebarFilters() {
+        var radios = document.querySelectorAll('input[name="bkcf_type"]');
+        var depMinR = document.getElementById('bkcf-dep-min');
+        var depMaxR = document.getElementById('bkcf-dep-max');
+        var retMinR = document.getElementById('bkcf-ret-min');
+        var retMaxR = document.getElementById('bkcf-ret-max');
+        var resetBtn = document.getElementById('bkcf-reset');
+
+        function applyFilters() {
+            var typeVal = 'all';
+            radios.forEach(function(r){ if(r.checked) typeVal = r.value; });
+            var dMin = parseInt(depMinR.value,10);
+            var dMax = parseInt(depMaxR.value,10);
+            var rMin = parseInt(retMinR.value,10);
+            var rMax = parseInt(retMaxR.value,10);
+            document.getElementById('bkcf-dep-min-lbl').textContent = bkcMinToTime(dMin);
+            document.getElementById('bkcf-dep-max-lbl').textContent = bkcMinToTime(dMax);
+            document.getElementById('bkcf-ret-min-lbl').textContent = bkcMinToTime(rMin);
+            document.getElementById('bkcf-ret-max-lbl').textContent = bkcMinToTime(rMax);
+
+            var cards = document.querySelectorAll('.bkc-combo-card');
+            var visible = 0;
+            cards.forEach(function(card) {
+                var show = true;
+                var conn = card.getAttribute('data-conn');
+                if (typeVal === 'direct' && conn === '1') show = false;
+                if (typeVal === 'escale' && conn === '0') show = false;
+                if (show) {
+                    var dep = parseInt(card.getAttribute('data-dep'),10);
+                    if (dep < dMin || dep > dMax) show = false;
                 }
+                if (show) {
+                    var ret = parseInt(card.getAttribute('data-ret'),10);
+                    if (ret < rMin || ret > rMax) show = false;
+                }
+                card.style.display = show ? '' : 'none';
+                if (show) visible++;
             });
-            list.appendChild(more);
+            var noMatch = document.getElementById('bkc-combo-no-match');
+            if (noMatch) noMatch.style.display = visible === 0 ? 'block' : 'none';
+        }
+
+        radios.forEach(function(r){ r.addEventListener('change', applyFilters); });
+        [depMinR, depMaxR, retMinR, retMaxR].forEach(function(el){
+            if (el) el.addEventListener('input', applyFilters);
+        });
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function() {
+                radios.forEach(function(r){ r.checked = r.value === 'all'; });
+                depMinR.value = 0; depMaxR.value = 1439;
+                retMinR.value = 0; retMaxR.value = 1439;
+                applyFilters();
+            });
         }
     }
 
