@@ -176,6 +176,12 @@ if (class_exists('VS08C_Meta') && (!$f_type || $f_type === 'circuit')) {
             'type_voyage'    => 'circuit',
             'transport_type'  => !empty($cm['aeroports']) ? 'vol' : '',
             'transfert_type'  => '',
+            // Circuit-specific
+            'pension'        => $cm['pension'] ?? '',
+            'transport'      => $cm['transport'] ?? '',
+            'guide_lang'     => $cm['guide_lang'] ?? '',
+            'themes'         => $cm['themes'] ?? '',
+            'nb_etapes'      => is_array($cm['jours'] ?? null) ? count($cm['jours']) : 0,
         ];
     }
 }
@@ -309,7 +315,7 @@ $hero_video_url = get_theme_file_uri('assets/video/hero.mp4');
     <?php endif; ?>
     <div class="vs08-sr-hero-content">
         <h1>Résultats de <em>recherche</em></h1>
-        <p class="vs08-sr-hero-desc"><?php echo $total; ?> séjour<?php echo $total > 1 ? 's' : ''; ?> correspond<?php echo $total > 1 ? 'ent' : ''; ?> à votre recherche</p>
+        <p class="vs08-sr-hero-desc"><?php echo $total; ?> voyage<?php echo $total > 1 ? 's' : ''; ?> correspond<?php echo $total > 1 ? 'ent' : ''; ?> à votre recherche</p>
     </div>
 </section>
 
@@ -384,11 +390,11 @@ $hero_video_url = get_theme_file_uri('assets/video/hero.mp4');
         </div>
         <?php endif; ?>
 
-        <p class="vs08-sr-intro"><?php echo $total > 0 ? 'Modifiez les critères dans le menu à gauche pour affiner, ou cliquez sur un séjour pour voir le détail et réserver.' : 'Utilisez le menu à gauche pour lancer une nouvelle recherche ou élargir vos critères.'; ?></p>
+        <p class="vs08-sr-intro"><?php echo $total > 0 ? 'Modifiez les critères dans le menu à gauche pour affiner, ou cliquez sur un voyage pour voir le détail et réserver.' : 'Utilisez le menu à gauche pour lancer une nouvelle recherche ou élargir vos critères.'; ?></p>
 
         <div class="vs08-sr-inner">
         <div class="vs08-sr-header">
-            <p class="vs08-sr-count"><strong><?php echo $total; ?></strong> séjour<?php echo $total > 1 ? 's' : ''; ?> trouvé<?php echo $total > 1 ? 's' : ''; ?></p>
+            <p class="vs08-sr-count"><strong><?php echo $total; ?></strong> voyage<?php echo $total > 1 ? 's' : ''; ?> trouvé<?php echo $total > 1 ? 's' : ''; ?></p>
             <?php if ($total > 1): ?>
             <div class="vs08-sr-sort">
                 <select onchange="vs08SortResults(this.value)">
@@ -404,8 +410,8 @@ $hero_video_url = get_theme_file_uri('assets/video/hero.mp4');
         <?php if ($total === 0): ?>
         <div class="vs08-sr-empty">
             <span>🔍</span>
-            <h3>Aucun séjour ne correspond</h3>
-            <p>Essayez d'élargir vos critères ou demandez un séjour sur mesure.</p>
+            <h3>Aucun voyage ne correspond</h3>
+            <p>Essayez d'élargir vos critères ou demandez un voyage sur mesure.</p>
             <a href="<?php echo esc_url(home_url('/contact')); ?>">Demander un devis sur mesure</a>
         </div>
         <?php else: ?>
@@ -428,7 +434,26 @@ $hero_video_url = get_theme_file_uri('assets/video/hero.mp4');
                         <?php if ($r['desc']): ?>
                         <p class="vs08-sr-desc"><?php echo esc_html($r['desc']); ?></p>
                         <?php endif; ?>
-                        <?php if (in_array($r['type_voyage'], ['sejour_golf', ''])): ?>
+                        <?php if ($r['type_voyage'] === 'circuit'): ?>
+                        <div class="vs08-sr-inclus">
+                            <?php if (in_array($r['transport_type'], ['vol', 'vol_option'])): ?>
+                            <span class="vs08-sr-inclus-item">✈️ Vol A/R</span>
+                            <?php endif; ?>
+                            <?php
+                            $pension_labels = ['bb'=>'🥐 Petit-déj','dp'=>'🍽️ Demi-pension','pc'=>'🍽️ Pension complète','ai'=>'🍽️ Tout inclus','mixed'=>'🍽️ Selon programme'];
+                            $transport_labels = ['bus'=>'🚌 Minibus','4x4'=>'🚙 4×4','voiture'=>'🚗 Voiture','train'=>'🚂 Train','mixed'=>'🚌 Transport mixte'];
+                            if (!empty($r['pension']) && isset($pension_labels[$r['pension']])): ?>
+                            <span class="vs08-sr-inclus-item"><?php echo $pension_labels[$r['pension']]; ?></span>
+                            <?php endif; ?>
+                            <?php if (!empty($r['transport']) && isset($transport_labels[$r['transport']])): ?>
+                            <span class="vs08-sr-inclus-item"><?php echo $transport_labels[$r['transport']]; ?></span>
+                            <?php endif; ?>
+                            <?php if (!empty($r['guide_lang'])): ?>
+                            <span class="vs08-sr-inclus-item">🗣️ Guide <?php echo esc_html($r['guide_lang']); ?></span>
+                            <?php endif; ?>
+                            <span class="vs08-sr-inclus-item">🏨 Hébergement</span>
+                        </div>
+                        <?php elseif (in_array($r['type_voyage'], ['sejour_golf', ''])): ?>
                         <div class="vs08-sr-inclus">
                             <?php if (in_array($r['transport_type'], ['vol', 'vol_option'])): ?>
                             <span class="vs08-sr-inclus-item">✈️ Vol A/R direct</span>
@@ -444,9 +469,15 @@ $hero_video_url = get_theme_file_uri('assets/video/hero.mp4');
                         </div>
                         <?php endif; ?>
                         <div class="vs08-sr-meta">
-                            <?php if ($r['duree']): ?><span class="vs08-sr-tag">🌙 <?php echo $r['duree']; ?> nuits</span><?php endif; ?>
+                            <?php if ($r['duree']): ?><span class="vs08-sr-tag">🌙 <?php echo $r['duree']; ?> <?php echo $r['type_voyage'] === 'circuit' ? 'jours' : 'nuits'; ?></span><?php endif; ?>
+                            <?php if ($r['type_voyage'] === 'circuit' && !empty($r['nb_etapes'])): ?><span class="vs08-sr-tag">📍 <?php echo $r['nb_etapes']; ?> étapes</span><?php endif; ?>
                             <?php if ($r['nb_parcours']): ?><span class="vs08-sr-tag">⛳ <?php echo $r['nb_parcours']; ?> parcours</span><?php endif; ?>
-                            <?php if ($r['niveau'] && isset($niveau_labels[$r['niveau']])): ?><span class="vs08-sr-tag"><?php echo esc_html($niveau_labels[$r['niveau']]); ?></span><?php endif; ?>
+                            <?php if (!empty($r['themes'])): ?>
+                                <?php foreach (array_slice(array_map('trim', explode(',', $r['themes'])), 0, 3) as $theme): ?>
+                                <span class="vs08-sr-tag"><?php echo esc_html($theme); ?></span>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                            <?php if ($r['niveau'] && $r['niveau'] !== 'tous' && isset($niveau_labels[$r['niveau']])): ?><span class="vs08-sr-tag"><?php echo esc_html($niveau_labels[$r['niveau']]); ?></span><?php endif; ?>
                             <?php if ($r['type_voyage'] && isset($types_labels[$r['type_voyage']])): ?><span class="vs08-sr-tag"><?php echo esc_html($types_labels[$r['type_voyage']]); ?></span><?php endif; ?>
                         </div>
                     </div>
@@ -460,7 +491,7 @@ $hero_video_url = get_theme_file_uri('assets/video/hero.mp4');
                         <?php else: ?>
                         <div><span class="vs08-sr-price-per">Prix sur demande</span></div>
                         <?php endif; ?>
-                        <span class="vs08-sr-btn">Voir ce séjour →</span>
+                        <span class="vs08-sr-btn">Voir <?php echo $r['type_voyage'] === 'circuit' ? 'ce circuit' : 'ce séjour'; ?> →</span>
                     </div>
                 </div>
             </a>
