@@ -363,14 +363,14 @@ $ft_slide_count = count($ft_bg_slides);
         </div>
 
         <div class="ft-lcol">
-            <h5>Séjours Golf</h5>
+            <h5>Nos destinations</h5>
             <ul>
-                <li><a href="<?php echo esc_url(home_url('/resultats-recherche?dest=algarve')); ?>">Portugal — Algarve</a></li>
-                <li><a href="<?php echo esc_url(home_url('/resultats-recherche?dest=marbella')); ?>">Espagne — Marbella</a></li>
-                <li><a href="<?php echo esc_url(home_url('/resultats-recherche?dest=marrakech')); ?>">Maroc — Marrakech</a></li>
-                <li><a href="<?php echo esc_url(home_url('/resultats-recherche?dest=belek')); ?>">Turquie — Belek</a></li>
-                <li><a href="<?php echo esc_url(home_url('/resultats-recherche?dest=kerry')); ?>">Irlande — Kerry</a></li>
-                <li><a href="<?php echo esc_url(home_url('/resultats-recherche?dest=phuket')); ?>">Thaïlande — Phuket</a></li>
+                <li><a href="<?php echo esc_url(home_url('/resultats-recherche?type=sejour_golf&dest=Portugal')); ?>">Portugal — Algarve</a></li>
+                <li><a href="<?php echo esc_url(home_url('/resultats-recherche?type=sejour_golf&dest=Espagne')); ?>">Espagne — Andalousie</a></li>
+                <li><a href="<?php echo esc_url(home_url('/resultats-recherche?type=sejour_golf&dest=Maroc')); ?>">Maroc — Golf</a></li>
+                <li><a href="<?php echo esc_url(home_url('/resultats-recherche?type=circuit&dest=Italie')); ?>">Italie — Circuits</a></li>
+                <li><a href="<?php echo esc_url(home_url('/resultats-recherche?type=circuit&dest=Grèce')); ?>">Grèce — Circuits</a></li>
+                <li><a href="<?php echo esc_url(home_url('/resultats-recherche')); ?>">Toutes nos destinations →</a></li>
             </ul>
         </div>
 
@@ -380,7 +380,7 @@ $ft_slide_count = count($ft_bg_slides);
                 <li><a href="<?php echo esc_url(home_url('/qui-sommes-nous/')); ?>">Qui sommes-nous</a></li>
                 <li><a href="<?php echo esc_url(home_url('/avis-clients/')); ?>">Avis clients</a></li>
                 <li><a href="<?php echo esc_url(home_url('/comment-reserver/')); ?>">Comment réserver</a></li>
-                <li><a href="<?php echo esc_url(home_url('/blog/')); ?>">Blog voyage & golf</a></li>
+                <li><a href="<?php echo esc_url(home_url('/devis-gratuit/')); ?>">Devis gratuit</a></li>
                 <li><a href="<?php echo esc_url(home_url('/assurances/')); ?>">Assurances voyage</a></li>
                 <li><a href="<?php echo esc_url(home_url('/faq/')); ?>">FAQ</a></li>
             </ul>
