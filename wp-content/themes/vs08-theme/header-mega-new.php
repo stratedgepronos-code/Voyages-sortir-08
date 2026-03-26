@@ -3,15 +3,9 @@
 $vs08_res = function_exists('vs08_mega_resultats_url') ? vs08_mega_resultats_url() : home_url('/resultats-recherche');
 $vs08_golf_pays = function_exists('vs08_mega_golf_countries') ? vs08_mega_golf_countries(5) : [];
 $vs08_airports = function_exists('vs08_mega_departure_airports') ? vs08_mega_departure_airports() : [];
-list($vs08_dest_col1, $vs08_dest_col2) = function_exists('vs08_mega_destinations_split') ? vs08_mega_destinations_split() : [[], []];
 $vs08_circuit_items = function_exists('vs08_mega_circuit_destinations') ? vs08_mega_circuit_destinations(8) : [];
 $vs08_devis_hub = home_url('/devis-gratuit/');
 $vs08_circuits_url = add_query_arg(['type' => 'circuit'], $vs08_res);
-$vs08_first_dest = null;
-foreach (array_merge($vs08_dest_col1, $vs08_dest_col2) as $__d) {
-    $vs08_first_dest = $__d;
-    break;
-}
 ?>
 <!-- SITE HEADER — MEGA MENU -->
 <header class="header" id="header">
@@ -75,69 +69,7 @@ foreach (array_merge($vs08_dest_col1, $vs08_dest_col2) as $__d) {
             </div>
         </li>
         <li>
-            <a href="<?php echo esc_url(home_url('/destinations')); ?>">Destinations <span class="arrow">▾</span></a>
-            <div class="mega-drop">
-                <div class="mega-drop-inner">
-                    <div class="mega-cols">
-                        <div class="mega-col-links">
-                            <h4>Nos destinations</h4>
-                            <ul>
-                                <?php if (empty($vs08_dest_col1)) : ?>
-                                <li><a href="<?php echo esc_url(home_url('/destinations')); ?>"><span class="ml-icon">🌍</span><div>Catalogue<span class="ml-desc">Voir toutes les destinations</span></div></a></li>
-                                <?php else : ?>
-                                    <?php foreach ($vs08_dest_col1 as $d) :
-                                        $dv = $d['value'] ?? '';
-                                        $dl = $d['label'] ?? $dv;
-                                        $fl = $d['flag'] ?? '';
-                                        $du = add_query_arg(['dest' => $dv], $vs08_res);
-                                        $pc = isset($d['count']) ? (int) $d['count'] : 0;
-                                        ?>
-                                <li><a href="<?php echo esc_url($du); ?>"><span class="ml-icon"><?php echo esc_html($fl ?: '✈️'); ?></span><div><?php echo esc_html($dl); ?><span class="ml-desc"><?php echo $pc > 0 ? sprintf('%d séjour%s', $pc, $pc > 1 ? 's' : '') : 'Voir les séjours'; ?></span></div></a></li>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </ul>
-                        </div>
-                        <div class="mega-col-links" style="border-left:1px solid var(--gray-light)">
-                            <?php if (!empty($vs08_dest_col2)) : ?><h4>Autres destinations</h4><?php else : ?><h4 style="opacity:0">.</h4><?php endif; ?>
-                            <ul>
-                                <?php foreach ($vs08_dest_col2 as $d) :
-                                    $dv = $d['value'] ?? '';
-                                    $dl = $d['label'] ?? $dv;
-                                    $fl = $d['flag'] ?? '';
-                                    $du = add_query_arg(['dest' => $dv], $vs08_res);
-                                    $pc = isset($d['count']) ? (int) $d['count'] : 0;
-                                    ?>
-                                <li><a href="<?php echo esc_url($du); ?>"><span class="ml-icon"><?php echo esc_html($fl ?: '✈️'); ?></span><div><?php echo esc_html($dl); ?><span class="ml-desc"><?php echo $pc > 0 ? sprintf('%d séjour%s', $pc, $pc > 1 ? 's' : '') : 'Voir les séjours'; ?></span></div></a></li>
-                                <?php endforeach; ?>
-                                <li class="mega-voir-plus"><a href="<?php echo esc_url(home_url('/destinations')); ?>"><span class="ml-icon">➕</span><div>Voir plus…<span class="ml-desc">Toutes les destinations</span></div></a></li>
-                            </ul>
-                        </div>
-                        <div class="mega-col-visual">
-                            <?php
-                            $vis_img = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80';
-                            $vis_url = home_url('/destinations');
-                            $vis_title = 'Nos destinations';
-                            $vis_sub = 'Séjours publiés sur le site';
-                            if ($vs08_first_dest) {
-                                if (!empty($vs08_first_dest['image'])) {
-                                    $vis_img = $vs08_first_dest['image'];
-                                }
-                                $vis_title = $vs08_first_dest['label'] ?? $vis_title;
-                                $vis_sub = (isset($vs08_first_dest['pays']) && $vs08_first_dest['pays']) ? $vs08_first_dest['pays'] : $vis_sub;
-                                $vis_url = add_query_arg(['dest' => ($vs08_first_dest['value'] ?? '')], $vs08_res);
-                            }
-                            ?>
-                            <img src="<?php echo esc_url($vis_img); ?>" alt="">
-                            <div class="mega-col-visual-content">
-                                <p>À la une</p>
-                                <h3><?php echo esc_html($vis_title); ?></h3>
-                                <span><?php echo esc_html($vis_sub); ?></span>
-                                <a href="<?php echo esc_url($vis_url); ?>">Découvrir</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <a href="<?php echo esc_url(add_query_arg(['airport' => 'XCR'], $vs08_res)); ?>">Départ Vatry</a>
         </li>
         <li>
             <a href="<?php echo esc_url($vs08_circuits_url); ?>">Circuits <span class="arrow">▾</span></a>
