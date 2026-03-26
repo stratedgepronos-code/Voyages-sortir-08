@@ -120,6 +120,66 @@ foreach ($all_posts as $p) {
     ];
 }
 
+// ── Circuits (post_type vs08_circuit) ──
+if (class_exists('VS08C_Meta') && (!$f_type || $f_type === 'circuit')) {
+    $circuit_posts = get_posts([
+        'post_type'      => 'vs08_circuit',
+        'post_status'    => 'publish',
+        'posts_per_page' => -1,
+    ]);
+    foreach ($circuit_posts as $cp) {
+        $cm = VS08C_Meta::get($cp->ID);
+        if (($cm['statut'] ?? '') === 'archive') continue;
+
+        if ($f_dest) {
+            $cd = trim($cm['destination'] ?? '');
+            $cpays = trim($cm['pays'] ?? '');
+            if (stripos($cd, $f_dest) === false && stripos($cpays, $f_dest) === false) continue;
+        }
+
+        if ($f_airport) {
+            $aero_match = false;
+            foreach (($cm['aeroports'] ?? []) as $a) {
+                if (strtoupper(trim($a['code'] ?? '')) === $f_airport) { $aero_match = true; break; }
+            }
+            if (!$aero_match) continue;
+        }
+
+        $cthumb = get_the_post_thumbnail_url($cp->ID, 'medium');
+        if (!$cthumb) {
+            $cgal = $cm['galerie'] ?? ($cm['photos'] ?? []);
+            $cthumb = !empty($cgal[0]) ? (is_array($cgal[0]) ? ($cgal[0]['url'] ?? '') : $cgal[0]) : '';
+        }
+        $cpays = trim($cm['pays'] ?? '');
+        $cflag = '';
+        if (class_exists('VS08C_Meta')) {
+            $cflag = VS08C_Meta::resolve_flag($cm);
+        }
+
+        $results[] = [
+            'id'          => $cp->ID,
+            'title'       => get_the_title($cp->ID),
+            'url'         => get_permalink($cp->ID),
+            'thumb'       => $cthumb,
+            'destination' => $cm['destination'] ?? '',
+            'pays'        => $cpays,
+            'flag'        => $cflag,
+            'prix'        => floatval($cm['prix_base'] ?? ($cm['prix_from'] ?? 0)),
+            'has_vol'     => !empty($cm['aeroports']),
+            'debug'       => '',
+            'duree'       => intval($cm['duree'] ?? ($cm['nb_jours'] ?? 0)),
+            'nb_parcours' => 0,
+            'niveau'      => 'tous',
+            'badge'       => $cm['badge'] ?? '',
+            'desc'           => $cm['desc_courte'] ?? wp_trim_words(get_the_excerpt($cp->ID), 25, '…'),
+            'hotel_nom'      => '',
+            'type_voyage'    => 'circuit',
+            'transport_type'  => !empty($cm['aeroports']) ? 'vol' : '',
+            'transfert_type'  => '',
+        ];
+    }
+}
+
 $active_filters = [];
 if ($f_type && isset($types_labels[$f_type]))   $active_filters[] = ['key'=>'type','label'=>$types_labels[$f_type]];
 if ($f_dest)    $active_filters[] = ['key'=>'dest','label'=>$f_dest];

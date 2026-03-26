@@ -1340,9 +1340,13 @@ $fp_dest_to_pays = [
 $fp_type_colors = ['sejour_golf'=>'#c9a84c','circuit'=>'#e55d3a','sejour'=>'#59b7b7','road_trip'=>'#8e44ad','city_trip'=>'#3498db','parc'=>'#e74c3c'];
 
 if (class_exists('VS08V_MetaBoxes')) {
-    $fp_map_ids = get_posts(['post_type'=>'vs08_voyage','post_status'=>'publish','posts_per_page'=>-1,'fields'=>'ids']);
+    // Scanner les 2 types de produits : voyages ET circuits
+    $fp_map_ids_voyages = get_posts(['post_type'=>'vs08_voyage','post_status'=>'publish','posts_per_page'=>-1,'fields'=>'ids']);
+    $fp_map_ids_circuits = get_posts(['post_type'=>'vs08_circuit','post_status'=>'publish','posts_per_page'=>-1,'fields'=>'ids']);
     $fp_dest_agg = []; // pays → ['types'=>[], 'airports'=>[], 'count'=>0, 'cities'=>[]]
-    foreach ($fp_map_ids as $pid) {
+
+    // ── Voyages (sejour_golf, sejour, road_trip, city_trip, parc) ──
+    foreach ($fp_map_ids_voyages as $pid) {
         $m = VS08V_MetaBoxes::get($pid);
         if (($m['statut'] ?? '') === 'archive') continue;
         $dest = trim($m['destination'] ?? '');
@@ -1350,22 +1354,13 @@ if (class_exists('VS08V_MetaBoxes')) {
         $type = $m['type_voyage'] ?? '';
         if (!$type) continue;
 
-        // Résoudre le pays pour le regroupement sur la carte
-        // Priorité: 1) champ pays, 2) alias destination→pays, 3) destination brute
         $map_key = '';
-        if ($pays && isset($fp_map_coords[$pays])) {
-            $map_key = $pays;
-        } elseif ($dest && isset($fp_dest_to_pays[$dest])) {
-            $map_key = $fp_dest_to_pays[$dest];
-        } elseif ($pays && isset($fp_dest_to_pays[$pays])) {
-            $map_key = $fp_dest_to_pays[$pays];
-        } elseif ($dest && isset($fp_map_coords[$dest])) {
-            $map_key = $dest;
-        } elseif ($pays) {
-            $map_key = $pays; // Pays non reconnu, on tente quand même
-        } elseif ($dest) {
-            $map_key = $dest;
-        }
+        if ($pays && isset($fp_map_coords[$pays])) { $map_key = $pays; }
+        elseif ($dest && isset($fp_dest_to_pays[$dest])) { $map_key = $fp_dest_to_pays[$dest]; }
+        elseif ($pays && isset($fp_dest_to_pays[$pays])) { $map_key = $fp_dest_to_pays[$pays]; }
+        elseif ($dest && isset($fp_map_coords[$dest])) { $map_key = $dest; }
+        elseif ($pays) { $map_key = $pays; }
+        elseif ($dest) { $map_key = $dest; }
         if (!$map_key) continue;
 
         if (!isset($fp_dest_agg[$map_key])) $fp_dest_agg[$map_key] = ['types'=>[],'airports'=>[],'count'=>0,'cities'=>[]];
@@ -1375,10 +1370,40 @@ if (class_exists('VS08V_MetaBoxes')) {
         if (!empty($m['aeroports']) && is_array($m['aeroports'])) {
             foreach ($m['aeroports'] as $a) {
                 $code = strtoupper(trim($a['code'] ?? ''));
-                if ($code && !in_array($code, $fp_dest_agg[$map_key]['airports'])) {
-                    $fp_dest_agg[$map_key]['airports'][] = $code;
-                }
+                if ($code && !in_array($code, $fp_dest_agg[$map_key]['airports'])) $fp_dest_agg[$map_key]['airports'][] = $code;
                 if ($code) $fp_map_airports_used[$code] = true;
+            }
+        }
+    }
+
+    // ── Circuits (post_type vs08_circuit) ──
+    if (class_exists('VS08C_Meta')) {
+        foreach ($fp_map_ids_circuits as $pid) {
+            $m = VS08C_Meta::get($pid);
+            if (($m['statut'] ?? '') === 'archive') continue;
+            $dest = trim($m['destination'] ?? '');
+            $pays = trim($m['pays'] ?? '');
+            $type = 'circuit'; // Toujours circuit
+
+            $map_key = '';
+            if ($pays && isset($fp_map_coords[$pays])) { $map_key = $pays; }
+            elseif ($dest && isset($fp_dest_to_pays[$dest])) { $map_key = $fp_dest_to_pays[$dest]; }
+            elseif ($pays && isset($fp_dest_to_pays[$pays])) { $map_key = $fp_dest_to_pays[$pays]; }
+            elseif ($dest && isset($fp_map_coords[$dest])) { $map_key = $dest; }
+            elseif ($pays) { $map_key = $pays; }
+            elseif ($dest) { $map_key = $dest; }
+            if (!$map_key) continue;
+
+            if (!isset($fp_dest_agg[$map_key])) $fp_dest_agg[$map_key] = ['types'=>[],'airports'=>[],'count'=>0,'cities'=>[]];
+            $fp_dest_agg[$map_key]['count']++;
+            if (!in_array($type, $fp_dest_agg[$map_key]['types'])) $fp_dest_agg[$map_key]['types'][] = $type;
+            if ($dest && !in_array($dest, $fp_dest_agg[$map_key]['cities'])) $fp_dest_agg[$map_key]['cities'][] = $dest;
+            if (!empty($m['aeroports']) && is_array($m['aeroports'])) {
+                foreach ($m['aeroports'] as $a) {
+                    $code = strtoupper(trim($a['code'] ?? ''));
+                    if ($code && !in_array($code, $fp_dest_agg[$map_key]['airports'])) $fp_dest_agg[$map_key]['airports'][] = $code;
+                    if ($code) $fp_map_airports_used[$code] = true;
+                }
             }
         }
     }
@@ -1403,7 +1428,7 @@ if (class_exists('VS08V_MetaBoxes')) {
     }
 }
 ?>
-<!-- DEBUG MAP: <?php echo count($fp_map_destinations); ?> destinations trouvées | clés: <?php echo implode(', ', array_keys($fp_dest_agg ?? [])); ?> -->
+<!-- DEBUG MAP: <?php echo count($fp_map_destinations); ?> destinations | <?php echo count($fp_map_ids_voyages ?? []); ?> voyages + <?php echo count($fp_map_ids_circuits ?? []); ?> circuits | clés: <?php echo implode(', ', array_keys($fp_dest_agg ?? [])); ?> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script>
