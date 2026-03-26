@@ -65,7 +65,8 @@ get_header();
                 $order      = wc_get_order($order_id);
                 $data       = VS08V_Traveler_Space::get_booking_data_from_order($order, true);
                 $is_circuit = isset($data['type']) && $data['type'] === 'circuit';
-                if ($is_circuit): // ── Détail Circuit (contrat de vente, récap) ──
+                if ($is_circuit): // ── Détail Circuit ──
+                    $solde_info = VS08V_Traveler_Space::get_solde_info($order_id);
                     $params     = $data['params'] ?? [];
                     $devis      = $data['devis'] ?? [];
                     $fact       = $data['facturation'] ?? [];
@@ -75,53 +76,230 @@ get_header();
                     $destination = $m['destination'] ?? '';
                     $total      = (float)($data['total'] ?? 0);
                     $contract_url = VS08V_Traveler_Space::get_contract_url($order_id);
-                    $galerie    = $m['galerie'] ?? [];
-                    $cover      = !empty($galerie[0]) ? $galerie[0] : '';
+                    $galerie    = $m['galerie'] ?? ($m['photos'] ?? []);
+                    $cover      = '';
+                    if (!empty($galerie)) {
+                        $first = $galerie[0];
+                        $cover = is_array($first) ? ($first['url'] ?? '') : $first;
+                    }
+                    if (!$cover) $cover = get_the_post_thumbnail_url($circuit_id, 'large');
                     $duree_n    = (int)($m['duree'] ?? 7);
                     $duree_j    = (int)($m['duree_jours'] ?? ($duree_n + 1));
                     $date_retour = !empty($params['date_depart']) ? date('d/m/Y', strtotime($params['date_depart'] . ' +' . $duree_n . ' days')) : '';
                     $pension_labels = ['bb'=>'Petit-déjeuner','dp'=>'Demi-pension','pc'=>'Pension complète','ai'=>'Tout inclus','mixed'=>'Selon programme'];
-                    $transport_labels = ['bus'=>'Bus climatisé','4x4'=>'4x4','voiture'=>'Voiture','train'=>'Train','mixed'=>'Transport mixte'];
+                    $transport_labels = ['bus'=>'Bus climatisé','4x4'=>'4×4','voiture'=>'Voiture de location','train'=>'Train','mixed'=>'Transport mixte'];
                     $pension_label = $pension_labels[$m['pension'] ?? ''] ?? '';
                     $transport_label = $transport_labels[$m['transport'] ?? ''] ?? '';
+                    $guide_lang = $m['guide_lang'] ?? '';
+                    $aeroport_depart = $params['aeroport'] ?? '';
+                    $aeroport_dest = $m['iata_dest'] ?? '';
+                    $can_pay_solde = $solde_info && $solde_info['solde_due'] && $solde_info['solde'] > 0;
+                    $company = VS08V_Contract::COMPANY;
+                    $nb_etapes = is_array($m['jours'] ?? null) ? count($m['jours']) : 0;
             ?>
             <a href="<?php echo esc_url(VS08V_Traveler_Space::base_url()); ?>" class="ev-back">&larr; Retour à mes voyages</a>
+
+            <!-- Hero -->
             <div class="ev-detail-hero" <?php if ($cover): ?>style="background-image:linear-gradient(180deg,rgba(26,58,58,.45) 0%,rgba(26,58,58,.7) 100%),url(<?php echo esc_url($cover); ?>)"<?php endif; ?>>
                 <div class="ev-detail-hero-content">
                     <h1><?php echo esc_html($data['circuit_titre'] ?? 'Circuit'); ?></h1>
                     <p>N° VS08-<?php echo $order_id; ?> · Départ le <?php echo !empty($params['date_depart']) ? esc_html(date('d/m/Y', strtotime($params['date_depart']))) : '—'; ?></p>
                 </div>
+                <?php if ($can_pay_solde): ?>
+                <div class="ev-detail-hero-badge">Solde à régler</div>
+                <?php elseif ($solde_info && !empty($solde_info['soldé_paye'])): ?>
+                <div class="ev-detail-hero-badge ev-detail-hero-badge-solde">Soldé</div>
+                <?php endif; ?>
                 <span class="ev-badge ev-badge-circuit">Circuit</span>
             </div>
-            <div class="ev-voyage-blocks">
-                <section class="ev-voyage-block">
-                    <h2>Récapitulatif</h2>
-                    <table class="vs08v-recap-table">
-                        <tr><th>Destination</th><td><?php echo esc_html($destination); ?></td></tr>
-                        <tr><th>Date de départ</th><td><?php echo !empty($params['date_depart']) ? esc_html(date('d/m/Y', strtotime($params['date_depart']))) : '—'; ?></td></tr>
-                        <tr><th>Durée</th><td><?php echo $duree_j; ?> jours / <?php echo $duree_n; ?> nuits</td></tr>
-                        <?php if ($pension_label): ?><tr><th>Formule</th><td><?php echo esc_html($pension_label); ?></td></tr><?php endif; ?>
-                        <?php if ($transport_label): ?><tr><th>Transport</th><td><?php echo esc_html($transport_label); ?></td></tr><?php endif; ?>
-                        <tr><th>Voyageurs</th><td><?php echo (int)($devis['nb_total'] ?? 0); ?> personne(s)</td></tr>
-                        <tr><th>Montant total</th><td><strong><?php echo number_format($total, 2, ',', ' '); ?> €</strong></td></tr>
-                    </table>
-                    <?php if (!empty($voyageurs)): ?>
-                    <h3>Participants</h3>
-                    <ul class="vs08v-voyageurs-list">
-                        <?php foreach ($voyageurs as $v): ?>
-                        <li><?php echo esc_html(($v['prenom'] ?? '') . ' ' . strtoupper($v['nom'] ?? '')); ?>
-                            <?php if (!empty($v['date_naissance'])): ?> · Né(e) le <?php echo esc_html(date('d/m/Y', strtotime($v['date_naissance']))); ?><?php endif; ?>
+
+            <div class="ev-detail-grid">
+
+                <!-- Récapitulatif -->
+                <section class="ev-card ev-card-recap">
+                    <h2>Récapitulatif du circuit</h2>
+                    <div class="ev-recap-rows">
+                        <div class="ev-recap-row"><span>Destination</span><strong><?php echo esc_html($destination); ?></strong></div>
+                        <div class="ev-recap-row"><span>Date de départ</span><strong><?php echo !empty($params['date_depart']) ? esc_html(date('d/m/Y', strtotime($params['date_depart']))) : '—'; ?></strong></div>
+                        <?php if ($date_retour): ?>
+                        <div class="ev-recap-row"><span>Date de retour</span><strong><?php echo esc_html($date_retour); ?></strong></div>
+                        <?php endif; ?>
+                        <div class="ev-recap-row"><span>Durée</span><strong><?php echo $duree_j; ?> jours / <?php echo $duree_n; ?> nuits</strong></div>
+                        <?php if ($nb_etapes): ?>
+                        <div class="ev-recap-row"><span>Étapes</span><strong><?php echo $nb_etapes; ?> étapes</strong></div>
+                        <?php endif; ?>
+                        <?php if ($pension_label): ?>
+                        <div class="ev-recap-row"><span>Formule</span><strong><?php echo esc_html($pension_label); ?></strong></div>
+                        <?php endif; ?>
+                        <?php if ($transport_label): ?>
+                        <div class="ev-recap-row"><span>Transport</span><strong><?php echo esc_html($transport_label); ?></strong></div>
+                        <?php endif; ?>
+                        <?php if ($guide_lang): ?>
+                        <div class="ev-recap-row"><span>Guide</span><strong><?php echo esc_html($guide_lang); ?></strong></div>
+                        <?php endif; ?>
+                        <div class="ev-recap-row"><span>Voyageurs</span><strong><?php echo (int)($devis['nb_total'] ?? 0); ?> personne(s)</strong></div>
+                        <?php if ($aeroport_depart): ?>
+                        <div class="ev-recap-row"><span>Aéroport de départ</span><strong><?php echo esc_html(strtoupper($aeroport_depart)); ?></strong></div>
+                        <?php endif; ?>
+                        <?php if ($aeroport_dest): ?>
+                        <div class="ev-recap-row"><span>Aéroport destination</span><strong><?php echo esc_html(strtoupper($aeroport_dest)); ?></strong></div>
+                        <?php endif; ?>
+                        <?php if (!empty($params['vol_aller_num'])): ?>
+                        <div class="ev-recap-row"><span>Vol aller</span><strong><?php echo esc_html($params['vol_aller_num']); ?> — <?php echo esc_html($params['vol_aller_depart'] ?? ''); ?> → <?php echo esc_html($params['vol_aller_arrivee'] ?? ''); ?></strong></div>
+                        <?php endif; ?>
+                        <?php if (!empty($params['vol_retour_num'])): ?>
+                        <div class="ev-recap-row"><span>Vol retour</span><strong><?php echo esc_html($params['vol_retour_num']); ?> — <?php echo esc_html($params['vol_retour_depart'] ?? ''); ?> → <?php echo esc_html($params['vol_retour_arrivee'] ?? ''); ?></strong></div>
+                        <?php endif; ?>
+                        <div class="ev-recap-row ev-recap-total"><span>Montant total</span><strong><?php echo number_format($total, 2, ',', ' '); ?> €</strong></div>
+                    </div>
+                </section>
+
+                <div class="ev-cards-pax-docs">
+                <!-- Participants -->
+                <?php if (!empty($voyageurs)): ?>
+                <section class="ev-card ev-card-pax">
+                    <h2>Participants</h2>
+                    <div class="ev-pax-list">
+                        <?php foreach ($voyageurs as $i => $v):
+                            $ddn = $v['ddn'] ?? $v['date_naissance'] ?? '';
+                        ?>
+                        <div class="ev-pax-item">
+                            <div class="ev-pax-num"><?php echo $i + 1; ?></div>
+                            <div class="ev-pax-info">
+                                <strong><?php echo esc_html(($v['prenom'] ?? '') . ' ' . strtoupper($v['nom'] ?? '')); ?></strong>
+                                <span class="ev-pax-type ev-pax-type-golfeur">Voyageur</span>
+                                <?php if ($ddn): ?>
+                                    <span>Né(e) le <?php echo esc_html(date('d/m/Y', strtotime($ddn))); ?></span>
+                                <?php endif; ?>
+                                <?php if (!empty($v['passeport'])): ?>
+                                    <span>Passeport <?php echo esc_html($v['passeport']); ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+                <?php endif; ?>
+
+                <!-- Documents -->
+                <section class="ev-card ev-card-docs">
+                    <h2>Documents</h2>
+                    <a href="<?php echo esc_url($contract_url); ?>" target="_blank" rel="noopener" class="ev-btn ev-btn-outline">Voir / imprimer le contrat de vente</a>
+                    <div class="ev-docs-upload">
+                        <p class="ev-docs-upload-desc">Envoyez des documents à l'agence (photos, pièces…) pour ce voyage.</p>
+                        <form class="ev-form-documents" data-order-id="<?php echo $order_id; ?>" enctype="multipart/form-data" method="post">
+                            <?php wp_nonce_field('vs08v_send_documents', 'vs08v_docs_nonce'); ?>
+                            <input type="file" name="vs08v_docs[]" class="ev-input-files" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx">
+                            <button type="submit" class="ev-btn ev-btn-outline ev-btn-docs-send">Envoyer des documents à l'agence</button>
+                            <span class="ev-docs-feedback" aria-live="polite"></span>
+                        </form>
+                    </div>
+                </section>
+                </div>
+
+                <!-- Paiements en attente de validation -->
+                <?php if (!empty($solde_info['pending_payments'])): ?>
+                <section class="ev-card ev-card-pending">
+                    <h2>Paiements en attente de validation</h2>
+                    <p class="ev-pending-desc">Les paiements ci-dessous ont été enregistrés et sont en attente de confirmation par l'agence.</p>
+                    <div class="ev-pending-list">
+                        <?php foreach ($solde_info['pending_payments'] as $pp): ?>
+                        <div class="ev-pending-item">
+                            <div class="ev-pending-icon">⏳</div>
+                            <div class="ev-pending-info">
+                                <strong><?php echo number_format($pp['amount'], 2, ',', ' '); ?> €</strong>
+                                <span><?php echo esc_html($pp['method']); ?> — <?php echo esc_html($pp['date']); ?></span>
+                            </div>
+                            <span class="ev-badge ev-badge-pending">En attente</span>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+                <?php endif; ?>
+
+                <!-- Paiement solde -->
+                <?php if ($can_pay_solde): ?>
+                <section class="ev-card ev-card-payment">
+                    <h2>Paiement du solde</h2>
+                    <div class="ev-solde-amount">
+                        <span class="ev-solde-label">Solde restant</span>
+                        <span class="ev-solde-value"><?php echo number_format($solde_info['solde'], 2, ',', ' '); ?> €</span>
+                        <?php if ($solde_info['solde_date']): ?>
+                        <span class="ev-solde-deadline">À régler avant le <?php echo esc_html($solde_info['solde_date']); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="ev-payment-btns">
+                        <button type="button" class="ev-btn ev-btn-primary ev-btn-solde-cb" data-order-id="<?php echo $order_id; ?>" data-solde="<?php echo esc_attr($solde_info['solde']); ?>">Payer le solde entier (<?php echo number_format($solde_info['solde'], 0, ',', ' '); ?> €)</button>
+                        <button type="button" class="ev-btn ev-btn-ghost ev-btn-solde-agence" data-order-id="<?php echo $order_id; ?>">Payer en agence</button>
+                    </div>
+                    <div class="ev-solde-partiel">
+                        <p class="ev-solde-partiel-label">Ou régler une partie du solde par carte :</p>
+                        <div class="ev-solde-partiel-row">
+                            <input type="number" class="ev-solde-partiel-input" step="0.01" min="1" max="<?php echo esc_attr($solde_info['solde']); ?>" placeholder="Montant en €" data-order-id="<?php echo $order_id; ?>" data-solde-max="<?php echo esc_attr($solde_info['solde']); ?>">
+                            <span class="ev-solde-partiel-euro">€</span>
+                            <button type="button" class="ev-btn ev-btn-outline ev-btn-solde-partiel" data-order-id="<?php echo $order_id; ?>" data-solde-max="<?php echo esc_attr($solde_info['solde']); ?>">Payer ce montant</button>
+                        </div>
+                    </div>
+                    <div class="ev-agence-info" id="ev-agence-<?php echo $order_id; ?>" style="display:none">
+                        <p><strong><?php echo esc_html($company['name'] ?? ''); ?></strong></p>
+                        <p><?php echo esc_html($company['address'] ?? ''); ?><br><?php echo esc_html($company['city'] ?? ''); ?></p>
+                        <p>Tél. : <?php echo esc_html($company['tel'] ?? ''); ?></p>
+                        <p>Montant : <strong><?php echo number_format($solde_info['solde'], 2, ',', ' '); ?> €</strong> — Dossier VS08-<?php echo $order_id; ?></p>
+                    </div>
+                </section>
+                <?php endif; ?>
+
+                <!-- À faire avant le départ -->
+                <?php
+                $is_upcoming_trip = !empty($params['date_depart']) && $params['date_depart'] >= date('Y-m-d');
+                if ($is_upcoming_trip):
+                    $checklist_items = VS08V_Traveler_Space::get_checklist_items();
+                    $saved_checklist = VS08V_Traveler_Space::get_saved_checklist($order_id, $current_user->ID);
+                ?>
+                <section class="ev-card ev-card-checklist">
+                    <h2>À faire avant le départ</h2>
+                    <p class="ev-checklist-desc">Cochez au fur et à mesure pour ne rien oublier.</p>
+                    <ul class="ev-checklist-list" data-order-id="<?php echo $order_id; ?>">
+                        <?php foreach ($checklist_items as $key => $label): ?>
+                        <li class="ev-checklist-item">
+                            <label class="ev-checklist-label">
+                                <input type="checkbox" class="ev-checklist-cb" value="<?php echo esc_attr($key); ?>" <?php echo in_array($key, $saved_checklist, true) ? ' checked' : ''; ?>>
+                                <span><?php echo esc_html($label); ?></span>
+                            </label>
                         </li>
                         <?php endforeach; ?>
                     </ul>
-                    <?php endif; ?>
+                    <p class="ev-checklist-docs">
+                        <a href="<?php echo esc_url($contract_url); ?>" target="_blank" rel="noopener">📄 Télécharger le contrat</a>
+                        · <a href="<?php echo esc_url(home_url('/assurances')); ?>">🛡 Infos assurance voyage</a>
+                    </p>
                 </section>
-                <section class="ev-voyage-block">
-                    <h2>Contrat de vente</h2>
-                    <p>Téléchargez ou consultez votre contrat de vente.</p>
-                    <a href="<?php echo esc_url($contract_url); ?>" target="_blank" rel="noopener" class="ev-btn ev-btn-primary">Voir le contrat de vente</a>
+                <?php endif; ?>
+
+                <!-- Donner son avis (voyages passés) -->
+                <?php
+                $can_review = !$is_upcoming_trip && VS08V_Traveler_Space::can_review($order_id, $current_user->ID);
+                if ($can_review):
+                ?>
+                <section class="ev-card ev-card-review">
+                    <h2>Donner votre avis</h2>
+                    <p>Vous avez effectué ce circuit ? Votre avis aide les futurs voyageurs.</p>
+                    <form class="ev-review-form" data-order-id="<?php echo $order_id; ?>">
+                        <div class="ev-review-stars">
+                            <span class="ev-star-label">Note :</span>
+                            <?php for ($s = 1; $s <= 5; $s++): ?>
+                            <button type="button" class="ev-star" data-star="<?php echo $s; ?>" aria-label="<?php echo $s; ?> étoile(s)">★</button>
+                            <?php endfor; ?>
+                            <input type="hidden" name="rating" value="">
+                        </div>
+                        <textarea name="review_text" class="ev-review-textarea" rows="4" placeholder="Racontez votre expérience…"></textarea>
+                        <button type="submit" class="ev-btn ev-btn-primary">Publier mon avis</button>
+                        <span class="ev-review-feedback" aria-live="polite"></span>
+                    </form>
                 </section>
-            </div>
+                <?php endif; ?>
+
+            </div><!-- /ev-detail-grid -->
             <?php else: // ── Détail Golf (existant) ──
                 $solde_info = VS08V_Traveler_Space::get_solde_info($order_id);
                 $params     = $data['params'] ?? [];
