@@ -216,13 +216,14 @@ class VS08V_Newsletter {
        ADMIN — MENU
     ═══════════════════════════════════════════ */
     public static function admin_menu() {
-        add_submenu_page(
-            'edit.php?post_type=vs08_voyage',
+        add_menu_page(
             'Newsletter',
             '📧 Newsletter',
             'manage_options',
-            'vs08v-newsletter',
-            [__CLASS__, 'admin_page']
+            'vs08-newsletter',
+            [__CLASS__, 'admin_page'],
+            'dashicons-email-alt',
+            28 // Position : après Commentaires
         );
     }
 
@@ -264,7 +265,7 @@ class VS08V_Newsletter {
         }
         $subscribers = $wpdb->get_results("SELECT * FROM $table $where ORDER BY created_at DESC LIMIT 200");
 
-        $base_url = admin_url('edit.php?post_type=vs08_voyage&page=vs08v-newsletter');
+        $base_url = admin_url('admin.php?page=vs08-newsletter');
         ?>
         <div class="wrap">
             <h1>📧 Newsletter — Abonnés</h1>
