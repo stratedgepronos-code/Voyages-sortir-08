@@ -535,9 +535,9 @@ $hc_slides = [
         <a href="<?php echo esc_url(home_url('/contact')); ?>" class="hc-btn-o">Demander un devis</a>
     </div>
 </div>
-<div class="hc-stats"><div class="hc-stat"><b>500+</b><small>Voyageurs par an</small></div><div class="hc-stat"><b>18</b><small>Pays couverts</small></div><div class="hc-stat"><b>4.9★</b><small>Note clients</small></div></div>
+<div class="hc-stats"><div class="hc-stat"><b>2500+</b><small>Voyageurs par an</small></div><div class="hc-stat"><b>50+</b><small>Pays couverts</small></div><div class="hc-stat"><b>4.9★</b><small>Note clients</small></div></div>
 <div class="hc-dots"><?php foreach($hc_slides as $i=>$s): ?><button class="hc-dot <?php echo $i===0?'active':''; ?>" data-i="<?php echo $i; ?>"></button><?php endforeach; ?></div>
-<div class="hc-conf"><div class="hc-conf-i"><span>🏆</span><span>Agence de confiance depuis 2016</span></div><div class="hc-conf-i"><span>⭐</span><span>4.8/5 sur Google (200+ avis)</span></div><div class="hc-conf-i"><span>💰</span><span>Libre à vous de payer plus cher !</span></div><div class="hc-conf-i"><span>✈️</span><span>Vols + Hôtels + Activités inclus</span></div></div>
+<div class="hc-conf"><div class="hc-conf-i"><span>🏆</span><span>Agence de confiance depuis 2001</span></div><div class="hc-conf-i"><span>⭐</span><span>4.8/5 sur Google (200+ avis)</span></div><div class="hc-conf-i"><span>💰</span><span>Libre à vous de payer plus cher !</span></div><div class="hc-conf-i"><span>✈️</span><span>Vols + Hôtels + Activités inclus</span></div></div>
 </section>
 
 <!-- Hero JS -->
@@ -1797,9 +1797,9 @@ if (!is_array($vs08_google_reviews) || empty($vs08_google_reviews)) {
                 <div class="fp-cta-box">
                     <p class="fp-cta-eyebrow">Devis gratuit</p>
                     <h2>Votre voyage sur mesure</h2>
-                    <p class="fp-cta-desc">Dites-nous destination, budget et envies. Un conseiller vous envoie une proposition sous 24h, sans engagement.</p>
+                    <p class="fp-cta-desc">Dites-nous destination, budget et envies. Un conseiller vous envoie une proposition sous 24-48h, sans engagement.</p>
                     <div class="fp-cta-trust">
-                        <span>Réponse sous 24h</span><span>Sans engagement</span><span>Devis personnalisé</span>
+                        <span>Réponse sous 24-48h</span><span>Sans engagement</span><span>Devis personnalisé</span>
                     </div>
                     <a href="<?php echo esc_url(home_url('/devis-gratuit')); ?>" class="fp-btn-devis">Demander mon devis <span class="btn-arrow">→</span></a>
                     <div class="fp-cta-phone">

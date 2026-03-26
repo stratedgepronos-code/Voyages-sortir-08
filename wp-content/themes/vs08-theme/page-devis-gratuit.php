@@ -89,7 +89,7 @@ $hero_bg     = 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1
         <h1>Votre devis <em>sur mesure</em></h1>
         <p>Choisissez le type de voyage qui vous ressemble. Un conseiller d&eacute;di&eacute; &eacute;tudie votre demande et vous r&eacute;pond sous 24 &agrave; 48h.</p>
         <div class="dv-trust">
-            <div class="dv-trust-item"><span>24h</span><small>D&eacute;lai de r&eacute;ponse</small></div>
+            <div class="dv-trust-item"><span>24-48h</span><small>D&eacute;lai de r&eacute;ponse</small></div>
             <div class="dv-trust-item"><span>100%</span><small>Sur mesure</small></div>
             <div class="dv-trust-item"><span>0&euro;</span><small>Frais de devis</small></div>
         </div>
@@ -173,7 +173,7 @@ $hero_bg     = 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1
                 <p>Un devis chez Voyages Sortir 08, c'est simple, rapide et gratuit.</p>
                 <ul class="dv-steps">
                     <li><span class="dv-step-num">1</span><div>Remplissez le formulaire correspondant &agrave; votre type de voyage (2 minutes).</div></li>
-                    <li><span class="dv-step-num">2</span><div>Un conseiller d&eacute;di&eacute; &eacute;tudie votre demande et vous recontacte sous 24h.</div></li>
+                    <li><span class="dv-step-num">2</span><div>Un conseiller d&eacute;di&eacute; &eacute;tudie votre demande et vous recontacte sous 24-48h.</div></li>
                     <li><span class="dv-step-num">3</span><div>Recevez votre devis d&eacute;taill&eacute; par email, pr&ecirc;t &agrave; r&eacute;server.</div></li>
                 </ul>
                 <div class="dv-bottom-cta">

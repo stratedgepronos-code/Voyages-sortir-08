@@ -38,7 +38,7 @@ get_header();
 <section class="qsn-hero">
     <div class="qsn-hero-bg"></div>
     <div class="qsn-hero-z">
-        <span class="qsn-badge">Depuis 2016 &agrave; Ch&acirc;lons-en-Champagne</span>
+        <span class="qsn-badge">Depuis 2001 &agrave; Ch&acirc;lons-en-Champagne</span>
         <h1>Voyages <em>Sortir 08</em></h1>
         <p>Une agence de voyages ind&eacute;pendante, passionn&eacute;e et engag&eacute;e. On n&eacute;gocie les meilleurs tarifs pour que vous partiez plus souvent, plus loin, et mieux.</p>
     </div>
@@ -48,15 +48,15 @@ get_header();
 
 <div class="qsn-section">
     <h2>Notre histoire</h2>
-    <p>Fond&eacute;e en 2016, Voyages Sortir 08 est une agence de voyages implant&eacute;e au c&oelig;ur de Ch&acirc;lons-en-Champagne. D&egrave;s le d&eacute;part, notre ambition &eacute;tait simple : proposer des voyages de qualit&eacute; &agrave; des prix n&eacute;goci&eacute;s, avec un service humain et personnalis&eacute;.</p>
-    <p>Sp&eacute;cialistes des s&eacute;jours golf, nous avons &eacute;largi notre offre aux circuits d&eacute;couverte, aux s&eacute;jours all inclusive et aux billets de parcs d'attractions. Aujourd'hui, nous accompagnons des centaines de voyageurs chaque ann&eacute;e vers plus de 18 destinations dans le monde.</p>
+    <p>FondFond&eacute;e en 2016eacute;e en 2001, Voyages Sortir 08 est une agence de voyages implant&eacute;e au c&oelig;ur de Ch&acirc;lons-en-Champagne. D&egrave;s le d&eacute;part, notre ambition &eacute;tait simple : proposer des voyages de qualit&eacute; &agrave; des prix n&eacute;goci&eacute;s, avec un service humain et personnalis&eacute;.</p>
+    <p>Sp&eacute;cialistes des s&eacute;jours golf, nous avons &eacute;largi notre offre aux circuits d&eacute;couverte, aux s&eacute;jours all inclusive, aux road trips et aux billets de parcs d'attractions. Aujourd'hui, nous accompagnons plus de 2 500 voyageurs chaque ann&eacute;e vers plus de 50 pays dans le monde.</p>
     <p>Notre slogan <strong>&laquo; Libre &agrave; vous de payer plus cher ! &raquo;</strong> r&eacute;sume notre philosophie : nous n&eacute;gocions au plus juste pour vous offrir le meilleur rapport qualit&eacute;-prix du march&eacute;.</p>
 </div>
 
 <div class="qsn-stats">
-    <div class="qsn-stat"><b>2016</b><span>Cr&eacute;ation</span></div>
-    <div class="qsn-stat"><b>18+</b><span>Pays</span></div>
-    <div class="qsn-stat"><b>500+</b><span>Voyageurs/an</span></div>
+    <div class="qsn-stat"><b>2001</b><span>Cr&eacute;ation</span></div>
+    <div class="qsn-stat"><b>50+</b><span>Pays</span></div>
+    <div class="qsn-stat"><b>2500+</b><span>Voyageurs/an</span></div>
     <div class="qsn-stat"><b>4.8★</b><span>Google</span></div>
 </div>
 
@@ -73,8 +73,10 @@ get_header();
     <h2>Ce que nous proposons</h2>
     <p>&#x26f3; <strong>S&eacute;jours Golf</strong> &mdash; Notre sp&eacute;cialit&eacute;. Portugal, Espagne, Maroc, Turquie, Tha&iuml;lande... Vols, h&ocirc;tel, green fees et transferts inclus.</p>
     <p>&#x1f5fa;&#xfe0f; <strong>Circuits d&eacute;couverte</strong> &mdash; Italie, Gr&egrave;ce, Portugal, Tha&iuml;lande, Costa Rica, Mexique, Sri Lanka, Oman... Guid&eacute;s ou en libert&eacute;.</p>
-    <p>&#x2600;&#xfe0f; <strong>S&eacute;jours All Inclusive</strong> &mdash; Soleil, plage et farniente dans les meilleurs h&ocirc;tels-clubs (bient&ocirc;t en ligne).</p>
-    <p>&#x1f3a2; <strong>Billets Parcs</strong> &mdash; Disneyland Paris, Parc Ast&eacute;rix, Europa-Park... &agrave; prix r&eacute;duit (bient&ocirc;t en ligne).</p>
+    <p>&#x2600;&#xfe0f; <strong>S&eacute;jours All Inclusive</strong> &mdash; Soleil, plage et farniente dans les meilleurs h&ocirc;tels-clubs.</p>
+    <p>&#x1f697; <strong>Road Trips</strong> &mdash; Itin&eacute;raires en libert&eacute; avec v&eacute;hicule de location, h&ocirc;tels r&eacute;serv&eacute;s &agrave; chaque &eacute;tape.</p>
+    <p>&#x1f3d9;&#xfe0f; <strong>City Breaks</strong> &mdash; Week-ends et courts s&eacute;jours dans les plus belles villes d'Europe et du monde.</p>
+    <p>&#x1f3a2; <strong>Billets Parcs</strong> &mdash; Disneyland Paris, Parc Ast&eacute;rix, Europa-Park... &agrave; prix r&eacute;duit.</p>
 </div>
 
 <div class="qsn-legal">

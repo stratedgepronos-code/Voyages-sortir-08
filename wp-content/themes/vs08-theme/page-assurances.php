@@ -46,20 +46,42 @@ get_header();
 
 <p class="as-intro">Chez Voyages Sortir 08, nous vous recommandons fortement de souscrire une assurance voyage. Celle-ci vous prot&egrave;ge en cas d'annulation, de retard, de perte de bagages ou de probl&egrave;me m&eacute;dical pendant votre s&eacute;jour. L'assurance est propos&eacute;e en option lors de votre r&eacute;servation.</p>
 
-<div class="as-grid" style="grid-template-columns:1fr;max-width:600px;margin:0 auto 48px">
+<div class="as-grid" style="grid-template-columns:1fr;max-width:700px;margin:0 auto 48px">
     <div class="as-card">
         <div class="as-card-head"><div class="as-card-ic">&#x1f6e1;&#xfe0f;</div><h2>Assurance Annulation</h2></div>
-        <p>Prot&eacute;gez votre investissement en cas d'emp&ecirc;chement avant le d&eacute;part.</p>
+        <p style="font-size:12px;color:#59b7b7;font-weight:600;margin:0 0 14px">En partenariat avec <strong>ASSUREVER</strong> &mdash; N&deg;1 du courtage en assurance voyage en France</p>
+        <p>Prot&eacute;gez votre investissement en cas d'emp&ecirc;chement avant le d&eacute;part. L'assurance est propos&eacute;e lors de votre r&eacute;servation et doit &ecirc;tre souscrite au moment de l'acompte.</p>
         <ul>
             <li>Maladie, accident, hospitalisation</li>
-            <li>D&eacute;c&egrave;s d'un proche</li>
+            <li>D&eacute;c&egrave;s d'un proche (conjoint, ascendants, descendants)</li>
             <li>Licenciement &eacute;conomique</li>
             <li>Convocation juridique impr&eacute;vue</li>
             <li>Refus de visa</li>
-            <li>Remboursement jusqu'&agrave; 100 % du voyage</li>
+            <li>Attentat ou catastrophe naturelle &agrave; destination (dans les 15 jours et 100 km)</li>
+            <li>Faillite de la compagnie a&eacute;rienne</li>
+            <li>Gr&egrave;ve du personnel de la compagnie a&eacute;rienne</li>
+            <li>Remboursement selon le bar&egrave;me des frais d'annulation</li>
         </ul>
-        <span class="as-price">Propos&eacute;e lors de votre r&eacute;servation</span>
+        <div style="margin-top:20px;background:#f0fafa;border-radius:14px;padding:20px">
+            <h4 style="font-size:13px;color:#0f2424;margin:0 0 12px;font-family:'Outfit',sans-serif;font-weight:700">&#x1f4b0; Bar&egrave;me de l'assurance (par personne)</h4>
+            <table style="width:100%;border-collapse:collapse;font-family:'Outfit',sans-serif;font-size:13px">
+                <tr style="border-bottom:1px solid rgba(89,183,183,.15)"><td style="padding:6px 0;color:#4a5568">Moins de 850 &euro;</td><td style="padding:6px 0;text-align:right;font-weight:700;color:#059669">Gratuit</td></tr>
+                <tr style="border-bottom:1px solid rgba(89,183,183,.15)"><td style="padding:6px 0;color:#4a5568">850 &euro; &ndash; 1 200 &euro;</td><td style="padding:6px 0;text-align:right;font-weight:700;color:#0f2424">40 &euro;</td></tr>
+                <tr style="border-bottom:1px solid rgba(89,183,183,.15)"><td style="padding:6px 0;color:#4a5568">1 201 &euro; &ndash; 1 800 &euro;</td><td style="padding:6px 0;text-align:right;font-weight:700;color:#0f2424">60 &euro;</td></tr>
+                <tr style="border-bottom:1px solid rgba(89,183,183,.15)"><td style="padding:6px 0;color:#4a5568">1 801 &euro; &ndash; 2 500 &euro;</td><td style="padding:6px 0;text-align:right;font-weight:700;color:#0f2424">85 &euro;</td></tr>
+                <tr style="border-bottom:1px solid rgba(89,183,183,.15)"><td style="padding:6px 0;color:#4a5568">2 501 &euro; &ndash; 3 500 &euro;</td><td style="padding:6px 0;text-align:right;font-weight:700;color:#0f2424">120 &euro;</td></tr>
+                <tr><td style="padding:6px 0;color:#4a5568">3 501 &euro; &ndash; 16 000 &euro;</td><td style="padding:6px 0;text-align:right;font-weight:700;color:#0f2424">4,20 %</td></tr>
+            </table>
+        </div>
     </div>
+</div>
+
+<div class="as-note">
+    <h3>&#x1f4e2; En cas de sinistre</h3>
+    <p>Pr&eacute;venez imm&eacute;diatement votre agence Voyages Sortir 08 le jour m&ecirc;me de la connaissance du motif d'annulation, puis d&eacute;clarez le sinistre aupr&egrave;s d'Assurever dans les 5 jours ouvrés.</p>
+    <p><strong>Sinistres Assurever :</strong> <a href="tel:+33173034101">+33 1 73 03 41 01</a></p>
+    <p><strong>Assistance Mutuaide (pendant le voyage) :</strong> <a href="tel:+33155988817">01 55 98 88 17</a> (depuis l'&eacute;tranger : +33 1 55 98 88 17)</p>
+    <p style="font-size:12px;color:#9ca3af;margin-top:12px">Assurever &mdash; SARL au capital de 516 500 &euro; &mdash; RCS Paris B 384.706.941 &mdash; Courtier immatricul&eacute; &agrave; l'ORIAS. Les conditions g&eacute;n&eacute;rales compl&egrave;tes sont remises avec votre contrat lors de la r&eacute;servation.</p>
 </div>
 
 <div class="as-note">
