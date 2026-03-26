@@ -21,9 +21,24 @@ class VS08V_Search {
         add_action('trashed_post',                 [__CLASS__, 'invalidate_cache']);
         add_action('untrashed_post',               [__CLASS__, 'invalidate_cache']);
 
+        // Admin: rebuild manuel via ?vs08_rebuild_map=1
+        if (is_admin() && isset($_GET['vs08_rebuild_map'])) {
+            add_action('init', function() {
+                self::rebuild_map_json();
+                wp_die('✅ vs08-map-data.json régénéré à ' . date('H:i:s'));
+            });
+        }
+
         // Reset one-shot du cache vol opportuniste (v3 : ajout saisons au calcul)
         if (get_option('_vs08v_vol_cache_reset') !== 'v3') {
             add_action('init', [__CLASS__, 'reset_vol_cache_once']);
+        }
+
+        // Générer le fichier JSON carte si inexistant
+        $upload_dir = wp_upload_dir();
+        $json_path  = $upload_dir['basedir'] . '/vs08-map-data.json';
+        if (!file_exists($json_path)) {
+            add_action('init', [__CLASS__, 'rebuild_map_json'], 99);
         }
     }
 
@@ -36,6 +51,143 @@ class VS08V_Search {
 
     public static function invalidate_cache() {
         delete_transient(self::TRANSIENT_KEY);
+        // Régénérer le fichier JSON carte en arrière-plan
+        self::rebuild_map_json();
+    }
+
+    /**
+     * Coordonnées GPS des destinations connues (pour la carte interactive).
+     * Ajoutez de nouvelles destinations ici quand vous les créez.
+     */
+    const DEST_COORDS = [
+        'Portugal'              => ['lat'=>37.02,'lon'=>-7.93,'city'=>'Algarve','iata'=>'FAO','region'=>'PORTUGAL'],
+        'Espagne'               => ['lat'=>36.72,'lon'=>-4.42,'city'=>'Marbella','iata'=>'AGP','region'=>'ESPAGNE · ANDALOUSIE'],
+        'France'                => ['lat'=>44.8,'lon'=>2.0,'city'=>'Biarritz','iata'=>'BOD','region'=>'FRANCE'],
+        'Maroc'                 => ['lat'=>31.63,'lon'=>-8.0,'city'=>'Marrakech','iata'=>'RAK','region'=>'MAROC'],
+        'Tunisie'               => ['lat'=>34.0,'lon'=>9.8,'city'=>'Djerba','iata'=>'DJE','region'=>'TUNISIE'],
+        'Égypte'                => ['lat'=>27.18,'lon'=>33.8,'city'=>'Hurghada','iata'=>'HRG','region'=>'ÉGYPTE · MER ROUGE'],
+        'Italie'                => ['lat'=>40.8,'lon'=>14.5,'city'=>'Sicile','iata'=>'CTA','region'=>'ITALIE'],
+        'Grèce'                 => ['lat'=>35.5,'lon'=>24.5,'city'=>'Crète','iata'=>'HER','region'=>'GRÈCE'],
+        'Turquie'               => ['lat'=>37.5,'lon'=>30.7,'city'=>'Antalya','iata'=>'AYT','region'=>'TURQUIE · BELEK'],
+        'Irlande'               => ['lat'=>52.3,'lon'=>-8.5,'city'=>'Kerry','iata'=>'SNN','region'=>'IRLANDE'],
+        'Canaries'              => ['lat'=>28.45,'lon'=>-13.86,'city'=>'Fuerteventura','iata'=>'FUE','region'=>'ÎLES CANARIES'],
+        'Thaïlande'             => ['lat'=>8.5,'lon'=>98.4,'city'=>'Phuket','iata'=>'HKT','region'=>'THAÏLANDE'],
+        'Croatie'               => ['lat'=>43.5,'lon'=>16.4,'city'=>'Split','iata'=>'SPU','region'=>'CROATIE'],
+        'République Dominicaine'=> ['lat'=>18.5,'lon'=>-69.9,'city'=>'Punta Cana','iata'=>'PUJ','region'=>'RÉP. DOMINICAINE'],
+        'Écosse'                => ['lat'=>56.5,'lon'=>-3.5,'city'=>'St Andrews','iata'=>'EDI','region'=>'ÉCOSSE'],
+        'Maurice'               => ['lat'=>-20.3,'lon'=>57.5,'city'=>'Île Maurice','iata'=>'MRU','region'=>'ÎLE MAURICE'],
+        'Chypre'                => ['lat'=>34.7,'lon'=>33.0,'city'=>'Paphos','iata'=>'PFO','region'=>'CHYPRE'],
+        'Vietnam'               => ['lat'=>16.05,'lon'=>108.2,'city'=>'Da Nang','iata'=>'DAD','region'=>'VIETNAM'],
+        'Costa Rica'            => ['lat'=>9.93,'lon'=>-84.08,'city'=>'San José','iata'=>'SJO','region'=>'COSTA RICA'],
+        'Malte'                 => ['lat'=>35.9,'lon'=>14.5,'city'=>'La Valette','iata'=>'MLA','region'=>'MALTE'],
+    ];
+
+    /**
+     * Couleur par type de voyage pour la carte.
+     */
+    const TYPE_COLORS = [
+        'sejour_golf' => '#c9a84c',
+        'circuit'     => '#e55d3a',
+        'sejour'      => '#59b7b7',
+    ];
+
+    /**
+     * Régénère le fichier JSON /wp-content/uploads/vs08-map-data.json
+     * Appelé à chaque save_post_vs08_voyage / trash / untrash.
+     */
+    public static function rebuild_map_json() {
+        $upload_dir = wp_upload_dir();
+        $json_path  = $upload_dir['basedir'] . '/vs08-map-data.json';
+
+        $posts = get_posts([
+            'post_type'      => 'vs08_voyage',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+        ]);
+
+        // Collecter : destination → { types[], airports[], count }
+        $dest_data = [];
+        $all_airports = [];
+
+        foreach ($posts as $pid) {
+            $m = VS08V_MetaBoxes::get($pid);
+            if (($m['statut'] ?? '') === 'archive') continue;
+
+            $dest = trim($m['destination'] ?? '');
+            $pays = trim($m['pays'] ?? '');
+            $key  = $pays ?: $dest;
+            $type = $m['type_voyage'] ?? '';
+            if (!$key || !$type) continue;
+
+            if (!isset($dest_data[$key])) {
+                $dest_data[$key] = ['types' => [], 'airports' => [], 'count' => 0];
+            }
+            $dest_data[$key]['count']++;
+            if (!in_array($type, $dest_data[$key]['types'])) {
+                $dest_data[$key]['types'][] = $type;
+            }
+
+            if (!empty($m['aeroports']) && is_array($m['aeroports'])) {
+                foreach ($m['aeroports'] as $a) {
+                    $code = strtoupper(trim($a['code'] ?? ''));
+                    $ville = trim($a['ville'] ?? '');
+                    if (!$code) continue;
+                    if (!in_array($code, $dest_data[$key]['airports'])) {
+                        $dest_data[$key]['airports'][] = $code;
+                    }
+                    if (!isset($all_airports[$code])) {
+                        $all_airports[$code] = ['code' => $code, 'name' => $ville];
+                    }
+                }
+            }
+        }
+
+        // Construire le tableau de destinations pour la carte
+        $destinations = [];
+        foreach ($dest_data as $pays => $info) {
+            $coords = self::DEST_COORDS[$pays] ?? null;
+            if (!$coords) continue; // Pas de coordonnées connues → on skip
+
+            $flag = '';
+            if (class_exists('VS08V_MetaBoxes')) {
+                $flag = VS08V_MetaBoxes::resolve_flag(['pays' => $pays]);
+            }
+
+            // Couleur = type principal
+            $main_type = $info['types'][0] ?? 'sejour';
+            $col = self::TYPE_COLORS[$main_type] ?? '#59b7b7';
+
+            // URL de recherche
+            $url = home_url('/resultats-recherche') . '?dest=' . rawurlencode($pays);
+            if (count($info['types']) === 1) {
+                $url .= '&type=' . rawurlencode($info['types'][0]);
+            }
+
+            $destinations[] = [
+                'id'       => sanitize_title($pays),
+                'pays'     => $pays,
+                'flag'     => $flag,
+                'city'     => $coords['city'],
+                'region'   => $coords['region'],
+                'iata'     => $coords['iata'],
+                'lat'      => $coords['lat'],
+                'lon'      => $coords['lon'],
+                'col'      => $col,
+                'url'      => $url,
+                'types'    => $info['types'],
+                'airports' => $info['airports'],
+                'count'    => $info['count'],
+            ];
+        }
+
+        $output = [
+            'destinations' => $destinations,
+            'airports'     => array_values($all_airports),
+            'generated'    => date('c'),
+        ];
+
+        file_put_contents($json_path, wp_json_encode($output, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
     }
 
     public static function get_aggregated_options() {

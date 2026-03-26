@@ -1275,7 +1275,11 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script>
 (function(){
-    var APTS=[
+    var JSON_URL = '<?php echo esc_url(wp_upload_dir()['baseurl'] . '/vs08-map-data.json'); ?>';
+    var HOME = '<?php echo esc_url(home_url()); ?>';
+
+    // Fallback aéroports (si le JSON n'en a pas assez)
+    var DEFAULT_APTS = [
         {code:'CDG',name:'Paris CDG',lat:49.01,lon:2.55},
         {code:'ORY',name:'Paris Orly',lat:48.72,lon:2.36},
         {code:'LYS',name:'Lyon',lat:45.73,lon:5.08},
@@ -1287,71 +1291,103 @@ document.addEventListener('DOMContentLoaded', function() {
         {code:'NCE',name:'Nice',lat:43.66,lon:7.22},
         {code:'BRU',name:'Bruxelles',lat:50.90,lon:4.48}
     ];
-    var HOME = '<?php echo esc_url(home_url()); ?>';
-    var URL_RES = '<?php echo esc_url($fp_url_resultats); ?>';
-    var URL_CIRCUITS = '<?php echo esc_url($fp_url_circuits); ?>';
-    var DS=[
-        {id:'portugal',flag:'\u{1F1F5}\u{1F1F9}',c:'Portugal',city:'Algarve',r:'PORTUGAL',iata:'FAO',n:14,lat:37.02,lon:-7.93,col:'#c9a84c',u:URL_RES+'?type=sejour_golf&dest=portugal',tags:['golf','beach'],desc:'Links face à l\'Atlantique, resorts 5 étoiles et soleil garanti.',price:'À partir de 899€/pers.'},
-        {id:'espagne',flag:'\u{1F1EA}\u{1F1F8}',c:'Espagne',city:'Marbella',r:'ESPAGNE · ANDALOUSIE',iata:'AGP',n:11,lat:36.72,lon:-4.42,col:'#c9a84c',u:URL_RES+'?type=sejour_golf&dest=espagne',tags:['golf','beach'],desc:'Costa del Sol, parcours de championnat et gastronomie.',price:'À partir de 949€/pers.'},
-        {id:'france',flag:'\u{1F1EB}\u{1F1F7}',c:'France',city:'Biarritz',r:'FRANCE · SUD',iata:'BOD',n:12,lat:44.8,lon:2.0,col:'#c9a84c',u:URL_RES+'?type=sejour_golf&dest=france',tags:['golf'],desc:'Parcours entre océan et montagne, douceur de vivre.',price:'À partir de 590€/pers.'},
-        {id:'maroc',flag:'\u{1F1F2}\u{1F1E6}',c:'Maroc',city:'Marrakech',r:'MAROC',iata:'RAK',n:9,lat:31.63,lon:-8.0,col:'#c9a84c',u:URL_RES+'?dest=maroc',tags:['golf','ai'],desc:'Royal Golf, palmeraies et riads. Soleil toute l\'année.',price:'À partir de 749€/pers.'},
-        {id:'tunisie',flag:'\u{1F1F9}\u{1F1F3}',c:'Tunisie',city:'Djerba',r:'TUNISIE',iata:'DJE',n:7,lat:34.0,lon:9.8,col:'#59b7b7',u:URL_RES+'?type=sejour&dest=tunisie',tags:['ai','beach'],desc:'Clubs all inclusive face à la Méditerranée.',price:'À partir de 599€/pers.'},
-        {id:'egypte',flag:'\u{1F1EA}\u{1F1EC}',c:'Égypte',city:'Hurghada',r:'ÉGYPTE · MER ROUGE',iata:'HRG',n:5,lat:27.18,lon:33.8,col:'#59b7b7',u:URL_RES+'?type=sejour&dest=egypte',tags:['ai','beach'],desc:'Récifs coralliens, resorts et soleil 365 jours.',price:'À partir de 649€/pers.'},
-        {id:'italie',flag:'\u{1F1EE}\u{1F1F9}',c:'Italie',city:'Sicile',r:'ITALIE',iata:'CTA',n:6,lat:40.8,lon:14.5,col:'#59b7b7',u:URL_CIRCUITS+'?destination=italie',tags:['circuit'],desc:'Volcans, temples grecs et cuisine divine.',price:'À partir de 899€/pers.'},
-        {id:'grece',flag:'\u{1F1EC}\u{1F1F7}',c:'Grèce',city:'Crète',r:'GRÈCE',iata:'HER',n:8,lat:35.5,lon:24.5,col:'#59b7b7',u:URL_CIRCUITS+'?destination=grece',tags:['circuit','beach'],desc:'Plages de sable rose, gorges et villages blancs.',price:'À partir de 799€/pers.'},
-        {id:'turquie',flag:'\u{1F1F9}\u{1F1F7}',c:'Turquie',city:'Antalya',r:'TURQUIE · BELEK',iata:'AYT',n:10,lat:37.5,lon:30.7,col:'#c9a84c',u:URL_RES+'?dest=turquie',tags:['golf','ai'],desc:'Parcours world-class, resorts 5★ all inclusive.',price:'À partir de 819€/pers.'},
-        {id:'irlande',flag:'\u{1F1EE}\u{1F1EA}',c:'Irlande',city:'Kerry',r:'IRLANDE',iata:'SNN',n:4,lat:52.3,lon:-8.5,col:'#59b7b7',u:URL_RES+'?type=sejour_golf&dest=irlande',tags:['golf'],desc:'Links légendaires battus par le vent.',price:'À partir de 1 190€/pers.'},
-        {id:'canaries',flag:'\u{1F1EA}\u{1F1F8}',c:'Canaries',city:'Fuerteventura',r:'ÎLES CANARIES',iata:'FUE',n:6,lat:28.45,lon:-13.86,col:'#59b7b7',u:URL_RES+'?type=sejour&dest=canaries',tags:['ai','beach'],desc:'Printemps éternel et plages infinies.',price:'À partir de 729€/pers.'},
-        {id:'thailande',flag:'\u{1F1F9}\u{1F1ED}',c:'Thaïlande',city:'Phuket',r:'THAÏLANDE',iata:'HKT',n:5,lat:8.5,lon:98.4,col:'#c9a84c',u:URL_RES+'?type=sejour_golf&dest=thailande',tags:['golf','beach'],desc:'Parcours tropicaux et plages carte postale.',price:'À partir de 1 490€/pers.'}
-    ];
-    var TAGS={golf:{l:'Golf',c:'fp-tt-tag-golf'},ai:{l:'All Inclusive',c:'fp-tt-tag-ai'},beach:{l:'Plage',c:'fp-tt-tag-beach'},circuit:{l:'Circuit',c:'fp-tt-tag-circuit'}};
-    var sel=APTS[0],W=1200,H=580;
-    var proj=d3.geoNaturalEarth1().center([20,30]).scale(340).translate([W/2,H/2]);
-    var pathG=d3.geoPath(proj);
-    var box=document.getElementById('fp-map-wrap');
-    if(!box)return;
-    var svg=d3.select(box).append('svg').attr('viewBox','0 0 '+W+' '+H).attr('width','100%');
-    var defs=svg.append('defs');
+
+    // Coordonnées des aéroports (pour positionner le point sur la carte)
+    var APT_COORDS = {};
+    DEFAULT_APTS.forEach(function(a){ APT_COORDS[a.code] = a; });
+
+    var TAGS = {
+        sejour_golf: {l:'Séjours Golf', c:'fp-tt-tag-golf'},
+        sejour:      {l:'All Inclusive', c:'fp-tt-tag-ai'},
+        circuit:     {l:'Circuit',      c:'fp-tt-tag-circuit'}
+    };
+
+    var sel = DEFAULT_APTS[0], W = 1200, H = 580;
+    var proj = d3.geoNaturalEarth1().center([20,30]).scale(340).translate([W/2,H/2]);
+    var pathG = d3.geoPath(proj);
+    var box = document.getElementById('fp-map-wrap');
+    if (!box) return;
+    var svg = d3.select(box).append('svg').attr('viewBox','0 0 '+W+' '+H).attr('width','100%');
+    var defs = svg.append('defs');
     defs.append('clipPath').attr('id','fp-mc').append('rect').attr('width',W).attr('height',H);
-    var rg1=defs.append('radialGradient').attr('id','fp-oc');
+    var rg1 = defs.append('radialGradient').attr('id','fp-oc');
     rg1.append('stop').attr('offset','0%').attr('stop-color','#14203a');
     rg1.append('stop').attr('offset','100%').attr('stop-color','#0b1120');
-    var gc=svg.append('g').attr('clip-path','url(#fp-mc)');
-    var gO=gc.append('g'),gGr=gc.append('g'),gL=gc.append('g'),gA=gc.append('g'),gM=gc.append('g');
+    var gc = svg.append('g').attr('clip-path','url(#fp-mc)');
+    var gO = gc.append('g'), gGr = gc.append('g'), gL = gc.append('g'), gA = gc.append('g'), gM = gc.append('g');
+
+    var ALL_DS = []; // Toutes les destinations (chargées du JSON)
 
     /* Boutons aéroports */
-    var ap=document.getElementById('fp-map-airports');
-    APTS.forEach(function(a,i){
-        var b=document.createElement('button');
-        b.className='fp-map-ab'+(i===0?' on':'');
-        b.textContent=a.code;
-        b.title=a.name;
-        b.onclick=function(){sel=a;ap.querySelectorAll('.fp-map-ab').forEach(function(x){x.classList.remove('on');});b.classList.add('on');drawArcs();};
-        ap.appendChild(b);
-    });
+    var ap = document.getElementById('fp-map-airports');
+    function buildAirportButtons(apts) {
+        ap.innerHTML = '';
+        apts.forEach(function(a, i) {
+            var b = document.createElement('button');
+            b.className = 'fp-map-ab' + (i === 0 ? ' on' : '');
+            b.textContent = a.code;
+            b.title = a.name;
+            b.onclick = function() {
+                sel = APT_COORDS[a.code] || a;
+                ap.querySelectorAll('.fp-map-ab').forEach(function(x) { x.classList.remove('on'); });
+                b.classList.add('on');
+                drawArcs();
+                drawMarkers();
+            };
+            ap.appendChild(b);
+        });
+    }
+    buildAirportButtons(DEFAULT_APTS);
 
     /* Fond océan + graticule */
     gO.append('path').datum({type:'Sphere'}).attr('d',pathG).attr('fill','url(#fp-oc)').attr('stroke','rgba(89,183,183,.08)').attr('stroke-width',.5);
     gGr.append('path').datum(d3.geoGraticule().step([20,20])()).attr('d',pathG).attr('fill','none').attr('stroke','rgba(89,183,183,.04)').attr('stroke-width',.3);
 
-    /* Chargement TopoJSON */
-    d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(function(w){
-        var land=topojson.feature(w,w.objects.countries);
-        var bord=topojson.mesh(w,w.objects.countries,function(a,b){return a!==b;});
+    /* Charger les données JSON + le monde */
+    Promise.all([
+        d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'),
+        fetch(JSON_URL).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; })
+    ]).then(function(results) {
+        var w = results[0], mapData = results[1];
+
+        // Dessiner les pays
+        var land = topojson.feature(w, w.objects.countries);
+        var bord = topojson.mesh(w, w.objects.countries, function(a,b) { return a !== b; });
         gL.selectAll('path').data(land.features).join('path').attr('d',pathG).attr('fill','#1a2640').attr('stroke','none');
         gL.append('path').datum(bord).attr('d',pathG).attr('fill','none').attr('stroke','rgba(89,183,183,.07)').attr('stroke-width',.3);
+
+        // Charger les destinations depuis le JSON
+        if (mapData && mapData.destinations && mapData.destinations.length > 0) {
+            ALL_DS = mapData.destinations;
+        }
+
         drawArcs();
         drawMarkers();
     });
 
-    /* Arcs de vol animés */
-    function drawArcs(){
-        gA.selectAll('*').remove();
-        var o=[sel.lon,sel.lat],op=proj(o);
-        DS.forEach(function(d,i){
-            gA.append('path').datum({type:'LineString',coordinates:[o,[d.lon,d.lat]]}).attr('d',pathG).attr('fill','none').attr('stroke',d.col).attr('stroke-width',1).attr('stroke-dasharray','6 5').attr('opacity',.22).style('animation','fp-map-dash '+(1.6+i*.1)+'s linear infinite');
+    /* Filtrer les destinations selon l'aéroport sélectionné */
+    function getFilteredDS() {
+        if (!sel || !sel.code) return ALL_DS;
+        return ALL_DS.filter(function(d) {
+            return d.airports && d.airports.indexOf(sel.code) !== -1;
         });
-        if(op){
+    }
+
+    /* Arcs de vol animés */
+    function drawArcs() {
+        gA.selectAll('*').remove();
+        if (!sel) return;
+        var o = [sel.lon, sel.lat], op = proj(o);
+        var filtered = getFilteredDS();
+        filtered.forEach(function(d, i) {
+            gA.append('path')
+                .datum({type:'LineString', coordinates:[o, [d.lon, d.lat]]})
+                .attr('d', pathG).attr('fill','none').attr('stroke', d.col)
+                .attr('stroke-width', 1).attr('stroke-dasharray','6 5')
+                .attr('opacity', .22)
+                .style('animation','fp-map-dash '+(1.6+i*.1)+'s linear infinite');
+        });
+        if (op) {
             gA.append('circle').attr('cx',op[0]).attr('cy',op[1]).attr('r',6).attr('fill','#fff');
             gA.append('circle').attr('cx',op[0]).attr('cy',op[1]).attr('r',6).attr('fill','none').attr('stroke','#fff').attr('stroke-width',1.5).attr('opacity',.25).style('animation','fp-map-pulse 3s ease infinite');
             gA.append('text').attr('x',op[0]).attr('y',op[1]-14).attr('text-anchor','middle').attr('fill','rgba(255,255,255,.7)').attr('font-size','11px').attr('font-weight','700').attr('letter-spacing','1.5px').attr('font-family','Outfit,system-ui,sans-serif').text(sel.code);
@@ -1359,52 +1395,70 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     /* Marqueurs destinations + tooltips */
-    function drawMarkers(){
-        var tt=document.getElementById('fp-map-tt');
-        var tiata=document.getElementById('fp-tt-iata'),tcity=document.getElementById('fp-tt-city'),tregion=document.getElementById('fp-tt-region'),ttags=document.getElementById('fp-tt-tags'),tdesc=document.getElementById('fp-tt-desc'),tprice=document.getElementById('fp-tt-price'),tbtn=document.getElementById('fp-tt-btn');
-        var hT=null;
-        DS.forEach(function(d){
-            var p=proj([d.lon,d.lat]);if(!p)return;
-            if(p[0]<-20||p[0]>W+20||p[1]<-20||p[1]>H+20)return;
-            var g=gM.append('g').style('cursor','pointer');
+    function drawMarkers() {
+        gM.selectAll('*').remove();
+        var tt = document.getElementById('fp-map-tt');
+        var tiata = document.getElementById('fp-tt-iata'),
+            tcity = document.getElementById('fp-tt-city'),
+            tregion = document.getElementById('fp-tt-region'),
+            ttags = document.getElementById('fp-tt-tags'),
+            tdesc = document.getElementById('fp-tt-desc'),
+            tprice = document.getElementById('fp-tt-price'),
+            tbtn = document.getElementById('fp-tt-btn');
+        var hT = null;
+        var filtered = getFilteredDS();
+
+        filtered.forEach(function(d) {
+            var p = proj([d.lon, d.lat]);
+            if (!p) return;
+            if (p[0] < -20 || p[0] > W+20 || p[1] < -20 || p[1] > H+20) return;
+            var g = gM.append('g').style('cursor','pointer');
             g.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',26).attr('fill',d.col).attr('opacity',.06);
             g.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',10).attr('fill','#0e1528').attr('stroke',d.col).attr('stroke-width',3);
             g.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',4).attr('fill',d.col);
-            var rg=g.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',10).attr('fill','none').attr('stroke',d.col).attr('stroke-width',.7);
-            var dur=(2.4+Math.random()*1)+'s';
+            var rg = g.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',10).attr('fill','none').attr('stroke',d.col).attr('stroke-width',.7);
+            var dur = (2.4+Math.random()*1)+'s';
             rg.append('animate').attr('attributeName','r').attr('values','11;24;11').attr('dur',dur).attr('repeatCount','indefinite');
             rg.append('animate').attr('attributeName','opacity').attr('values','.3;0;.3').attr('dur',dur).attr('repeatCount','indefinite');
-            g.on('mouseenter',function(){
+
+            // Tooltip description
+            var descText = d.pays + ' — ' + d.count + ' séjour' + (d.count > 1 ? 's' : '');
+
+            g.on('mouseenter', function() {
                 clearTimeout(hT);
-                tiata.textContent=d.iata;
-                tcity.textContent=d.flag+' '+d.city;
-                tregion.textContent=d.r;
-                ttags.innerHTML='';
-                d.tags.forEach(function(t){var tg=TAGS[t];ttags.innerHTML+='<span class="fp-tt-tag '+tg.c+'">'+tg.l+'</span>';});
-                tdesc.textContent=d.desc;
-                tprice.textContent=d.price;
-                tbtn.textContent='Voir les '+d.n+' séjours \u2192';
-                tbtn.href=d.u;
-                var br=box.getBoundingClientRect(),svgE=box.querySelector('svg'),sr=svgE.getBoundingClientRect();
-                var sx=sr.width/W,sy=sr.height/H;
-                var px=sr.left-br.left+p[0]*sx,py=sr.top-br.top+p[1]*sy;
-                tt.style.left=(px+26)+'px';tt.style.top=(py-60)+'px';
-                if(px+290>br.width)tt.style.left=(px-275)+'px';
-                if(py-60<0)tt.style.top=(py+26)+'px';
+                tiata.textContent = d.iata;
+                tcity.textContent = (d.flag || '') + ' ' + d.city;
+                tregion.textContent = d.region;
+                ttags.innerHTML = '';
+                (d.types || []).forEach(function(t) {
+                    var tg = TAGS[t];
+                    if (tg) ttags.innerHTML += '<span class="fp-tt-tag '+tg.c+'">'+tg.l+'</span>';
+                });
+                tdesc.textContent = descText;
+                tprice.textContent = d.count + ' séjour' + (d.count > 1 ? 's' : '') + ' disponible' + (d.count > 1 ? 's' : '');
+                tbtn.textContent = 'Voir les séjours \u2192';
+                tbtn.href = d.url;
+                var br = box.getBoundingClientRect(), svgE = box.querySelector('svg'), sr = svgE.getBoundingClientRect();
+                var sx = sr.width/W, sy = sr.height/H;
+                var px = sr.left-br.left+p[0]*sx, py = sr.top-br.top+p[1]*sy;
+                tt.style.left = (px+26)+'px'; tt.style.top = (py-60)+'px';
+                if (px+290 > br.width) tt.style.left = (px-275)+'px';
+                if (py-60 < 0) tt.style.top = (py+26)+'px';
                 tt.classList.add('on');
-                gM.selectAll('g').style('opacity',function(){return this===g.node()?1:.12;});
+                gM.selectAll('g').style('opacity', function() { return this === g.node() ? 1 : .12; });
             });
-            g.on('mouseleave',function(){hT=setTimeout(function(){tt.classList.remove('on');gM.selectAll('g').style('opacity',1);},200);});
-            g.on('click',function(){window.location.href=d.u;});
-            /* Touch mobile : 1er tap = tooltip, 2e tap = navigation */
-            g.on('touchstart',function(e){
+            g.on('mouseleave', function() { hT = setTimeout(function() { tt.classList.remove('on'); gM.selectAll('g').style('opacity',1); }, 200); });
+            g.on('click', function() { window.location.href = d.url; });
+            g.on('touchstart', function(e) {
                 e.preventDefault();
-                if(tt.classList.contains('on')&&tcity.textContent.indexOf(d.city)>-1){window.location.href=d.u;}
-                else{g.dispatch('mouseenter');}
-            },{passive:false});
+                if (tt.classList.contains('on') && tcity.textContent.indexOf(d.city) > -1) { window.location.href = d.url; }
+                else { g.dispatch('mouseenter'); }
+            }, {passive:false});
         });
-        tt.addEventListener('mouseenter',function(){clearTimeout(hT);});
-        tt.addEventListener('mouseleave',function(){hT=setTimeout(function(){tt.classList.remove('on');gM.selectAll('g').style('opacity',1);},200);});
+        if (tt) {
+            tt.addEventListener('mouseenter', function() { clearTimeout(hT); });
+            tt.addEventListener('mouseleave', function() { hT = setTimeout(function() { tt.classList.remove('on'); gM.selectAll('g').style('opacity',1); }, 200); });
+        }
     }
 })();
 </script>
