@@ -945,3 +945,218 @@ add_action('woocommerce_checkout_create_order', function($order) {
         $order->update_meta_data('_vs08v_voyageurs_confirmed', '1');
     }
 }, 10, 1);
+
+/* ============================================================
+   NEWSLETTER — menu top-level indépendant
+   Fonctionne même si le plugin ne charge pas la bonne version
+============================================================ */
+add_action('admin_menu', function() {
+    add_menu_page(
+        'Newsletter',
+        '📧 Newsletter',
+        'manage_options',
+        'vs08-newsletter-hub',
+        'vs08_newsletter_admin_page',
+        'dashicons-email-alt',
+        28
+    );
+}, 5);
+
+function vs08_newsletter_admin_page() {
+    global $wpdb;
+    $table = $wpdb->prefix . 'vs08_newsletter';
+
+    // Vérifier que la table existe
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table'") === $table;
+    if (!$table_exists) {
+        // Créer la table
+        $charset = $wpdb->get_charset_collate();
+        $sql = "CREATE TABLE $table (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            email VARCHAR(180) NOT NULL,
+            prenom VARCHAR(100) DEFAULT '',
+            nom VARCHAR(100) DEFAULT '',
+            source VARCHAR(30) DEFAULT 'homepage',
+            token VARCHAR(64) NOT NULL,
+            active TINYINT(1) DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY email (email)
+        ) $charset;";
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta($sql);
+
+        // Migrer les anciennes données depuis wp_options
+        $old = get_option('vs08v_newsletter_emails_v1', []);
+        if (is_array($old) && !empty($old)) {
+            foreach ($old as $row) {
+                $e = strtolower(sanitize_email($row['email'] ?? ''));
+                if (!is_email($e)) continue;
+                $wpdb->replace($table, [
+                    'email' => $e,
+                    'source' => 'homepage_v1',
+                    'token' => bin2hex(random_bytes(32)),
+                    'active' => 1,
+                    'created_at' => $row['date'] ?? current_time('mysql'),
+                ], ['%s','%s','%s','%d','%s']);
+            }
+        }
+        $table_exists = true;
+        echo '<div class="notice notice-success"><p>✅ Table newsletter créée avec succès.</p></div>';
+    }
+
+    // Export CSV
+    if (isset($_GET['action']) && $_GET['action'] === 'export' && current_user_can('manage_options')) {
+        check_admin_referer('vs08_nl_export');
+        $active_only = isset($_GET['active_only']);
+        $where = $active_only ? "WHERE active = 1" : "";
+        $rows = $wpdb->get_results("SELECT * FROM $table $where ORDER BY created_at DESC");
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=vs08-newsletter-brevo-' . date('Y-m-d') . '.csv');
+        $out = fopen('php://output', 'w');
+        fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
+        fputcsv($out, ['EMAIL','PRENOM','NOM','SOURCE','DATE_INSCRIPTION','STATUT'], ';');
+        foreach ($rows as $r) {
+            fputcsv($out, [$r->email, $r->prenom, $r->nom, $r->source, $r->created_at, $r->active ? 'actif' : 'desabonne'], ';');
+        }
+        fclose($out);
+        exit;
+    }
+
+    // Supprimer
+    if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id']) && current_user_can('manage_options')) {
+        check_admin_referer('vs08_nl_del_' . intval($_GET['id']));
+        $wpdb->delete($table, ['id' => intval($_GET['id'])], ['%d']);
+        echo '<div class="notice notice-success"><p>Contact supprimé.</p></div>';
+    }
+
+    // Stats
+    $total  = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table");
+    $active = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE active = 1");
+    $sources = $wpdb->get_results("SELECT source, COUNT(*) as cnt FROM $table WHERE active = 1 GROUP BY source ORDER BY cnt DESC");
+
+    // Recherche
+    $search = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
+    $where = '';
+    if ($search) {
+        $like = '%' . $wpdb->esc_like($search) . '%';
+        $where = $wpdb->prepare(" WHERE email LIKE %s OR prenom LIKE %s OR nom LIKE %s", $like, $like, $like);
+    }
+    $subs = $wpdb->get_results("SELECT * FROM $table $where ORDER BY created_at DESC LIMIT 200");
+    $base = admin_url('admin.php?page=vs08-newsletter-hub');
+    ?>
+    <div class="wrap">
+        <h1>📧 Newsletter — Abonnés</h1>
+        <div style="display:flex;gap:16px;margin:20px 0">
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px 28px;flex:1;text-align:center">
+                <div style="font-size:36px;font-weight:700;color:#0f2424"><?php echo $active; ?></div>
+                <div style="color:#6b7280;font-size:13px;margin-top:4px">Abonnés actifs</div>
+            </div>
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px 28px;flex:1;text-align:center">
+                <div style="font-size:36px;font-weight:700;color:#b91c1c"><?php echo $total - $active; ?></div>
+                <div style="color:#6b7280;font-size:13px;margin-top:4px">Désabonnés</div>
+            </div>
+            <?php foreach ($sources as $src) : ?>
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px 28px;flex:1;text-align:center">
+                <div style="font-size:36px;font-weight:700;color:#59b7b7"><?php echo $src->cnt; ?></div>
+                <div style="color:#6b7280;font-size:13px;margin-top:4px"><?php echo esc_html(ucfirst(str_replace('_', ' ', $src->source))); ?></div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px">
+            <a href="<?php echo esc_url(wp_nonce_url($base . '&action=export&active_only=1', 'vs08_nl_export')); ?>" class="button button-primary">📥 Export CSV actifs (Brevo)</a>
+            <a href="<?php echo esc_url(wp_nonce_url($base . '&action=export', 'vs08_nl_export')); ?>" class="button">📥 Export CSV tous</a>
+            <form method="get" style="margin-left:auto;display:flex;gap:8px">
+                <input type="hidden" name="page" value="vs08-newsletter-hub">
+                <input type="text" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Rechercher..." style="min-width:240px">
+                <button type="submit" class="button">🔍</button>
+            </form>
+        </div>
+        <table class="wp-list-table widefat striped">
+            <thead><tr><th>Email</th><th>Prénom</th><th>Nom</th><th>Source</th><th>Statut</th><th>Date</th><th></th></tr></thead>
+            <tbody>
+            <?php if (empty($subs)) : ?>
+                <tr><td colspan="7" style="text-align:center;padding:24px;color:#9ca3af">Aucun abonné pour le moment.</td></tr>
+            <?php else : foreach ($subs as $s) :
+                $src_colors = ['homepage'=>'#dbeafe','commande'=>'#fef3c7','inscription'=>'#e0e7ff','homepage_v1'=>'#f3e8ff'];
+                $bg = $src_colors[$s->source] ?? '#f3f4f6';
+            ?>
+                <tr>
+                    <td><strong><?php echo esc_html($s->email); ?></strong></td>
+                    <td><?php echo esc_html($s->prenom); ?></td>
+                    <td><?php echo esc_html($s->nom); ?></td>
+                    <td><span style="background:<?php echo $bg; ?>;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600"><?php echo esc_html(ucfirst($s->source)); ?></span></td>
+                    <td><?php echo $s->active ? '<span style="color:#059669">✓ Actif</span>' : '<span style="color:#b91c1c">✗</span>'; ?></td>
+                    <td style="font-size:12px;color:#6b7280"><?php echo esc_html(date_i18n('j M Y H:i', strtotime($s->created_at))); ?></td>
+                    <td><a href="<?php echo esc_url(wp_nonce_url($base . '&action=delete&id=' . $s->id, 'vs08_nl_del_' . $s->id)); ?>" onclick="return confirm('Supprimer ?')" style="color:#b91c1c;font-size:11px">✕</a></td>
+                </tr>
+            <?php endforeach; endif; ?>
+            </tbody>
+        </table>
+        <p class="description" style="margin-top:16px">CSV compatible <strong>Brevo</strong> : <code>EMAIL;PRENOM;NOM;SOURCE;DATE_INSCRIPTION;STATUT</code></p>
+    </div>
+    <?php
+}
+
+/* ── Newsletter : hooks de collecte (AJAX, inscription, commande) ── */
+
+// Helper : ajouter un abonné
+function vs08_nl_add($email, $prenom = '', $nom = '', $source = 'homepage') {
+    global $wpdb;
+    $table = $wpdb->prefix . 'vs08_newsletter';
+    $email = strtolower(sanitize_email($email));
+    if (!is_email($email)) return false;
+    if ($wpdb->get_var("SHOW TABLES LIKE '$table'") !== $table) return false;
+    $exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE email = %s", $email));
+    if ($exists) {
+        $wpdb->query($wpdb->prepare(
+            "UPDATE $table SET active = 1, prenom = IF(prenom = '' AND %s != '', %s, prenom), nom = IF(nom = '' AND %s != '', %s, nom) WHERE email = %s",
+            $prenom, $prenom, $nom, $nom, $email
+        ));
+        return 'exists';
+    }
+    $wpdb->insert($table, [
+        'email' => $email, 'prenom' => sanitize_text_field($prenom),
+        'nom' => sanitize_text_field($nom), 'source' => sanitize_key($source),
+        'token' => bin2hex(random_bytes(32)), 'active' => 1,
+        'created_at' => current_time('mysql'),
+    ]);
+    return 'added';
+}
+
+// AJAX : formulaire homepage
+add_action('wp_ajax_vs08v_newsletter_subscribe', 'vs08_nl_ajax');
+add_action('wp_ajax_nopriv_vs08v_newsletter_subscribe', 'vs08_nl_ajax');
+function vs08_nl_ajax() {
+    $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+    if (!is_email($email)) wp_send_json_error(['message' => 'Adresse email invalide.']);
+    $r = vs08_nl_add($email, sanitize_text_field($_POST['prenom'] ?? ''), '', 'homepage');
+    if ($r === 'exists') wp_send_json_success(['message' => 'Vous êtes déjà inscrit !']);
+    elseif ($r === 'added') wp_send_json_success(['message' => 'Merci ! Vous recevrez nos meilleures offres.']);
+    else wp_send_json_error(['message' => 'Réessayez plus tard.']);
+}
+
+// Inscription utilisateur
+add_action('user_register', function($uid) {
+    $u = get_userdata($uid);
+    if ($u && $u->user_email) vs08_nl_add($u->user_email, $u->first_name ?? '', $u->last_name ?? '', 'inscription');
+});
+
+// Commande WooCommerce
+add_action('woocommerce_order_status_completed', 'vs08_nl_on_order');
+add_action('woocommerce_order_status_processing', 'vs08_nl_on_order');
+add_action('woocommerce_thankyou', 'vs08_nl_on_order');
+function vs08_nl_on_order($oid) {
+    if (!function_exists('wc_get_order')) return;
+    $o = wc_get_order($oid);
+    if (!$o) return;
+    vs08_nl_add($o->get_billing_email(), $o->get_billing_first_name(), $o->get_billing_last_name(), 'commande');
+}
+
+// Désinscription
+add_action('template_redirect', function() {
+    if (!isset($_GET['vs08_unsub']) || !isset($_GET['token'])) return;
+    global $wpdb;
+    $wpdb->update($wpdb->prefix . 'vs08_newsletter', ['active' => 0], ['token' => sanitize_text_field($_GET['token'])]);
+    wp_die('<div style="max-width:500px;margin:80px auto;text-align:center;font-family:sans-serif"><h1>Désinscription confirmée</h1><p style="color:#666;margin-top:16px">Vous ne recevrez plus nos emails.</p><a href="' . esc_url(home_url('/')) . '" style="display:inline-block;margin-top:24px;padding:12px 28px;background:#59b7b7;color:#fff;border-radius:100px;text-decoration:none;font-weight:700">Retour au site</a></div>', 'Désinscription');
+});
