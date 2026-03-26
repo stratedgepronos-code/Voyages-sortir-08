@@ -156,13 +156,13 @@ if (class_exists('VS08C_Meta') && (!$f_type || $f_type === 'circuit')) {
             $cflag = VS08C_Meta::resolve_flag($cm);
         }
 
-        // ── Calcul prix d'appel circuit (même logique que golf) ──
-        $c_prix_base  = floatval($cm['prix_double'] ?? 0);
+        // ── Calcul prix d'appel circuit (reproduit le calculateur réel pour 1 personne) ──
+        $c_prix_base  = floatval($cm['prix_double'] ?? 0); // base par personne
         $c_prix_vol   = 0;
         $c_has_vol    = false;
         $c_vol_est    = false;
 
-        // 1) Cache vol (recherches visiteurs)
+        // 1) Cache vol (recherches visiteurs — le moins cher gagne)
         $c_vol_cache = get_post_meta($cp->ID, '_vs08c_vol_min_cache', true);
         if (!empty($c_vol_cache['prix']) && !empty($c_vol_cache['ts'])) {
             $c_age = time() - intval($c_vol_cache['ts']);
@@ -180,21 +180,35 @@ if (class_exists('VS08C_Meta') && (!$f_type || $f_type === 'circuit')) {
             }
         }
 
+        // Taxes, transferts, bagage (par personne)
         $c_taxe      = floatval($cm['prix_taxe'] ?? 0);
-        $c_total     = $c_prix_base + $c_prix_vol + $c_taxe;
+        $c_transfert = floatval($cm['prix_transfert'] ?? 0);
+        $c_bagage    = floatval($cm['prix_bagage'] ?? 0);
+
+        // Total par personne = base + vol + taxe + transfert + bagage
+        $c_total = $c_prix_base + $c_prix_vol + $c_taxe + $c_transfert + $c_bagage;
 
         // Supplément date (saison la moins chère si existante)
         if (!empty($cm['dates_depart']) && is_array($cm['dates_depart'])) {
             $c_supps = [];
             foreach ($cm['dates_depart'] as $dd) {
                 $sv = floatval($dd['supp'] ?? 0);
-                if ($sv > 0) $c_supps[] = $sv;
+                if ($sv >= 0) $c_supps[] = $sv;
             }
             if (!empty($c_supps)) $c_total += min($c_supps);
         }
 
-        // Marge
-        if (!empty($cm['marge_pct']) && floatval($cm['marge_pct']) > 0) {
+        // Marge (utilise VS08C_Marge si disponible, sinon champs meta)
+        if (class_exists('VS08C_Marge')) {
+            $c_mg = VS08C_Marge::get_effective_for_circuit($cp->ID);
+            if (($c_mg['marge_type'] ?? '') === 'montant' && floatval($c_mg['marge_montant'] ?? 0) > 0) {
+                // Marge forfaitaire : diviser par 1 personne pour le prix d'appel
+                // (approximation — en réalité dépend du nb de voyageurs)
+                $c_total += floatval($c_mg['marge_montant']);
+            } elseif (floatval($c_mg['marge_pct'] ?? 0) > 0) {
+                $c_total *= (1 + floatval($c_mg['marge_pct']) / 100);
+            }
+        } elseif (!empty($cm['marge_pct']) && floatval($cm['marge_pct']) > 0) {
             $c_total *= (1 + floatval($cm['marge_pct']) / 100);
         } elseif (!empty($cm['marge_montant']) && floatval($cm['marge_montant']) > 0) {
             $c_total += floatval($cm['marge_montant']);
