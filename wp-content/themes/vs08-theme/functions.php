@@ -476,6 +476,92 @@ add_action('init', function() {
 }, 26);
 
 /* ============================================================
+   PAGES SITE — création auto des pages nécessaires au menu
+   Fonctionne comme les pages devis : crée une seule fois, puis ne touche plus.
+   Si la page existe déjà, on assigne juste le bon template.
+============================================================ */
+add_action('init', function() {
+    if (get_option('vs08_pages_site_v2') === 'yes') {
+        return;
+    }
+    // slug => ['title' => ..., 'template' => ... (optionnel si slug matching suffit)]
+    $pages = [
+        'resultats-recherche' => [
+            'title'    => 'Résultats de recherche',
+            // Pas de template : slug matching page-resultats.php
+        ],
+        'destinations' => [
+            'title'    => 'Nos destinations',
+            'template' => 'page-destinations.php',
+        ],
+        'sejours-golf' => [
+            'title'    => 'Séjours Golf',
+            'template' => 'page-golf.php',
+        ],
+        'contact' => [
+            'title'    => 'Contact',
+            'template' => 'page-contact.php',
+        ],
+        'avis-clients' => [
+            'title'    => 'Avis clients',
+            'template' => 'page-avis-clients.php',
+        ],
+        'qui-sommes-nous' => [
+            'title'    => 'Qui sommes-nous',
+            'template' => 'page-qui-sommes-nous.php',
+        ],
+        'faq' => [
+            'title'    => 'FAQ',
+            'template' => 'page-faq.php',
+        ],
+        'mentions-legales' => [
+            'title'    => 'Mentions légales',
+            'template' => 'page-mentions-legales.php',
+        ],
+        'conditions-generales' => [
+            'title'    => 'Conditions générales de vente',
+            'template' => 'page-conditions.php',
+        ],
+        'rgpd' => [
+            'title'    => 'Politique de confidentialité',
+            'template' => 'page-rgpd.php',
+        ],
+        'comment-reserver' => [
+            'title'    => 'Comment réserver',
+            'template' => 'page-comment-reserver.php',
+        ],
+        'assurances' => [
+            'title'    => 'Assurances voyage',
+            'template' => 'page-assurances.php',
+        ],
+    ];
+
+    foreach ($pages as $slug => $data) {
+        $existing = get_page_by_path($slug, OBJECT, 'page');
+        if ($existing) {
+            // La page existe déjà — on assigne juste le template si précisé
+            if (!empty($data['template'])) {
+                update_post_meta($existing->ID, '_wp_page_template', $data['template']);
+            }
+            continue;
+        }
+        // Créer la page
+        $post_id = wp_insert_post([
+            'post_title'   => $data['title'],
+            'post_name'    => $slug,
+            'post_status'  => 'publish',
+            'post_type'    => 'page',
+            'post_author'  => 1,
+            'post_content' => '',
+        ]);
+        if ($post_id && !is_wp_error($post_id) && !empty($data['template'])) {
+            update_post_meta($post_id, '_wp_page_template', $data['template']);
+        }
+    }
+    update_option('vs08_pages_site_v2', 'yes');
+}, 27);
+
+/* ============================================================
    DÉSACTIVER LE CACHE SUR LES PAGES DYNAMIQUES (prix temps réel)
 ============================================================ */
 add_action('template_redirect', function() {
