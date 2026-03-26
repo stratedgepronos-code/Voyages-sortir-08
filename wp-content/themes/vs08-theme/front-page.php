@@ -297,6 +297,9 @@ body.home,body.page-template-default{background:#fff!important}
 .fp-map-ab{padding:5px 12px;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.45);transition:all .2s;font-family:'Outfit',sans-serif}
 .fp-map-ab:hover{border-color:rgba(89,183,183,.3);color:rgba(255,255,255,.7)}
 .fp-map-ab.on{background:rgba(89,183,183,.15);border-color:rgba(89,183,183,.4);color:#7ecece}
+.fp-map-svg-wrap svg{cursor:grab}.fp-map-svg-wrap svg:active{cursor:grabbing}
+.fp-map-zoom-reset{position:absolute;bottom:16px;right:16px;z-index:10;padding:8px 18px;border-radius:100px;border:1px solid rgba(89,183,183,.3);background:rgba(11,17,32,.85);color:#7ecece;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);transition:all .25s}
+.fp-map-zoom-reset:hover{background:rgba(89,183,183,.15);border-color:#59b7b7}
 .fp-map-svg-wrap{position:relative;width:100%;overflow:hidden}
 .fp-map-svg-wrap svg{display:block;width:100%}
 .fp-map-tt{position:absolute;pointer-events:none;opacity:0;transform:translateY(6px) scale(.96);transition:opacity .22s,transform .22s cubic-bezier(.22,1,.36,1);z-index:50;font-family:'Outfit',sans-serif}
@@ -1462,6 +1465,29 @@ if (class_exists('VS08V_MetaBoxes')) {
     rg1.append('stop').attr('offset','100%').attr('stop-color','#0b1120');
     var gc=svg.append('g').attr('clip-path','url(#fp-mc)');
     var gO=gc.append('g'),gGr=gc.append('g'),gL=gc.append('g'),gA=gc.append('g'),gM=gc.append('g');
+
+    /* Zoom & pan */
+    var zoom=d3.zoom()
+        .scaleExtent([1,8])
+        .translateExtent([[0,0],[W,H]])
+        .on('zoom',function(e){ gc.attr('transform',e.transform); });
+    svg.call(zoom);
+    svg.on('dblclick.zoom',null); // désactiver double-clic zoom
+
+    // Bouton reset zoom (apparaît quand zoomé)
+    var zBtn=document.createElement('button');
+    zBtn.className='fp-map-zoom-reset';
+    zBtn.textContent='⟲ Vue globale';
+    zBtn.style.display='none';
+    zBtn.onclick=function(){ svg.transition().duration(600).call(zoom.transform,d3.zoomIdentity); };
+    box.style.position='relative';
+    box.appendChild(zBtn);
+    svg.on('zoom',null); // clear old
+    zoom.on('zoom',function(e){
+        gc.attr('transform',e.transform);
+        zBtn.style.display=(e.transform.k>1.05)?'block':'none';
+    });
+    svg.call(zoom);
 
     /* Boutons aéroports avec "Tous" */
     var ap=document.getElementById('fp-map-airports');
