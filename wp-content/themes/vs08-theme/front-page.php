@@ -535,7 +535,7 @@ $hc_slides = [
         <a href="<?php echo esc_url(home_url('/contact')); ?>" class="hc-btn-o">Demander un devis</a>
     </div>
 </div>
-<div class="hc-stats"><div class="hc-stat"><b>250+</b><small>Parcours partenaires</small></div><div class="hc-stat"><b>18</b><small>Pays couverts</small></div><div class="hc-stat"><b>4.9★</b><small>Note clients</small></div></div>
+<div class="hc-stats"><div class="hc-stat"><b>500+</b><small>Voyageurs par an</small></div><div class="hc-stat"><b>18</b><small>Pays couverts</small></div><div class="hc-stat"><b>4.9★</b><small>Note clients</small></div></div>
 <div class="hc-dots"><?php foreach($hc_slides as $i=>$s): ?><button class="hc-dot <?php echo $i===0?'active':''; ?>" data-i="<?php echo $i; ?>"></button><?php endforeach; ?></div>
 <div class="hc-conf"><div class="hc-conf-i"><span>🏆</span><span>Agence de confiance depuis 2016</span></div><div class="hc-conf-i"><span>⭐</span><span>4.8/5 sur Google (200+ avis)</span></div><div class="hc-conf-i"><span>💰</span><span>Libre à vous de payer plus cher !</span></div><div class="hc-conf-i"><span>✈️</span><span>Vols + Hôtels + Activités inclus</span></div></div>
 </section>
@@ -875,7 +875,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     } else {
                         $fp_prix = '—';
-                        $fp_price_hint = 'Indicatif après choix des dates et de l’aéroport sur la fiche séjour (vol + hôtel + green fees).';
+                        $fp_price_hint = 'Indicatif après choix des dates et de l’aéroport sur la fiche séjour .';
                     }
                     $fp_pays  = trim(($fp_m['flag'] ?? '').' '.($fp_m['pays'] ?? ''));
                     $fp_golfs = $fp_m['golfs'] ?? [];
@@ -1229,10 +1229,10 @@ document.addEventListener('DOMContentLoaded', function() {
         <p class="fp-section-label fp-label-light">✦ Notre différence</p>
         <h2 class="fp-section-title fp-title-white">Pourquoi nous <em>faire confiance ?</em></h2>
         <div class="fp-why-grid">
-            <div class="fp-why-item"><div class="fp-why-icon">⛳</div><h3>Experts Golf</h3><p>Passionnés de golf depuis 20 ans, nous jouons sur les parcours que nous vous proposons.</p></div>
-            <div class="fp-why-item"><div class="fp-why-icon">🏷️</div><h3>Prix transparents</h3><p>Tout est inclus : vols, hôtel, green fees, transferts. Le prix affiché est le prix payé.</p></div>
-            <div class="fp-why-item"><div class="fp-why-icon">📞</div><h3>Conseiller unique</h3><p>Un conseiller unique dédié avant, pendant et après votre voyage. Pas de chatbot.</p></div>
-            <div class="fp-why-item"><div class="fp-why-icon">🔒</div><h3>Paiement sécurisé</h3><p>3D Secure, acompte ou règlement total (voir conditions d'annulation sur chaque produit).</p></div>
+            <div class="fp-why-item"><div class="fp-why-icon">🌍</div><h3>L'agence qui vous ressemble</h3><p>Golf, circuits, all inclusive, road trips ou parcs d'attractions : quelle que soit votre envie, on monte votre voyage sur mesure, de A à Z.</p></div>
+            <div class="fp-why-item"><div class="fp-why-icon">🏷️</div><h3>Le meilleur prix, toujours</h3><p>Notre slogan, c'est une promesse : "Libre à vous de payer plus cher !" Vols, hôtels, activités — tout est négocié au plus juste pour vous.</p></div>
+            <div class="fp-why-item"><div class="fp-why-icon">📞</div><h3>Un vrai conseiller dédié</h3><p>Pas de chatbot, pas de centre d'appels. Un interlocuteur unique à Châlons-en-Champagne qui vous accompagne avant, pendant et après votre voyage.</p></div>
+            <div class="fp-why-item"><div class="fp-why-icon">🔒</div><h3>Partez l'esprit tranquille</h3><p>Garantie financière APST, immatriculation Atout France, assurance Hiscox, paiement sécurisé 3D Secure. Vos vacances sont entre de bonnes mains.</p></div>
         </div>
     </div>
 </section>
@@ -1244,7 +1244,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <section class="fp-dest">
     <div class="fp-container">
         <div class="fp-section-header">
-            <div><p class="fp-section-label">🌍 Nos destinations</p><h2 class="fp-section-title">Partir jouer <em>partout dans le monde</em></h2></div>
+            <div><p class="fp-section-label">🌍 Nos destinations</p><h2 class="fp-section-title">Partir <em>partout dans le monde</em></h2></div>
             <a href="<?php echo esc_url($fp_url_destinations); ?>" class="fp-section-link">Toutes les destinations →</a>
         </div>
         <div class="fp-map-box">
@@ -1759,12 +1759,12 @@ foreach (($fp_dest_agg ?? []) as $k => $v) {
 $vs08_google_reviews = get_option('vs08v_google_reviews', []);
 if (!is_array($vs08_google_reviews) || empty($vs08_google_reviews)) {
     $vs08_google_reviews = [
-        ['initials' => 'MR', 'name' => 'Michel R.', 'trip' => 'Portugal Algarve — Oct. 2024', 'text' => 'Séjour parfait au Portugal. Parcours magnifiques, hôtel de rêve. L\'équipe a tout pensé, on n\'avait qu\'à jouer. On repart l\'an prochain !'],
-        ['initials' => 'SL', 'name' => 'Sophie L.', 'trip' => 'Maroc Agadir — Fév. 2025', 'text' => 'Premier voyage golf en agence et je ne m\'en passerai plus. Prix vraiment transparent. Le conseiller était disponible même depuis le Maroc.'],
-        ['initials' => 'JP', 'name' => 'Jean-Pierre V.', 'trip' => 'Espagne Marbella — Avr. 2025', 'text' => 'On était 4 amis golfeurs, tout était parfaitement coordonné. Tee-times, transferts, dîner de groupe... Un vrai service premium à prix honnête.'],
-        ['initials' => 'CG', 'name' => 'Catherine G.', 'trip' => 'Thaïlande Hua Hin — Jan. 2026', 'text' => 'Nous sommes partis en couple pour la première fois avec une agence spécialiste golf. Organisation au top, parcours sublimes. On recommande à 200 %.'],
-        ['initials' => 'AD', 'name' => 'Alain D.', 'trip' => 'Irlande Kerry — Mai 2025', 'text' => 'Groupe de 8 golfeurs : tout a été coordonné à la perfection. Tee-times, dîners, navettes. Un service haut de gamme et des souvenirs incroyables.'],
-        ['initials' => 'PB', 'name' => 'Philippe B.', 'trip' => 'Turquie Belek — Nov. 2025', 'text' => '3ème séjour avec Sortir Monde : Algarve, Maroc et maintenant la Turquie. On ne change pas une équipe qui gagne, toujours au-delà de nos attentes.'],
+        ['initials' => 'MR', 'name' => 'Michel R.', 'trip' => 'Séjour Golf — Portugal Algarve', 'text' => 'Séjour parfait au Portugal. Parcours magnifiques, hôtel de rêve. L\'équipe a tout organisé, on n\'avait qu\'à jouer. On repart l\'an prochain !'],
+        ['initials' => 'SL', 'name' => 'Sophie L.', 'trip' => 'Circuit — Italie du Sud', 'text' => 'Notre circuit en Italie était exceptionnel. Chaque étape était une découverte. Le conseiller a adapté le programme à nos envies. Merci !'],
+        ['initials' => 'JP', 'name' => 'Jean-Pierre V.', 'trip' => 'Séjour Golf — Espagne Marbella', 'text' => 'On était 4 amis golfeurs, tout était parfaitement coordonné. Tee-times, transferts, dîner de groupe... Un vrai service premium à prix honnête.'],
+        ['initials' => 'CG', 'name' => 'Catherine G.', 'trip' => 'Circuit — Grèce Crète', 'text' => 'Premier voyage organisé par une agence et quelle réussite ! Les hôtels, les visites, le rythme... tout était pensé pour nous. On recommande à 200 %.'],
+        ['initials' => 'AD', 'name' => 'Alain D.', 'trip' => 'Séjour Golf — Maroc Agadir', 'text' => 'Prix vraiment transparent et service au top. Le conseiller était disponible même depuis le Maroc. Premier voyage golf en agence, je ne m\'en passerai plus.'],
+        ['initials' => 'PB', 'name' => 'Philippe B.', 'trip' => 'Séjour Golf — Turquie Belek', 'text' => '3ème séjour avec Sortir 08 : Algarve, Maroc et maintenant la Turquie. On ne change pas une équipe qui gagne, toujours au-delà de nos attentes.'],
     ];
 }
 ?>
@@ -1777,8 +1777,8 @@ if (!is_array($vs08_google_reviews) || empty($vs08_google_reviews)) {
     <div class="fp-nl-band">
         <div class="fp-nl-side">
             <p class="fp-nl-badge">📧 Newsletter exclusive</p>
-            <h2>Offres privées & <em>bons plans golf</em></h2>
-            <p>Ventes flash, nouveaux parcours, conseils d'expert : recevez le meilleur du golf voyage directement dans votre boîte mail.</p>
+            <h2>Offres privées & <em>bons plans voyage</em></h2>
+            <p>Ventes flash, nouvelles destinations, conseils d'expert : recevez le meilleur de nos offres directement dans votre boîte mail.</p>
             <form class="fp-nl-form" id="vs08-newsletter-form">
                 <input type="email" name="email" placeholder="Votre adresse email..." required>
                 <button type="submit">S'inscrire →</button>
@@ -1796,12 +1796,12 @@ if (!is_array($vs08_google_reviews) || empty($vs08_google_reviews)) {
             <div class="fp-cta-wrap">
                 <div class="fp-cta-box">
                     <p class="fp-cta-eyebrow">Devis gratuit</p>
-                    <h2>Votre séjour golf sur mesure</h2>
-                    <p class="fp-cta-desc">Dites-nous destination, budget et niveau. Un conseiller vous envoie une proposition sous 24h, sans engagement.</p>
+                    <h2>Votre voyage sur mesure</h2>
+                    <p class="fp-cta-desc">Dites-nous destination, budget et envies. Un conseiller vous envoie une proposition sous 24h, sans engagement.</p>
                     <div class="fp-cta-trust">
                         <span>Réponse sous 24h</span><span>Sans engagement</span><span>Devis personnalisé</span>
                     </div>
-                    <a href="<?php echo esc_url(home_url('/devis-golf')); ?>" class="fp-btn-devis">Demander mon devis <span class="btn-arrow">→</span></a>
+                    <a href="<?php echo esc_url(home_url('/devis-gratuit')); ?>" class="fp-btn-devis">Demander mon devis <span class="btn-arrow">→</span></a>
                     <div class="fp-cta-phone">
                         <span>Ou par téléphone</span>
                         <a href="tel:<?php echo esc_attr(preg_replace('/\s+/', '', vs08_opt('vs08_tel', '0326652863'))); ?>"><span>📞</span> <?php echo esc_html(vs08_opt('vs08_tel', '03 26 65 28 63')); ?></a>
