@@ -554,6 +554,9 @@ var BK_CIRCUIT = <?php echo json_encode([
         <?php endif; ?>
         <div class="bkc-loading" id="bkc-loading"><div class="bkc-spinner"></div><div style="font-size:13px;color:#59b7b7;font-family:'Outfit',sans-serif">Création de votre réservation…</div></div>
         <div class="bkc-security" style="margin-top:12px">Paiement sécurisé 3D Secure · APST · Atout France</div>
+        <div class="bkc-recap-btn-wrap" id="bkc-recap-btn-wrap" style="margin-top:18px;display:none">
+            <button type="button" class="bkc-btn-next" style="width:100%" id="bkc-recap-btn">Continuer →</button>
+        </div>
     </div>
 
 </div></div>
@@ -1177,6 +1180,84 @@ var BK_CIRCUIT = <?php echo json_encode([
         function fail(){errEl.textContent='Erreur réseau. Vérifiez votre connexion.';errEl.style.display='block';submitting=false;btn.disabled=false;btn.textContent='🔒 Procéder au paiement →';load.style.display='none';}
         jQuery.post(BK.ajax_url, data).done(done).fail(fail);
     };
+})();
+
+/* ═══ Recap button — mirrors current step's action ═══ */
+(function(){
+    var recapBtn = document.getElementById('bkc-recap-btn');
+    var recapWrap = document.getElementById('bkc-recap-btn-wrap');
+    if (!recapBtn || !recapWrap) return;
+
+    function updateRecapBtn() {
+        var s1 = document.getElementById('bkc-step-1');
+        var s2 = document.getElementById('bkc-step-2');
+        var confirm = document.getElementById('bkc-step-confirm');
+        if (confirm && confirm.style.display !== 'none') {
+            recapWrap.style.display = 'none';
+        } else if (s2 && s2.classList.contains('bkc-step-active')) {
+            recapBtn.textContent = 'Vérifier et confirmer →';
+            recapBtn.onclick = function(){ window.bkcGoToConfirm(); };
+            recapWrap.style.display = 'block';
+        } else if (s1 && s1.classList.contains('bkc-step-active')) {
+            recapBtn.textContent = 'Continuer →';
+            recapBtn.onclick = function(){ window.bkcGoToStep2(); };
+            recapWrap.style.display = 'block';
+        }
+    }
+
+    var observer = new MutationObserver(updateRecapBtn);
+    ['bkc-step-1','bkc-step-2'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) observer.observe(el, {attributes:true, attributeFilter:['class']});
+    });
+    var confirmEl = document.getElementById('bkc-step-confirm');
+    if (confirmEl) observer.observe(confirmEl, {attributes:true, attributeFilter:['style']});
+    updateRecapBtn();
+})();
+
+/* ═══ Sidebar + Recap sticky: stop before footer ═══ */
+(function(){
+    var sidebar = document.getElementById('bkc-filters-sidebar');
+    var recap = document.querySelector('.bkc-recap');
+    if (!sidebar && !recap) return;
+
+    function checkFooter() {
+        var footer = document.querySelector('.ft-wrap') || document.querySelector('footer') || document.querySelector('.ft-root');
+        if (!footer) return;
+        var footerTop = footer.getBoundingClientRect().top;
+
+        if (sidebar && sidebar.style.display !== 'none') {
+            var sH = sidebar.offsetHeight;
+            var maxTop = footerTop - sH - 40;
+            if (maxTop < 20) {
+                sidebar.style.opacity = '0';
+                sidebar.style.pointerEvents = 'none';
+            } else if (maxTop < 160) {
+                sidebar.style.top = maxTop + 'px';
+                sidebar.style.opacity = '1';
+                sidebar.style.pointerEvents = '';
+            } else {
+                sidebar.style.top = '160px';
+                sidebar.style.opacity = '1';
+                sidebar.style.pointerEvents = '';
+            }
+        }
+
+        if (recap) {
+            var rH = recap.offsetHeight;
+            if (footerTop < rH + 130) {
+                recap.style.position = 'relative';
+                recap.style.top = '0';
+            } else {
+                recap.style.position = 'sticky';
+                recap.style.top = '90px';
+            }
+        }
+    }
+
+    window.addEventListener('scroll', checkFooter, {passive:true});
+    window.addEventListener('resize', checkFooter);
+    checkFooter();
 })();
 </script>
 <?php get_footer(); ?>
