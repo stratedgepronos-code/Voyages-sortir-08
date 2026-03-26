@@ -327,16 +327,16 @@ body.home,body.page-template-default{background:#fff!important}
 /* ═══════════════════════════════════════════════════════════════
    13. TRUST BAR
    ═══════════════════════════════════════════════════════════════ */
-.fp-trust{padding:40px 0;background:var(--white);border-top:1px solid var(--gray-light);border-bottom:1px solid var(--gray-light)}
-.fp-trust-row{display:flex;align-items:center;justify-content:center;gap:48px;flex-wrap:nowrap}
-.fp-trust-item{display:flex;align-items:center;gap:14px;white-space:nowrap}
-.fp-trust-logo{height:44px;width:auto;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.fp-trust-logo svg,.fp-trust-logo img{height:44px;width:auto;object-fit:contain;filter:grayscale(20%);transition:filter .3s}
-.fp-trust-item:hover .fp-trust-logo svg,.fp-trust-item:hover .fp-trust-logo img{filter:grayscale(0%)}
+.fp-trust{padding:32px 0;background:var(--white);border-top:1px solid var(--gray-light);border-bottom:1px solid var(--gray-light)}
+.fp-trust-row{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:nowrap}
+.fp-trust-item{display:flex;align-items:center;gap:12px;white-space:nowrap;padding:0 28px}
+.fp-trust-logo{height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.fp-trust-logo svg,.fp-trust-logo img{height:36px;width:auto;max-width:90px;object-fit:contain;opacity:.7;transition:opacity .3s}
+.fp-trust-item:hover .fp-trust-logo svg,.fp-trust-item:hover .fp-trust-logo img{opacity:1}
 .fp-trust-text{display:flex;flex-direction:column}
-.fp-trust-text strong{font-size:13px;color:var(--dark);font-weight:700}
-.fp-trust-text span{font-size:11px;color:var(--gray)}
-.fp-trust-sep{width:1px;height:36px;background:var(--gray-light);flex-shrink:0}
+.fp-trust-text strong{font-size:12px;color:var(--dark);font-weight:700}
+.fp-trust-text span{font-size:10px;color:var(--gray)}
+.fp-trust-sep{width:1px;height:32px;background:var(--gray-light);flex-shrink:0}
 
 /* ═══════════════════════════════════════════════════════════════
    14. TÉMOIGNAGES
@@ -434,8 +434,9 @@ body.home,body.page-template-default{background:#fff!important}
     .scard-featured{grid-column:span 2}
     .fp-why-grid{grid-template-columns:repeat(2,1fr)}
     .fp-nl-cta{padding:0 40px 80px}
-    .fp-trust-row{gap:28px;flex-wrap:wrap;justify-content:center}
+    .fp-trust-row{gap:0;flex-wrap:wrap;justify-content:center}
     .fp-trust-sep{display:none}
+    .fp-trust-item{padding:12px 20px}
     .sh-grid{grid-template-columns:1fr 1fr}
     .fp-bento{grid-template-columns:repeat(2,1fr);grid-template-areas:"golf golf" "sejour circuit" "road parcs";gap:1rem}
     .fp-ucard--golf{min-height:340px}
