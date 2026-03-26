@@ -1340,6 +1340,78 @@ $fp_dest_to_pays = [
     // France
     'Biarritz'=>'France','Côte d\'Azur'=>'France','Provence'=>'France','Normandie'=>'France','Corse'=>'France',
 ];
+// IATA destination → pays (fallback ultime : résout via le code aéroport d'arrivée)
+$fp_iata_to_pays = [
+    // Portugal
+    'FAO'=>'Portugal','LIS'=>'Portugal','OPO'=>'Portugal','FNC'=>'Portugal',
+    // Espagne continentale
+    'AGP'=>'Espagne','ALC'=>'Espagne','BCN'=>'Espagne','MAD'=>'Espagne','SVQ'=>'Espagne','VLC'=>'Espagne','BIO'=>'Espagne','PMI'=>'Espagne','IBZ'=>'Espagne','MAH'=>'Espagne','GRX'=>'Espagne','REU'=>'Espagne','MJV'=>'Espagne',
+    // Canaries
+    'TFS'=>'Canaries','LPA'=>'Canaries','FUE'=>'Canaries','ACE'=>'Canaries','TFN'=>'Canaries','SPC'=>'Canaries',
+    // Maroc
+    'RAK'=>'Maroc','AGA'=>'Maroc','CMN'=>'Maroc','FEZ'=>'Maroc','TNG'=>'Maroc','OUD'=>'Maroc','NDR'=>'Maroc','RBA'=>'Maroc','ESU'=>'Maroc',
+    // Turquie
+    'AYT'=>'Turquie','IST'=>'Turquie','SAW'=>'Turquie','DLM'=>'Turquie','BJV'=>'Turquie','ADB'=>'Turquie','GZT'=>'Turquie',
+    // Tunisie
+    'DJE'=>'Tunisie','TUN'=>'Tunisie','NBE'=>'Tunisie','MIR'=>'Tunisie','SFA'=>'Tunisie',
+    // Grèce
+    'HER'=>'Grèce','ATH'=>'Grèce','RHO'=>'Grèce','CFU'=>'Grèce','JTR'=>'Grèce','JMK'=>'Grèce','CHQ'=>'Grèce','KGS'=>'Grèce','ZTH'=>'Grèce','SKG'=>'Grèce','KLX'=>'Grèce','PVK'=>'Grèce',
+    // Italie
+    'CTA'=>'Italie','PMO'=>'Italie','FCO'=>'Italie','NAP'=>'Italie','VCE'=>'Italie','MXP'=>'Italie','BLQ'=>'Italie','OLB'=>'Italie','CAG'=>'Italie','PSA'=>'Italie','FLR'=>'Italie','BRI'=>'Italie','SUF'=>'Italie',
+    // Croatie
+    'SPU'=>'Croatie','DBV'=>'Croatie','ZAG'=>'Croatie','PUY'=>'Croatie',
+    // Irlande
+    'DUB'=>'Irlande','SNN'=>'Irlande','ORK'=>'Irlande',
+    // Écosse
+    'EDI'=>'Écosse','GLA'=>'Écosse',
+    // Égypte
+    'HRG'=>'Égypte','SSH'=>'Égypte','CAI'=>'Égypte','LXR'=>'Égypte','RMF'=>'Égypte',
+    // Thaïlande
+    'HKT'=>'Thaïlande','BKK'=>'Thaïlande','CNX'=>'Thaïlande','USM'=>'Thaïlande','DMK'=>'Thaïlande',
+    // Rép. Dominicaine
+    'PUJ'=>'République Dominicaine','SDQ'=>'République Dominicaine',
+    // Maurice
+    'MRU'=>'Maurice',
+    // Chypre
+    'PFO'=>'Chypre','LCA'=>'Chypre',
+    // Vietnam
+    'DAD'=>'Vietnam','HAN'=>'Vietnam','SGN'=>'Vietnam',
+    // Costa Rica
+    'SJO'=>'Costa Rica','LIR'=>'Costa Rica',
+    // Malte
+    'MLA'=>'Malte',
+    // Autres destinations populaires
+    'CUN'=>'Mexique','NAS'=>'Bahamas','MBJ'=>'Jamaïque','HAV'=>'Cuba',
+    'DPS'=>'Indonésie','KUL'=>'Malaisie','SIN'=>'Singapour','CMB'=>'Sri Lanka',
+    'MLE'=>'Maldives','MCT'=>'Oman','DXB'=>'Émirats arabes unis','AMM'=>'Jordanie',
+    'CPT'=>'Afrique du Sud','DSS'=>'Sénégal','SID'=>'Cap-Vert',
+    'NRT'=>'Japon','ICN'=>'Corée du Sud','AKL'=>'Nouvelle-Zélande','SYD'=>'Australie',
+    'EZE'=>'Argentine','GRU'=>'Brésil','BOG'=>'Colombie','MEX'=>'Mexique',
+    'YUL'=>'Canada','JFK'=>'États-Unis','MIA'=>'États-Unis','LAX'=>'États-Unis',
+    'PPT'=>'Polynésie','NOU'=>'Nouvelle-Calédonie',
+    'TIV'=>'Monténégro','TGD'=>'Monténégro','BOJ'=>'Bulgarie','VAR'=>'Bulgarie',
+    'PRG'=>'République Tchèque','BUD'=>'Hongrie','WAW'=>'Pologne','OTP'=>'Roumanie',
+    'KEF'=>'Islande','OSL'=>'Norvège','ARN'=>'Suède','HEL'=>'Finlande',
+];
+// Ajouter les coords pour les pays qui ne sont pas encore dans la table
+$fp_map_coords += [
+    'Mexique'=>['lat'=>20.6,'lon'=>-87.1,'city'=>'Cancún','iata'=>'CUN','region'=>'MEXIQUE'],
+    'Indonésie'=>['lat'=>-8.65,'lon'=>115.2,'city'=>'Bali','iata'=>'DPS','region'=>'INDONÉSIE'],
+    'Maldives'=>['lat'=>4.18,'lon'=>73.5,'city'=>'Malé','iata'=>'MLE','region'=>'MALDIVES'],
+    'Émirats arabes unis'=>['lat'=>25.25,'lon'=>55.3,'city'=>'Dubaï','iata'=>'DXB','region'=>'ÉMIRATS'],
+    'Jordanie'=>['lat'=>31.95,'lon'=>35.9,'city'=>'Amman','iata'=>'AMM','region'=>'JORDANIE'],
+    'Afrique du Sud'=>['lat'=>-33.97,'lon'=>18.6,'city'=>'Le Cap','iata'=>'CPT','region'=>'AFRIQUE DU SUD'],
+    'Sénégal'=>['lat'=>14.74,'lon'=>-17.5,'city'=>'Dakar','iata'=>'DSS','region'=>'SÉNÉGAL'],
+    'Cap-Vert'=>['lat'=>16.73,'lon'=>-22.9,'city'=>'Sal','iata'=>'SID','region'=>'CAP-VERT'],
+    'Sri Lanka'=>['lat'=>7.07,'lon'=>79.9,'city'=>'Colombo','iata'=>'CMB','region'=>'SRI LANKA'],
+    'Oman'=>['lat'=>23.6,'lon'=>58.3,'city'=>'Mascate','iata'=>'MCT','region'=>'OMAN'],
+    'Cuba'=>['lat'=>23.0,'lon'=>-82.4,'city'=>'La Havane','iata'=>'HAV','region'=>'CUBA'],
+    'Jamaïque'=>['lat'=>18.5,'lon'=>-77.9,'city'=>'Montego Bay','iata'=>'MBJ','region'=>'JAMAÏQUE'],
+    'Islande'=>['lat'=>63.98,'lon'=>-22.6,'city'=>'Reykjavik','iata'=>'KEF','region'=>'ISLANDE'],
+    'Monténégro'=>['lat'=>42.4,'lon'=>18.8,'city'=>'Tivat','iata'=>'TIV','region'=>'MONTÉNÉGRO'],
+    'Bulgarie'=>['lat'=>42.57,'lon'=>27.5,'city'=>'Bourgas','iata'=>'BOJ','region'=>'BULGARIE'],
+    'Polynésie'=>['lat'=>-17.55,'lon'=>-149.6,'city'=>'Tahiti','iata'=>'PPT','region'=>'POLYNÉSIE'],
+];
 $fp_type_colors = ['sejour_golf'=>'#c9a84c','circuit'=>'#e55d3a','sejour'=>'#59b7b7','road_trip'=>'#8e44ad','city_trip'=>'#3498db','parc'=>'#e74c3c'];
 
 if (class_exists('VS08V_MetaBoxes')) {
@@ -1355,6 +1427,7 @@ if (class_exists('VS08V_MetaBoxes')) {
         $dest = trim($m['destination'] ?? '');
         $pays = trim($m['pays'] ?? '');
         $type = $m['type_voyage'] ?? '';
+        $iata = strtoupper(trim($m['iata_dest'] ?? ''));
         if (!$type) continue;
 
         $map_key = '';
@@ -1362,6 +1435,7 @@ if (class_exists('VS08V_MetaBoxes')) {
         elseif ($dest && isset($fp_dest_to_pays[$dest])) { $map_key = $fp_dest_to_pays[$dest]; }
         elseif ($pays && isset($fp_dest_to_pays[$pays])) { $map_key = $fp_dest_to_pays[$pays]; }
         elseif ($dest && isset($fp_map_coords[$dest])) { $map_key = $dest; }
+        elseif ($iata && isset($fp_iata_to_pays[$iata])) { $map_key = $fp_iata_to_pays[$iata]; }
         elseif ($pays) { $map_key = $pays; }
         elseif ($dest) { $map_key = $dest; }
         if (!$map_key) continue;
@@ -1386,13 +1460,15 @@ if (class_exists('VS08V_MetaBoxes')) {
             if (($m['statut'] ?? '') === 'archive') continue;
             $dest = trim($m['destination'] ?? '');
             $pays = trim($m['pays'] ?? '');
-            $type = 'circuit'; // Toujours circuit
+            $type = 'circuit';
+            $iata = strtoupper(trim($m['iata_dest'] ?? ''));
 
             $map_key = '';
             if ($pays && isset($fp_map_coords[$pays])) { $map_key = $pays; }
             elseif ($dest && isset($fp_dest_to_pays[$dest])) { $map_key = $fp_dest_to_pays[$dest]; }
             elseif ($pays && isset($fp_dest_to_pays[$pays])) { $map_key = $fp_dest_to_pays[$pays]; }
             elseif ($dest && isset($fp_map_coords[$dest])) { $map_key = $dest; }
+            elseif ($iata && isset($fp_iata_to_pays[$iata])) { $map_key = $fp_iata_to_pays[$iata]; }
             elseif ($pays) { $map_key = $pays; }
             elseif ($dest) { $map_key = $dest; }
             if (!$map_key) continue;
@@ -1430,8 +1506,12 @@ if (class_exists('VS08V_MetaBoxes')) {
         ];
     }
 }
+$fp_map_missed = [];
+foreach (($fp_dest_agg ?? []) as $k => $v) {
+    if (!isset($fp_map_coords[$k])) $fp_map_missed[] = $k . '(' . $v['count'] . ')';
+}
 ?>
-<!-- DEBUG MAP: <?php echo count($fp_map_destinations); ?> destinations | <?php echo count($fp_map_ids_voyages ?? []); ?> voyages + <?php echo count($fp_map_ids_circuits ?? []); ?> circuits | clés: <?php echo implode(', ', array_keys($fp_dest_agg ?? [])); ?> -->
+<!-- DEBUG MAP: <?php echo count($fp_map_destinations); ?> sur carte | <?php echo count($fp_map_ids_voyages ?? []); ?> voyages + <?php echo count($fp_map_ids_circuits ?? []); ?> circuits | OK: <?php echo implode(', ', array_keys(array_filter($fp_dest_agg ?? [], function($v, $k) use ($fp_map_coords) { return isset($fp_map_coords[$k]); }, ARRAY_FILTER_USE_BOTH))); ?> | MANQUE coords: <?php echo $fp_map_missed ? implode(', ', $fp_map_missed) : 'aucun'; ?> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script>
