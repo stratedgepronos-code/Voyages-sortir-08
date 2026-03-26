@@ -6,11 +6,13 @@ class VS08V_Search {
     const TRANSIENT_KEY = 'vs08v_search_agg_v3';
 
     const TYPE_LABELS = [
-        'sejour_golf' => 'Séjours Golfique',
-        'sejour'      => 'Séjours',
-        'road_trip'   => 'Road Trip',
-        'circuit'     => 'Circuits',
-        'city_trip'   => 'City Trip',
+        'sejour_golf'   => 'Séjours Golf',
+        'sejour'        => 'Séjours Vacances',
+        'all_inclusive'  => 'All Inclusive',
+        'road_trip'     => 'Road Trip',
+        'circuit'       => 'Circuits',
+        'city_trip'     => 'City Trip',
+        'parc'          => 'Billets Parcs',
     ];
 
     public static function register() {

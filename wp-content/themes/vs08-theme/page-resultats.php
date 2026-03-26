@@ -15,6 +15,12 @@ $f_niveau  = sanitize_key($_GET['niveau'] ?? '');
 
 $opts  = class_exists('VS08V_Search') ? VS08V_Search::get_aggregated_options() : ['types'=>[],'destinations'=>[],'aeroports'=>[],'durees'=>[],'dates'=>[]];
 $types_labels = VS08V_Search::TYPE_LABELS;
+// Toujours afficher tous les types dans le filtre (même sans produits)
+foreach ($types_labels as $tk => $tl) {
+    if (!isset($opts['types'][$tk])) {
+        $opts['types'][$tk] = $tl;
+    }
+}
 $niveau_labels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','intermediaire'=>'Intermédiaire','confirme'=>'Confirmé','champion'=>'Compétition / championnat'];
 $badge_labels  = ['new'=>'Nouveauté','promo'=>'Promo','best'=>'Best-seller','derniere'=>'Dernières places'];
 

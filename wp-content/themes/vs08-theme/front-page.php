@@ -543,7 +543,71 @@ $hc_slides = [
 <!-- ═══════════════════════════════════════════════════════════════
      2. BARRE DE RECHERCHE
      ═══════════════════════════════════════════════════════════════ -->
-<?php $vs08_opts = class_exists('VS08V_Search') ? VS08V_Search::get_aggregated_options() : ['types'=>[],'destinations'=>[],'aeroports'=>[],'durees'=>[],'dates'=>[]]; ?>
+<?php
+$vs08_opts = class_exists('VS08V_Search') ? VS08V_Search::get_aggregated_options() : ['types'=>[],'destinations'=>[],'aeroports'=>[],'durees'=>[],'dates'=>[]];
+
+// ── Fallback types (toujours afficher tous les types même sans produits) ──
+$fp_all_types = [
+    'sejour_golf'  => 'Séjours Golf',
+    'sejour'       => 'Séjours Vacances',
+    'all_inclusive' => 'All Inclusive',
+    'circuit'      => 'Circuits',
+    'road_trip'    => 'Road Trip',
+    'city_trip'    => 'City Trip',
+    'parc'         => 'Billets Parcs',
+];
+// Fusionner : les types réels + les types manquants
+foreach ($fp_all_types as $k => $v) {
+    if (!isset($vs08_opts['types'][$k])) {
+        $vs08_opts['types'][$k] = $v;
+    }
+}
+
+// ── Fallback destinations (si la BDD en a moins de 5) ──
+if (count($vs08_opts['destinations']) < 5) {
+    $fp_fb_dest = [
+        ['value'=>'Portugal','label'=>'Portugal','flag'=>'🇵🇹','pays'=>'Portugal','count'=>0,'image'=>''],
+        ['value'=>'Espagne','label'=>'Espagne','flag'=>'🇪🇸','pays'=>'Espagne','count'=>0,'image'=>''],
+        ['value'=>'Maroc','label'=>'Maroc','flag'=>'🇲🇦','pays'=>'Maroc','count'=>0,'image'=>''],
+        ['value'=>'Tunisie','label'=>'Tunisie','flag'=>'🇹🇳','pays'=>'Tunisie','count'=>0,'image'=>''],
+        ['value'=>'Turquie','label'=>'Turquie','flag'=>'🇹🇷','pays'=>'Turquie','count'=>0,'image'=>''],
+        ['value'=>'Grèce','label'=>'Grèce','flag'=>'🇬🇷','pays'=>'Grèce','count'=>0,'image'=>''],
+        ['value'=>'Italie','label'=>'Italie','flag'=>'🇮🇹','pays'=>'Italie','count'=>0,'image'=>''],
+        ['value'=>'Irlande','label'=>'Irlande','flag'=>'🇮🇪','pays'=>'Irlande','count'=>0,'image'=>''],
+        ['value'=>'Croatie','label'=>'Croatie','flag'=>'🇭🇷','pays'=>'Croatie','count'=>0,'image'=>''],
+        ['value'=>'République Dominicaine','label'=>'Rép. Dominicaine','flag'=>'🇩🇴','pays'=>'République Dominicaine','count'=>0,'image'=>''],
+        ['value'=>'Thaïlande','label'=>'Thaïlande','flag'=>'🇹🇭','pays'=>'Thaïlande','count'=>0,'image'=>''],
+        ['value'=>'Égypte','label'=>'Égypte','flag'=>'🇪🇬','pays'=>'Égypte','count'=>0,'image'=>''],
+        ['value'=>'Maurice','label'=>'Île Maurice','flag'=>'🇲🇺','pays'=>'Maurice','count'=>0,'image'=>''],
+    ];
+    // Ajouter ceux qui n'existent pas déjà
+    $existing_values = array_column($vs08_opts['destinations'], 'value');
+    foreach ($fp_fb_dest as $d) {
+        if (!in_array($d['value'], $existing_values)) {
+            $vs08_opts['destinations'][] = $d;
+        }
+    }
+    // Trier alphabétiquement
+    usort($vs08_opts['destinations'], function($a, $b) { return strcmp($a['label'], $b['label']); });
+}
+
+// ── Fallback aéroports (si la BDD en a moins de 3) ──
+if (count($vs08_opts['aeroports']) < 3) {
+    $fp_fb_aero = [
+        ['code'=>'CDG','ville'=>'Paris Charles de Gaulle','label'=>'CDG — Paris Charles de Gaulle'],
+        ['code'=>'ORY','ville'=>'Paris Orly','label'=>'ORY — Paris Orly'],
+        ['code'=>'XCR','ville'=>'Paris-Vatry','label'=>'XCR — Paris-Vatry'],
+        ['code'=>'LYS','ville'=>'Lyon Saint-Exupéry','label'=>'LYS — Lyon Saint-Exupéry'],
+        ['code'=>'MRS','ville'=>'Marseille Provence','label'=>'MRS — Marseille Provence'],
+    ];
+    $existing_codes = array_column($vs08_opts['aeroports'], 'code');
+    foreach ($fp_fb_aero as $a) {
+        if (!in_array($a['code'], $existing_codes)) {
+            $vs08_opts['aeroports'][] = $a;
+        }
+    }
+}
+?>
 <section class="fp-search">
     <form class="fp-search-card" action="<?php echo esc_url(home_url('/resultats-recherche')); ?>" method="get">
         <div class="fp-search-field"><label>Type de voyage</label>
