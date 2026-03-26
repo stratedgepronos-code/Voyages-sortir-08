@@ -11,10 +11,11 @@ $f_airport = strtoupper(sanitize_text_field($_GET['airport'] ?? ''));
 $f_date_min = sanitize_text_field($_GET['date_min'] ?? '');
 $f_date_max = sanitize_text_field($_GET['date_max'] ?? '');
 $f_duree   = intval($_GET['duree'] ?? 0);
+$f_niveau  = sanitize_key($_GET['niveau'] ?? '');
 
 $opts  = class_exists('VS08V_Search') ? VS08V_Search::get_aggregated_options() : ['types'=>[],'destinations'=>[],'aeroports'=>[],'durees'=>[],'dates'=>[]];
 $types_labels = VS08V_Search::TYPE_LABELS;
-$niveau_labels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','intermediaire'=>'Intermédiaire','confirme'=>'Confirmé'];
+$niveau_labels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','intermediaire'=>'Intermédiaire','confirme'=>'Confirmé','champion'=>'Compétition / championnat'];
 $badge_labels  = ['new'=>'Nouveauté','promo'=>'Promo','best'=>'Best-seller','derniere'=>'Dernières places'];
 
 $all_posts = get_posts([
@@ -55,6 +56,8 @@ foreach ($all_posts as $p) {
     }
 
     if ($f_duree && intval($m['duree'] ?? 0) !== $f_duree) continue;
+
+    if ($f_niveau && $f_niveau !== 'tous' && ($m['niveau'] ?? 'tous') !== $f_niveau) continue;
 
     $thumb = get_the_post_thumbnail_url($p->ID, 'medium');
     if (!$thumb) {
@@ -107,6 +110,9 @@ if ($f_date_min || $f_date_max) {
     $active_filters[] = ['key'=>'date_min,date_max','label'=>$dl];
 }
 if ($f_duree) $active_filters[] = ['key'=>'duree','label'=>$f_duree . ' nuits'];
+if ($f_niveau && $f_niveau !== 'tous' && isset($niveau_labels[$f_niveau])) {
+    $active_filters[] = ['key'=>'niveau','label'=>$niveau_labels[$f_niveau]];
+}
 
 $total = count($results);
 

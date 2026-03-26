@@ -1,5 +1,7 @@
 <?php
 // Nouveau header avec mega menu — à insérer dans header.php
+/** Liste filtrée des voyages réels (CPT vs08_voyage). */
+$vs08_res = home_url('/resultats-recherche');
 ?>
 <!-- SITE HEADER — MEGA MENU -->
 <header class="header" id="header">
@@ -27,35 +29,35 @@
     <ul class="mega-nav">
         <li><a href="<?php echo esc_url(home_url('/')); ?>">Accueil</a></li>
         <li>
-            <a href="<?php echo esc_url(home_url('/golf')); ?>">Séjours Golf <span class="arrow">▾</span></a>
+            <a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf'], $vs08_res)); ?>">Séjours Golf <span class="arrow">▾</span></a>
             <div class="mega-drop">
                 <div class="mega-drop-inner">
                     <div class="mega-cols">
                         <div class="mega-col-links">
                             <h4>Par type</h4>
                             <ul>
-                                <li><a href="<?php echo esc_url(home_url('/golf')); ?>"><span class="ml-icon">⛳</span><div>Séjours Golf<span class="ml-desc">Tout compris avec vols</span></div></a></li>
-                                <li><a href="<?php echo esc_url(home_url('/golf')); ?>"><span class="ml-icon">🏌️</span><div>Golf & Spa<span class="ml-desc">Bien-être et parcours</span></div></a></li>
-                                <li><a href="<?php echo esc_url(home_url('/golf')); ?>"><span class="ml-icon">🚗</span><div>Autotours Golf<span class="ml-desc">Liberté en voiture de location</span></div></a></li>
-                                <li><a href="<?php echo esc_url(home_url('/golf')); ?>"><span class="ml-icon">🏆</span><div>Compétitions<span class="ml-desc">Tournois et coupes amicales</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf'], $vs08_res)); ?>"><span class="ml-icon">⛳</span><div>Séjours Golf<span class="ml-desc">Tout compris avec vols</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf'], $vs08_res)); ?>"><span class="ml-icon">🏌️</span><div>Golf & Spa<span class="ml-desc">Resorts golf &amp; bien-être</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['type' => 'road_trip'], $vs08_res)); ?>"><span class="ml-icon">🚗</span><div>Autotours Golf<span class="ml-desc">Road trip &amp; parcours</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf', 'niveau' => 'champion'], $vs08_res)); ?>"><span class="ml-icon">🏆</span><div>Compétitions<span class="ml-desc">Niveau championnat</span></div></a></li>
                                 <li><a href="<?php echo esc_url(home_url('/contact')); ?>"><span class="ml-icon">✨</span><div>Sur mesure<span class="ml-desc">Votre voyage 100% personnalisé</span></div></a></li>
                             </ul>
                         </div>
                         <div class="mega-col-links" style="border-left:1px solid var(--gray-light)">
                             <h4>Par niveau</h4>
                             <ul>
-                                <li><a href="<?php echo esc_url(home_url('/golf')); ?>"><span class="ml-icon" style="color:#2d8a5a">⚙</span><div>Débutant<span class="ml-desc">Parcours accessibles</span></div></a></li>
-                                <li><a href="<?php echo esc_url(home_url('/golf')); ?>"><span class="ml-icon" style="color:var(--teal)">⚙</span><div>Intermédiaire<span class="ml-desc">Challenge & plaisir</span></div></a></li>
-                                <li><a href="<?php echo esc_url(home_url('/golf')); ?>"><span class="ml-icon" style="color:var(--coral)">⚙</span><div>Confirmé<span class="ml-desc">Links & championnat</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf', 'niveau' => 'debutant'], $vs08_res)); ?>"><span class="ml-icon" style="color:#2d8a5a">⚙</span><div>Débutant<span class="ml-desc">Parcours accessibles</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf', 'niveau' => 'intermediaire'], $vs08_res)); ?>"><span class="ml-icon" style="color:var(--teal)">⚙</span><div>Intermédiaire<span class="ml-desc">Challenge &amp; plaisir</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf', 'niveau' => 'confirme'], $vs08_res)); ?>"><span class="ml-icon" style="color:var(--coral)">⚙</span><div>Confirmé<span class="ml-desc">Links &amp; parcours exigeants</span></div></a></li>
                             </ul>
                         </div>
                         <div class="mega-col-visual">
                             <img src="https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=600&q=80" alt="Golf featured">
                             <div class="mega-col-visual-content">
                                 <p>Coup de cœur</p>
-                                <h3>Algarve 5★</h3>
-                                <span>7 nuits · 5 parcours · Vol inclus</span>
-                                <a href="<?php echo esc_url(home_url('/golf')); ?>">Dès 1 290€</a>
+                                <h3>Algarve &amp; Portugal</h3>
+                                <span>Voyages golf publiés sur le site</span>
+                                <a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf', 'dest' => 'Algarve'], $vs08_res)); ?>">Voir les séjours</a>
                             </div>
                         </div>
                     </div>
@@ -70,29 +72,29 @@
                         <div class="mega-col-links">
                             <h4>Europe</h4>
                             <ul>
-                                <li><a href="<?php echo esc_url(home_url('/destinations')); ?>"><span class="ml-icon">🇵🇹</span><div>Portugal<span class="ml-desc">Algarve, Lisbonne, Porto</span></div></a></li>
-                                <li><a href="<?php echo esc_url(home_url('/destinations')); ?>"><span class="ml-icon">🇪🇸</span><div>Espagne<span class="ml-desc">Marbella, Costa del Sol</span></div></a></li>
-                                <li><a href="<?php echo esc_url(home_url('/destinations')); ?>"><span class="ml-icon">🇮🇪</span><div>Irlande<span class="ml-desc">Kerry, Dingle, links</span></div></a></li>
-                                <li><a href="<?php echo esc_url(home_url('/destinations')); ?>"><span class="ml-icon">🇬🇷</span><div>Grèce<span class="ml-desc">Crète, Costa Navarino</span></div></a></li>
-                                <li><a href="<?php echo esc_url(home_url('/destinations')); ?>"><span class="ml-icon">🇹🇷</span><div>Turquie<span class="ml-desc">Belek, Antalya</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Portugal'], $vs08_res)); ?>"><span class="ml-icon">🇵🇹</span><div>Portugal<span class="ml-desc">Algarve, Lisbonne, Porto</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Espagne'], $vs08_res)); ?>"><span class="ml-icon">🇪🇸</span><div>Espagne<span class="ml-desc">Marbella, Costa del Sol</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Irlande'], $vs08_res)); ?>"><span class="ml-icon">🇮🇪</span><div>Irlande<span class="ml-desc">Kerry, Dingle, links</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Grèce'], $vs08_res)); ?>"><span class="ml-icon">🇬🇷</span><div>Grèce<span class="ml-desc">Crète, Costa Navarino</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Turquie'], $vs08_res)); ?>"><span class="ml-icon">🇹🇷</span><div>Turquie<span class="ml-desc">Belek, Antalya</span></div></a></li>
                             </ul>
                         </div>
                         <div class="mega-col-links" style="border-left:1px solid var(--gray-light)">
                             <h4>Monde</h4>
                             <ul>
-                                <li><a href="<?php echo esc_url(home_url('/destinations')); ?>"><span class="ml-icon">🇲🇦</span><div>Maroc<span class="ml-desc">Marrakech, Agadir, El Jadida</span></div></a></li>
-                                <li><a href="<?php echo esc_url(home_url('/destinations')); ?>"><span class="ml-icon">🇹🇭</span><div>Thaïlande<span class="ml-desc">Phuket, Hua Hin</span></div></a></li>
-                                <li><a href="<?php echo esc_url(home_url('/destinations')); ?>"><span class="ml-icon">🇲🇺</span><div>Île Maurice<span class="ml-desc">Paradis tropical</span></div></a></li>
-                                <li><a href="<?php echo esc_url(home_url('/destinations')); ?>"><span class="ml-icon">🇿🇦</span><div>Afrique du Sud<span class="ml-desc">Cape Town, Garden Route</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Maroc'], $vs08_res)); ?>"><span class="ml-icon">🇲🇦</span><div>Maroc<span class="ml-desc">Marrakech, Agadir, El Jadida</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Thaïlande'], $vs08_res)); ?>"><span class="ml-icon">🇹🇭</span><div>Thaïlande<span class="ml-desc">Phuket, Hua Hin</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Maurice'], $vs08_res)); ?>"><span class="ml-icon">🇲🇺</span><div>Île Maurice<span class="ml-desc">Paradis tropical</span></div></a></li>
+                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Afrique du Sud'], $vs08_res)); ?>"><span class="ml-icon">🇿🇦</span><div>Afrique du Sud<span class="ml-desc">Cape Town, Garden Route</span></div></a></li>
                             </ul>
                         </div>
                         <div class="mega-col-visual">
                             <img src="https://images.unsplash.com/photo-1553603227-2358aabe821e?w=600&q=80" alt="Maroc destination">
                             <div class="mega-col-visual-content">
                                 <p>Destination star</p>
-                                <h3>Marrakech</h3>
-                                <span>Soleil garanti · Dès 890€</span>
-                                <a href="<?php echo esc_url(home_url('/destinations')); ?>">Découvrir</a>
+                                <h3>Marrakech &amp; Maroc</h3>
+                                <span>Séjours correspondant à votre recherche</span>
+                                <a href="<?php echo esc_url(add_query_arg(['dest' => 'Marrakech'], $vs08_res)); ?>">Voir les séjours</a>
                             </div>
                         </div>
                     </div>
