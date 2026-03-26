@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) exit;
 
 class VS08V_Search {
 
-    const TRANSIENT_KEY = 'vs08v_search_agg_v3';
+    const TRANSIENT_KEY = 'vs08v_search_agg_v4';
 
     const TYPE_LABELS = [
         'sejour_golf'   => 'Séjours Golf',
@@ -54,6 +54,7 @@ class VS08V_Search {
         $airports     = [];
         $durees       = [];
         $dates        = [];
+        $airport_dest = []; // code → [dest1, dest2, ...]
         $today        = date('Y-m-d');
 
         foreach ($posts as $pid) {
@@ -101,6 +102,15 @@ class VS08V_Search {
                             'label' => $code . ' — ' . $ville,
                         ];
                     }
+                    // Map aéroport → destinations desservies
+                    if ($code && $dest) {
+                        if (!isset($airport_dest[$code])) {
+                            $airport_dest[$code] = [];
+                        }
+                        if (!in_array($dest, $airport_dest[$code])) {
+                            $airport_dest[$code][] = $dest;
+                        }
+                    }
                 }
             }
 
@@ -130,11 +140,12 @@ class VS08V_Search {
         sort($dates);
 
         $result = [
-            'types'        => $types,
-            'destinations' => array_values($destinations),
-            'aeroports'    => array_values($airports),
-            'durees'       => array_values($durees),
-            'dates'        => array_values($dates),
+            'types'            => $types,
+            'destinations'     => array_values($destinations),
+            'aeroports'        => array_values($airports),
+            'durees'           => array_values($durees),
+            'dates'            => array_values($dates),
+            'airport_dest_map' => $airport_dest,
         ];
 
         set_transient(self::TRANSIENT_KEY, $result, HOUR_IN_SECONDS);

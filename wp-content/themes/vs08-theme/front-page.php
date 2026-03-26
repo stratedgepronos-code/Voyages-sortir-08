@@ -619,7 +619,7 @@ if (count($vs08_opts['aeroports']) < 3) {
             </select>
         </div>
         <div class="fp-search-field"><label>Destination</label>
-            <select name="dest">
+            <select name="dest" id="fp-sel-dest">
                 <option value="">Toutes les destinations</option>
                 <?php foreach ($vs08_opts['destinations'] as $d): ?>
                 <option value="<?php echo esc_attr($d['value']); ?>"><?php echo esc_html($d['label']); ?></option>
@@ -627,7 +627,7 @@ if (count($vs08_opts['aeroports']) < 3) {
             </select>
         </div>
         <div class="fp-search-field"><label>Aéroport de départ</label>
-            <select name="airport">
+            <select name="airport" id="fp-sel-airport">
                 <option value="">Tous les aéroports</option>
                 <?php foreach ($vs08_opts['aeroports'] as $a): ?>
                 <option value="<?php echo esc_attr($a['code']); ?>"><?php echo esc_html($a['label']); ?></option>
@@ -686,6 +686,75 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<!-- Filtrage dynamique : aéroport → destinations desservies -->
+<script>
+(function(){
+    var airportSel = document.getElementById('fp-sel-airport');
+    var destSel    = document.getElementById('fp-sel-dest');
+    if (!airportSel || !destSel) return;
+
+    // Map aéroport → destinations (générée depuis la BDD)
+    var airportDestMap = <?php echo wp_json_encode($vs08_opts['airport_dest_map'] ?? new stdClass()); ?>;
+
+    // Sauvegarder toutes les options destination originales
+    var allDestOptions = [];
+    for (var i = 0; i < destSel.options.length; i++) {
+        allDestOptions.push({
+            value: destSel.options[i].value,
+            text:  destSel.options[i].text
+        });
+    }
+
+    airportSel.addEventListener('change', function() {
+        var code = this.value;
+        var currentDest = destSel.value;
+
+        // Vider et re-remplir le select destination
+        destSel.innerHTML = '';
+
+        if (!code || !airportDestMap[code]) {
+            // Pas d'aéroport sélectionné → toutes les destinations
+            allDestOptions.forEach(function(o) {
+                var opt = document.createElement('option');
+                opt.value = o.value;
+                opt.textContent = o.text;
+                if (o.value === currentDest) opt.selected = true;
+                destSel.appendChild(opt);
+            });
+        } else {
+            // Aéroport sélectionné → filtrer
+            var allowed = airportDestMap[code];
+            var optAll = document.createElement('option');
+            optAll.value = '';
+            optAll.textContent = 'Destinations au départ de ' + code;
+            destSel.appendChild(optAll);
+
+            var found = false;
+            allDestOptions.forEach(function(o) {
+                if (o.value === '') return; // skip "Toutes les destinations"
+                if (allowed.indexOf(o.value) !== -1) {
+                    var opt = document.createElement('option');
+                    opt.value = o.value;
+                    opt.textContent = o.text;
+                    if (o.value === currentDest) { opt.selected = true; found = true; }
+                    destSel.appendChild(opt);
+                }
+            });
+
+            // Si aucune destination trouvée dans les options existantes, ajouter les destinations brutes
+            if (destSel.options.length <= 1) {
+                allowed.forEach(function(d) {
+                    var opt = document.createElement('option');
+                    opt.value = d;
+                    opt.textContent = d;
+                    destSel.appendChild(opt);
+                });
+            }
+        }
+    });
+})();
+</script>
+
 <!-- ═══════════════════════════════════════════════════════════════
      3. NOS UNIVERS — Bento Grid
      ═══════════════════════════════════════════════════════════════ -->
@@ -708,7 +777,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <div class="fp-ucard__line"></div>
       </a>
-      <a href="<?php echo esc_url(add_query_arg(['type' => 'sejour'], home_url('/resultats-recherche'))); ?>" class="fp-ucard fp-ucard--sejour fp-anim">
+      <a href="<?php echo esc_url(home_url('/bientot-disponible/?univers=sejour')); ?>" class="fp-ucard fp-ucard--sejour fp-anim">
         <div class="fp-ucard__img"><img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=700&q=80" alt="Séjour All Inclusive" loading="lazy"></div>
         <div class="fp-ucard__overlay"></div>
         <div class="fp-ucard__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
@@ -717,6 +786,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <h3 class="fp-ucard__title">Séjours All Inclusive</h3>
           <p class="fp-ucard__desc">Détente &amp; découverte dans les plus beaux hôtels-clubs, tout compris.</p>
         </div>
+        <span class="fp-ucard__soon">Bientôt</span>
         <div class="fp-ucard__line"></div>
       </a>
       <a href="<?php echo esc_url(add_query_arg(['type' => 'circuit'], home_url('/resultats-recherche'))); ?>" class="fp-ucard fp-ucard--circuit fp-anim">

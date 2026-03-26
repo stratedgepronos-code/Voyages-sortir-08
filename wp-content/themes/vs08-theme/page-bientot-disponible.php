@@ -8,6 +8,13 @@ get_header();
 
 $univers = sanitize_key($_GET['univers'] ?? '');
 $data = [
+    'sejour' => [
+        'icon'  => '☀️',
+        'title' => 'Séjours All Inclusive',
+        'desc'  => 'Soleil, plage, hôtels-clubs tout compris dans les plus belles destinations. Nos séjours All Inclusive arrivent très bientôt.',
+        'img'   => 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1920&q=80',
+        'color' => '#59b7b7',
+    ],
     'road_trip' => [
         'icon'  => '🚗',
         'title' => 'Road-Trips',
