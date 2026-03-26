@@ -402,6 +402,7 @@ class VS08V_Contract {
     <?php if (!empty($annulation_paliers)): ?>
     <ul style="margin:4px 0 4px 20px;">
         <?php foreach ($annulation_paliers as $p):
+            if (!is_array($p)) continue;
             $label = $p['label'] ?? '';
             $jours = $p['jours_avant'] ?? '';
             $pct   = $p['retenue'] ?? '';

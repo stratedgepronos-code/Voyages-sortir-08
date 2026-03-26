@@ -302,9 +302,18 @@ class VS08C_Contract {
 <div style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
     <p><strong>Absence de droit de rétractation</strong> — Conformément aux articles L. 221-2 et L. 221-28 du Code de la consommation, le présent contrat n'est pas soumis au droit de rétractation.</p>
     <p><strong>Frais d'annulation :</strong></p>
-    <?php $annulation = $m['annulation'] ?? []; if (!is_array($annulation)) $annulation = []; if (!empty($annulation)): ?>
+    <?php
+    $annulation = $m['annulation'] ?? [];
+    // Circuit stocke l'annulation en texte libre (textarea), golf en tableau structuré
+    if (is_string($annulation) && trim($annulation) !== '') {
+        // Mode texte libre — afficher tel quel
+        echo '<div style="margin:4px 0 4px 20px;white-space:pre-line;">' . nl2br(esc_html($annulation)) . '</div>';
+    } elseif (is_array($annulation) && !empty($annulation)) {
+        // Mode tableau structuré (golf)
+    ?>
     <ul style="margin:4px 0 4px 20px;">
         <?php foreach ($annulation as $p):
+            if (!is_array($p)) continue;
             $label = $p['label'] ?? '';
             $jours = $p['jours_avant'] ?? '';
             $pct   = $p['retenue'] ?? '';
@@ -313,14 +322,14 @@ class VS08C_Contract {
         <li><?php echo esc_html($label ?: (($jours !== '') ? $jours . ' jours avant le départ' : '—')); ?><?php if ($pct !== ''): ?> : <?php echo esc_html($pct); ?>% du prix total<?php endif; ?></li>
         <?php endforeach; ?>
     </ul>
-    <?php else: ?>
+    <?php } else { ?>
     <ul style="margin:4px 0 4px 20px;">
         <li>Plus de 60 jours avant le départ : 30% du prix total</li>
         <li>De 60 à 30 jours : 50%</li>
         <li>De 30 à 15 jours : 75%</li>
         <li>Moins de 15 jours : 100%</li>
     </ul>
-    <?php endif; ?>
+    <?php } ?>
     <p><strong>Cession du contrat</strong> — Conformément à l'article L. 211-11 du Code du Tourisme, vous avez la possibilité de céder le présent contrat jusqu'à 7 jours du départ.</p>
 </div>
 
