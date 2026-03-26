@@ -507,6 +507,58 @@ VS08Calendar.prototype.setAvailable = function(dateStrings) {
     this.render();
 };
 
+/**
+ * Affiche l'animation "Recherche de vols en cours" sous le header du calendrier.
+ * @param {string} [msg] - texte personnalisé (défaut: "Recherche de vols en cours…")
+ */
+VS08Calendar.prototype.showFlightLoading = function(msg) {
+    msg = msg || 'Recherche de vols en cours\u2026';
+    var existing = this.wrap.querySelector('.vs-cal-flight-loading');
+    if (!existing) {
+        var el = document.createElement('div');
+        el.className = 'vs-cal-flight-loading';
+        el.innerHTML = '<div class="vs-cal-flight-loading-inner">'
+            + '<div class="vs-cal-flight-loading-icon"><svg viewBox="0 0 24 24" fill="#59b7b7"><path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" transform="rotate(-45 12 12)"/></svg></div>'
+            + '<div class="vs-cal-flight-loading-text">'
+            + '<p class="vs-cal-flight-loading-label">' + msg + '</p>'
+            + '<div class="vs-cal-flight-loading-bar"></div>'
+            + '</div></div>';
+        // Insérer après le perf (ligne de perforation)
+        var perf = this.wrap.querySelector('.vs-cal-perf');
+        if (perf && perf.nextSibling) {
+            this.wrap.insertBefore(el, perf.nextSibling);
+        } else {
+            this.wrap.appendChild(el);
+        }
+        // Force reflow pour que la transition s'active
+        el.offsetHeight;
+        el.classList.add('active');
+    } else {
+        var label = existing.querySelector('.vs-cal-flight-loading-label');
+        if (label) label.textContent = msg;
+        existing.classList.remove('done');
+        existing.classList.add('active');
+    }
+};
+
+/**
+ * Masque l'animation de recherche de vols avec un état "trouvé" temporaire.
+ * @param {string} [msg] - texte de succès (défaut: "Vols trouvés ✓")
+ * @param {number} [delay] - ms avant disparition (défaut: 2000)
+ */
+VS08Calendar.prototype.hideFlightLoading = function(msg, delay) {
+    msg = msg || 'Vols trouv\u00e9s \u2713';
+    delay = delay || 2000;
+    var existing = this.wrap.querySelector('.vs-cal-flight-loading');
+    if (!existing) return;
+    var label = existing.querySelector('.vs-cal-flight-loading-label');
+    if (label) label.textContent = msg;
+    existing.classList.add('done');
+    setTimeout(function() {
+        existing.classList.remove('active', 'done');
+    }, delay);
+};
+
 window.VS08Calendar = VS08Calendar;
 
 })();

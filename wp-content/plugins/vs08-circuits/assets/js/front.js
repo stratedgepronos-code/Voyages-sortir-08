@@ -88,6 +88,7 @@ function vcOnDateSelected(){
     if(!aero||!date)return;
     var $s=$('#vc-vol-status');
     $s.attr('class','vc-vol-status loading').text('⏳ Recherche du meilleur vol...').show();
+    if(window.vcCalDate&&window.vcCalDate.showFlightLoading) window.vcCalDate.showFlightLoading();
 
     $.post(vs08c.ajax_url,{action:'vs08c_get_flight',nonce:vs08c.nonce,circuit_id:CIRCUIT.id,date:date,aeroport:aero,passengers:parseInt($('#vc-nb-adultes').val())||2},function(res){
         if(res.success&&res.data){
@@ -98,14 +99,17 @@ function vcOnDateSelected(){
                 ?(count>0?'✈️ '+count+' vol(s) A/R trouvé(s) (estimé)':'Tarif estimé')
                 :(count>0?'✅ '+count+' vol(s) A/R en temps réel':'Vol(s) trouvé(s)');
             $s.attr('class','vc-vol-status loaded').text(txt);
+            if(window.vcCalDate&&window.vcCalDate.hideFlightLoading) window.vcCalDate.hideFlightLoading(count>0?count+' vol(s) trouvé(s) ✓':'Tarif estimé ✓');
         }else{
             vc_prix_vol=parseFloat(CIRCUIT.prix_vol_base)||0;
             $s.attr('class','vc-vol-status '+(vc_prix_vol>0?'loaded':'error')).text(vc_prix_vol>0?'Tarif de base':'Tarif vol indisponible');
+            if(window.vcCalDate&&window.vcCalDate.hideFlightLoading) window.vcCalDate.hideFlightLoading(vc_prix_vol>0?'Tarif de base ✓':'Aucun vol trouvé',3000);
         }
         $('#vc-step2').slideDown(300);buildRooms();triggerCalc();
     }).fail(function(){
         vc_prix_vol=parseFloat(CIRCUIT.prix_vol_base)||0;
         $s.attr('class','vc-vol-status error').text('Erreur réseau — tarif de base');
+        if(window.vcCalDate&&window.vcCalDate.hideFlightLoading) window.vcCalDate.hideFlightLoading('Erreur réseau',3000);
         $('#vc-step2').slideDown(300);buildRooms();triggerCalc();
     });
 }

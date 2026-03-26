@@ -117,3 +117,56 @@
     .vs-cal-days{padding:4px 10px 0}
     .vs-cal-overlay{min-width:300px}
 }
+
+/* ── Flight search loading animation ── */
+.vs-cal-flight-loading{
+    overflow:hidden;max-height:0;opacity:0;
+    transition:max-height .4s ease,opacity .3s ease,padding .3s ease;
+    padding:0 20px;background:#fff;
+}
+.vs-cal-flight-loading.active{
+    max-height:80px;opacity:1;padding:12px 20px 14px;
+}
+.vs-cal-flight-loading-inner{
+    display:flex;align-items:center;gap:12px;
+}
+.vs-cal-flight-loading-icon{
+    flex-shrink:0;width:28px;height:28px;position:relative;
+}
+.vs-cal-flight-loading-icon svg{
+    width:28px;height:28px;animation:vs-cal-fly-bounce 1.8s ease-in-out infinite;
+}
+@keyframes vs-cal-fly-bounce{
+    0%,100%{transform:translateY(0) rotate(-5deg)}
+    50%{transform:translateY(-4px) rotate(5deg)}
+}
+.vs-cal-flight-loading-text{
+    flex:1;min-width:0;
+}
+.vs-cal-flight-loading-label{
+    font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;
+    color:#0f2424;margin:0 0 6px;
+}
+.vs-cal-flight-loading-bar{
+    height:4px;border-radius:4px;background:rgba(89,183,183,.15);overflow:hidden;position:relative;
+}
+.vs-cal-flight-loading-bar::after{
+    content:'';position:absolute;top:0;left:0;height:100%;width:40%;
+    border-radius:4px;
+    background:linear-gradient(90deg,#59b7b7,#7dd3d3);
+    animation:vs-cal-bar-slide 1.4s ease-in-out infinite;
+}
+@keyframes vs-cal-bar-slide{
+    0%{left:-40%;width:40%}
+    50%{left:30%;width:50%}
+    100%{left:110%;width:40%}
+}
+/* Done state */
+.vs-cal-flight-loading.done .vs-cal-flight-loading-bar::after{
+    animation:none;width:100%;left:0;
+    background:linear-gradient(90deg,#059669,#34d399);
+    transition:all .5s ease;
+}
+.vs-cal-flight-loading.done .vs-cal-flight-loading-label{
+    color:#059669;
+}
