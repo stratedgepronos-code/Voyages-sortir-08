@@ -156,6 +156,58 @@ if (class_exists('VS08C_Meta') && (!$f_type || $f_type === 'circuit')) {
             $cflag = VS08C_Meta::resolve_flag($cm);
         }
 
+        // ── Calcul prix d'appel circuit (même logique que golf) ──
+        $c_prix_base  = floatval($cm['prix_double'] ?? 0);
+        $c_prix_vol   = 0;
+        $c_has_vol    = false;
+        $c_vol_est    = false;
+
+        // 1) Cache vol (recherches visiteurs)
+        $c_vol_cache = get_post_meta($cp->ID, '_vs08c_vol_min_cache', true);
+        if (!empty($c_vol_cache['prix']) && !empty($c_vol_cache['ts'])) {
+            $c_age = time() - intval($c_vol_cache['ts']);
+            if ($c_age < 14 * DAY_IN_SECONDS) {
+                $c_prix_vol = floatval($c_vol_cache['prix']);
+                $c_has_vol  = true;
+            }
+        }
+        // 2) Fallback: estimation admin
+        if ($c_prix_vol <= 0) {
+            $c_pvb = floatval($cm['prix_vol_base'] ?? 0);
+            if ($c_pvb > 0) {
+                $c_prix_vol = $c_pvb;
+                $c_vol_est  = true;
+            }
+        }
+
+        $c_taxe      = floatval($cm['prix_taxe'] ?? 0);
+        $c_total     = $c_prix_base + $c_prix_vol + $c_taxe;
+
+        // Supplément date (saison la moins chère si existante)
+        if (!empty($cm['dates_depart']) && is_array($cm['dates_depart'])) {
+            $c_supps = [];
+            foreach ($cm['dates_depart'] as $dd) {
+                $sv = floatval($dd['supp'] ?? 0);
+                if ($sv > 0) $c_supps[] = $sv;
+            }
+            if (!empty($c_supps)) $c_total += min($c_supps);
+        }
+
+        // Marge
+        if (!empty($cm['marge_pct']) && floatval($cm['marge_pct']) > 0) {
+            $c_total *= (1 + floatval($cm['marge_pct']) / 100);
+        } elseif (!empty($cm['marge_montant']) && floatval($cm['marge_montant']) > 0) {
+            $c_total += floatval($cm['marge_montant']);
+        }
+
+        $c_prix_final = $c_total > 0 ? (int) ceil($c_total) : 0;
+        $c_price_hint = '';
+        if ($c_has_vol) {
+            $c_price_hint = 'Basé sur le meilleur tarif vol récemment trouvé.';
+        } elseif ($c_vol_est) {
+            $c_price_hint = 'Vol estimé — une recherche sur la fiche actualise le prix.';
+        }
+
         $results[] = [
             'id'          => $cp->ID,
             'title'       => get_the_title($cp->ID),
@@ -164,17 +216,17 @@ if (class_exists('VS08C_Meta') && (!$f_type || $f_type === 'circuit')) {
             'destination' => $cm['destination'] ?? '',
             'pays'        => $cpays,
             'flag'        => $cflag,
-            'prix'        => floatval($cm['prix_base'] ?? ($cm['prix_from'] ?? 0)),
-            'has_vol'     => !empty($cm['aeroports']),
-            'debug'       => '',
+            'prix'        => $c_prix_final,
+            'has_vol'     => $c_has_vol || $c_vol_est,
+            'debug'       => $c_price_hint,
             'duree'       => intval($cm['duree'] ?? ($cm['nb_jours'] ?? 0)),
             'nb_parcours' => 0,
             'niveau'      => 'tous',
             'badge'       => $cm['badge'] ?? '',
-            'desc'           => $cm['desc_courte'] ?? wp_trim_words(get_the_excerpt($cp->ID), 25, '…'),
+            'desc'           => !empty($cm['desc_courte']) ? $cm['desc_courte'] : (!empty($cm['description']) ? wp_trim_words(wp_strip_all_tags($cm['description']), 25, '…') : wp_trim_words(get_post_field('post_content', $cp->ID), 25, '…')),
             'hotel_nom'      => '',
             'type_voyage'    => 'circuit',
-            'transport_type'  => !empty($cm['aeroports']) ? 'vol' : '',
+            'transport_type'  => (!empty($cm['aeroports']) || $c_has_vol || $c_vol_est) ? 'vol' : '',
             'transfert_type'  => '',
             // Circuit-specific
             'pension'        => $cm['pension'] ?? '',
@@ -478,7 +530,7 @@ $hero_video_url = get_theme_file_uri('assets/video/hero.mp4');
                                 <?php endforeach; ?>
                             <?php endif; ?>
                             <?php if ($r['niveau'] && $r['niveau'] !== 'tous' && isset($niveau_labels[$r['niveau']])): ?><span class="vs08-sr-tag"><?php echo esc_html($niveau_labels[$r['niveau']]); ?></span><?php endif; ?>
-                            <?php if ($r['type_voyage'] && isset($types_labels[$r['type_voyage']])): ?><span class="vs08-sr-tag"><?php echo esc_html($types_labels[$r['type_voyage']]); ?></span><?php endif; ?>
+                            <?php if ($r['type_voyage'] && $r['type_voyage'] !== 'circuit' && isset($types_labels[$r['type_voyage']])): ?><span class="vs08-sr-tag"><?php echo esc_html($types_labels[$r['type_voyage']]); ?></span><?php endif; ?>
                         </div>
                     </div>
                     <div class="vs08-sr-footer">
