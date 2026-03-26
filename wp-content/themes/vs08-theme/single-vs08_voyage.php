@@ -1337,6 +1337,8 @@ function svFetchVol(){
 
     // Badge orange — recherche en cours
     if(st){ st.className='sv-vol-st loading'; st.textContent='⏳ Recherche de vols…'; }
+    // Animation calendrier
+    if(window.svCalDate && window.svCalDate.showFlightLoading) window.svCalDate.showFlightLoading();
 
     var restFlight = (window.VS08V && window.VS08V.rest_flight) ? window.VS08V.rest_flight : (window.vs08v && window.vs08v.rest_flight) ? window.vs08v.rest_flight : '';
     var ajaxUrl = (window.VS08V && window.VS08V.ajax_url) ? window.VS08V.ajax_url : (window.vs08v && window.vs08v.ajax_url) ? window.vs08v.ajax_url : '';
@@ -1363,6 +1365,7 @@ function svFetchVol(){
             if (estPrix > 0 && res.data.note === 'estimate') {
                 svVolReady = true;
                 if (st) { st.className = 'sv-vol-st loaded'; st.textContent = '✅ Tarif vol indicatif (à partir de) — détail des lignes au moment de la réservation'; }
+                if(window.svCalDate && window.svCalDate.hideFlightLoading) window.svCalDate.hideFlightLoading('Tarif vol estimé ✓');
                 svSetCalendarConfirmEnabled(true);
                 svUpdate();
                 return;
@@ -1378,12 +1381,14 @@ function svFetchVol(){
         svVolReady = true;
         var txt = '✅ ' + nbVols + ' combinaison' + (nbVols>1?'s':'') + ' aller-retour trouvée' + (nbVols>1?'s':'');
         if (st) { st.className = 'sv-vol-st loaded'; st.textContent = txt; }
+        if(window.svCalDate && window.svCalDate.hideFlightLoading) window.svCalDate.hideFlightLoading(nbVols + ' vol' + (nbVols>1?'s':'') + ' trouvé' + (nbVols>1?'s':'') + ' ✓');
         svSetCalendarConfirmEnabled(true);
         svUpdate();
     }
     function onFlightFail() {
         svPrixVol = 0; svVolReady = false;
         if (st) { st.className = 'sv-vol-st error'; st.textContent = '❌ Aucun vol trouvé pour cette date / cet aéroport.'; }
+        if(window.svCalDate && window.svCalDate.hideFlightLoading) window.svCalDate.hideFlightLoading('Aucun vol trouvé', 3000);
         document.getElementById('sv-price-box').style.display='none';
         document.getElementById('sv-price-loading').style.display='block';
         document.getElementById('sv-price-loading').textContent='Aucun vol disponible — essayez une autre date ou un autre aéroport.';
