@@ -198,76 +198,142 @@ function vs08_mega_resultats_url() {
 /** Pays / zones golf : uniquement les fiches catalogue golf réelles (type ou nb parcours). */
 function vs08_mega_golf_countries($limit = 5) {
     $res = vs08_mega_resultats_url();
-    if (class_exists('VS08V_Search')) {
-        $out = VS08V_Search::get_mega_menu_golf_countries($limit);
-        if ($out !== []) {
-            return $out;
-        }
-    }
-    $seen = [];
-    $out  = [];
-    $fallback = [
-        ['label' => 'Portugal',  'flag' => '🇵🇹', 'dest' => 'Portugal',  'desc' => 'Algarve, Lisbonne, Madère'],
-        ['label' => 'Espagne',   'flag' => '🇪🇸', 'dest' => 'Espagne',   'desc' => 'Costa del Sol, Majorque'],
-        ['label' => 'Maroc',     'flag' => '🇲🇦', 'dest' => 'Maroc',     'desc' => 'Marrakech, Agadir'],
-        ['label' => 'Turquie',   'flag' => '🇹🇷', 'dest' => 'Turquie',   'desc' => 'Belek, Antalya'],
-        ['label' => 'Tunisie',   'flag' => '🇹🇳', 'dest' => 'Tunisie',   'desc' => 'Hammamet, Djerba'],
+
+    // Descriptions par pays — les régions/villes golf emblématiques
+    $desc_map = [
+        'Portugal'  => 'Algarve, Lisbonne, Madère',
+        'Espagne'   => 'Costa del Sol, Majorque, Tenerife',
+        'Maroc'     => 'Marrakech, Agadir, El Jadida',
+        'Turquie'   => 'Belek, Antalya',
+        'Tunisie'   => 'Hammamet, Djerba, Sousse',
+        'Irlande'   => 'Dublin, Kerry, Cork',
+        'Grèce'     => 'Crète, Rhodes, Costa Navarino',
+        'Écosse'    => 'St Andrews, Highlands',
+        'Italie'    => 'Sardaigne, Sicile, Toscane',
+        'France'    => 'Côte d\'Azur, Pays Basque',
+        'Thaïlande' => 'Phuket, Hua Hin, Bangkok',
+        'Maurice'   => 'Île Maurice',
+        'Égypte'    => 'Soma Bay, El Gouna',
+        'Chypre'    => 'Paphos, Limassol',
     ];
-    foreach ($fallback as $fb) {
-        if (count($out) >= $limit) {
-            break;
+
+    // Essayer de lire depuis la BDD
+    if (class_exists('VS08V_MetaBoxes')) {
+        $ids = get_posts([
+            'post_type'      => 'vs08_voyage',
+            'post_status'    => 'publish',
+            'posts_per_page' => 200,
+            'fields'         => 'ids',
+        ]);
+        $countries = []; // pays => ['count' => N, 'flag' => '🇵🇹', 'dest' => 'Portugal']
+        foreach ($ids as $pid) {
+            $m = VS08V_MetaBoxes::get($pid);
+            if (($m['statut'] ?? '') === 'archive') continue;
+            // Filtre golf : type = sejour_golf OU nb_parcours renseigné
+            $is_golf = (($m['type_voyage'] ?? '') === 'sejour_golf') || (intval($m['nb_parcours'] ?? 0) > 0);
+            if (!$is_golf) continue;
+
+            $pays = trim($m['pays'] ?? '');
+            if ($pays === '') continue;
+            $flag = VS08V_MetaBoxes::resolve_flag($m);
+
+            if (!isset($countries[$pays])) {
+                $countries[$pays] = ['count' => 0, 'flag' => $flag, 'dest' => $pays];
+            }
+            $countries[$pays]['count']++;
         }
-        if (isset($seen[$fb['label']])) {
-            continue;
+        // Trier par nombre de séjours (le plus populaire en premier)
+        uasort($countries, function($a, $b) { return $b['count'] - $a['count']; });
+
+        $out = [];
+        foreach (array_slice($countries, 0, $limit, true) as $pays => $info) {
+            $out[] = [
+                'label' => $pays,
+                'flag'  => $info['flag'],
+                'desc'  => $desc_map[$pays] ?? 'Séjours golf tout compris',
+                'url'   => add_query_arg(['type' => 'sejour_golf', 'dest' => $info['dest']], $res),
+            ];
         }
-        $seen[$fb['label']] = true;
+        if (!empty($out)) return $out;
+    }
+
+    // Fallback si BDD vide
+    $fallback = [
+        ['label' => 'Portugal',  'flag' => '🇵🇹', 'dest' => 'Portugal'],
+        ['label' => 'Espagne',   'flag' => '🇪🇸', 'dest' => 'Espagne'],
+        ['label' => 'Maroc',     'flag' => '🇲🇦', 'dest' => 'Maroc'],
+        ['label' => 'Turquie',   'flag' => '🇹🇷', 'dest' => 'Turquie'],
+        ['label' => 'Tunisie',   'flag' => '🇹🇳', 'dest' => 'Tunisie'],
+    ];
+    $out = [];
+    foreach (array_slice($fallback, 0, $limit) as $fb) {
         $out[] = [
             'label' => $fb['label'],
             'flag'  => $fb['flag'],
-            'desc'  => $fb['desc'] ?? '',
+            'desc'  => $desc_map[$fb['label']] ?? 'Séjours golf tout compris',
             'url'   => add_query_arg(['type' => 'sejour_golf', 'dest' => $fb['dest']], $res),
         ];
     }
-    return array_slice($out, 0, $limit);
+    return $out;
 }
 
-/** Aéroports : seulement ceux renseignés sur au moins un séjour golf. */
-function vs08_mega_departure_airports() {
-    if (class_exists('VS08V_Search')) {
-        $rows = VS08V_Search::get_mega_menu_golf_airports();
-        if ($rows !== []) {
-            return $rows;
-        }
-    }
+/** Aéroports : les 5 plus utilisés dans les séjours golf publiés. */
+function vs08_mega_departure_airports($limit = 5) {
     $res = vs08_mega_resultats_url();
-    // Fallback : les 5 principaux aéroports de départ pour le golf
-    return [
-        [
-            'code'  => 'CDG',
-            'label' => 'Paris Charles de Gaulle',
-            'url'   => add_query_arg(['type' => 'sejour_golf', 'airport' => 'CDG'], $res),
-        ],
-        [
-            'code'  => 'ORY',
-            'label' => 'Paris Orly',
-            'url'   => add_query_arg(['type' => 'sejour_golf', 'airport' => 'ORY'], $res),
-        ],
-        [
-            'code'  => 'LYS',
-            'label' => 'Lyon Saint-Exupéry',
-            'url'   => add_query_arg(['type' => 'sejour_golf', 'airport' => 'LYS'], $res),
-        ],
-        [
-            'code'  => 'MRS',
-            'label' => 'Marseille Provence',
-            'url'   => add_query_arg(['type' => 'sejour_golf', 'airport' => 'MRS'], $res),
-        ],
-        [
-            'code'  => 'NTE',
-            'label' => 'Nantes Atlantique',
-            'url'   => add_query_arg(['type' => 'sejour_golf', 'airport' => 'NTE'], $res),
-        ],
+
+    // Essayer de lire depuis la BDD
+    if (class_exists('VS08V_MetaBoxes')) {
+        $ids = get_posts([
+            'post_type'      => 'vs08_voyage',
+            'post_status'    => 'publish',
+            'posts_per_page' => 200,
+            'fields'         => 'ids',
+        ]);
+        $airports = []; // code => ['ville' => '...', 'count' => N]
+        foreach ($ids as $pid) {
+            $m = VS08V_MetaBoxes::get($pid);
+            if (($m['statut'] ?? '') === 'archive') continue;
+            // Tous les types de voyages (pas que golf) pour les aéroports
+            if (!empty($m['aeroports']) && is_array($m['aeroports'])) {
+                foreach ($m['aeroports'] as $a) {
+                    $code  = strtoupper(trim($a['code'] ?? ''));
+                    $ville = trim($a['ville'] ?? '');
+                    if (!$code) continue;
+                    if (!isset($airports[$code])) {
+                        $airports[$code] = ['ville' => $ville, 'count' => 0];
+                    }
+                    $airports[$code]['count']++;
+                }
+            }
+        }
+        // Trier par nombre de séjours (le plus utilisé en premier)
+        uasort($airports, function($a, $b) { return $b['count'] - $a['count']; });
+
+        $out = [];
+        foreach (array_slice($airports, 0, $limit, true) as $code => $info) {
+            $out[] = [
+                'code'  => $code,
+                'label' => $info['ville'] ?: $code,
+                'url'   => add_query_arg(['type' => 'sejour_golf', 'airport' => $code], $res),
+            ];
+        }
+        if (!empty($out)) return $out;
+    }
+
+    // Fallback si BDD vide
+    $fallback = [
+        ['code' => 'CDG', 'label' => 'Paris Charles de Gaulle'],
+        ['code' => 'ORY', 'label' => 'Paris Orly'],
+        ['code' => 'LYS', 'label' => 'Lyon Saint-Exupéry'],
+        ['code' => 'MRS', 'label' => 'Marseille Provence'],
+        ['code' => 'NTE', 'label' => 'Nantes Atlantique'],
     ];
+    $out = [];
+    foreach (array_slice($fallback, 0, $limit) as $fb) {
+        $fb['url'] = add_query_arg(['type' => 'sejour_golf', 'airport' => $fb['code']], $res);
+        $out[] = $fb;
+    }
+    return $out;
 }
 
 /** Destinations catalogue : deux colonnes pour le méga-menu. */
