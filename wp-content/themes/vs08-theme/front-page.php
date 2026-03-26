@@ -1302,7 +1302,7 @@ document.addEventListener('DOMContentLoaded', function() {
         circuit:     {l:'Circuit',      c:'fp-tt-tag-circuit'}
     };
 
-    var sel = DEFAULT_APTS[0], W = 1200, H = 580;
+    var sel = null, W = 1200, H = 580; // null = Tous (pas de filtre aéroport)
     var proj = d3.geoNaturalEarth1().center([20,30]).scale(340).translate([W/2,H/2]);
     var pathG = d3.geoPath(proj);
     var box = document.getElementById('fp-map-wrap');
@@ -1318,13 +1318,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var ALL_DS = []; // Toutes les destinations (chargées du JSON)
 
-    /* Boutons aéroports */
+    /* Boutons aéroports — avec "Tous" en premier */
     var ap = document.getElementById('fp-map-airports');
     function buildAirportButtons(apts) {
         ap.innerHTML = '';
-        apts.forEach(function(a, i) {
+        // Bouton "Tous" en premier
+        var bAll = document.createElement('button');
+        bAll.className = 'fp-map-ab on';
+        bAll.textContent = 'Tous';
+        bAll.title = 'Toutes les destinations';
+        bAll.onclick = function() {
+            sel = null;
+            ap.querySelectorAll('.fp-map-ab').forEach(function(x) { x.classList.remove('on'); });
+            bAll.classList.add('on');
+            drawArcs();
+            drawMarkers();
+        };
+        ap.appendChild(bAll);
+        // Boutons aéroports
+        apts.forEach(function(a) {
             var b = document.createElement('button');
-            b.className = 'fp-map-ab' + (i === 0 ? ' on' : '');
+            b.className = 'fp-map-ab';
             b.textContent = a.code;
             b.title = a.name;
             b.onclick = function() {
@@ -1367,15 +1381,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /* Filtrer les destinations selon l'aéroport sélectionné */
     function getFilteredDS() {
-        if (!sel || !sel.code) return ALL_DS;
-        return ALL_DS.filter(function(d) {
+        // Mode "Tous" : afficher toutes les destinations
+        if (!sel) return ALL_DS;
+        // Mode aéroport : filtrer par code
+        var filtered = ALL_DS.filter(function(d) {
             return d.airports && d.airports.indexOf(sel.code) !== -1;
         });
+        // Si aucune destination ne correspond à cet aéroport, montrer toutes
+        if (filtered.length === 0) return ALL_DS;
+        return filtered;
     }
 
     /* Arcs de vol animés */
     function drawArcs() {
         gA.selectAll('*').remove();
+        // Mode "Tous" : pas d'arcs, pas de point aéroport
         if (!sel) return;
         var o = [sel.lon, sel.lat], op = proj(o);
         var filtered = getFilteredDS();
