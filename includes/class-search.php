@@ -7,8 +7,7 @@ class VS08V_Search {
 
     const TYPE_LABELS = [
         'sejour_golf'   => 'Séjours Golf',
-        'sejour'        => 'Séjours Vacances',
-        'all_inclusive'  => 'All Inclusive',
+        'sejour'        => 'Séjours All Inclusive',
         'road_trip'     => 'Road Trip',
         'circuit'       => 'Circuits',
         'city_trip'     => 'City Trip',

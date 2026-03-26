@@ -40,7 +40,7 @@ class VS08V_MetaBoxes {
             <div class="vs08v-field"><label>Type de voyage</label>
                 <select name="vs08v[type_voyage]">
                     <option value="">— Choisir —</option>
-                    <?php foreach(['sejour_golf'=>'Séjours Golf','sejour'=>'Séjours Vacances','all_inclusive'=>'All Inclusive','road_trip'=>'Road Trip','circuit'=>'Circuits','city_trip'=>'City Trip','parc'=>'Billets Parcs'] as $tv=>$tl): ?>
+                    <?php foreach(['sejour_golf'=>'Séjours Golf','sejour'=>'Séjours All Inclusive','road_trip'=>'Road Trip','circuit'=>'Circuits','city_trip'=>'City Trip','parc'=>'Billets Parcs'] as $tv=>$tl): ?>
                     <option value="<?php echo $tv;?>" <?php selected($m['type_voyage']??'',$tv);?>><?php echo $tl;?></option>
                     <?php endforeach;?>
                 </select>

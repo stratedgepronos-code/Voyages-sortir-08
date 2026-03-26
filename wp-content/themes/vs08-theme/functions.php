@@ -481,7 +481,7 @@ add_action('init', function() {
    Si la page existe déjà, on assigne juste le bon template.
 ============================================================ */
 add_action('init', function() {
-    if (get_option('vs08_pages_site_v3') === 'yes') {
+    if (get_option('vs08_pages_site_v4') === 'yes') {
         return;
     }
     // slug => ['title' => ..., 'template' => ... (optionnel si slug matching suffit)]
@@ -497,6 +497,10 @@ add_action('init', function() {
         'sejours-golf' => [
             'title'    => 'Séjours Golf',
             'template' => 'page-golf.php',
+        ],
+        'bientot-disponible' => [
+            'title'    => 'Bientôt disponible',
+            'template' => 'page-bientot-disponible.php',
         ],
         'contact' => [
             'title'    => 'Contact',
@@ -558,7 +562,7 @@ add_action('init', function() {
             update_post_meta($post_id, '_wp_page_template', $data['template']);
         }
     }
-    update_option('vs08_pages_site_v3', 'yes');
+    update_option('vs08_pages_site_v4', 'yes');
 }, 27);
 
 /* ============================================================

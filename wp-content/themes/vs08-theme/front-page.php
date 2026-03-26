@@ -132,6 +132,7 @@ body.home,body.page-template-default{background:#fff!important}
 .fp-ucard:hover .fp-ucard__count{color:rgba(255,255,255,.8)}
 .fp-ucard__count::before{content:'';width:24px;height:1px;background:rgba(255,255,255,.3);transition:width .4s,background .3s}
 .fp-ucard:hover .fp-ucard__count::before{width:36px;background:#59b7b7}
+.fp-ucard__soon{position:absolute;top:1.2rem;right:1.2rem;z-index:3;font-family:'Outfit',sans-serif;font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:#fff;background:linear-gradient(135deg,#c9a84c,#e8724a);padding:.35rem .9rem;border-radius:100px;box-shadow:0 4px 16px rgba(232,114,74,.3)}
 
 /* ─── Ligne déco bas carte ─── */
 .fp-ucard__line{position:absolute;bottom:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#59b7b7,#c8a45e);z-index:3;transition:width .6s cubic-bezier(.23,1,.32,1);border-radius:0 3px 0 0}
@@ -549,8 +550,7 @@ $vs08_opts = class_exists('VS08V_Search') ? VS08V_Search::get_aggregated_options
 // ── Fallback types (toujours afficher tous les types même sans produits) ──
 $fp_all_types = [
     'sejour_golf'  => 'Séjours Golf',
-    'sejour'       => 'Séjours Vacances',
-    'all_inclusive' => 'All Inclusive',
+    'sejour'       => 'Séjours All Inclusive',
     'circuit'      => 'Circuits',
     'road_trip'    => 'Road Trip',
     'city_trip'    => 'City Trip',
@@ -697,31 +697,29 @@ document.addEventListener('DOMContentLoaded', function() {
       <p class="fp-univers-subtitle">Chaque voyage est une histoire. Choisissez le premier chapitre de la vôtre parmi nos univers soigneusement conçus.</p>
     </div>
     <div class="fp-bento">
-      <a href="<?php echo esc_url(home_url('/golf')); ?>" class="fp-ucard fp-ucard--golf fp-anim">
+      <a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf'], home_url('/resultats-recherche'))); ?>" class="fp-ucard fp-ucard--golf fp-anim">
         <div class="fp-ucard__img"><img src="<?php echo esc_url(get_template_directory_uri() . '/assets/img/bento/golf-bento.png'); ?>" alt="Séjour golfique" loading="lazy"></div>
         <div class="fp-ucard__overlay"></div>
         <div class="fp-ucard__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
         <div class="fp-ucard__content">
           <span class="fp-ucard__badge">⛳ Séjours golf</span>
-          <h3 class="fp-ucard__title">Séjours Golfique</h3>
+          <h3 class="fp-ucard__title">Séjours Golf</h3>
           <p class="fp-ucard__desc">Parcours d'exception, hôtels de charme, vols &amp; green fees inclus. Vous n'avez qu'à jouer.</p>
         </div>
-        <span class="fp-ucard__count">32 séjours</span>
         <div class="fp-ucard__line"></div>
       </a>
-      <a href="<?php echo esc_url(home_url('/resultats-recherche?type=sejour')); ?>" class="fp-ucard fp-ucard--sejour fp-anim">
-        <div class="fp-ucard__img"><img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=700&q=80" alt="Séjour détente" loading="lazy"></div>
+      <a href="<?php echo esc_url(add_query_arg(['type' => 'sejour'], home_url('/resultats-recherche'))); ?>" class="fp-ucard fp-ucard--sejour fp-anim">
+        <div class="fp-ucard__img"><img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=700&q=80" alt="Séjour All Inclusive" loading="lazy"></div>
         <div class="fp-ucard__overlay"></div>
         <div class="fp-ucard__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
         <div class="fp-ucard__content">
-          <span class="fp-ucard__badge">☀️ Évasion</span>
-          <h3 class="fp-ucard__title">Séjours</h3>
-          <p class="fp-ucard__desc">Détente &amp; découverte dans les plus beaux hôtels-clubs.</p>
+          <span class="fp-ucard__badge">☀️ All Inclusive</span>
+          <h3 class="fp-ucard__title">Séjours All Inclusive</h3>
+          <p class="fp-ucard__desc">Détente &amp; découverte dans les plus beaux hôtels-clubs, tout compris.</p>
         </div>
-        <span class="fp-ucard__count">18 séjours</span>
         <div class="fp-ucard__line"></div>
       </a>
-      <a href="<?php echo esc_url($fp_url_circuits); ?>" class="fp-ucard fp-ucard--circuit fp-anim">
+      <a href="<?php echo esc_url(add_query_arg(['type' => 'circuit'], home_url('/resultats-recherche'))); ?>" class="fp-ucard fp-ucard--circuit fp-anim">
         <div class="fp-ucard__img"><img src="<?php echo esc_url(get_template_directory_uri() . '/assets/img/bento/circuit-bento.png'); ?>" alt="Circuit découverte" loading="lazy"></div>
         <div class="fp-ucard__overlay"></div>
         <div class="fp-ucard__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
@@ -730,10 +728,9 @@ document.addEventListener('DOMContentLoaded', function() {
           <h3 class="fp-ucard__title">Circuits</h3>
           <p class="fp-ucard__desc">Itinéraires conçus étape par étape pour ne rien manquer.</p>
         </div>
-        <span class="fp-ucard__count">14 circuits</span>
         <div class="fp-ucard__line"></div>
       </a>
-      <a href="<?php echo esc_url($fp_url_destinations); ?>" class="fp-ucard fp-ucard--road fp-anim">
+      <a href="<?php echo esc_url(home_url('/bientot-disponible/?univers=road_trip')); ?>" class="fp-ucard fp-ucard--road fp-anim">
         <div class="fp-ucard__img"><img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=900&q=80" alt="Road trip" loading="lazy"></div>
         <div class="fp-ucard__overlay"></div>
         <div class="fp-ucard__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
@@ -742,10 +739,10 @@ document.addEventListener('DOMContentLoaded', function() {
           <h3 class="fp-ucard__title">Road-Trip</h3>
           <p class="fp-ucard__desc">Votre voiture, votre rythme, nos meilleures routes.</p>
         </div>
-        <span class="fp-ucard__count">8 itinéraires</span>
+        <span class="fp-ucard__soon">Bientôt</span>
         <div class="fp-ucard__line"></div>
       </a>
-      <a href="<?php echo esc_url($fp_url_parcs); ?>" class="fp-ucard fp-ucard--parcs fp-anim">
+      <a href="<?php echo esc_url(home_url('/bientot-disponible/?univers=parc')); ?>" class="fp-ucard fp-ucard--parcs fp-anim">
         <div class="fp-ucard__img"><img src="<?php echo esc_url(get_template_directory_uri() . '/assets/img/bento/parcs-bento.png'); ?>" alt="Parcs d'attractions" loading="lazy"></div>
         <div class="fp-ucard__overlay"></div>
         <div class="fp-ucard__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
@@ -754,7 +751,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <h3 class="fp-ucard__title">Parcs d'attractions</h3>
           <p class="fp-ucard__desc">Billets à prix réduit pour Disneyland, Parc Astérix &amp; plus.</p>
         </div>
-        <span class="fp-ucard__count">5 parcs</span>
+        <span class="fp-ucard__soon">Bientôt</span>
         <div class="fp-ucard__line"></div>
       </a>
     </div>
