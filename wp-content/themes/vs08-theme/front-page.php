@@ -331,8 +331,8 @@ body.home,body.page-template-default{background:#fff!important}
 .fp-trust-row{display:flex;align-items:center;justify-content:center;gap:48px;flex-wrap:nowrap}
 .fp-trust-item{display:flex;align-items:center;gap:14px;white-space:nowrap}
 .fp-trust-logo{height:44px;width:auto;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.fp-trust-logo svg{height:44px;width:auto;object-fit:contain;filter:grayscale(20%);transition:filter .3s}
-.fp-trust-item:hover .fp-trust-logo svg{filter:grayscale(0%)}
+.fp-trust-logo svg,.fp-trust-logo img{height:44px;width:auto;object-fit:contain;filter:grayscale(20%);transition:filter .3s}
+.fp-trust-item:hover .fp-trust-logo svg,.fp-trust-item:hover .fp-trust-logo img{filter:grayscale(0%)}
 .fp-trust-text{display:flex;flex-direction:column}
 .fp-trust-text strong{font-size:13px;color:var(--dark);font-weight:700}
 .fp-trust-text span{font-size:11px;color:var(--gray)}
@@ -1720,23 +1720,23 @@ foreach (($fp_dest_agg ?? []) as $k => $v) {
     <div class="fp-container">
         <div class="fp-trust-row">
             <div class="fp-trust-item">
-                <div class="fp-trust-logo"><svg viewBox="0 0 120 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="120" height="44" rx="8" fill="#1a5276"/><text x="60" y="28" text-anchor="middle" fill="#fff" font-family="Outfit,Arial,sans-serif" font-weight="800" font-size="16">APST</text><text x="60" y="38" text-anchor="middle" fill="rgba(255,255,255,.85)" font-family="Outfit,Arial,sans-serif" font-weight="600" font-size="8">Garantie voyageurs</text></svg></div>
+                <div class="fp-trust-logo"><img src="https://apst.travel/wp-content/uploads/2025/12/Logo-Full-Ladybug-1.png" alt="APST Garantie" loading="lazy"></div>
                 <div class="fp-trust-text"><strong>Garantie APST</strong><span>Protection financière voyageurs</span></div>
             </div>
             <div class="fp-trust-sep"></div>
             <div class="fp-trust-item">
-                <div class="fp-trust-logo"><svg viewBox="0 0 100 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="44" rx="8" fill="#002654"/><text x="50" y="26" text-anchor="middle" fill="#fff" font-family="Outfit,Arial,sans-serif" font-weight="800" font-size="11">Atout France</text><text x="50" y="38" text-anchor="middle" fill="rgba(255,255,255,.9)" font-family="Outfit,Arial,sans-serif" font-weight="600" font-size="8">IM051100014</text></svg></div>
-                <div class="fp-trust-text"><strong>Atout France</strong><span>Immatriculation tourisme</span></div>
+                <div class="fp-trust-logo"><svg viewBox="0 0 140 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="140" height="44" rx="6" fill="#002654"/><rect x="0" width="8" height="44" rx="0" fill="#002654"/><rect x="4" width="4" height="44" fill="#fff"/><rect x="8" width="4" height="44" fill="#ED2939"/><text x="78" y="20" text-anchor="middle" fill="#fff" font-family="Georgia,serif" font-weight="700" font-size="13" letter-spacing=".5">Atout France</text><text x="78" y="34" text-anchor="middle" fill="rgba(255,255,255,.8)" font-family="Outfit,Arial,sans-serif" font-weight="600" font-size="8" letter-spacing=".8">IM051100014</text></svg></div>
+                <div class="fp-trust-text"><strong>Atout France</strong><span>Immatriculation IM051100014</span></div>
             </div>
             <div class="fp-trust-sep"></div>
             <div class="fp-trust-item">
-                <div class="fp-trust-logo"><svg viewBox="0 0 100 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="44" rx="8" fill="#1a1a2e"/><text x="50" y="28" text-anchor="middle" fill="#00d4aa" font-family="Outfit,Arial,sans-serif" font-weight="800" font-size="14">3D Secure</text><text x="50" y="40" text-anchor="middle" fill="rgba(0,212,170,.8)" font-family="Outfit,Arial,sans-serif" font-size="7">Paiement sécurisé</text></svg></div>
-                <div class="fp-trust-text"><strong>Paiement 3D Secure</strong><span>Transactions sécurisées SSL</span></div>
+                <div class="fp-trust-logo"><svg viewBox="0 0 110 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="110" height="44" rx="6" fill="#0a2540"/><path d="M35 8 L55 4 L75 8 L75 24 C75 32 65 38 55 40 C45 38 35 32 35 24Z" fill="none" stroke="#00d4aa" stroke-width="1.5"/><path d="M46 22 L52 28 L64 16" fill="none" stroke="#00d4aa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><text x="55" y="17" text-anchor="middle" fill="rgba(255,255,255,.25)" font-family="Outfit,sans-serif" font-size="5" letter-spacing="1">SSL</text></svg></div>
+                <div class="fp-trust-text"><strong>Paiement sécurisé</strong><span>3D Secure · SSL · Paybox</span></div>
             </div>
             <div class="fp-trust-sep"></div>
             <div class="fp-trust-item">
-                <div class="fp-trust-logo"><svg viewBox="0 0 100 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="44" rx="8" fill="#c41230"/><text x="50" y="28" text-anchor="middle" fill="#fff" font-family="Outfit,Arial,sans-serif" font-weight="800" font-size="14">Hiscox</text><text x="50" y="40" text-anchor="middle" fill="rgba(255,255,255,.9)" font-family="Outfit,Arial,sans-serif" font-size="7">Assurance RC Pro</text></svg></div>
-                <div class="fp-trust-text"><strong>Assurance Hiscox</strong><span>Responsabilité civile professionnelle</span></div>
+                <div class="fp-trust-logo"><svg viewBox="0 0 110 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="110" height="44" rx="6" fill="#fff" stroke="#e5e7eb" stroke-width="1"/><text x="55" y="24" text-anchor="middle" fill="#c41230" font-family="Georgia,serif" font-weight="700" font-size="18" letter-spacing="2">HISCOX</text><text x="55" y="36" text-anchor="middle" fill="#9ca3af" font-family="Outfit,sans-serif" font-weight="600" font-size="7" letter-spacing=".5">RC Professionnelle</text></svg></div>
+                <div class="fp-trust-text"><strong>Assurance Hiscox</strong><span>Responsabilité civile pro</span></div>
             </div>
         </div>
     </div>
