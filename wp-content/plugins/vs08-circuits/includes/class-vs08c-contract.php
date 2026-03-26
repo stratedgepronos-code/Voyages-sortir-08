@@ -302,7 +302,7 @@ class VS08C_Contract {
 <div style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
     <p><strong>Absence de droit de rétractation</strong> — Conformément aux articles L. 221-2 et L. 221-28 du Code de la consommation, le présent contrat n'est pas soumis au droit de rétractation.</p>
     <p><strong>Frais d'annulation :</strong></p>
-    <?php $annulation = $m['annulation'] ?? []; if (!empty($annulation)): ?>
+    <?php $annulation = $m['annulation'] ?? []; if (!is_array($annulation)) $annulation = []; if (!empty($annulation)): ?>
     <ul style="margin:4px 0 4px 20px;">
         <?php foreach ($annulation as $p):
             $label = $p['label'] ?? '';

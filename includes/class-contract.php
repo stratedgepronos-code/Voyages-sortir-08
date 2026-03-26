@@ -392,6 +392,7 @@ class VS08V_Contract {
 
 <?php
         $annulation_paliers = $m['annulation'] ?? [];
+        if (!is_array($annulation_paliers)) $annulation_paliers = [];
         $annulation_texte   = $m['annulation_texte'] ?? '';
 ?>
 <?php echo self::section_title('Conditions de modification et d\'annulation'); ?>
