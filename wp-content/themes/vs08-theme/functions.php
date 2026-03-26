@@ -195,35 +195,17 @@ function vs08_mega_resultats_url() {
     return home_url('/resultats-recherche');
 }
 
-/** Jusqu’à $limit pays distincts (priorité aux données agrégées du plugin). */
+/** Pays / zones golf : uniquement les fiches catalogue golf réelles (type ou nb parcours). */
 function vs08_mega_golf_countries($limit = 5) {
     $res = vs08_mega_resultats_url();
-    $out = [];
-    $seen = [];
     if (class_exists('VS08V_Search')) {
-        foreach (VS08V_Search::get_aggregated_options()['destinations'] ?? [] as $d) {
-            if (count($out) >= $limit) {
-                break;
-            }
-            $p = trim($d['pays'] ?? '');
-            if ($p === '') {
-                $p = trim($d['value'] ?? '');
-            }
-            if ($p === '' || isset($seen[$p])) {
-                continue;
-            }
-            $seen[$p] = true;
-            $flag = $d['flag'] ?? '';
-            if ($flag === '' && class_exists('VS08V_MetaBoxes')) {
-                $flag = VS08V_MetaBoxes::get_flag_emoji($p);
-            }
-            $out[] = [
-                'label' => $p,
-                'flag'  => $flag,
-                'url'   => add_query_arg(['type' => 'sejour_golf', 'dest' => $p], $res),
-            ];
+        $out = VS08V_Search::get_mega_menu_golf_countries($limit);
+        if ($out !== []) {
+            return $out;
         }
     }
+    $seen = [];
+    $out  = [];
     $fallback = [
         ['label' => 'Portugal', 'flag' => '🇵🇹', 'dest' => 'Portugal'],
         ['label' => 'Espagne', 'flag' => '🇪🇸', 'dest' => 'Espagne'],
@@ -248,21 +230,22 @@ function vs08_mega_golf_countries($limit = 5) {
     return array_slice($out, 0, $limit);
 }
 
-/** Aéroports de départ (filtre résultats golf). */
+/** Aéroports : seulement ceux renseignés sur au moins un séjour golf. */
 function vs08_mega_departure_airports() {
-    $res = vs08_mega_resultats_url();
-    $rows = [
-        ['code' => 'CDG', 'label' => 'Paris Charles-de-Gaulle'],
-        ['code' => 'ORY', 'label' => 'Paris Orly'],
-        ['code' => 'LUX', 'label' => 'Luxembourg'],
-        ['code' => 'NTE', 'label' => 'Nantes Atlantique'],
-        ['code' => 'MRS', 'label' => 'Marseille Provence'],
-    ];
-    foreach ($rows as &$r) {
-        $r['url'] = add_query_arg(['type' => 'sejour_golf', 'airport' => $r['code']], $res);
+    if (class_exists('VS08V_Search')) {
+        $rows = VS08V_Search::get_mega_menu_golf_airports();
+        if ($rows !== []) {
+            return $rows;
+        }
     }
-    unset($r);
-    return $rows;
+    $res = vs08_mega_resultats_url();
+    return [
+        [
+            'code'  => '',
+            'label' => 'Tous les séjours golf',
+            'url'   => add_query_arg(['type' => 'sejour_golf'], $res),
+        ],
+    ];
 }
 
 /** Destinations catalogue : deux colonnes pour le méga-menu. */

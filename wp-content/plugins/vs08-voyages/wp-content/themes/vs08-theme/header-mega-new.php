@@ -55,7 +55,7 @@ foreach (array_merge($vs08_dest_col1, $vs08_dest_col2) as $__d) {
                             <h4>Par aéroport de départ</h4>
                             <ul>
                                 <?php foreach ($vs08_airports as $ap) : ?>
-                                <li><a href="<?php echo esc_url($ap['url']); ?>"><span class="ml-icon">✈️</span><div><?php echo esc_html($ap['label']); ?><span class="ml-desc">Départs <?php echo esc_html($ap['code']); ?></span></div></a></li>
+                                <li><a href="<?php echo esc_url($ap['url']); ?>"><span class="ml-icon">✈️</span><div><?php echo esc_html($ap['label']); ?><span class="ml-desc"><?php echo !empty($ap['code']) ? 'Départs ' . esc_html($ap['code']) : 'Tous aéroports'; ?></span></div></a></li>
                                 <?php endforeach; ?>
                             </ul>
                         </div>

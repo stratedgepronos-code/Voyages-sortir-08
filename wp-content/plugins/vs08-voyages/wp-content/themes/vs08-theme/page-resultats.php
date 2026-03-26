@@ -30,9 +30,25 @@ foreach ($all_posts as $p) {
     $statut = $m['statut'] ?? 'actif';
     if ($statut === 'archive') continue;
 
-    if ($f_type && ($m['type_voyage'] ?? '') !== $f_type) continue;
+    if ($f_type) {
+        if (class_exists('VS08V_Search')) {
+            if (!VS08V_Search::voyage_matches_type_filter($m, $f_type)) {
+                continue;
+            }
+        } elseif (($m['type_voyage'] ?? '') !== $f_type) {
+            continue;
+        }
+    }
 
-    if ($f_dest && stripos($m['destination'] ?? '', $f_dest) === false && stripos($m['pays'] ?? '', $f_dest) === false) continue;
+    if ($f_dest) {
+        if (class_exists('VS08V_Search')) {
+            if (!VS08V_Search::voyage_matches_dest($m, $f_dest, (int) $p->ID)) {
+                continue;
+            }
+        } elseif (stripos($m['destination'] ?? '', $f_dest) === false && stripos($m['pays'] ?? '', $f_dest) === false) {
+            continue;
+        }
+    }
 
     if ($f_airport) {
         $aero_match = false;

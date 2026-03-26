@@ -141,6 +141,223 @@ class VS08V_Search {
     }
 
     /* ============================================================
+       Filtres catalogue / résultats-recherche (type, destination)
+       ============================================================ */
+
+    /**
+     * Produit « golf » pour le catalogue : type explicite ou parcours renseignés
+     * (les fiches anciennes ont souvent type_voyage vide tout en étant du golf).
+     */
+    public static function is_catalog_golf(array $m): bool {
+        $tv = trim((string) ($m['type_voyage'] ?? ''));
+        if ($tv === 'sejour_golf') {
+            return true;
+        }
+        if (in_array($tv, ['circuit', 'road_trip', 'city_trip'], true)) {
+            return false;
+        }
+        return (int) ($m['nb_parcours'] ?? 0) > 0;
+    }
+
+    /**
+     * Correspondance du filtre ?type= sur une fiche vs08_voyage.
+     */
+    public static function voyage_matches_type_filter(array $m, string $requested): bool {
+        $requested = trim($requested);
+        if ($requested === '') {
+            return true;
+        }
+        $tv = trim((string) ($m['type_voyage'] ?? ''));
+
+        if ($requested === 'sejour_golf') {
+            return self::is_catalog_golf($m);
+        }
+
+        if ($requested === 'sejour') {
+            if (self::is_catalog_golf($m)) {
+                return false;
+            }
+            return $tv === 'sejour' || $tv === '';
+        }
+
+        return $tv === $requested;
+    }
+
+    public static function normalize_search_token(string $s): string {
+        $s = trim(wp_strip_all_tags($s));
+        if ($s === '') {
+            return '';
+        }
+        if (function_exists('mb_strtolower')) {
+            $s = mb_strtolower($s, 'UTF-8');
+        } else {
+            $s = strtolower($s);
+        }
+        if (class_exists('Normalizer')) {
+            $s = Normalizer::normalize($s, Normalizer::FORM_D);
+            $s = preg_replace('/\pM/u', '', $s);
+        }
+        return trim($s);
+    }
+
+    /**
+     * Filtre ?dest= : pays, destination, titre (ex. lien footer dest=marrakech).
+     */
+    public static function voyage_matches_dest(array $m, string $needle, int $post_id = 0): bool {
+        $needle = trim($needle);
+        if ($needle === '') {
+            return true;
+        }
+        $candidates = [
+            trim((string) ($m['destination'] ?? '')),
+            trim((string) ($m['pays'] ?? '')),
+        ];
+        if ($post_id > 0) {
+            $candidates[] = get_the_title($post_id);
+        }
+        $n_norm = self::normalize_search_token($needle);
+        foreach ($candidates as $c) {
+            if ($c === '') {
+                continue;
+            }
+            if (function_exists('mb_stripos')) {
+                if (mb_stripos($c, $needle, 0, 'UTF-8') !== false) {
+                    return true;
+                }
+                $c_norm = self::normalize_search_token($c);
+                if ($c_norm !== '' && $n_norm !== '' && mb_stripos($c_norm, $n_norm, 0, 'UTF-8') !== false) {
+                    return true;
+                }
+            } else {
+                if (stripos($c, $needle) !== false) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Pays / zones affichés dans le méga-menu golf (données réelles uniquement). */
+    public static function get_mega_menu_golf_countries(int $limit = 5): array {
+        if (!class_exists('VS08V_MetaBoxes')) {
+            return [];
+        }
+        $res    = home_url('/resultats-recherche');
+        $ids    = get_posts([
+            'post_type'      => 'vs08_voyage',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+        ]);
+        $counts = [];
+        foreach ($ids as $pid) {
+            $m = VS08V_MetaBoxes::get($pid);
+            if (($m['statut'] ?? '') === 'archive') {
+                continue;
+            }
+            if (!self::is_catalog_golf($m)) {
+                continue;
+            }
+            $pays = trim((string) ($m['pays'] ?? ''));
+            $dest = trim((string) ($m['destination'] ?? ''));
+            $key  = $pays !== '' ? $pays : $dest;
+            if ($key === '') {
+                continue;
+            }
+            if (!isset($counts[$key])) {
+                $counts[$key] = ['n' => 0, 'flag' => VS08V_MetaBoxes::resolve_flag($m)];
+            }
+            $counts[$key]['n']++;
+        }
+        uasort($counts, static function ($a, $b) {
+            return ($b['n'] <=> $a['n']);
+        });
+        $out = [];
+        foreach ($counts as $label => $row) {
+            if (count($out) >= $limit) {
+                break;
+            }
+            $flag = $row['flag'] ?? '';
+            if ($flag === '') {
+                $flag = VS08V_MetaBoxes::get_flag_emoji($label);
+            }
+            $out[] = [
+                'label' => $label,
+                'flag'  => $flag,
+                'url'   => add_query_arg(['type' => 'sejour_golf', 'dest' => $label], $res),
+            ];
+        }
+        return $out;
+    }
+
+    /** Aéroports présents sur au moins une fiche golf (pas de liens vides). */
+    public static function get_mega_menu_golf_airports(): array {
+        if (!class_exists('VS08V_MetaBoxes')) {
+            return [];
+        }
+        $known = [
+            'CDG' => 'Paris Charles-de-Gaulle',
+            'ORY' => 'Paris Orly',
+            'LUX' => 'Luxembourg',
+            'NTE' => 'Nantes Atlantique',
+            'MRS' => 'Marseille Provence',
+            'LYS' => 'Lyon Saint-Exupéry',
+            'BOD' => 'Bordeaux Mérignac',
+            'TLS' => 'Toulouse Blagnac',
+            'NCE' => 'Nice Côte d\'Azur',
+            'BRU' => 'Bruxelles',
+        ];
+        $res   = home_url('/resultats-recherche');
+        $ids   = get_posts([
+            'post_type'      => 'vs08_voyage',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+        ]);
+        $found = [];
+        foreach ($ids as $pid) {
+            $m = VS08V_MetaBoxes::get($pid);
+            if (($m['statut'] ?? '') === 'archive') {
+                continue;
+            }
+            if (!self::is_catalog_golf($m)) {
+                continue;
+            }
+            foreach (($m['aeroports'] ?? []) as $a) {
+                $c = strtoupper(trim($a['code'] ?? ''));
+                if ($c === '') {
+                    continue;
+                }
+                $ville = trim($a['ville'] ?? '');
+                if (!isset($found[$c])) {
+                    $found[$c] = $known[$c] ?? ($ville !== '' ? $c . ' — ' . $ville : $c);
+                }
+            }
+        }
+        $out = [];
+        foreach (array_keys($known) as $code) {
+            if (!isset($found[$code])) {
+                continue;
+            }
+            $out[] = [
+                'code'  => $code,
+                'label' => $found[$code],
+                'url'   => add_query_arg(['type' => 'sejour_golf', 'airport' => $code], $res),
+            ];
+        }
+        $extra = array_diff(array_keys($found), array_keys($known));
+        sort($extra, SORT_STRING);
+        foreach ($extra as $code) {
+            $out[] = [
+                'code'  => $code,
+                'label' => $found[$code],
+                'url'   => add_query_arg(['type' => 'sejour_golf', 'airport' => $code], $res),
+            ];
+        }
+        return $out;
+    }
+
+    /* ============================================================
        AJAX search (overlay header)
        ============================================================ */
     public static function ajax_search() {
