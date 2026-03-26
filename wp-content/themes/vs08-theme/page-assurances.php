@@ -46,7 +46,7 @@ get_header();
 
 <p class="as-intro">Chez Voyages Sortir 08, nous vous recommandons fortement de souscrire une assurance voyage. Celle-ci vous prot&egrave;ge en cas d'annulation, de retard, de perte de bagages ou de probl&egrave;me m&eacute;dical pendant votre s&eacute;jour. L'assurance est propos&eacute;e en option lors de votre r&eacute;servation.</p>
 
-<div class="as-grid">
+<div class="as-grid" style="grid-template-columns:1fr;max-width:600px;margin:0 auto 48px">
     <div class="as-card">
         <div class="as-card-head"><div class="as-card-ic">&#x1f6e1;&#xfe0f;</div><h2>Assurance Annulation</h2></div>
         <p>Prot&eacute;gez votre investissement en cas d'emp&ecirc;chement avant le d&eacute;part.</p>
@@ -58,20 +58,7 @@ get_header();
             <li>Refus de visa</li>
             <li>Remboursement jusqu'&agrave; 100 % du voyage</li>
         </ul>
-        <span class="as-price">&Agrave; partir de 3,5 % du prix du voyage</span>
-    </div>
-    <div class="as-card">
-        <div class="as-card-head"><div class="as-card-ic">&#x1f6a8;</div><h2>Assurance Multirisques</h2></div>
-        <p>Couverture compl&egrave;te : annulation + assistance + bagages.</p>
-        <ul>
-            <li>Tout ce qui est inclus dans l'annulation</li>
-            <li>Frais m&eacute;dicaux &agrave; l'&eacute;tranger</li>
-            <li>Rapatriement sanitaire</li>
-            <li>Retard ou annulation de vol</li>
-            <li>Perte ou vol de bagages</li>
-            <li>Responsabilit&eacute; civile &agrave; l'&eacute;tranger</li>
-        </ul>
-        <span class="as-price">&Agrave; partir de 5 % du prix du voyage</span>
+        <span class="as-price">Propos&eacute;e lors de votre r&eacute;servation</span>
     </div>
 </div>
 
