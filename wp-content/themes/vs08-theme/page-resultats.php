@@ -1,7 +1,7 @@
 <?php
 /**
- * Template: Résultats de recherche voyages
- * Chargé via rewrite rule /resultats-recherche
+ * Template Name: Résultats de recherche
+ * Slug attendu : resultats-recherche
  */
 get_header();
 

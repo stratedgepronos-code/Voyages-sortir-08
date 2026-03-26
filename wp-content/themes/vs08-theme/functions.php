@@ -481,14 +481,14 @@ add_action('init', function() {
    Si la page existe déjà, on assigne juste le bon template.
 ============================================================ */
 add_action('init', function() {
-    if (get_option('vs08_pages_site_v2') === 'yes') {
+    if (get_option('vs08_pages_site_v3') === 'yes') {
         return;
     }
     // slug => ['title' => ..., 'template' => ... (optionnel si slug matching suffit)]
     $pages = [
         'resultats-recherche' => [
             'title'    => 'Résultats de recherche',
-            // Pas de template : slug matching page-resultats.php
+            'template' => 'page-resultats.php',
         ],
         'destinations' => [
             'title'    => 'Nos destinations',
@@ -558,7 +558,7 @@ add_action('init', function() {
             update_post_meta($post_id, '_wp_page_template', $data['template']);
         }
     }
-    update_option('vs08_pages_site_v2', 'yes');
+    update_option('vs08_pages_site_v3', 'yes');
 }, 27);
 
 /* ============================================================
