@@ -107,6 +107,12 @@ require_once VS08V_PATH . 'includes/class-emails.php';
 require_once VS08V_PATH . 'includes/class-traveler-space.php';
 require_once VS08V_PATH . 'includes/class-admin-dossiers.php';
 require_once VS08V_PATH . 'includes/class-duplicate-voyage.php';
+if (!class_exists('VS08V_Search')) {
+    require_once VS08V_PATH . 'includes/class-search.php';
+}
+if (!class_exists('VS08V_Newsletter')) {
+    require_once VS08V_PATH . 'includes/class-newsletter.php';
+}
 try {
     require_once VS08V_PATH . 'includes/class-paybox-mail.php';
 } catch (\Throwable $e) {
@@ -118,6 +124,14 @@ VS08V_REST::register();
 VS08V_Traveler_Space::register();
 VS08V_Admin_Dossiers::register();
 VS08V_Duplicate_Voyage::register();
+if (class_exists('VS08V_Search') && !did_action('vs08v_search_registered')) {
+    VS08V_Search::register();
+    do_action('vs08v_search_registered');
+}
+if (class_exists('VS08V_Newsletter') && !did_action('vs08v_newsletter_registered')) {
+    VS08V_Newsletter::register();
+    do_action('vs08v_newsletter_registered');
+}
 if (class_exists('VS08V_Paybox_Mail')) {
     VS08V_Paybox_Mail::register();
 }
