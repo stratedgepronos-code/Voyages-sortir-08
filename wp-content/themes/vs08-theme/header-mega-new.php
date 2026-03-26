@@ -141,18 +141,32 @@ foreach (array_merge($vs08_dest_col1, $vs08_dest_col2) as $__d) {
         </li>
         <li>
             <a href="<?php echo esc_url($vs08_circuits_url); ?>">Circuits <span class="arrow">▾</span></a>
-            <div class="mini-drop">
-                <div class="mini-drop-inner">
-                    <ul>
-                        <?php if (empty($vs08_circuit_items)) : ?>
-                        <li><a href="<?php echo esc_url($vs08_circuits_url); ?>"><span class="ml-icon">🗺️</span> Tous les circuits</a></li>
-                        <?php else : ?>
-                            <?php foreach ($vs08_circuit_items as $ci) : ?>
-                        <li><a href="<?php echo esc_url($ci['url']); ?>"><span class="ml-icon"><?php echo esc_html($ci['flag'] ?: '🗺️'); ?></span> <?php echo esc_html($ci['label']); ?></a></li>
-                            <?php endforeach; ?>
-                        <li class="mega-voir-plus"><a href="<?php echo esc_url($vs08_circuits_url); ?>"><span class="ml-icon">➕</span> Voir plus…</a></li>
-                        <?php endif; ?>
-                    </ul>
+            <div class="mega-drop">
+                <div class="mega-drop-inner">
+                    <div class="mega-cols">
+                        <div class="mega-col-links">
+                            <h4>Circuits par destination</h4>
+                            <ul>
+                                <?php if (empty($vs08_circuit_items)) : ?>
+                                <li><a href="<?php echo esc_url($vs08_circuits_url); ?>"><span class="ml-icon">🗺️</span><div>Tous les circuits<span class="ml-desc">Voir le catalogue complet</span></div></a></li>
+                                <?php else : ?>
+                                    <?php foreach ($vs08_circuit_items as $ci) : ?>
+                                <li><a href="<?php echo esc_url($ci['url']); ?>"><span class="ml-icon"><?php echo esc_html($ci['flag'] ?: '🗺️'); ?></span><div><?php echo esc_html($ci['label']); ?><span class="ml-desc">Circuits tout compris</span></div></a></li>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                                <li class="mega-voir-plus"><a href="<?php echo esc_url($vs08_circuits_url); ?>"><span class="ml-icon">➕</span><div>Voir plus…<span class="ml-desc">Tous les circuits</span></div></a></li>
+                            </ul>
+                        </div>
+                        <div class="mega-col-visual">
+                            <img src="https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=600&q=80" alt="Circuits">
+                            <div class="mega-col-visual-content">
+                                <p>Circuits guidés</p>
+                                <h3>Explorez le monde</h3>
+                                <span>Italie, Grèce, Asie, Amérique…</span>
+                                <a href="<?php echo esc_url($vs08_circuits_url); ?>">Voir tous les circuits</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </li>
