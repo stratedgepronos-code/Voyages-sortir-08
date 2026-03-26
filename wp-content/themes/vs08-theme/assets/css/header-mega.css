@@ -77,6 +77,13 @@ img.custom-logo,.custom-logo{background:transparent!important}
 .mini-drop li a:hover{background:var(--teal-ultra);color:var(--teal-dark)}
 .mini-drop li a .ml-icon{font-size:16px}
 
+/* "Voir plus…" links at bottom of each column */
+.mega-voir-plus{margin-top:6px;padding-top:6px;border-top:1px solid var(--gray-light)}
+.mega-voir-plus a{color:var(--teal-dark)!important;font-weight:600!important}
+.mega-voir-plus a:hover{background:var(--teal-ultra)!important}
+.mega-voir-plus .ml-icon{opacity:.7}
+.mini-drop .mega-voir-plus{margin-top:6px;padding-top:6px;border-top:1px solid #eee}
+
 .nav-toggle{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:5px}
 .nav-toggle span{display:block;width:26px;height:2px;background:#fff;border-radius:2px}
 

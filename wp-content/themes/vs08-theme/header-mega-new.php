@@ -47,8 +47,9 @@ foreach (array_merge($vs08_dest_col1, $vs08_dest_col2) as $__d) {
                             <h4>Par destination</h4>
                             <ul>
                                 <?php foreach ($vs08_golf_pays as $gp) : ?>
-                                <li><a href="<?php echo esc_url($gp['url']); ?>"><span class="ml-icon"><?php echo esc_html($gp['flag'] ?: '⛳'); ?></span><div><?php echo esc_html($gp['label']); ?><span class="ml-desc">Séjours golf tout compris</span></div></a></li>
+                                <li><a href="<?php echo esc_url($gp['url']); ?>"><span class="ml-icon"><?php echo esc_html($gp['flag'] ?: '⛳'); ?></span><div><?php echo esc_html($gp['label']); ?><span class="ml-desc"><?php echo esc_html(!empty($gp['desc']) ? $gp['desc'] : 'Séjours golf tout compris'); ?></span></div></a></li>
                                 <?php endforeach; ?>
+                                <li class="mega-voir-plus"><a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf'], $vs08_res)); ?>"><span class="ml-icon">➕</span><div>Voir plus…<span class="ml-desc">Tous les séjours golf</span></div></a></li>
                             </ul>
                         </div>
                         <div class="mega-col-links" style="border-left:1px solid var(--gray-light)">
@@ -57,6 +58,7 @@ foreach (array_merge($vs08_dest_col1, $vs08_dest_col2) as $__d) {
                                 <?php foreach ($vs08_airports as $ap) : ?>
                                 <li><a href="<?php echo esc_url($ap['url']); ?>"><span class="ml-icon">✈️</span><div><?php echo esc_html($ap['label']); ?><span class="ml-desc"><?php echo !empty($ap['code']) ? 'Départs ' . esc_html($ap['code']) : 'Tous aéroports'; ?></span></div></a></li>
                                 <?php endforeach; ?>
+                                <li class="mega-voir-plus"><a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf'], $vs08_res)); ?>"><span class="ml-icon">➕</span><div>Voir plus…<span class="ml-desc">Tous les aéroports</span></div></a></li>
                             </ul>
                         </div>
                         <div class="mega-col-visual">
@@ -107,7 +109,7 @@ foreach (array_merge($vs08_dest_col1, $vs08_dest_col2) as $__d) {
                                     ?>
                                 <li><a href="<?php echo esc_url($du); ?>"><span class="ml-icon"><?php echo esc_html($fl ?: '✈️'); ?></span><div><?php echo esc_html($dl); ?><span class="ml-desc"><?php echo $pc > 0 ? sprintf('%d séjour%s', $pc, $pc > 1 ? 's' : '') : 'Voir les séjours'; ?></span></div></a></li>
                                 <?php endforeach; ?>
-                                <li><a href="<?php echo esc_url(home_url('/destinations')); ?>"><span class="ml-icon">➕</span><div>Toutes les destinations<span class="ml-desc">Grille complète</span></div></a></li>
+                                <li class="mega-voir-plus"><a href="<?php echo esc_url(home_url('/destinations')); ?>"><span class="ml-icon">➕</span><div>Voir plus…<span class="ml-desc">Toutes les destinations</span></div></a></li>
                             </ul>
                         </div>
                         <div class="mega-col-visual">
@@ -148,7 +150,7 @@ foreach (array_merge($vs08_dest_col1, $vs08_dest_col2) as $__d) {
                             <?php foreach ($vs08_circuit_items as $ci) : ?>
                         <li><a href="<?php echo esc_url($ci['url']); ?>"><span class="ml-icon"><?php echo esc_html($ci['flag'] ?: '🗺️'); ?></span> <?php echo esc_html($ci['label']); ?></a></li>
                             <?php endforeach; ?>
-                        <li><a href="<?php echo esc_url($vs08_circuits_url); ?>"><span class="ml-icon">➕</span> Voir tout le catalogue</a></li>
+                        <li class="mega-voir-plus"><a href="<?php echo esc_url($vs08_circuits_url); ?>"><span class="ml-icon">➕</span> Voir plus…</a></li>
                         <?php endif; ?>
                     </ul>
                 </div>

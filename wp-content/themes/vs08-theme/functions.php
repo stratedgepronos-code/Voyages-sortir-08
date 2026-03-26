@@ -207,11 +207,11 @@ function vs08_mega_golf_countries($limit = 5) {
     $seen = [];
     $out  = [];
     $fallback = [
-        ['label' => 'Portugal', 'flag' => '🇵🇹', 'dest' => 'Portugal'],
-        ['label' => 'Espagne', 'flag' => '🇪🇸', 'dest' => 'Espagne'],
-        ['label' => 'Maroc', 'flag' => '🇲🇦', 'dest' => 'Maroc'],
-        ['label' => 'Turquie', 'flag' => '🇹🇷', 'dest' => 'Turquie'],
-        ['label' => 'Irlande', 'flag' => '🇮🇪', 'dest' => 'Irlande'],
+        ['label' => 'Portugal',  'flag' => '🇵🇹', 'dest' => 'Portugal',  'desc' => 'Algarve, Lisbonne, Madère'],
+        ['label' => 'Espagne',   'flag' => '🇪🇸', 'dest' => 'Espagne',   'desc' => 'Costa del Sol, Majorque'],
+        ['label' => 'Maroc',     'flag' => '🇲🇦', 'dest' => 'Maroc',     'desc' => 'Marrakech, Agadir'],
+        ['label' => 'Turquie',   'flag' => '🇹🇷', 'dest' => 'Turquie',   'desc' => 'Belek, Antalya'],
+        ['label' => 'Tunisie',   'flag' => '🇹🇳', 'dest' => 'Tunisie',   'desc' => 'Hammamet, Djerba'],
     ];
     foreach ($fallback as $fb) {
         if (count($out) >= $limit) {
@@ -224,6 +224,7 @@ function vs08_mega_golf_countries($limit = 5) {
         $out[] = [
             'label' => $fb['label'],
             'flag'  => $fb['flag'],
+            'desc'  => $fb['desc'] ?? '',
             'url'   => add_query_arg(['type' => 'sejour_golf', 'dest' => $fb['dest']], $res),
         ];
     }
@@ -239,69 +240,127 @@ function vs08_mega_departure_airports() {
         }
     }
     $res = vs08_mega_resultats_url();
+    // Fallback : les 5 principaux aéroports de départ pour le golf
     return [
         [
-            'code'  => '',
-            'label' => 'Tous les séjours golf',
-            'url'   => add_query_arg(['type' => 'sejour_golf'], $res),
+            'code'  => 'CDG',
+            'label' => 'Paris Charles de Gaulle',
+            'url'   => add_query_arg(['type' => 'sejour_golf', 'airport' => 'CDG'], $res),
+        ],
+        [
+            'code'  => 'ORY',
+            'label' => 'Paris Orly',
+            'url'   => add_query_arg(['type' => 'sejour_golf', 'airport' => 'ORY'], $res),
+        ],
+        [
+            'code'  => 'LYS',
+            'label' => 'Lyon Saint-Exupéry',
+            'url'   => add_query_arg(['type' => 'sejour_golf', 'airport' => 'LYS'], $res),
+        ],
+        [
+            'code'  => 'MRS',
+            'label' => 'Marseille Provence',
+            'url'   => add_query_arg(['type' => 'sejour_golf', 'airport' => 'MRS'], $res),
+        ],
+        [
+            'code'  => 'NTE',
+            'label' => 'Nantes Atlantique',
+            'url'   => add_query_arg(['type' => 'sejour_golf', 'airport' => 'NTE'], $res),
         ],
     ];
 }
 
 /** Destinations catalogue : deux colonnes pour le méga-menu. */
 function vs08_mega_destinations_split() {
-    if (!class_exists('VS08V_Search')) {
-        return [[], []];
+    if (class_exists('VS08V_Search')) {
+        $list = array_values(VS08V_Search::get_aggregated_options()['destinations'] ?? []);
+        if (count($list) > 0) {
+            $mid = (int) ceil(count($list) / 2);
+            return [array_slice($list, 0, $mid), array_slice($list, $mid)];
+        }
     }
-    $list = array_values(VS08V_Search::get_aggregated_options()['destinations'] ?? []);
-    $n = count($list);
-    if ($n === 0) {
-        return [[], []];
+    // Fallback — destinations populaires (toutes catégories confondues)
+    $res = vs08_mega_resultats_url();
+    $fb = [
+        ['value' => 'Portugal',              'pays' => 'Portugal',              'flag' => '🇵🇹', 'label' => 'Portugal'],
+        ['value' => 'Espagne',               'pays' => 'Espagne',               'flag' => '🇪🇸', 'label' => 'Espagne'],
+        ['value' => 'Maroc',                 'pays' => 'Maroc',                 'flag' => '🇲🇦', 'label' => 'Maroc'],
+        ['value' => 'Grèce',                 'pays' => 'Grèce',                 'flag' => '🇬🇷', 'label' => 'Grèce'],
+        ['value' => 'Tunisie',               'pays' => 'Tunisie',               'flag' => '🇹🇳', 'label' => 'Tunisie'],
+        ['value' => 'Italie',                'pays' => 'Italie',                'flag' => '🇮🇹', 'label' => 'Italie'],
+        ['value' => 'Turquie',               'pays' => 'Turquie',               'flag' => '🇹🇷', 'label' => 'Turquie'],
+        ['value' => 'République Dominicaine','pays' => 'République Dominicaine','flag' => '🇩🇴', 'label' => 'Rép. Dominicaine'],
+        ['value' => 'Croatie',               'pays' => 'Croatie',               'flag' => '🇭🇷', 'label' => 'Croatie'],
+        ['value' => 'Irlande',               'pays' => 'Irlande',               'flag' => '🇮🇪', 'label' => 'Irlande'],
+    ];
+    // Ajouter count = 0 (pas de produits encore) et image vide
+    foreach ($fb as &$d) {
+        $d['count'] = 0;
+        $d['image'] = '';
     }
-    $mid = (int) ceil($n / 2);
-    return [array_slice($list, 0, $mid), array_slice($list, $mid)];
+    unset($d);
+    $mid = (int) ceil(count($fb) / 2);
+    return [array_slice($fb, 0, $mid), array_slice($fb, $mid)];
 }
 
 /** Destinations pour lesquelles au moins un voyage « circuit » existe. */
 function vs08_mega_circuit_destinations($limit = 8) {
-    if (!class_exists('VS08V_MetaBoxes')) {
-        return [];
-    }
     $res = vs08_mega_resultats_url();
-    $ids = get_posts([
-        'post_type'      => 'vs08_voyage',
-        'post_status'    => 'publish',
-        'posts_per_page' => 200,
-        'fields'         => 'ids',
-    ]);
-    $seen = [];
+    if (class_exists('VS08V_MetaBoxes')) {
+        $ids = get_posts([
+            'post_type'      => 'vs08_voyage',
+            'post_status'    => 'publish',
+            'posts_per_page' => 200,
+            'fields'         => 'ids',
+        ]);
+        $seen = [];
+        $out = [];
+        foreach ($ids as $pid) {
+            if (count($out) >= $limit) {
+                break;
+            }
+            $m = VS08V_MetaBoxes::get($pid);
+            if (($m['statut'] ?? '') === 'archive') {
+                continue;
+            }
+            if (($m['type_voyage'] ?? '') !== 'circuit') {
+                continue;
+            }
+            $dest = trim($m['destination'] ?? '');
+            $pays = trim($m['pays'] ?? '');
+            $key = $dest !== '' ? $dest : $pays;
+            if ($key === '' || isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $flag = VS08V_MetaBoxes::resolve_flag($m);
+            $out[] = [
+                'label' => $key,
+                'flag'  => $flag,
+                'url'   => add_query_arg(['type' => 'circuit', 'dest' => $key], $res),
+            ];
+        }
+        if (!empty($out)) {
+            return $out;
+        }
+    }
+    // Fallback — circuits populaires
+    $fb = [
+        ['label' => 'Italie',         'flag' => '🇮🇹', 'dest' => 'Italie'],
+        ['label' => 'Grèce',          'flag' => '🇬🇷', 'dest' => 'Grèce'],
+        ['label' => 'Croatie',         'flag' => '🇭🇷', 'dest' => 'Croatie'],
+        ['label' => 'Vietnam',         'flag' => '🇻🇳', 'dest' => 'Vietnam'],
+        ['label' => 'Costa Rica',      'flag' => '🇨🇷', 'dest' => 'Costa Rica'],
+    ];
     $out = [];
-    foreach ($ids as $pid) {
-        if (count($out) >= $limit) {
-            break;
-        }
-        $m = VS08V_MetaBoxes::get($pid);
-        if (($m['statut'] ?? '') === 'archive') {
-            continue;
-        }
-        if (($m['type_voyage'] ?? '') !== 'circuit') {
-            continue;
-        }
-        $dest = trim($m['destination'] ?? '');
-        $pays = trim($m['pays'] ?? '');
-        $key = $dest !== '' ? $dest : $pays;
-        if ($key === '' || isset($seen[$key])) {
-            continue;
-        }
-        $seen[$key] = true;
-        $flag = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : '';
+    foreach ($fb as $f) {
         $out[] = [
-            'label' => $key,
-            'flag'  => $flag,
-            'url'   => add_query_arg(['type' => 'circuit', 'dest' => $key], $res),
+            'label' => $f['label'],
+            'flag'  => $f['flag'],
+            'url'   => add_query_arg(['type' => 'circuit', 'dest' => $f['dest']], $res),
         ];
     }
-    return $out;
+    return array_slice($out, 0, $limit);
 }
 
 /**
