@@ -1271,15 +1271,79 @@ document.addEventListener('DOMContentLoaded', function() {
 </section>
 
 <!-- D3.js + TopoJSON pour la carte du monde -->
+<?php
+// ── Construire les données de la carte directement depuis la BDD ──
+$fp_map_destinations = [];
+$fp_map_airports_used = [];
+$fp_map_coords = [
+    'Portugal'=>['lat'=>37.02,'lon'=>-7.93,'city'=>'Algarve','iata'=>'FAO','region'=>'PORTUGAL'],
+    'Espagne'=>['lat'=>36.72,'lon'=>-4.42,'city'=>'Marbella','iata'=>'AGP','region'=>'ESPAGNE'],
+    'France'=>['lat'=>44.8,'lon'=>2.0,'city'=>'Biarritz','iata'=>'BOD','region'=>'FRANCE'],
+    'Maroc'=>['lat'=>31.63,'lon'=>-8.0,'city'=>'Marrakech','iata'=>'RAK','region'=>'MAROC'],
+    'Tunisie'=>['lat'=>34.0,'lon'=>9.8,'city'=>'Djerba','iata'=>'DJE','region'=>'TUNISIE'],
+    'Égypte'=>['lat'=>27.18,'lon'=>33.8,'city'=>'Hurghada','iata'=>'HRG','region'=>'ÉGYPTE'],
+    'Italie'=>['lat'=>40.8,'lon'=>14.5,'city'=>'Sicile','iata'=>'CTA','region'=>'ITALIE'],
+    'Grèce'=>['lat'=>35.5,'lon'=>24.5,'city'=>'Crète','iata'=>'HER','region'=>'GRÈCE'],
+    'Turquie'=>['lat'=>37.5,'lon'=>30.7,'city'=>'Antalya','iata'=>'AYT','region'=>'TURQUIE'],
+    'Irlande'=>['lat'=>52.3,'lon'=>-8.5,'city'=>'Kerry','iata'=>'SNN','region'=>'IRLANDE'],
+    'Canaries'=>['lat'=>28.45,'lon'=>-13.86,'city'=>'Fuerteventura','iata'=>'FUE','region'=>'CANARIES'],
+    'Thaïlande'=>['lat'=>8.5,'lon'=>98.4,'city'=>'Phuket','iata'=>'HKT','region'=>'THAÏLANDE'],
+    'Croatie'=>['lat'=>43.5,'lon'=>16.4,'city'=>'Split','iata'=>'SPU','region'=>'CROATIE'],
+    'République Dominicaine'=>['lat'=>18.5,'lon'=>-69.9,'city'=>'Punta Cana','iata'=>'PUJ','region'=>'RÉP. DOMINICAINE'],
+    'Maurice'=>['lat'=>-20.3,'lon'=>57.5,'city'=>'Île Maurice','iata'=>'MRU','region'=>'ÎLE MAURICE'],
+    'Chypre'=>['lat'=>34.7,'lon'=>33.0,'city'=>'Paphos','iata'=>'PFO','region'=>'CHYPRE'],
+    'Vietnam'=>['lat'=>16.05,'lon'=>108.2,'city'=>'Da Nang','iata'=>'DAD','region'=>'VIETNAM'],
+    'Costa Rica'=>['lat'=>9.93,'lon'=>-84.08,'city'=>'San José','iata'=>'SJO','region'=>'COSTA RICA'],
+];
+$fp_type_colors = ['sejour_golf'=>'#c9a84c','circuit'=>'#e55d3a','sejour'=>'#59b7b7','road_trip'=>'#8e44ad','city_trip'=>'#3498db','parc'=>'#e74c3c'];
+
+if (class_exists('VS08V_MetaBoxes')) {
+    $fp_map_ids = get_posts(['post_type'=>'vs08_voyage','post_status'=>'publish','posts_per_page'=>-1,'fields'=>'ids']);
+    $fp_dest_agg = []; // pays → ['types'=>[], 'airports'=>[], 'count'=>0]
+    foreach ($fp_map_ids as $pid) {
+        $m = VS08V_MetaBoxes::get($pid);
+        if (($m['statut'] ?? '') === 'archive') continue;
+        $dest = trim($m['destination'] ?? '');
+        $pays = trim($m['pays'] ?? '');
+        $key = $pays ?: $dest;
+        $type = $m['type_voyage'] ?? '';
+        if (!$key || !$type) continue;
+        if (!isset($fp_dest_agg[$key])) $fp_dest_agg[$key] = ['types'=>[],'airports'=>[],'count'=>0];
+        $fp_dest_agg[$key]['count']++;
+        if (!in_array($type, $fp_dest_agg[$key]['types'])) $fp_dest_agg[$key]['types'][] = $type;
+        if (!empty($m['aeroports']) && is_array($m['aeroports'])) {
+            foreach ($m['aeroports'] as $a) {
+                $code = strtoupper(trim($a['code'] ?? ''));
+                if ($code && !in_array($code, $fp_dest_agg[$key]['airports'])) {
+                    $fp_dest_agg[$key]['airports'][] = $code;
+                }
+                if ($code) $fp_map_airports_used[$code] = true;
+            }
+        }
+    }
+    foreach ($fp_dest_agg as $pays => $info) {
+        $coords = $fp_map_coords[$pays] ?? null;
+        if (!$coords) continue;
+        $url = home_url('/resultats-recherche') . '?dest=' . rawurlencode($pays);
+        if (count($info['types']) === 1) $url .= '&type=' . rawurlencode($info['types'][0]);
+        $colors = [];
+        foreach ($info['types'] as $t) { $colors[] = $fp_type_colors[$t] ?? '#59b7b7'; }
+        $fp_map_destinations[] = [
+            'id'=>sanitize_title($pays),'pays'=>$pays,'city'=>$coords['city'],
+            'region'=>$coords['region'],'iata'=>$coords['iata'],
+            'lat'=>$coords['lat'],'lon'=>$coords['lon'],
+            'colors'=>$colors,'types'=>$info['types'],
+            'airports'=>$info['airports'],'count'=>$info['count'],'url'=>$url,
+        ];
+    }
+}
+?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script>
 (function(){
-    var JSON_URL = '<?php echo esc_url(wp_upload_dir()['baseurl'] . '/vs08-map-data.json'); ?>';
-    var HOME = '<?php echo esc_url(home_url()); ?>';
-
-    // Fallback aéroports (si le JSON n'en a pas assez)
-    var DEFAULT_APTS = [
+    var DS = <?php echo wp_json_encode($fp_map_destinations, JSON_UNESCAPED_UNICODE); ?>;
+    var APTS = [
         {code:'CDG',name:'Paris CDG',lat:49.01,lon:2.55},
         {code:'ORY',name:'Paris Orly',lat:48.72,lon:2.36},
         {code:'LYS',name:'Lyon',lat:45.73,lon:5.08},
@@ -1291,193 +1355,162 @@ document.addEventListener('DOMContentLoaded', function() {
         {code:'NCE',name:'Nice',lat:43.66,lon:7.22},
         {code:'BRU',name:'Bruxelles',lat:50.90,lon:4.48}
     ];
+    var TYPE_LABELS = {sejour_golf:'Séjours Golf',circuit:'Circuits',sejour:'All Inclusive',road_trip:'Road Trip',city_trip:'City Trip',parc:'Parcs'};
+    var APT_MAP = {}; APTS.forEach(function(a){ APT_MAP[a.code]=a; });
 
-    // Coordonnées des aéroports (pour positionner le point sur la carte)
-    var APT_COORDS = {};
-    DEFAULT_APTS.forEach(function(a){ APT_COORDS[a.code] = a; });
-
-    var TAGS = {
-        sejour_golf: {l:'Séjours Golf', c:'fp-tt-tag-golf'},
-        sejour:      {l:'All Inclusive', c:'fp-tt-tag-ai'},
-        circuit:     {l:'Circuit',      c:'fp-tt-tag-circuit'}
-    };
-
-    var sel = null, W = 1200, H = 580; // null = Tous (pas de filtre aéroport)
-    var proj = d3.geoNaturalEarth1().center([20,30]).scale(340).translate([W/2,H/2]);
-    var pathG = d3.geoPath(proj);
-    var box = document.getElementById('fp-map-wrap');
-    if (!box) return;
-    var svg = d3.select(box).append('svg').attr('viewBox','0 0 '+W+' '+H).attr('width','100%');
-    var defs = svg.append('defs');
+    var sel=null, W=1200, H=580;
+    var proj=d3.geoNaturalEarth1().center([20,30]).scale(340).translate([W/2,H/2]);
+    var pathG=d3.geoPath(proj);
+    var box=document.getElementById('fp-map-wrap');
+    if(!box)return;
+    var svg=d3.select(box).append('svg').attr('viewBox','0 0 '+W+' '+H).attr('width','100%');
+    var defs=svg.append('defs');
     defs.append('clipPath').attr('id','fp-mc').append('rect').attr('width',W).attr('height',H);
-    var rg1 = defs.append('radialGradient').attr('id','fp-oc');
+    var rg1=defs.append('radialGradient').attr('id','fp-oc');
     rg1.append('stop').attr('offset','0%').attr('stop-color','#14203a');
     rg1.append('stop').attr('offset','100%').attr('stop-color','#0b1120');
-    var gc = svg.append('g').attr('clip-path','url(#fp-mc)');
-    var gO = gc.append('g'), gGr = gc.append('g'), gL = gc.append('g'), gA = gc.append('g'), gM = gc.append('g');
+    var gc=svg.append('g').attr('clip-path','url(#fp-mc)');
+    var gO=gc.append('g'),gGr=gc.append('g'),gL=gc.append('g'),gA=gc.append('g'),gM=gc.append('g');
 
-    var ALL_DS = []; // Toutes les destinations (chargées du JSON)
+    /* Boutons aéroports avec "Tous" */
+    var ap=document.getElementById('fp-map-airports');
+    ap.innerHTML='';
+    var bAll=document.createElement('button');
+    bAll.className='fp-map-ab on'; bAll.textContent='Tous'; bAll.title='Toutes les destinations';
+    bAll.onclick=function(){sel=null;ap.querySelectorAll('.fp-map-ab').forEach(function(x){x.classList.remove('on');});bAll.classList.add('on');update();};
+    ap.appendChild(bAll);
+    APTS.forEach(function(a){
+        var b=document.createElement('button');
+        b.className='fp-map-ab'; b.textContent=a.code; b.title=a.name;
+        b.onclick=function(){sel=a;ap.querySelectorAll('.fp-map-ab').forEach(function(x){x.classList.remove('on');});b.classList.add('on');update();};
+        ap.appendChild(b);
+    });
 
-    /* Boutons aéroports — avec "Tous" en premier */
-    var ap = document.getElementById('fp-map-airports');
-    function buildAirportButtons(apts) {
-        ap.innerHTML = '';
-        // Bouton "Tous" en premier
-        var bAll = document.createElement('button');
-        bAll.className = 'fp-map-ab on';
-        bAll.textContent = 'Tous';
-        bAll.title = 'Toutes les destinations';
-        bAll.onclick = function() {
-            sel = null;
-            ap.querySelectorAll('.fp-map-ab').forEach(function(x) { x.classList.remove('on'); });
-            bAll.classList.add('on');
-            drawArcs();
-            drawMarkers();
-        };
-        ap.appendChild(bAll);
-        // Boutons aéroports
-        apts.forEach(function(a) {
-            var b = document.createElement('button');
-            b.className = 'fp-map-ab';
-            b.textContent = a.code;
-            b.title = a.name;
-            b.onclick = function() {
-                sel = APT_COORDS[a.code] || a;
-                ap.querySelectorAll('.fp-map-ab').forEach(function(x) { x.classList.remove('on'); });
-                b.classList.add('on');
-                drawArcs();
-                drawMarkers();
-            };
-            ap.appendChild(b);
-        });
-    }
-    buildAirportButtons(DEFAULT_APTS);
-
-    /* Fond océan + graticule */
+    /* Fond */
     gO.append('path').datum({type:'Sphere'}).attr('d',pathG).attr('fill','url(#fp-oc)').attr('stroke','rgba(89,183,183,.08)').attr('stroke-width',.5);
     gGr.append('path').datum(d3.geoGraticule().step([20,20])()).attr('d',pathG).attr('fill','none').attr('stroke','rgba(89,183,183,.04)').attr('stroke-width',.3);
 
-    /* Charger les données JSON + le monde */
-    Promise.all([
-        d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'),
-        fetch(JSON_URL).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; })
-    ]).then(function(results) {
-        var w = results[0], mapData = results[1];
-
-        // Dessiner les pays
-        var land = topojson.feature(w, w.objects.countries);
-        var bord = topojson.mesh(w, w.objects.countries, function(a,b) { return a !== b; });
+    /* Charger le monde */
+    d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(function(w){
+        var land=topojson.feature(w,w.objects.countries);
+        var bord=topojson.mesh(w,w.objects.countries,function(a,b){return a!==b;});
         gL.selectAll('path').data(land.features).join('path').attr('d',pathG).attr('fill','#1a2640').attr('stroke','none');
         gL.append('path').datum(bord).attr('d',pathG).attr('fill','none').attr('stroke','rgba(89,183,183,.07)').attr('stroke-width',.3);
-
-        // Charger les destinations depuis le JSON
-        if (mapData && mapData.destinations && mapData.destinations.length > 0) {
-            ALL_DS = mapData.destinations;
-        }
-
-        drawArcs();
-        drawMarkers();
+        update();
     });
 
-    /* Filtrer les destinations selon l'aéroport sélectionné */
-    function getFilteredDS() {
-        // Mode "Tous" : afficher toutes les destinations
-        if (!sel) return ALL_DS;
-        // Mode aéroport : filtrer par code
-        var filtered = ALL_DS.filter(function(d) {
-            return d.airports && d.airports.indexOf(sel.code) !== -1;
-        });
-        // Si aucune destination ne correspond à cet aéroport, montrer toutes
-        if (filtered.length === 0) return ALL_DS;
-        return filtered;
+    function getFiltered(){
+        if(!sel) return DS;
+        var f=DS.filter(function(d){return d.airports&&d.airports.indexOf(sel.code)!==-1;});
+        return f.length>0?f:DS; // jamais vide
     }
 
-    /* Arcs de vol animés */
-    function drawArcs() {
+    function update(){ drawArcs(); drawMarkers(); }
+
+    /* Arcs de vol */
+    function drawArcs(){
         gA.selectAll('*').remove();
-        // Mode "Tous" : pas d'arcs, pas de point aéroport
-        if (!sel) return;
-        var o = [sel.lon, sel.lat], op = proj(o);
-        var filtered = getFilteredDS();
-        filtered.forEach(function(d, i) {
-            gA.append('path')
-                .datum({type:'LineString', coordinates:[o, [d.lon, d.lat]]})
-                .attr('d', pathG).attr('fill','none').attr('stroke', d.col)
-                .attr('stroke-width', 1).attr('stroke-dasharray','6 5')
-                .attr('opacity', .22)
+        if(!sel) return; // mode Tous = pas d'arcs
+        var o=[sel.lon,sel.lat],op=proj(o);
+        var fd=getFiltered();
+        fd.forEach(function(d,i){
+            var mainCol=d.colors&&d.colors[0]?d.colors[0]:'#59b7b7';
+            gA.append('path').datum({type:'LineString',coordinates:[o,[d.lon,d.lat]]})
+                .attr('d',pathG).attr('fill','none').attr('stroke',mainCol)
+                .attr('stroke-width',1.2).attr('stroke-dasharray','6 5').attr('opacity',.3)
                 .style('animation','fp-map-dash '+(1.6+i*.1)+'s linear infinite');
         });
-        if (op) {
+        if(op){
             gA.append('circle').attr('cx',op[0]).attr('cy',op[1]).attr('r',6).attr('fill','#fff');
             gA.append('circle').attr('cx',op[0]).attr('cy',op[1]).attr('r',6).attr('fill','none').attr('stroke','#fff').attr('stroke-width',1.5).attr('opacity',.25).style('animation','fp-map-pulse 3s ease infinite');
             gA.append('text').attr('x',op[0]).attr('y',op[1]-14).attr('text-anchor','middle').attr('fill','rgba(255,255,255,.7)').attr('font-size','11px').attr('font-weight','700').attr('letter-spacing','1.5px').attr('font-family','Outfit,system-ui,sans-serif').text(sel.code);
         }
     }
 
-    /* Marqueurs destinations + tooltips */
-    function drawMarkers() {
+    /* Marqueurs destinations — camembert multi-couleur */
+    function drawMarkers(){
         gM.selectAll('*').remove();
-        var tt = document.getElementById('fp-map-tt');
-        var tiata = document.getElementById('fp-tt-iata'),
-            tcity = document.getElementById('fp-tt-city'),
-            tregion = document.getElementById('fp-tt-region'),
-            ttags = document.getElementById('fp-tt-tags'),
-            tdesc = document.getElementById('fp-tt-desc'),
-            tprice = document.getElementById('fp-tt-price'),
-            tbtn = document.getElementById('fp-tt-btn');
-        var hT = null;
-        var filtered = getFilteredDS();
+        var tt=document.getElementById('fp-map-tt');
+        var tiata=document.getElementById('fp-tt-iata'),tcity=document.getElementById('fp-tt-city'),
+            tregion=document.getElementById('fp-tt-region'),ttags=document.getElementById('fp-tt-tags'),
+            tdesc=document.getElementById('fp-tt-desc'),tprice=document.getElementById('fp-tt-price'),
+            tbtn=document.getElementById('fp-tt-btn');
+        var hT=null, R=11;
+        var arc=d3.arc();
+        var fd=getFiltered();
 
-        filtered.forEach(function(d) {
-            var p = proj([d.lon, d.lat]);
-            if (!p) return;
-            if (p[0] < -20 || p[0] > W+20 || p[1] < -20 || p[1] > H+20) return;
-            var g = gM.append('g').style('cursor','pointer');
-            g.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',26).attr('fill',d.col).attr('opacity',.06);
-            g.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',10).attr('fill','#0e1528').attr('stroke',d.col).attr('stroke-width',3);
-            g.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',4).attr('fill',d.col);
-            var rg = g.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',10).attr('fill','none').attr('stroke',d.col).attr('stroke-width',.7);
-            var dur = (2.4+Math.random()*1)+'s';
-            rg.append('animate').attr('attributeName','r').attr('values','11;24;11').attr('dur',dur).attr('repeatCount','indefinite');
+        fd.forEach(function(d){
+            var p=proj([d.lon,d.lat]); if(!p) return;
+            if(p[0]<-20||p[0]>W+20||p[1]<-20||p[1]>H+20) return;
+            var g=gM.append('g').style('cursor','pointer').attr('transform','translate('+p[0]+','+p[1]+')');
+
+            // Halo
+            g.append('circle').attr('r',26).attr('fill',d.colors[0]).attr('opacity',.08);
+
+            // Fond noir du marqueur
+            g.append('circle').attr('r',R).attr('fill','#0e1528');
+
+            // Segments camembert (divisé par type)
+            var nc=d.colors.length;
+            if(nc===1){
+                // Un seul type : cercle plein
+                g.append('circle').attr('r',R).attr('fill','none').attr('stroke',d.colors[0]).attr('stroke-width',3);
+                g.append('circle').attr('r',4).attr('fill',d.colors[0]);
+            } else {
+                // Multi-types : arcs divisés
+                var anglePerSlice=2*Math.PI/nc;
+                d.colors.forEach(function(col,i){
+                    g.append('path')
+                        .attr('d',arc({innerRadius:R-3,outerRadius:R,startAngle:i*anglePerSlice,endAngle:(i+1)*anglePerSlice}))
+                        .attr('fill',col);
+                });
+                // Point central = première couleur
+                g.append('circle').attr('r',3.5).attr('fill',d.colors[0]);
+                // Bord extérieur pour la lisibilité
+                g.append('circle').attr('r',R).attr('fill','none').attr('stroke','rgba(255,255,255,.15)').attr('stroke-width',.5);
+            }
+
+            // Pulsation
+            var rg=g.append('circle').attr('r',R).attr('fill','none').attr('stroke',d.colors[0]).attr('stroke-width',.7);
+            var dur=(2.4+Math.random()*1)+'s';
+            rg.append('animate').attr('attributeName','r').attr('values','12;26;12').attr('dur',dur).attr('repeatCount','indefinite');
             rg.append('animate').attr('attributeName','opacity').attr('values','.3;0;.3').attr('dur',dur).attr('repeatCount','indefinite');
 
-            // Tooltip description
-            var descText = d.pays + ' — ' + d.count + ' séjour' + (d.count > 1 ? 's' : '');
-
-            g.on('mouseenter', function() {
+            // Tooltip
+            g.on('mouseenter',function(){
                 clearTimeout(hT);
-                tiata.textContent = d.iata;
-                tcity.textContent = (d.flag || '') + ' ' + d.city;
-                tregion.textContent = d.region;
-                ttags.innerHTML = '';
-                (d.types || []).forEach(function(t) {
-                    var tg = TAGS[t];
-                    if (tg) ttags.innerHTML += '<span class="fp-tt-tag '+tg.c+'">'+tg.l+'</span>';
+                tiata.textContent=d.iata;
+                tcity.textContent=d.pays;
+                tregion.textContent=d.region;
+                ttags.innerHTML='';
+                (d.types||[]).forEach(function(t){
+                    var lbl=TYPE_LABELS[t]||t;
+                    ttags.innerHTML+='<span class="fp-tt-tag" style="background:rgba(255,255,255,.1);color:#fff">'+lbl+'</span>';
                 });
-                tdesc.textContent = descText;
-                tprice.textContent = d.count + ' séjour' + (d.count > 1 ? 's' : '') + ' disponible' + (d.count > 1 ? 's' : '');
-                tbtn.textContent = 'Voir les séjours \u2192';
-                tbtn.href = d.url;
-                var br = box.getBoundingClientRect(), svgE = box.querySelector('svg'), sr = svgE.getBoundingClientRect();
-                var sx = sr.width/W, sy = sr.height/H;
-                var px = sr.left-br.left+p[0]*sx, py = sr.top-br.top+p[1]*sy;
-                tt.style.left = (px+26)+'px'; tt.style.top = (py-60)+'px';
-                if (px+290 > br.width) tt.style.left = (px-275)+'px';
-                if (py-60 < 0) tt.style.top = (py+26)+'px';
+                tdesc.textContent=d.city+' — '+d.count+' séjour'+(d.count>1?'s':'');
+                tprice.textContent=d.count+' séjour'+(d.count>1?'s':'')+' disponible'+(d.count>1?'s':'');
+                tbtn.textContent='Voir les séjours \u2192';
+                tbtn.href=d.url;
+                var br=box.getBoundingClientRect(),svgE=box.querySelector('svg'),sr=svgE.getBoundingClientRect();
+                var sx=sr.width/W,sy=sr.height/H;
+                var px=sr.left-br.left+p[0]*sx,py=sr.top-br.top+p[1]*sy;
+                tt.style.left=(px+26)+'px';tt.style.top=(py-60)+'px';
+                if(px+290>br.width) tt.style.left=(px-275)+'px';
+                if(py-60<0) tt.style.top=(py+26)+'px';
                 tt.classList.add('on');
-                gM.selectAll('g').style('opacity', function() { return this === g.node() ? 1 : .12; });
+                gM.selectAll('g').style('opacity',function(){return this===g.node()?1:.12;});
             });
-            g.on('mouseleave', function() { hT = setTimeout(function() { tt.classList.remove('on'); gM.selectAll('g').style('opacity',1); }, 200); });
-            g.on('click', function() { window.location.href = d.url; });
-            g.on('touchstart', function(e) {
+            g.on('mouseleave',function(){hT=setTimeout(function(){tt.classList.remove('on');gM.selectAll('g').style('opacity',1);},200);});
+            g.on('click',function(){window.location.href=d.url;});
+            g.on('touchstart',function(e){
                 e.preventDefault();
-                if (tt.classList.contains('on') && tcity.textContent.indexOf(d.city) > -1) { window.location.href = d.url; }
-                else { g.dispatch('mouseenter'); }
-            }, {passive:false});
+                if(tt.classList.contains('on')&&tcity.textContent.indexOf(d.pays)>-1){window.location.href=d.url;}
+                else{g.dispatch('mouseenter');}
+            },{passive:false});
         });
-        if (tt) {
-            tt.addEventListener('mouseenter', function() { clearTimeout(hT); });
-            tt.addEventListener('mouseleave', function() { hT = setTimeout(function() { tt.classList.remove('on'); gM.selectAll('g').style('opacity',1); }, 200); });
+        if(tt){
+            tt.addEventListener('mouseenter',function(){clearTimeout(hT);});
+            tt.addEventListener('mouseleave',function(){hT=setTimeout(function(){tt.classList.remove('on');gM.selectAll('g').style('opacity',1);},200);});
         }
     }
 })();
