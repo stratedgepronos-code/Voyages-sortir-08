@@ -189,6 +189,185 @@ function vs08_opt($key, $default = '') {
 }
 
 /* ============================================================
+   MÉGA-MENU — données depuis les voyages publiés (vs08_voyage)
+============================================================ */
+function vs08_mega_resultats_url() {
+    return home_url('/resultats-recherche');
+}
+
+/** Jusqu’à $limit pays distincts (priorité aux données agrégées du plugin). */
+function vs08_mega_golf_countries($limit = 5) {
+    $res = vs08_mega_resultats_url();
+    $out = [];
+    $seen = [];
+    if (class_exists('VS08V_Search')) {
+        foreach (VS08V_Search::get_aggregated_options()['destinations'] ?? [] as $d) {
+            if (count($out) >= $limit) {
+                break;
+            }
+            $p = trim($d['pays'] ?? '');
+            if ($p === '') {
+                $p = trim($d['value'] ?? '');
+            }
+            if ($p === '' || isset($seen[$p])) {
+                continue;
+            }
+            $seen[$p] = true;
+            $flag = $d['flag'] ?? '';
+            if ($flag === '' && class_exists('VS08V_MetaBoxes')) {
+                $flag = VS08V_MetaBoxes::get_flag_emoji($p);
+            }
+            $out[] = [
+                'label' => $p,
+                'flag'  => $flag,
+                'url'   => add_query_arg(['type' => 'sejour_golf', 'dest' => $p], $res),
+            ];
+        }
+    }
+    $fallback = [
+        ['label' => 'Portugal', 'flag' => '🇵🇹', 'dest' => 'Portugal'],
+        ['label' => 'Espagne', 'flag' => '🇪🇸', 'dest' => 'Espagne'],
+        ['label' => 'Maroc', 'flag' => '🇲🇦', 'dest' => 'Maroc'],
+        ['label' => 'Turquie', 'flag' => '🇹🇷', 'dest' => 'Turquie'],
+        ['label' => 'Irlande', 'flag' => '🇮🇪', 'dest' => 'Irlande'],
+    ];
+    foreach ($fallback as $fb) {
+        if (count($out) >= $limit) {
+            break;
+        }
+        if (isset($seen[$fb['label']])) {
+            continue;
+        }
+        $seen[$fb['label']] = true;
+        $out[] = [
+            'label' => $fb['label'],
+            'flag'  => $fb['flag'],
+            'url'   => add_query_arg(['type' => 'sejour_golf', 'dest' => $fb['dest']], $res),
+        ];
+    }
+    return array_slice($out, 0, $limit);
+}
+
+/** Aéroports de départ (filtre résultats golf). */
+function vs08_mega_departure_airports() {
+    $res = vs08_mega_resultats_url();
+    $rows = [
+        ['code' => 'CDG', 'label' => 'Paris Charles-de-Gaulle'],
+        ['code' => 'ORY', 'label' => 'Paris Orly'],
+        ['code' => 'LUX', 'label' => 'Luxembourg'],
+        ['code' => 'NTE', 'label' => 'Nantes Atlantique'],
+        ['code' => 'MRS', 'label' => 'Marseille Provence'],
+    ];
+    foreach ($rows as &$r) {
+        $r['url'] = add_query_arg(['type' => 'sejour_golf', 'airport' => $r['code']], $res);
+    }
+    unset($r);
+    return $rows;
+}
+
+/** Destinations catalogue : deux colonnes pour le méga-menu. */
+function vs08_mega_destinations_split() {
+    if (!class_exists('VS08V_Search')) {
+        return [[], []];
+    }
+    $list = array_values(VS08V_Search::get_aggregated_options()['destinations'] ?? []);
+    $n = count($list);
+    if ($n === 0) {
+        return [[], []];
+    }
+    $mid = (int) ceil($n / 2);
+    return [array_slice($list, 0, $mid), array_slice($list, $mid)];
+}
+
+/** Destinations pour lesquelles au moins un voyage « circuit » existe. */
+function vs08_mega_circuit_destinations($limit = 8) {
+    if (!class_exists('VS08V_MetaBoxes')) {
+        return [];
+    }
+    $res = vs08_mega_resultats_url();
+    $ids = get_posts([
+        'post_type'      => 'vs08_voyage',
+        'post_status'    => 'publish',
+        'posts_per_page' => 200,
+        'fields'         => 'ids',
+    ]);
+    $seen = [];
+    $out = [];
+    foreach ($ids as $pid) {
+        if (count($out) >= $limit) {
+            break;
+        }
+        $m = VS08V_MetaBoxes::get($pid);
+        if (($m['statut'] ?? '') === 'archive') {
+            continue;
+        }
+        if (($m['type_voyage'] ?? '') !== 'circuit') {
+            continue;
+        }
+        $dest = trim($m['destination'] ?? '');
+        $pays = trim($m['pays'] ?? '');
+        $key = $dest !== '' ? $dest : $pays;
+        if ($key === '' || isset($seen[$key])) {
+            continue;
+        }
+        $seen[$key] = true;
+        $flag = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : '';
+        $out[] = [
+            'label' => $key,
+            'flag'  => $flag,
+            'url'   => add_query_arg(['type' => 'circuit', 'dest' => $key], $res),
+        ];
+    }
+    return $out;
+}
+
+/**
+ * Devis hors golf : envoi aux deux adresses agence.
+ */
+function vs08_mail_devis_agence($subject, $body_plain, $reply_to_email) {
+    $headers = ['Content-Type: text/plain; charset=UTF-8'];
+    if (is_email($reply_to_email)) {
+        $headers[] = 'Reply-To: ' . $reply_to_email;
+    }
+    $ok1 = wp_mail('sortir08@wanadoo.fr', $subject, $body_plain, $headers);
+    $ok2 = wp_mail('sortir08.ag@wanadoo.fr', $subject, $body_plain, $headers);
+    return $ok1 && $ok2;
+}
+
+/* Pages devis (hub + formulaires) — création / template une fois */
+add_action('init', function() {
+    if (get_option('vs08_pages_devis_hub_v1') === 'yes') {
+        return;
+    }
+    $new = [
+        'devis-gratuit'         => ['title' => 'Devis gratuit', 'template' => 'page-devis-gratuit.php'],
+        'devis-sejour-vacances' => ['title' => 'Devis séjour vacances', 'template' => 'page-devis-sejour-vacances.php'],
+        'devis-city-trip'       => ['title' => 'Devis City Trip', 'template' => 'page-devis-city-trip.php'],
+        'devis-road-trip'       => ['title' => 'Devis Road Trip', 'template' => 'page-devis-road-trip.php'],
+        'devis-circuit'         => ['title' => 'Devis circuit', 'template' => 'page-devis-circuit.php'],
+    ];
+    foreach ($new as $slug => $data) {
+        $existing = get_page_by_path($slug, OBJECT, 'page');
+        if ($existing) {
+            update_post_meta($existing->ID, '_wp_page_template', $data['template']);
+            continue;
+        }
+        $post_id = wp_insert_post([
+            'post_title'   => $data['title'],
+            'post_name'    => $slug,
+            'post_status'  => 'publish',
+            'post_type'    => 'page',
+            'post_author'  => 1,
+            'post_content' => '',
+        ]);
+        if ($post_id && !is_wp_error($post_id)) {
+            update_post_meta($post_id, '_wp_page_template', $data['template']);
+        }
+    }
+    update_option('vs08_pages_devis_hub_v1', 'yes');
+}, 26);
+
+/* ============================================================
    DÉSACTIVER LE CACHE SUR LES PAGES DYNAMIQUES (prix temps réel)
 ============================================================ */
 add_action('template_redirect', function() {

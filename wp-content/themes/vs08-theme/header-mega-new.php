@@ -1,7 +1,17 @@
 <?php
 // Nouveau header avec mega menu — à insérer dans header.php
-/** Liste filtrée des voyages réels (CPT vs08_voyage). */
-$vs08_res = home_url('/resultats-recherche');
+$vs08_res = function_exists('vs08_mega_resultats_url') ? vs08_mega_resultats_url() : home_url('/resultats-recherche');
+$vs08_golf_pays = function_exists('vs08_mega_golf_countries') ? vs08_mega_golf_countries(5) : [];
+$vs08_airports = function_exists('vs08_mega_departure_airports') ? vs08_mega_departure_airports() : [];
+list($vs08_dest_col1, $vs08_dest_col2) = function_exists('vs08_mega_destinations_split') ? vs08_mega_destinations_split() : [[], []];
+$vs08_circuit_items = function_exists('vs08_mega_circuit_destinations') ? vs08_mega_circuit_destinations(8) : [];
+$vs08_devis_hub = home_url('/devis-gratuit/');
+$vs08_circuits_url = add_query_arg(['type' => 'circuit'], $vs08_res);
+$vs08_first_dest = null;
+foreach (array_merge($vs08_dest_col1, $vs08_dest_col2) as $__d) {
+    $vs08_first_dest = $__d;
+    break;
+}
 ?>
 <!-- SITE HEADER — MEGA MENU -->
 <header class="header" id="header">
@@ -34,30 +44,28 @@ $vs08_res = home_url('/resultats-recherche');
                 <div class="mega-drop-inner">
                     <div class="mega-cols">
                         <div class="mega-col-links">
-                            <h4>Par type</h4>
+                            <h4>Par destination</h4>
                             <ul>
-                                <li><a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf'], $vs08_res)); ?>"><span class="ml-icon">⛳</span><div>Séjours Golf<span class="ml-desc">Tout compris avec vols</span></div></a></li>
-                                <li><a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf'], $vs08_res)); ?>"><span class="ml-icon">🏌️</span><div>Golf & Spa<span class="ml-desc">Resorts golf &amp; bien-être</span></div></a></li>
-                                <li><a href="<?php echo esc_url(add_query_arg(['type' => 'road_trip'], $vs08_res)); ?>"><span class="ml-icon">🚗</span><div>Autotours Golf<span class="ml-desc">Road trip &amp; parcours</span></div></a></li>
-                                <li><a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf', 'niveau' => 'champion'], $vs08_res)); ?>"><span class="ml-icon">🏆</span><div>Compétitions<span class="ml-desc">Niveau championnat</span></div></a></li>
-                                <li><a href="<?php echo esc_url(home_url('/contact')); ?>"><span class="ml-icon">✨</span><div>Sur mesure<span class="ml-desc">Votre voyage 100% personnalisé</span></div></a></li>
+                                <?php foreach ($vs08_golf_pays as $gp) : ?>
+                                <li><a href="<?php echo esc_url($gp['url']); ?>"><span class="ml-icon"><?php echo esc_html($gp['flag'] ?: '⛳'); ?></span><div><?php echo esc_html($gp['label']); ?><span class="ml-desc">Séjours golf tout compris</span></div></a></li>
+                                <?php endforeach; ?>
                             </ul>
                         </div>
                         <div class="mega-col-links" style="border-left:1px solid var(--gray-light)">
-                            <h4>Par niveau</h4>
+                            <h4>Par aéroport de départ</h4>
                             <ul>
-                                <li><a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf', 'niveau' => 'debutant'], $vs08_res)); ?>"><span class="ml-icon" style="color:#2d8a5a">⚙</span><div>Débutant<span class="ml-desc">Parcours accessibles</span></div></a></li>
-                                <li><a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf', 'niveau' => 'intermediaire'], $vs08_res)); ?>"><span class="ml-icon" style="color:var(--teal)">⚙</span><div>Intermédiaire<span class="ml-desc">Challenge &amp; plaisir</span></div></a></li>
-                                <li><a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf', 'niveau' => 'confirme'], $vs08_res)); ?>"><span class="ml-icon" style="color:var(--coral)">⚙</span><div>Confirmé<span class="ml-desc">Links &amp; parcours exigeants</span></div></a></li>
+                                <?php foreach ($vs08_airports as $ap) : ?>
+                                <li><a href="<?php echo esc_url($ap['url']); ?>"><span class="ml-icon">✈️</span><div><?php echo esc_html($ap['label']); ?><span class="ml-desc">Départs <?php echo esc_html($ap['code']); ?></span></div></a></li>
+                                <?php endforeach; ?>
                             </ul>
                         </div>
                         <div class="mega-col-visual">
-                            <img src="https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=600&q=80" alt="Golf featured">
+                            <img src="https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=600&q=80" alt="Golf">
                             <div class="mega-col-visual-content">
-                                <p>Coup de cœur</p>
-                                <h3>Algarve &amp; Portugal</h3>
-                                <span>Voyages golf publiés sur le site</span>
-                                <a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf', 'dest' => 'Algarve'], $vs08_res)); ?>">Voir les séjours</a>
+                                <p>Séjours golf</p>
+                                <h3>Catalogue en ligne</h3>
+                                <span>Filtrez par pays ou aéroport</span>
+                                <a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf'], $vs08_res)); ?>">Tous les séjours golf</a>
                             </div>
                         </div>
                     </div>
@@ -70,31 +78,59 @@ $vs08_res = home_url('/resultats-recherche');
                 <div class="mega-drop-inner">
                     <div class="mega-cols">
                         <div class="mega-col-links">
-                            <h4>Europe</h4>
+                            <h4>Nos destinations</h4>
                             <ul>
-                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Portugal'], $vs08_res)); ?>"><span class="ml-icon">🇵🇹</span><div>Portugal<span class="ml-desc">Algarve, Lisbonne, Porto</span></div></a></li>
-                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Espagne'], $vs08_res)); ?>"><span class="ml-icon">🇪🇸</span><div>Espagne<span class="ml-desc">Marbella, Costa del Sol</span></div></a></li>
-                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Irlande'], $vs08_res)); ?>"><span class="ml-icon">🇮🇪</span><div>Irlande<span class="ml-desc">Kerry, Dingle, links</span></div></a></li>
-                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Grèce'], $vs08_res)); ?>"><span class="ml-icon">🇬🇷</span><div>Grèce<span class="ml-desc">Crète, Costa Navarino</span></div></a></li>
-                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Turquie'], $vs08_res)); ?>"><span class="ml-icon">🇹🇷</span><div>Turquie<span class="ml-desc">Belek, Antalya</span></div></a></li>
+                                <?php if (empty($vs08_dest_col1)) : ?>
+                                <li><a href="<?php echo esc_url(home_url('/destinations')); ?>"><span class="ml-icon">🌍</span><div>Catalogue<span class="ml-desc">Voir toutes les destinations</span></div></a></li>
+                                <?php else : ?>
+                                    <?php foreach ($vs08_dest_col1 as $d) :
+                                        $dv = $d['value'] ?? '';
+                                        $dl = $d['label'] ?? $dv;
+                                        $fl = $d['flag'] ?? '';
+                                        $du = add_query_arg(['dest' => $dv], $vs08_res);
+                                        $pc = isset($d['count']) ? (int) $d['count'] : 0;
+                                        ?>
+                                <li><a href="<?php echo esc_url($du); ?>"><span class="ml-icon"><?php echo esc_html($fl ?: '✈️'); ?></span><div><?php echo esc_html($dl); ?><span class="ml-desc"><?php echo $pc > 0 ? sprintf('%d séjour%s', $pc, $pc > 1 ? 's' : '') : 'Voir les séjours'; ?></span></div></a></li>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </ul>
                         </div>
                         <div class="mega-col-links" style="border-left:1px solid var(--gray-light)">
-                            <h4>Monde</h4>
+                            <?php if (!empty($vs08_dest_col2)) : ?><h4>Autres destinations</h4><?php else : ?><h4 style="opacity:0">.</h4><?php endif; ?>
                             <ul>
-                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Maroc'], $vs08_res)); ?>"><span class="ml-icon">🇲🇦</span><div>Maroc<span class="ml-desc">Marrakech, Agadir, El Jadida</span></div></a></li>
-                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Thaïlande'], $vs08_res)); ?>"><span class="ml-icon">🇹🇭</span><div>Thaïlande<span class="ml-desc">Phuket, Hua Hin</span></div></a></li>
-                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Maurice'], $vs08_res)); ?>"><span class="ml-icon">🇲🇺</span><div>Île Maurice<span class="ml-desc">Paradis tropical</span></div></a></li>
-                                <li><a href="<?php echo esc_url(add_query_arg(['dest' => 'Afrique du Sud'], $vs08_res)); ?>"><span class="ml-icon">🇿🇦</span><div>Afrique du Sud<span class="ml-desc">Cape Town, Garden Route</span></div></a></li>
+                                <?php foreach ($vs08_dest_col2 as $d) :
+                                    $dv = $d['value'] ?? '';
+                                    $dl = $d['label'] ?? $dv;
+                                    $fl = $d['flag'] ?? '';
+                                    $du = add_query_arg(['dest' => $dv], $vs08_res);
+                                    $pc = isset($d['count']) ? (int) $d['count'] : 0;
+                                    ?>
+                                <li><a href="<?php echo esc_url($du); ?>"><span class="ml-icon"><?php echo esc_html($fl ?: '✈️'); ?></span><div><?php echo esc_html($dl); ?><span class="ml-desc"><?php echo $pc > 0 ? sprintf('%d séjour%s', $pc, $pc > 1 ? 's' : '') : 'Voir les séjours'; ?></span></div></a></li>
+                                <?php endforeach; ?>
+                                <li><a href="<?php echo esc_url(home_url('/destinations')); ?>"><span class="ml-icon">➕</span><div>Toutes les destinations<span class="ml-desc">Grille complète</span></div></a></li>
                             </ul>
                         </div>
                         <div class="mega-col-visual">
-                            <img src="https://images.unsplash.com/photo-1553603227-2358aabe821e?w=600&q=80" alt="Maroc destination">
+                            <?php
+                            $vis_img = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80';
+                            $vis_url = home_url('/destinations');
+                            $vis_title = 'Nos destinations';
+                            $vis_sub = 'Séjours publiés sur le site';
+                            if ($vs08_first_dest) {
+                                if (!empty($vs08_first_dest['image'])) {
+                                    $vis_img = $vs08_first_dest['image'];
+                                }
+                                $vis_title = $vs08_first_dest['label'] ?? $vis_title;
+                                $vis_sub = (isset($vs08_first_dest['pays']) && $vs08_first_dest['pays']) ? $vs08_first_dest['pays'] : $vis_sub;
+                                $vis_url = add_query_arg(['dest' => ($vs08_first_dest['value'] ?? '')], $vs08_res);
+                            }
+                            ?>
+                            <img src="<?php echo esc_url($vis_img); ?>" alt="">
                             <div class="mega-col-visual-content">
-                                <p>Destination star</p>
-                                <h3>Marrakech &amp; Maroc</h3>
-                                <span>Séjours correspondant à votre recherche</span>
-                                <a href="<?php echo esc_url(add_query_arg(['dest' => 'Marrakech'], $vs08_res)); ?>">Voir les séjours</a>
+                                <p>À la une</p>
+                                <h3><?php echo esc_html($vis_title); ?></h3>
+                                <span><?php echo esc_html($vis_sub); ?></span>
+                                <a href="<?php echo esc_url($vis_url); ?>">Découvrir</a>
                             </div>
                         </div>
                     </div>
@@ -102,14 +138,18 @@ $vs08_res = home_url('/resultats-recherche');
             </div>
         </li>
         <li>
-            <a href="<?php echo esc_url(home_url('/contact')); ?>">Sur Mesure <span class="arrow">▾</span></a>
+            <a href="<?php echo esc_url($vs08_circuits_url); ?>">Circuits <span class="arrow">▾</span></a>
             <div class="mini-drop">
                 <div class="mini-drop-inner">
                     <ul>
-                        <li><a href="<?php echo esc_url(home_url('/contact')); ?>"><span class="ml-icon">💌</span> Voyage de noces</a></li>
-                        <li><a href="<?php echo esc_url(home_url('/contact')); ?>"><span class="ml-icon">🎉</span> Groupe & CE</a></li>
-                        <li><a href="<?php echo esc_url(home_url('/contact')); ?>"><span class="ml-icon">⛳</span> Compétition privée</a></li>
-                        <li><a href="<?php echo esc_url(home_url('/contact')); ?>"><span class="ml-icon">💼</span> Incentive entreprise</a></li>
+                        <?php if (empty($vs08_circuit_items)) : ?>
+                        <li><a href="<?php echo esc_url($vs08_circuits_url); ?>"><span class="ml-icon">🗺️</span> Tous les circuits</a></li>
+                        <?php else : ?>
+                            <?php foreach ($vs08_circuit_items as $ci) : ?>
+                        <li><a href="<?php echo esc_url($ci['url']); ?>"><span class="ml-icon"><?php echo esc_html($ci['flag'] ?: '🗺️'); ?></span> <?php echo esc_html($ci['label']); ?></a></li>
+                            <?php endforeach; ?>
+                        <li><a href="<?php echo esc_url($vs08_circuits_url); ?>"><span class="ml-icon">➕</span> Voir tout le catalogue</a></li>
+                        <?php endif; ?>
                     </ul>
                 </div>
             </div>
@@ -122,7 +162,7 @@ $vs08_res = home_url('/resultats-recherche');
                 <a href="<?php echo esc_url(home_url('/connexion/')); ?>" class="nav-account" aria-label="Se connecter ou s'inscrire"><span class="nav-account-icon" aria-hidden="true"></span>Se connecter / s'inscrire</a>
             <?php endif; ?>
         </li>
-        <li><a href="<?php echo esc_url(home_url('/contact')); ?>" class="cta-link">Devis gratuit</a></li>
+        <li><a href="<?php echo esc_url($vs08_devis_hub); ?>" class="cta-link">Devis gratuit</a></li>
     </ul>
     <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
 </nav>
@@ -146,7 +186,7 @@ $vs08_res = home_url('/resultats-recherche');
             <div class="vs08-search-empty" id="vs08-search-empty" style="display:none">
                 <span>🔍</span>
                 <h3>Aucun s&eacute;jour trouv&eacute;</h3>
-                <p>Essayez un autre terme ou <a href="<?php echo esc_url(home_url('/contact')); ?>">demandez un s&eacute;jour sur mesure</a>.</p>
+                <p>Essayez un autre terme ou <a href="<?php echo esc_url($vs08_devis_hub); ?>">demandez un devis gratuit</a>.</p>
             </div>
             <div class="vs08-search-popular" id="vs08-search-popular">
                 <p class="vs08-search-popular-title">Destinations populaires</p>
