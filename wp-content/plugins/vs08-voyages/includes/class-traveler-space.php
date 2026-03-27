@@ -542,15 +542,16 @@ class VS08V_Traveler_Space {
         add_rewrite_rule('^espace-voyageur/?$', 'index.php?vs08_espace=list', 'top');
         add_rewrite_rule('^espace-voyageur/profil/?$', 'index.php?vs08_espace=profil', 'top');
         add_rewrite_rule('^espace-voyageur/favoris/?$', 'index.php?vs08_espace=favoris', 'top');
+        add_rewrite_rule('^espace-voyageur/contact/?$', 'index.php?vs08_espace=contact', 'top');
         add_rewrite_rule('^espace-voyageur/voyage/([0-9]+)/?$', 'index.php?vs08_espace=detail&vs08_voyage_order=$matches[1]', 'top');
         add_rewrite_rule('^connexion/?$', 'index.php?vs08_auth=1', 'top');
         add_rewrite_tag('%vs08_espace%', '([a-z]+)');
         add_rewrite_tag('%vs08_voyage_order%', '([0-9]+)');
         add_rewrite_tag('%vs08_auth%', '([0-9]+)');
 
-        if (get_option('vs08v_espace_rewrite_v', '') !== '2.5') {
+        if (get_option('vs08v_espace_rewrite_v', '') !== '2.6') {
             flush_rewrite_rules(false);
-            update_option('vs08v_espace_rewrite_v', '2.5');
+            update_option('vs08v_espace_rewrite_v', '2.6');
         }
     }
 

@@ -1317,3 +1317,67 @@ add_action('init', function() {
         wp_schedule_event(time(), 'daily', 'vs08v_solde_reminder');
     }
 });
+
+/* ============================================================
+   MESSAGERIE ESPACE MEMBRE — envoi email aux admins + historique
+============================================================ */
+add_action('wp_ajax_vs08v_member_contact', function() {
+    check_ajax_referer('vs08v_member_contact', 'nonce');
+    $user = wp_get_current_user();
+    if (!$user || !$user->ID) wp_send_json_error('Non connecté.');
+
+    $sujet   = sanitize_text_field($_POST['sujet'] ?? '');
+    $message = sanitize_textarea_field($_POST['message'] ?? '');
+    $order_id = intval($_POST['order_id'] ?? 0);
+
+    if (!$sujet || !$message) wp_send_json_error('Sujet et message requis.');
+
+    $client_name  = trim($user->first_name . ' ' . $user->last_name) ?: $user->display_name;
+    $client_email = $user->user_email;
+    $dossier = $order_id ? 'VS08-' . $order_id : 'Question générale';
+
+    $subject = sprintf('💬 Message client — %s — %s', $client_name, $sujet);
+
+    $body = '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:20px">'
+        . '<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">'
+        . '<div style="background:#1a3a3a;padding:20px 28px;color:#fff;font-family:Georgia,serif;font-size:18px">Message depuis l\'espace voyageur</div>'
+        . '<div style="padding:24px 28px">'
+        . '<table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:16px">'
+        . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold;width:120px">Client</td><td style="padding:8px;border:1px solid #e5e5e5">' . esc_html($client_name) . '</td></tr>'
+        . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold">Email</td><td style="padding:8px;border:1px solid #e5e5e5"><a href="mailto:' . esc_attr($client_email) . '">' . esc_html($client_email) . '</a></td></tr>'
+        . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold">Dossier</td><td style="padding:8px;border:1px solid #e5e5e5">' . esc_html($dossier) . '</td></tr>'
+        . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold">Sujet</td><td style="padding:8px;border:1px solid #e5e5e5;font-weight:bold">' . esc_html($sujet) . '</td></tr>'
+        . '</table>'
+        . '<div style="background:#f9f6f0;border-radius:10px;padding:16px 20px;font-size:14px;line-height:1.7;color:#333">'
+        . nl2br(esc_html($message))
+        . '</div>'
+        . '<p style="margin-top:16px;font-size:12px;color:#999">Répondez directement à ce mail pour contacter le client.</p>'
+        . '</div></div></body></html>';
+
+    $headers = [
+        'Content-Type: text/html; charset=UTF-8',
+        'From: Voyages Sortir 08 <noreply@sortirmonde.fr>',
+        'Reply-To: ' . $client_name . ' <' . $client_email . '>',
+    ];
+    $admins = ['sortir08.ag@wanadoo.fr', 'sortir08@wanadoo.fr'];
+    $sent = wp_mail($admins, $subject, $body, $headers);
+
+    if ($sent) {
+        // Sauvegarder dans l'historique du user
+        $history = get_user_meta($user->ID, '_vs08_messages_sent', true);
+        if (!is_array($history)) $history = [];
+        $history[] = [
+            'date'     => current_time('d/m/Y H:i'),
+            'sujet'    => $sujet,
+            'message'  => $message,
+            'order_id' => $order_id,
+        ];
+        // Garder les 50 derniers messages max
+        if (count($history) > 50) $history = array_slice($history, -50);
+        update_user_meta($user->ID, '_vs08_messages_sent', $history);
+
+        wp_send_json_success('Message envoyé.');
+    } else {
+        wp_send_json_error('Erreur d\'envoi. Contactez-nous au 03 26 65 28 63.');
+    }
+});

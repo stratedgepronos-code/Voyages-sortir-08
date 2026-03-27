@@ -38,7 +38,7 @@ get_header();
             <a href="<?php echo esc_url(VS08V_Traveler_Space::favoris_url()); ?>" class="ev-nav-item <?php echo $view === 'favoris' ? 'active' : ''; ?>">
                 <span class="ev-nav-icon">❤</span> Mes favoris
             </a>
-            <a href="<?php echo esc_url(home_url('/contact')); ?>" class="ev-nav-item">
+            <a href="<?php echo esc_url(home_url('/espace-voyageur/contact/')); ?>" class="ev-nav-item <?php echo $view === 'contact' ? 'active' : ''; ?>">
                 <span class="ev-nav-icon">✉</span> Nous contacter
             </a>
         </nav>
@@ -1239,6 +1239,158 @@ get_header();
             })();
             </script>
             <?php endif; ?>
+
+        <?php elseif ($view === 'contact'): ?>
+
+            <div class="ev-list-header">
+                <h1>Nous contacter</h1>
+                <p>Envoyez-nous un message, nous vous répondrons dans les meilleurs délais.</p>
+            </div>
+
+            <style>
+            .ev-msg-grid{display:grid;grid-template-columns:1fr 320px;gap:24px;margin-top:8px}
+            .ev-msg-form-card{background:#fff;border-radius:20px;padding:28px;box-shadow:0 4px 24px rgba(0,0,0,.05)}
+            .ev-msg-form-card h2{font-family:'Playfair Display',serif;font-size:20px;color:#0f2424;margin:0 0 20px}
+            .ev-msg-field{margin-bottom:16px}
+            .ev-msg-field label{display:block;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-family:'Outfit',sans-serif}
+            .ev-msg-field select,.ev-msg-field input,.ev-msg-field textarea{width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;font-family:'Outfit',sans-serif;color:#0f2424;background:#fff;transition:border-color .2s;resize:vertical}
+            .ev-msg-field select:focus,.ev-msg-field input:focus,.ev-msg-field textarea:focus{outline:none;border-color:#59b7b7}
+            .ev-msg-btn{width:100%;padding:14px;background:#59b7b7;color:#fff;border:none;border-radius:100px;font-size:15px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .25s}
+            .ev-msg-btn:hover{background:#3d9a9a;transform:translateY(-1px)}
+            .ev-msg-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+            .ev-msg-feedback{margin-top:12px;padding:12px 16px;border-radius:12px;font-size:13px;font-family:'Outfit',sans-serif;display:none}
+            .ev-msg-feedback.success{display:block;background:#edf8f0;color:#059669;border:1px solid #a7f3d0}
+            .ev-msg-feedback.error{display:block;background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+            .ev-msg-info{background:#fff;border-radius:20px;padding:28px;box-shadow:0 4px 24px rgba(0,0,0,.05);align-self:start}
+            .ev-msg-info h3{font-size:14px;color:#59b7b7;text-transform:uppercase;letter-spacing:1px;margin:0 0 16px;font-family:'Outfit',sans-serif;font-weight:700}
+            .ev-msg-info-item{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #f0ece4}
+            .ev-msg-info-item:last-child{border-bottom:none}
+            .ev-msg-info-ic{font-size:20px;flex-shrink:0;margin-top:2px}
+            .ev-msg-info-text{font-family:'Outfit',sans-serif;font-size:13px;color:#4a5568;line-height:1.5}
+            .ev-msg-info-text strong{color:#0f2424;display:block;margin-bottom:2px}
+            .ev-msg-info-text a{color:#59b7b7;text-decoration:none;font-weight:600}
+            .ev-msg-sent-list{margin-top:24px}
+            .ev-msg-sent-list h3{font-size:14px;color:#0f2424;margin:0 0 12px;font-family:'Outfit',sans-serif;font-weight:700}
+            .ev-msg-sent-item{background:#f9f6f0;border-radius:12px;padding:14px 16px;margin-bottom:8px;font-family:'Outfit',sans-serif}
+            .ev-msg-sent-item .ev-msg-sent-head{display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-bottom:6px}
+            .ev-msg-sent-item .ev-msg-sent-subj{font-size:13px;font-weight:700;color:#0f2424}
+            .ev-msg-sent-item .ev-msg-sent-body{font-size:12px;color:#6b7280;margin-top:4px;line-height:1.5}
+            @media(max-width:768px){.ev-msg-grid{grid-template-columns:1fr}}
+            </style>
+
+            <div class="ev-msg-grid">
+                <div class="ev-msg-form-card">
+                    <h2>✉️ Nouveau message</h2>
+                    <form id="ev-contact-form">
+                        <?php
+                        // Lister les voyages du client pour le sélecteur
+                        $user_orders = VS08V_Traveler_Space::get_voyage_orders();
+                        ?>
+                        <div class="ev-msg-field">
+                            <label>Concerne (optionnel)</label>
+                            <select name="order_id" id="ev-msg-order">
+                                <option value="">— Question générale —</option>
+                                <?php foreach ($user_orders as $uo):
+                                    $uo_d = $uo['booking_data'];
+                                    $uo_titre = $uo_d['voyage_titre'] ?? ($uo_d['circuit_titre'] ?? 'Voyage');
+                                    $uo_date = !empty($uo_d['params']['date_depart']) ? date('d/m/Y', strtotime($uo_d['params']['date_depart'])) : '';
+                                ?>
+                                <option value="<?php echo $uo['order']->get_id(); ?>">VS08-<?php echo $uo['order']->get_id(); ?> — <?php echo esc_html($uo_titre); ?><?php if ($uo_date): ?> (<?php echo $uo_date; ?>)<?php endif; ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="ev-msg-field">
+                            <label>Sujet *</label>
+                            <input type="text" name="sujet" id="ev-msg-sujet" required placeholder="Ex : Question sur mon vol, modification de dates...">
+                        </div>
+                        <div class="ev-msg-field">
+                            <label>Message *</label>
+                            <textarea name="message" id="ev-msg-body" rows="6" required placeholder="Écrivez votre message ici..."></textarea>
+                        </div>
+                        <button type="submit" class="ev-msg-btn" id="ev-msg-submit">Envoyer le message →</button>
+                        <div class="ev-msg-feedback" id="ev-msg-feedback"></div>
+                    </form>
+
+                    <?php
+                    // Afficher les messages déjà envoyés
+                    $sent_messages = get_user_meta($current_user->ID, '_vs08_messages_sent', true);
+                    if (!is_array($sent_messages)) $sent_messages = [];
+                    $sent_messages = array_reverse(array_slice($sent_messages, -10)); // 10 derniers
+                    if (!empty($sent_messages)):
+                    ?>
+                    <div class="ev-msg-sent-list">
+                        <h3>📨 Messages envoyés</h3>
+                        <?php foreach ($sent_messages as $sm): ?>
+                        <div class="ev-msg-sent-item">
+                            <div class="ev-msg-sent-head">
+                                <span><?php echo esc_html($sm['date'] ?? ''); ?></span>
+                                <?php if (!empty($sm['order_id'])): ?><span>Dossier VS08-<?php echo intval($sm['order_id']); ?></span><?php endif; ?>
+                            </div>
+                            <div class="ev-msg-sent-subj"><?php echo esc_html($sm['sujet'] ?? ''); ?></div>
+                            <div class="ev-msg-sent-body"><?php echo esc_html(mb_substr($sm['message'] ?? '', 0, 120)); ?><?php echo mb_strlen($sm['message'] ?? '') > 120 ? '…' : ''; ?></div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="ev-msg-info">
+                    <h3>Coordonnées</h3>
+                    <div class="ev-msg-info-item">
+                        <span class="ev-msg-info-ic">📞</span>
+                        <div class="ev-msg-info-text"><strong>Téléphone</strong><a href="tel:0326652863">03 26 65 28 63</a><br>Lun — Ven · 9h — 18h30</div>
+                    </div>
+                    <div class="ev-msg-info-item">
+                        <span class="ev-msg-info-ic">✉️</span>
+                        <div class="ev-msg-info-text"><strong>Email</strong><a href="mailto:resa@voyagessortir08.com">resa@voyagessortir08.com</a></div>
+                    </div>
+                    <div class="ev-msg-info-item">
+                        <span class="ev-msg-info-ic">📍</span>
+                        <div class="ev-msg-info-text"><strong>En agence</strong>24 rue Léon Bourgeois<br>51000 Châlons-en-Champagne</div>
+                    </div>
+                    <div class="ev-msg-info-item">
+                        <span class="ev-msg-info-ic">💬</span>
+                        <div class="ev-msg-info-text"><strong>WhatsApp</strong><a href="https://wa.me/33326652863">Nous écrire sur WhatsApp</a></div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+            (function(){
+                var form = document.getElementById('ev-contact-form');
+                var fb = document.getElementById('ev-msg-feedback');
+                var btn = document.getElementById('ev-msg-submit');
+                if (!form) return;
+                form.addEventListener('submit', function(e){
+                    e.preventDefault();
+                    var sujet = document.getElementById('ev-msg-sujet').value.trim();
+                    var message = document.getElementById('ev-msg-body').value.trim();
+                    if (!sujet || !message) { fb.className='ev-msg-feedback error'; fb.textContent='Veuillez remplir tous les champs.'; return; }
+                    btn.disabled = true; btn.textContent = 'Envoi en cours…';
+                    fb.className='ev-msg-feedback'; fb.style.display='none';
+                    var fd = new FormData();
+                    fd.append('action', 'vs08v_member_contact');
+                    fd.append('nonce', '<?php echo esc_js(wp_create_nonce('vs08v_member_contact')); ?>');
+                    fd.append('sujet', sujet);
+                    fd.append('message', message);
+                    fd.append('order_id', document.getElementById('ev-msg-order').value);
+                    fetch('<?php echo esc_url(admin_url('admin-ajax.php')); ?>', {method:'POST', body:fd})
+                        .then(function(r){ return r.json(); })
+                        .then(function(res){
+                            btn.disabled = false; btn.textContent = 'Envoyer le message →';
+                            if (res.success) {
+                                fb.className='ev-msg-feedback success'; fb.textContent='✅ Message envoyé ! Nous vous répondrons dans les meilleurs délais.';
+                                form.reset();
+                            } else {
+                                fb.className='ev-msg-feedback error'; fb.textContent=res.data || 'Erreur lors de l\'envoi.';
+                            }
+                        }).catch(function(){
+                            btn.disabled = false; btn.textContent = 'Envoyer le message →';
+                            fb.className='ev-msg-feedback error'; fb.textContent='Erreur de connexion. Réessayez.';
+                        });
+                });
+            })();
+            </script>
 
         <?php else: ?>
 
