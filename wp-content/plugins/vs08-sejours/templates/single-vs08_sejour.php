@@ -172,7 +172,7 @@ $vs08s_payload = [
 .sv-inclus-box.no li::before{content:'✗';position:absolute;left:0;color:#dc2626;font-weight:bold}
 /* Right col */
 .sv-right-col{position:sticky;top:70px;display:flex;flex-direction:column;gap:14px;align-self:start}
-.sv-calc-card{background:#fff;border-radius:18px;padding:24px;box-shadow:0 4px 28px rgba(0,0,0,.1);overflow-y:auto;max-height:min(85vh,720px);scrollbar-width:none}
+.sv-calc-card{background:#fff;border-radius:18px;padding:24px;box-shadow:0 4px 28px rgba(0,0,0,.1);overflow:visible;scrollbar-width:none}
 .sv-calc-card::-webkit-scrollbar{display:none}
 .sv-calc-title{font-size:18px;font-weight:700;color:#0f2424;font-family:'Playfair Display',serif;margin-bottom:4px}
 .sv-calc-sub{font-size:12px;color:#6b7280;font-family:'Outfit',sans-serif;margin-bottom:16px}

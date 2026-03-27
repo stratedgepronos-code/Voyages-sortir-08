@@ -56,6 +56,13 @@ add_action('init', function() {
         delete_option('vs08s_flush_rewrite');
         flush_rewrite_rules();
     }
+    // Auto-flush si la règle n'existe pas encore (déploiement GitHub sans activation WP)
+    global $wp_rewrite;
+    $rules = $wp_rewrite->wp_rewrite_rules();
+    if (!isset($rules['^reservation-sejour/([0-9]+)/?$']) && !isset($rules['reservation-sejour/([0-9]+)/?$'])) {
+        flush_rewrite_rules();
+        error_log('[VS08S] Rewrite rules auto-flushed for /reservation-sejour/');
+    }
 }, 99);
 
 add_action('template_redirect', function() {
