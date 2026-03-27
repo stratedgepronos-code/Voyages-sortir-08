@@ -66,6 +66,55 @@ class VS08V_Admin_Espace_Ajax {
         return [];
     }
 
+    /**
+     * Canal unique pour le ré-envoi complet (évite d'enchaîner golf + circuit + séjour :
+     * 3× contrat / wp_mail / hooks = pic mémoire, cf. fatals Yoast / Requests).
+     */
+    private static function resend_dispatch_channel($order) {
+        if (!$order) {
+            return null;
+        }
+        $v = $order->get_meta('_vs08v_booking_data');
+        if (!empty($v) && is_array($v)) {
+            return 'golf';
+        }
+        foreach ($order->get_items() as $item) {
+            $iv = $item->get_meta('_vs08v_booking_data');
+            if (!empty($iv) && is_array($iv)) {
+                return 'golf';
+            }
+        }
+        $c = $order->get_meta('_vs08c_booking_data');
+        if (!empty($c) && is_array($c)) {
+            return 'circuit';
+        }
+        foreach ($order->get_items() as $item) {
+            $ic = $item->get_meta('_vs08c_booking_data');
+            if (!empty($ic) && is_array($ic)) {
+                return 'circuit';
+            }
+        }
+        $s = $order->get_meta('_vs08s_booking_data');
+        if (!empty($s) && is_array($s)) {
+            return 'sejour';
+        }
+        if (class_exists('VS08V_Traveler_Space')) {
+            $d = VS08V_Traveler_Space::get_booking_data_from_order($order, true);
+            if (empty($d) || !is_array($d)) {
+                return null;
+            }
+            $t = $d['type'] ?? '';
+            if ($t === 'circuit') {
+                return 'circuit';
+            }
+            if ($t === 'sejour') {
+                return 'sejour';
+            }
+            return 'golf';
+        }
+        return null;
+    }
+
     private static function send_simple_reservation_emails($order) {
         $data = self::get_order_booking_data($order);
         if (empty($data)) {
@@ -387,6 +436,10 @@ class VS08V_Admin_Espace_Ajax {
 
         error_log('[VS08 Resend] Début pour VS08-' . $order_id);
 
+        if (function_exists('wp_raise_memory_limit')) {
+            wp_raise_memory_limit('admin');
+        }
+
         $order->delete_meta_data('_vs08v_emails_sent');
         $order->delete_meta_data('_vs08c_emails_sent');
         $order->delete_meta_data('_vs08s_emails_sent');
@@ -395,8 +448,11 @@ class VS08V_Admin_Espace_Ajax {
         $sent = false;
         $errors = [];
 
-        if (class_exists('VS08V_Emails')) {
-            error_log('[VS08 Resend] Tentative VS08V_Emails::dispatch(' . $order_id . ')');
+        $channel = self::resend_dispatch_channel($order);
+        error_log('[VS08 Resend] Canal: ' . ($channel ?: 'aucun'));
+
+        if ($channel === 'golf' && class_exists('VS08V_Emails')) {
+            error_log('[VS08 Resend] VS08V_Emails::dispatch(' . $order_id . ')');
             try {
                 VS08V_Emails::dispatch($order_id);
                 $order_check = wc_get_order($order_id);
@@ -404,19 +460,15 @@ class VS08V_Admin_Espace_Ajax {
                     $sent = true;
                     error_log('[VS08 Resend] Golf OK');
                 } else {
-                    $errors[] = 'Golf: dispatch terminé sans flag (booking_data absente ou type circuit ?)';
+                    $errors[] = 'Golf: dispatch terminé sans flag.';
                     error_log('[VS08 Resend] Golf: dispatch terminé sans flag');
                 }
             } catch (\Throwable $e) {
                 $errors[] = 'Golf: ' . $e->getMessage();
                 error_log('[VS08 Resend] Golf: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
             }
-        } else {
-            error_log('[VS08 Resend] VS08V_Emails n\'existe pas');
-        }
-
-        if (class_exists('VS08C_Emails')) {
-            error_log('[VS08 Resend] Tentative VS08C_Emails::dispatch(' . $order_id . ')');
+        } elseif ($channel === 'circuit' && class_exists('VS08C_Emails')) {
+            error_log('[VS08 Resend] VS08C_Emails::dispatch(' . $order_id . ')');
             try {
                 VS08C_Emails::dispatch($order_id);
                 $order_check = wc_get_order($order_id);
@@ -424,16 +476,15 @@ class VS08V_Admin_Espace_Ajax {
                     $sent = true;
                     error_log('[VS08 Resend] Circuit OK');
                 } else {
+                    $errors[] = 'Circuit: dispatch terminé sans flag.';
                     error_log('[VS08 Resend] Circuit: dispatch terminé sans flag');
                 }
             } catch (\Throwable $e) {
                 $errors[] = 'Circuit: ' . $e->getMessage();
                 error_log('[VS08 Resend] Circuit: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
             }
-        }
-
-        if (class_exists('VS08S_Emails')) {
-            error_log('[VS08 Resend] Tentative VS08S_Emails::dispatch(' . $order_id . ')');
+        } elseif ($channel === 'sejour' && class_exists('VS08S_Emails')) {
+            error_log('[VS08 Resend] VS08S_Emails::dispatch(' . $order_id . ')');
             try {
                 VS08S_Emails::dispatch($order_id);
                 $order_check = wc_get_order($order_id);
@@ -441,12 +492,19 @@ class VS08V_Admin_Espace_Ajax {
                     $sent = true;
                     error_log('[VS08 Resend] Séjour OK');
                 } else {
+                    $errors[] = 'Séjour: dispatch terminé sans flag.';
                     error_log('[VS08 Resend] Séjour: dispatch terminé sans flag');
                 }
             } catch (\Throwable $e) {
                 $errors[] = 'Séjour: ' . $e->getMessage();
                 error_log('[VS08 Resend] Séjour: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
             }
+        } elseif ($channel !== null) {
+            $errors[] = 'Canal « ' . $channel . ' » : classe d’emails indisponible.';
+            error_log('[VS08 Resend] Canal ' . $channel . ' sans classe emails');
+        } else {
+            $errors[] = 'Type de dossier non reconnu pour l’envoi complet.';
+            error_log('[VS08 Resend] Aucun canal détecté');
         }
 
         if ($sent) {
