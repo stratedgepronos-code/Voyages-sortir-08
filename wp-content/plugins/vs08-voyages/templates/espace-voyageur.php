@@ -38,9 +38,6 @@ get_header();
             <a href="<?php echo esc_url(VS08V_Traveler_Space::favoris_url()); ?>" class="ev-nav-item <?php echo $view === 'favoris' ? 'active' : ''; ?>">
                 <span class="ev-nav-icon">❤</span> Mes favoris
             </a>
-            <a href="<?php echo esc_url(home_url('/golf')); ?>" class="ev-nav-item">
-                <span class="ev-nav-icon">⛳</span> Nos séjours
-            </a>
             <a href="<?php echo esc_url(home_url('/contact')); ?>" class="ev-nav-item">
                 <span class="ev-nav-icon">✉</span> Nous contacter
             </a>
@@ -299,6 +296,47 @@ get_header();
                 </section>
                 <?php endif; ?>
 
+                <!-- Carnet de voyage (documents admin → client) -->
+                <?php
+                $carnet_files = get_post_meta($order_id, '_vs08_carnet_files', true);
+                if (!is_array($carnet_files)) $carnet_files = [];
+                if (!empty($carnet_files)):
+                ?>
+                <section class="ev-card ev-card-carnet">
+                    <h2>📋 Carnet de voyage</h2>
+                    <p style="font-size:13px;color:#6b7280;margin:0 0 14px;font-family:'Outfit',sans-serif">Vos documents de voyage sont prêts. Téléchargez-les avant votre départ.</p>
+                    <div class="ev-carnet-files">
+                        <?php foreach ($carnet_files as $cf):
+                            $fname = $cf['name'] ?? basename($cf['url'] ?? '');
+                            $furl = $cf['url'] ?? '';
+                            $fdate = $cf['date'] ?? '';
+                            if (!$furl) continue;
+                            $ext = strtolower(pathinfo($fname, PATHINFO_EXTENSION));
+                            $icon = '📄';
+                            if (in_array($ext, ['pdf'])) $icon = '📕';
+                            elseif (in_array($ext, ['jpg','jpeg','png','gif','webp'])) $icon = '🖼️';
+                            elseif (in_array($ext, ['doc','docx'])) $icon = '📝';
+                        ?>
+                        <a href="<?php echo esc_url($furl); ?>" target="_blank" rel="noopener" class="ev-carnet-file">
+                            <span class="ev-carnet-icon"><?php echo $icon; ?></span>
+                            <span class="ev-carnet-info">
+                                <strong><?php echo esc_html($fname); ?></strong>
+                                <?php if ($fdate): ?><span style="font-size:11px;color:#9ca3af">Ajouté le <?php echo esc_html(date_i18n('j M Y', strtotime($fdate))); ?></span><?php endif; ?>
+                            </span>
+                            <span class="ev-carnet-dl">Télécharger</span>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+                <?php endif; ?>
+
+                <!-- Question -->
+                <section class="ev-card ev-card-question">
+                    <h2>Une question ?</h2>
+                    <p class="ev-question-intro">Posez-nous une question relative à ce voyage. Nous vous répondrons dans les meilleurs délais.</p>
+                    <button type="button" class="ev-btn ev-btn-outline ev-btn-open-question ev-btn-question-spaced" data-order-id="<?php echo $order_id; ?>">Poser une question</button>
+                </section>
+
             </div><!-- /ev-detail-grid -->
             <?php else: // ── Détail Golf (existant) ──
                 $solde_info = VS08V_Traveler_Space::get_solde_info($order_id);
@@ -525,6 +563,40 @@ get_header();
                         <textarea id="ev-review-comment" name="comment" rows="4" placeholder="Décrivez votre expérience..."></textarea>
                         <button type="submit" class="ev-btn ev-btn-primary">Publier mon avis</button>
                     </form>
+                </section>
+                <?php endif; ?>
+
+                <!-- Carnet de voyage (documents admin → client) -->
+                <?php
+                $g_carnet_files = get_post_meta($order_id, '_vs08_carnet_files', true);
+                if (!is_array($g_carnet_files)) $g_carnet_files = [];
+                if (!empty($g_carnet_files)):
+                ?>
+                <section class="ev-card ev-card-carnet">
+                    <h2>📋 Carnet de voyage</h2>
+                    <p style="font-size:13px;color:#6b7280;margin:0 0 14px;font-family:'Outfit',sans-serif">Vos documents de voyage sont prêts. Téléchargez-les avant votre départ.</p>
+                    <div class="ev-carnet-files">
+                        <?php foreach ($g_carnet_files as $gcf):
+                            $gfname = $gcf['name'] ?? basename($gcf['url'] ?? '');
+                            $gfurl = $gcf['url'] ?? '';
+                            $gfdate = $gcf['date'] ?? '';
+                            if (!$gfurl) continue;
+                            $gext = strtolower(pathinfo($gfname, PATHINFO_EXTENSION));
+                            $gicon = '📄';
+                            if (in_array($gext, ['pdf'])) $gicon = '📕';
+                            elseif (in_array($gext, ['jpg','jpeg','png','gif','webp'])) $gicon = '🖼️';
+                            elseif (in_array($gext, ['doc','docx'])) $gicon = '📝';
+                        ?>
+                        <a href="<?php echo esc_url($gfurl); ?>" target="_blank" rel="noopener" class="ev-carnet-file">
+                            <span class="ev-carnet-icon"><?php echo $gicon; ?></span>
+                            <span class="ev-carnet-info">
+                                <strong><?php echo esc_html($gfname); ?></strong>
+                                <?php if ($gfdate): ?><span style="font-size:11px;color:#9ca3af">Ajouté le <?php echo esc_html(date_i18n('j M Y', strtotime($gfdate))); ?></span><?php endif; ?>
+                            </span>
+                            <span class="ev-carnet-dl">Télécharger</span>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
                 </section>
                 <?php endif; ?>
 

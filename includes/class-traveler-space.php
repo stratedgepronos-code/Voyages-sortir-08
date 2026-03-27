@@ -84,16 +84,28 @@ class VS08V_Traveler_Space {
         if (!$order) {
             return null;
         }
-        $data = self::get_booking_data_from_order($order);
+        $data = self::get_booking_data_from_order($order, true); // true = include circuits
         if (!$data) {
             return null;
         }
 
+        $is_circuit   = isset($data['type']) && $data['type'] === 'circuit';
         $total_voyage = floatval($data['total'] ?? 0);
         $payer_tout   = !empty($data['payer_tout']);
-        $voyage_id    = (int) ($data['voyage_id'] ?? 0);
-        $m            = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($voyage_id) : [];
-        $delai_solde  = intval($m['delai_solde'] ?? 30);
+
+        // Récupérer le délai solde depuis le bon post type
+        $delai_solde = 30;
+        if ($is_circuit) {
+            $circuit_id = (int) ($data['circuit_id'] ?? 0);
+            if ($circuit_id && class_exists('VS08C_Meta')) {
+                $cm = VS08C_Meta::get($circuit_id);
+                $delai_solde = intval($cm['delai_solde'] ?? 30);
+            }
+        } else {
+            $voyage_id = (int) ($data['voyage_id'] ?? 0);
+            $m = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($voyage_id) : [];
+            $delai_solde = intval($m['delai_solde'] ?? 30);
+        }
         $params       = $data['params'] ?? [];
         $date_depart  = $params['date_depart'] ?? '';
 

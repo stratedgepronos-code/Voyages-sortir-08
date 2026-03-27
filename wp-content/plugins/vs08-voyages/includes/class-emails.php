@@ -18,15 +18,33 @@ class VS08V_Emails {
 
         if ($order->get_meta('_vs08v_emails_sent')) return;
 
+        // Essayer golf d'abord, puis circuit
         $data = VS08V_Contract::get_booking_data($order_id);
+        $is_circuit = false;
+        $contract_html = '';
+
+        if (!$data && class_exists('VS08C_Contract')) {
+            $data = VS08C_Contract::get_booking_data($order_id);
+            if ($data) {
+                $is_circuit = true;
+                $data['type'] = 'circuit';
+            }
+        }
+
         if (!$data) return;
 
         // Copier les booking_data sur la commande pour accès futur
-        $order->update_meta_data('_vs08v_booking_data', $data);
+        $meta_key = $is_circuit ? '_vs08c_booking_data' : '_vs08v_booking_data';
+        $order->update_meta_data($meta_key, $data);
         $order->update_meta_data('_vs08v_emails_sent', current_time('mysql'));
         $order->save();
 
-        $contract_html = VS08V_Contract::generate($order_id);
+        // Générer le contrat HTML
+        if ($is_circuit && class_exists('VS08C_Contract')) {
+            $contract_html = VS08C_Contract::generate($order_id);
+        } else {
+            $contract_html = VS08V_Contract::generate($order_id);
+        }
         if (empty($contract_html)) return;
 
         self::send_admin_notification($order_id, $order, $data, $contract_html);
