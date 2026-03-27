@@ -18,19 +18,33 @@ class VS08V_Emails {
 
         if ($order->get_meta('_vs08v_emails_sent')) return;
 
-        $data = VS08V_Contract::get_booking_data($order_id);
+        $data = null;
+        $contract_html = '';
+
+        try {
+            $data = VS08V_Contract::get_booking_data($order_id);
+        } catch (\Throwable $e) {
+            error_log('[VS08 Emails] get_booking_data CRASH: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+        }
+
         if (!$data) {
-            error_log('[VS08 Emails] dispatch(' . $order_id . ') — pas de booking_data');
-            return;
+            // Fallback: lire depuis la meta de la commande
+            $data = $order->get_meta('_vs08v_booking_data');
+            if (empty($data) || !is_array($data)) {
+                error_log('[VS08 Emails] dispatch(' . $order_id . ') — pas de booking_data');
+                return;
+            }
         }
 
         // Copier les booking_data sur la commande pour accès futur
         $order->update_meta_data('_vs08v_booking_data', $data);
         $order->save();
 
-        $contract_html = VS08V_Contract::generate($order_id);
-        if (empty($contract_html)) {
-            error_log('[VS08 Emails] dispatch(' . $order_id . ') — contrat vide');
+        try {
+            $contract_html = VS08V_Contract::generate($order_id);
+        } catch (\Throwable $e) {
+            error_log('[VS08 Emails] Contract generate CRASH: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+            $contract_html = '';
         }
 
         self::send_admin_notification($order_id, $order, $data, $contract_html ?: '');
@@ -197,7 +211,7 @@ class VS08V_Emails {
 
         $headers = [
             'Content-Type: text/html; charset=UTF-8',
-            self::from_header(),
+            'From: Voyages Sortir 08 <noreply@sortirmonde.fr>',
         ];
 
         // Envoyer séparément à chaque admin
@@ -237,7 +251,7 @@ class VS08V_Emails {
             . '<p style="font-size:16px;color:#555;margin:0 0 24px;">Votre réservation a bien été enregistrée. Vous trouverez ci-dessous votre contrat de vente.</p>'
             . '<table cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;background:#edf8f8;border-radius:8px;">'
             . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Voyage</td><td style="padding:12px 16px;">' . esc_html($titre) . '</td></tr>'
-            . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Date de départ</td><td style="padding:12px 16px;">' . esc_html(!empty($params['date_depart']) ? date('d/m/Y', strtotime($params['date_depart'])) : '') . '</td></tr>'
+            . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Date de départ</td><td style="padding:12px 16px;">' . esc_html($params['date_depart'] ? date('d/m/Y', strtotime($params['date_depart'])) : '') . '</td></tr>'
             . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">N° contrat</td><td style="padding:12px 16px;">VS08-' . $order_id . '</td></tr>'
             . '<tr style="font-weight:bold;font-size:16px;"><td style="padding:12px 16px;color:#1a3a3a;">Total</td><td style="padding:12px 16px;color:#e8724a;">' . $total . ' &euro;</td></tr>'
             . '</table>'
@@ -299,16 +313,10 @@ class VS08V_Emails {
     /**
      * Envoi effectif via wp_mail (HTML).
      */
-    private static function from_header() {
-        $host = function_exists('home_url') ? (string) wp_parse_url(home_url(), PHP_URL_HOST) : 'localhost';
-        $host = preg_replace('/^www\./', '', $host) ?: 'localhost';
-        return 'From: Voyages Sortir 08 <noreply@' . $host . '>';
-    }
-
     private static function send($recipients, $subject, $html_body) {
         $headers = [
             'Content-Type: text/html; charset=UTF-8',
-            self::from_header(),
+            'From: Voyages Sortir 08 <noreply@sortirmonde.fr>',
         ];
         $result = wp_mail($recipients, $subject, $html_body, $headers);
         $to = is_array($recipients) ? implode(', ', $recipients) : $recipients;

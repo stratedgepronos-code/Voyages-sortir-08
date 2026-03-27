@@ -18,19 +18,33 @@ class VS08V_Emails {
 
         if ($order->get_meta('_vs08v_emails_sent')) return;
 
-        $data = VS08V_Contract::get_booking_data($order_id);
+        $data = null;
+        $contract_html = '';
+
+        try {
+            $data = VS08V_Contract::get_booking_data($order_id);
+        } catch (\Throwable $e) {
+            error_log('[VS08 Emails] get_booking_data CRASH: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+        }
+
         if (!$data) {
-            error_log('[VS08 Emails] dispatch(' . $order_id . ') — pas de booking_data');
-            return;
+            // Fallback: lire depuis la meta de la commande
+            $data = $order->get_meta('_vs08v_booking_data');
+            if (empty($data) || !is_array($data)) {
+                error_log('[VS08 Emails] dispatch(' . $order_id . ') — pas de booking_data');
+                return;
+            }
         }
 
         // Copier les booking_data sur la commande pour accès futur
         $order->update_meta_data('_vs08v_booking_data', $data);
         $order->save();
 
-        $contract_html = VS08V_Contract::generate($order_id);
-        if (empty($contract_html)) {
-            error_log('[VS08 Emails] dispatch(' . $order_id . ') — contrat vide');
+        try {
+            $contract_html = VS08V_Contract::generate($order_id);
+        } catch (\Throwable $e) {
+            error_log('[VS08 Emails] Contract generate CRASH: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+            $contract_html = '';
         }
 
         self::send_admin_notification($order_id, $order, $data, $contract_html ?: '');

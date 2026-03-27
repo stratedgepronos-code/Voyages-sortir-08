@@ -84,7 +84,7 @@ body.home,body.page-template-default{background:#fff!important}
 .fp-univers-subtitle{font-family:'Outfit',sans-serif;font-size:1.1rem;color:#4a5568;max-width:560px;margin:0 auto;line-height:1.7}
 
 /* ─── Bento Grid ─── */
-.fp-bento{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:auto;gap:1.25rem;grid-template-areas:"golf golf golf golf golf golf golf sejour sejour sejour sejour sejour" "circuit circuit circuit circuit road road road road parcs parcs parcs parcs"}
+.fp-bento{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:auto;gap:1.25rem;grid-template-areas:"golf golf golf golf golf golf golf sejour sejour sejour sejour sejour" "circuit circuit circuit circuit road road road road road road road road"}
 
 /* ─── Card base ─── */
 .fp-ucard{position:relative;border-radius:16px;overflow:hidden;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;justify-content:flex-end;min-height:320px;transition:transform .5s cubic-bezier(.23,1,.32,1),box-shadow .5s cubic-bezier(.23,1,.32,1);box-shadow:0 4px 24px rgba(0,0,0,.08);opacity:0;transform:translateY(40px)}
@@ -438,7 +438,7 @@ body.home,body.page-template-default{background:#fff!important}
     .fp-trust-sep{display:none}
     .fp-trust-item{padding:12px 20px}
     .sh-grid{grid-template-columns:1fr 1fr}
-    .fp-bento{grid-template-columns:repeat(2,1fr);grid-template-areas:"golf golf" "sejour circuit" "road parcs";gap:1rem}
+    .fp-bento{grid-template-columns:repeat(2,1fr);grid-template-areas:"golf golf" "sejour circuit" "road road";gap:1rem}
     .fp-ucard--golf{min-height:340px}
     .fp-ucard{min-height:280px}
     .fp-ucard--golf .fp-ucard__title{font-size:1.8rem}
@@ -472,7 +472,7 @@ body.home,body.page-template-default{background:#fff!important}
     .sh-grid{grid-template-columns:1fr 1fr}
     .dl-grid{flex-direction:column}
     /* Bento 1 col */
-    .fp-bento{grid-template-columns:1fr;grid-template-areas:"golf" "sejour" "circuit" "road" "parcs";gap:.85rem}
+    .fp-bento{grid-template-columns:1fr;grid-template-areas:"golf" "sejour" "circuit" "road";gap:.85rem}
     .fp-ucard{min-height:240px}
     .fp-ucard--golf{min-height:300px}
     .fp-ucard--golf .fp-ucard__title{font-size:1.7rem}
@@ -812,18 +812,6 @@ document.addEventListener('DOMContentLoaded', function() {
           <span class="fp-ucard__badge">🚗 Liberté</span>
           <h3 class="fp-ucard__title">Road-Trip</h3>
           <p class="fp-ucard__desc">Votre voiture, votre rythme, nos meilleures routes.</p>
-        </div>
-        <span class="fp-ucard__soon">Bientôt</span>
-        <div class="fp-ucard__line"></div>
-      </a>
-      <a href="<?php echo esc_url(home_url('/bientot-disponible/?univers=parc')); ?>" class="fp-ucard fp-ucard--parcs fp-anim">
-        <div class="fp-ucard__img"><img src="<?php echo esc_url(get_template_directory_uri() . '/assets/img/bento/parcs-bento.png'); ?>" alt="Parcs d'attractions" loading="lazy"></div>
-        <div class="fp-ucard__overlay"></div>
-        <div class="fp-ucard__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
-        <div class="fp-ucard__content">
-          <span class="fp-ucard__badge">🎢 Sensations</span>
-          <h3 class="fp-ucard__title">Parcs d'attractions</h3>
-          <p class="fp-ucard__desc">Billets à prix réduit pour Disneyland, Parc Astérix &amp; plus.</p>
         </div>
         <span class="fp-ucard__soon">Bientôt</span>
         <div class="fp-ucard__line"></div>

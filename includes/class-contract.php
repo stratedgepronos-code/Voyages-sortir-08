@@ -82,7 +82,7 @@ class VS08V_Contract {
         if ($date_depart && $duree > 0) {
             $date_retour = date('Y-m-d', strtotime($date_depart . ' +' . $duree . ' days'));
         }
-        $nb_total    = intval($devis['nb_total'] ?? ($params['nb_golfeurs'] + $params['nb_nongolfeurs']));
+        $nb_total    = intval($devis['nb_total'] ?? (($params['nb_golfeurs'] ?? 1) + ($params['nb_nongolfeurs'] ?? 0)));
         $nb_golfeurs = intval($params['nb_golfeurs'] ?? 1);
 
         $opt_bagage_qty  = 0;
