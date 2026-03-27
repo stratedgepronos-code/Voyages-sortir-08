@@ -14,6 +14,17 @@ get_header();
 
 <div class="ev-page">
 
+    <!-- ─── Mobile nav bar (visible < 960px) ─── -->
+    <div class="ev-mobile-nav">
+        <a href="<?php echo esc_url(VS08V_Traveler_Space::base_url()); ?>" class="ev-mn-item <?php echo $view === 'list' ? 'active' : ''; ?>"><span>✈</span>Voyages</a>
+        <a href="<?php echo esc_url(VS08V_Traveler_Space::profile_url()); ?>" class="ev-mn-item <?php echo $view === 'profil' ? 'active' : ''; ?>"><span>👤</span>Profil</a>
+        <a href="<?php echo esc_url(VS08V_Traveler_Space::favoris_url()); ?>" class="ev-mn-item <?php echo $view === 'favoris' ? 'active' : ''; ?>"><span>❤</span>Favoris</a>
+        <a href="<?php echo esc_url(home_url('/espace-voyageur/contact/')); ?>" class="ev-mn-item <?php echo $view === 'contact' ? 'active' : ''; ?>"><span>✉</span>Contact</a>
+        <?php if (current_user_can('manage_options')): ?>
+        <a href="<?php echo esc_url(home_url('/espace-admin/')); ?>" class="ev-mn-item"><span>⚙️</span>Admin</a>
+        <?php endif; ?>
+    </div>
+
     <!-- ─── Sidebar navigation ─── -->
     <aside class="ev-sidebar">
         <div class="ev-sidebar-user">

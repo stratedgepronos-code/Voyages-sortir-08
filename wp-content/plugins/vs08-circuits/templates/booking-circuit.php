@@ -253,8 +253,8 @@ var BK_CIRCUIT = <?php echo json_encode([
 .bkf-range{width:100%;margin:3px 0;accent-color:#3d9a9a;cursor:pointer}
 .bkf-reset{width:100%;padding:7px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'Outfit',sans-serif}
 .bkf-reset:hover{border-color:#3d9a9a;color:#3d9a9a}
-@media(max-width:960px){.bkc-inner{grid-template-columns:1fr;padding:0 20px}.bkc-header{grid-column:span 1}.bkc-recap{position:static}}
-@media(max-width:640px){.bkc-inner{padding:0 14px}.bkc-field-row{grid-template-columns:1fr}.bkc-fact-grid{grid-template-columns:1fr}.bkc-fact-grid .full{grid-column:span 1}.bkc-header{flex-direction:column;text-align:center}.bkc-header-chips{justify-content:center}.bkc-route-iata{font-size:20px}.bkc-route-header{padding:10px 14px;gap:10px}}
+@media(max-width:960px){.bkc-inner{grid-template-columns:1fr;padding:0 20px}.bkc-header{grid-column:span 1}.bkc-recap{position:static}.bkc-filters-sidebar{display:none!important}}
+@media(max-width:640px){.bkc-inner{padding:0 14px}.bkc-field-row{grid-template-columns:1fr}.bkc-fact-grid{grid-template-columns:1fr}.bkc-fact-grid .full{grid-column:span 1}.bkc-header{flex-direction:column;text-align:center}.bkc-header-chips{justify-content:center}.bkc-route-iata{font-size:20px}.bkc-route-header{padding:10px 14px;gap:10px}.bkc-combo-card .combo-header{flex-direction:column;gap:8px;align-items:flex-start}}
 </style>
 
 <div class="bkc-wrap">

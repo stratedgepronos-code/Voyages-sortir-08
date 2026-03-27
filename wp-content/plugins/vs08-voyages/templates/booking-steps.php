@@ -245,7 +245,8 @@ get_header();
 .bk-success p{font-size:17px;color:#6b7280;font-family:'Outfit',sans-serif;max-width:480px;margin:0 auto 20px}
 .bk-success-ref{background:#edf8f8;border-radius:12px;padding:14px 24px;display:inline-block;font-family:'Outfit',sans-serif}
 .bk-success-ref strong{color:#3d9a9a;font-size:19px}
-@media(max-width:900px){.bk-inner{grid-template-columns:1fr;padding:0 20px}.bk-recap-col{position:static}.bk-field-row{grid-template-columns:1fr 1fr}.bk-field-row.cols-4{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.bk-inner{grid-template-columns:1fr;padding:0 20px}.bk-recap-col{position:static}.bk-field-row{grid-template-columns:1fr 1fr}.bk-field-row.cols-4{grid-template-columns:1fr 1fr}.bk-filters-sidebar{display:none!important}}
+@media(max-width:480px){.bk-field-row{grid-template-columns:1fr}.bk-field-row.cols-4{grid-template-columns:1fr}.combo-header{flex-direction:column;gap:8px;align-items:flex-start}.combo-leg-times{gap:6px}.combo-time{font-size:16px}.combo-airline{gap:6px}.combo-airline img{width:28px;height:28px}.bk-nav{flex-direction:column;gap:10px}.bk-btn-next,.bk-btn-prev{width:100%;text-align:center}}
 </style>
 
 <div class="bk-wrap">

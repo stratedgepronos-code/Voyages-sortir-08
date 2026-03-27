@@ -124,17 +124,48 @@ if (!is_array($messages_admin)) $messages_admin = [];
 .ea-departure-date{font-size:20px;font-weight:700;color:#0f2424;font-family:'Playfair Display',serif}
 .ea-departure-title{font-size:12px;color:#6b7280;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ea-departure-client{font-size:11px;color:#9ca3af;margin-top:2px}
+.ea-mobile-nav{display:none}
 @media(max-width:960px){
-.ea-page{flex-direction:column}.ea-sidebar{width:100%;height:auto;position:relative}
+.ea-mobile-nav{
+    display:flex;position:sticky;top:0;z-index:90;
+    background:#0f2424;padding:0;overflow-x:auto;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+    border-bottom:1px solid rgba(89,183,183,.15)
+}
+.ea-mobile-nav::-webkit-scrollbar{display:none}
+.ea-mn-item{
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:12px 14px;color:rgba(255,255,255,.5);text-decoration:none;
+    font-family:'Outfit',sans-serif;font-size:10px;font-weight:600;
+    white-space:nowrap;transition:all .2s;border-bottom:2px solid transparent;
+    flex-shrink:0
+}
+.ea-mn-item span{font-size:18px}
+.ea-mn-item.active{color:#59b7b7;border-bottom-color:#59b7b7}
+.ea-mn-item:hover{color:#fff}
+.ea-page{flex-direction:column}.ea-sidebar{display:none}
 .ea-kpi-grid{grid-template-columns:repeat(2,1fr)}.ea-charts-grid{grid-template-columns:1fr}
 .ea-detail-grid{grid-template-columns:1fr}.ea-detail-full{grid-column:span 1}
 .ea-departures{grid-template-columns:1fr}.ea-main{padding:20px 16px}
-.ea-nav{display:flex;flex-wrap:wrap;gap:4px;padding:8px}.ea-nav-item{padding:8px 12px;font-size:12px}
-.ea-sidebar-header{padding:16px}.ea-sidebar-footer{display:none}
+.ea-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ea-table th,.ea-table td{white-space:nowrap}
+.ea-page-title{font-size:22px}
+.ea-msg-item{flex-direction:column;gap:10px}
+.ea-table-search{width:100%;max-width:100%}
+.ea-table-header{flex-direction:column;align-items:stretch}
 }
 </style>
 
 <div class="ea-page">
+
+<!-- Mobile nav admin -->
+<div class="ea-mobile-nav">
+    <a href="<?php echo home_url('/espace-admin/'); ?>" class="ea-mn-item <?php echo $admin_view === 'dashboard' ? 'active' : ''; ?>"><span>📊</span>Dashboard</a>
+    <a href="<?php echo home_url('/espace-admin/dossiers/'); ?>" class="ea-mn-item <?php echo in_array($admin_view, ['dossiers','dossier']) ? 'active' : ''; ?>"><span>📁</span>Dossiers</a>
+    <a href="<?php echo home_url('/espace-admin/clients/'); ?>" class="ea-mn-item <?php echo $admin_view === 'clients' ? 'active' : ''; ?>"><span>👥</span>Clients</a>
+    <a href="<?php echo home_url('/espace-admin/messages/'); ?>" class="ea-mn-item <?php echo $admin_view === 'messages' ? 'active' : ''; ?>"><span>💬</span>Messages</a>
+    <a href="<?php echo home_url('/espace-admin/produits/'); ?>" class="ea-mn-item <?php echo $admin_view === 'produits' ? 'active' : ''; ?>"><span>🗺️</span>Produits</a>
+</div>
 <aside class="ea-sidebar">
     <div class="ea-sidebar-header">
         <div class="ea-sidebar-logo">Voyages Sortir 08</div>
