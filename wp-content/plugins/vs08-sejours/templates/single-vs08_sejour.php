@@ -6,7 +6,10 @@
 if (!defined('ABSPATH')) exit;
 get_header();
 
-$id           = get_the_ID();
+$id           = function_exists('vs08s_get_context_sejour_id') ? vs08s_get_context_sejour_id() : (int) get_the_ID();
+if (!$id) {
+    $id = (int) get_the_ID();
+}
 $m            = VS08S_Meta::get($id);
 $destination  = $m['destination'] ?? '';
 $pays         = $m['pays'] ?? '';

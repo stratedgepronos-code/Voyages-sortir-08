@@ -75,9 +75,64 @@ register_activation_hook(__FILE__, function() {
 });
 VS08S_HotelScanner::register();
 
+/**
+ * ID du CPT vs08_sejour affiché (publié, brouillon en prévisualisation, révision).
+ * En preview, $post peut être une révision : les métas et l’API doivent utiliser le parent.
+ */
+function vs08s_get_context_sejour_id() {
+    global $post;
+    if ($post && !empty($post->ID)) {
+        if ($post->post_type === 'vs08_sejour') {
+            return (int) $post->ID;
+        }
+        if ($post->post_type === 'revision' && !empty($post->post_parent)) {
+            $parent = (int) $post->post_parent;
+            if (get_post_type($parent) === 'vs08_sejour') {
+                return $parent;
+            }
+        }
+    }
+    $qid = (int) get_queried_object_id();
+    if ($qid && get_post_type($qid) === 'vs08_sejour') {
+        return $qid;
+    }
+    if (!empty($_GET['preview_id'])) {
+        $pid = absint($_GET['preview_id']);
+        if ($pid) {
+            $pt = get_post_type($pid);
+            if ($pt === 'vs08_sejour') {
+                return $pid;
+            }
+            if ($pt === 'revision') {
+                $rev = get_post($pid);
+                if ($rev && $rev->post_parent) {
+                    $parent_id = (int) $rev->post_parent;
+                    if (get_post_type($parent_id) === 'vs08_sejour') {
+                        return $parent_id;
+                    }
+                }
+            }
+        }
+    }
+    if (!empty($_GET['p'])) {
+        $pid = absint($_GET['p']);
+        if ($pid && get_post_type($pid) === 'vs08_sejour') {
+            return $pid;
+        }
+    }
+    $tid = (int) get_the_ID();
+    if ($tid && get_post_type($tid) === 'vs08_sejour') {
+        return $tid;
+    }
+    return 0;
+}
+
 // ── Assets frontend ──
 add_action('wp_enqueue_scripts', function() {
-    if (!is_singular('vs08_sejour')) return;
+    $sid = vs08s_get_context_sejour_id();
+    if (!$sid && !is_singular('vs08_sejour')) {
+        return;
+    }
     wp_enqueue_style('vs08s-front', VS08S_URL . 'assets/css/front.css', [], VS08S_VERSION);
     wp_enqueue_script('vs08s-front', VS08S_URL . 'assets/js/front.js', ['jquery'], VS08S_VERSION, true);
     wp_localize_script('vs08s-front', 'vs08s', [
@@ -87,12 +142,32 @@ add_action('wp_enqueue_scripts', function() {
     ]);
 });
 
+// Moins de bruit console : la fiche séjour n’utilise pas VS08V (calcul inline + vs08s).
+add_action('wp_enqueue_scripts', function() {
+    if (!vs08s_get_context_sejour_id() && !is_singular('vs08_sejour')) {
+        return;
+    }
+    wp_dequeue_script('vs08v-front');
+    wp_dequeue_style('vs08v-front');
+}, 30);
+
 // ── Template single ──
 add_filter('single_template', function($template) {
     global $post;
-    if ($post && $post->post_type === 'vs08_sejour') {
+    if (!$post) {
+        return $template;
+    }
+    $pt  = $post->post_type;
+    $pid = (int) $post->ID;
+    if ($pt === 'revision' && !empty($post->post_parent)) {
+        $pid = (int) $post->post_parent;
+        $pt  = get_post_type($pid);
+    }
+    if ($pt === 'vs08_sejour') {
         $custom = VS08S_PATH . 'templates/single-vs08_sejour.php';
-        if (file_exists($custom)) return $custom;
+        if (file_exists($custom)) {
+            return $custom;
+        }
     }
     return $template;
 });
