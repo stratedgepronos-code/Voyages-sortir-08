@@ -1480,3 +1480,31 @@ function vs08_messages_admin_page() {
     </div>
     <?php
 }
+
+/* ============================================================
+   ESPACE ADMIN — AJAX handlers (notes, marquer comme soldé)
+============================================================ */
+add_action('wp_ajax_vs08_admin_save_notes', function() {
+    check_ajax_referer('vs08_admin_actions', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Non autorisé.');
+    $order_id = intval($_POST['order_id'] ?? 0);
+    $notes = sanitize_textarea_field($_POST['notes'] ?? '');
+    if (!$order_id) wp_send_json_error('ID manquant.');
+    update_post_meta($order_id, '_vs08_admin_notes', $notes);
+    wp_send_json_success('Notes sauvegardées.');
+});
+
+add_action('wp_ajax_vs08_admin_mark_paid', function() {
+    check_ajax_referer('vs08_admin_actions', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Non autorisé.');
+    $order_id = intval($_POST['order_id'] ?? 0);
+    if (!$order_id) wp_send_json_error('ID manquant.');
+    $order = wc_get_order($order_id);
+    if (!$order) wp_send_json_error('Commande introuvable.');
+    // Marquer comme payé : set status completed + meta
+    $order->update_meta_data('_vs08v_solde_paye', current_time('mysql'));
+    $order->update_meta_data('_vs08c_solde_paye', current_time('mysql'));
+    $order->set_status('completed');
+    $order->save();
+    wp_send_json_success('Dossier marqué comme soldé.');
+});

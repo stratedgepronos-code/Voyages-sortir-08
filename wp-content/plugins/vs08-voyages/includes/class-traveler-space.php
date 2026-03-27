@@ -383,6 +383,7 @@ class VS08V_Traveler_Space {
     public static function register() {
         add_action('init', [__CLASS__, 'register_routes'], 11);
         add_action('template_redirect', [__CLASS__, 'render_page']);
+        add_action('template_redirect', [__CLASS__, 'render_admin_page']);
         add_action('template_redirect', [__CLASS__, 'render_auth_page']);
         add_action('template_redirect', [__CLASS__, 'maybe_output_contract']);
         add_action('wp_ajax_vs08v_traveler_question', [__CLASS__, 'ajax_question']);
@@ -543,15 +544,23 @@ class VS08V_Traveler_Space {
         add_rewrite_rule('^espace-voyageur/profil/?$', 'index.php?vs08_espace=profil', 'top');
         add_rewrite_rule('^espace-voyageur/favoris/?$', 'index.php?vs08_espace=favoris', 'top');
         add_rewrite_rule('^espace-voyageur/contact/?$', 'index.php?vs08_espace=contact', 'top');
+        add_rewrite_rule('^espace-admin/?$', 'index.php?vs08_admin=dashboard', 'top');
+        add_rewrite_rule('^espace-admin/dossiers/?$', 'index.php?vs08_admin=dossiers', 'top');
+        add_rewrite_rule('^espace-admin/dossier/([0-9]+)/?$', 'index.php?vs08_admin=dossier&vs08_admin_order=$matches[1]', 'top');
+        add_rewrite_rule('^espace-admin/clients/?$', 'index.php?vs08_admin=clients', 'top');
+        add_rewrite_rule('^espace-admin/messages/?$', 'index.php?vs08_admin=messages', 'top');
+        add_rewrite_rule('^espace-admin/produits/?$', 'index.php?vs08_admin=produits', 'top');
         add_rewrite_rule('^espace-voyageur/voyage/([0-9]+)/?$', 'index.php?vs08_espace=detail&vs08_voyage_order=$matches[1]', 'top');
         add_rewrite_rule('^connexion/?$', 'index.php?vs08_auth=1', 'top');
         add_rewrite_tag('%vs08_espace%', '([a-z]+)');
         add_rewrite_tag('%vs08_voyage_order%', '([0-9]+)');
         add_rewrite_tag('%vs08_auth%', '([0-9]+)');
+        add_rewrite_tag('%vs08_admin%', '([a-z]+)');
+        add_rewrite_tag('%vs08_admin_order%', '([0-9]+)');
 
-        if (get_option('vs08v_espace_rewrite_v', '') !== '2.6') {
+        if (get_option('vs08v_espace_rewrite_v', '') !== '3.0') {
             flush_rewrite_rules(false);
-            update_option('vs08v_espace_rewrite_v', '2.6');
+            update_option('vs08v_espace_rewrite_v', '3.0');
         }
     }
 
@@ -582,6 +591,19 @@ class VS08V_Traveler_Space {
         wp_enqueue_script('vs08-calendar', VS08V_URL . 'assets/js/vs08-calendar.js', [], '1.3.0', false);
 
         include VS08V_PATH . 'templates/espace-voyageur.php';
+        exit;
+    }
+
+    /** Page /espace-admin/ : dashboard admin front-end. */
+    public static function render_admin_page() {
+        $admin_view = get_query_var('vs08_admin');
+        if (!$admin_view) return;
+        if (!is_user_logged_in() || !current_user_can('manage_options')) {
+            wp_redirect(home_url('/'));
+            exit;
+        }
+        wp_enqueue_style('vs08v-espace-voyageur', VS08V_URL . 'assets/css/espace-voyageur.css', [], filemtime(VS08V_PATH . 'assets/css/espace-voyageur.css'));
+        include VS08V_PATH . 'templates/espace-admin.php';
         exit;
     }
 
