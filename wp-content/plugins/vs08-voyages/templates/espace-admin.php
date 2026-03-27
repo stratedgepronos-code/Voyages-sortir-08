@@ -381,17 +381,28 @@ if (!$order) { echo '<p>Dossier introuvable.</p>'; } else {
         $date_retour = !empty($params['date_depart']) ? date('d/m/Y', strtotime($params['date_depart'].' +'.$duree_n.' days')) : '';
 ?>
 <a href="<?php echo home_url('/espace-admin/dossiers/'); ?>" class="ea-back">← Retour aux dossiers</a>
+<?php
+    $is_sejour = isset($data['type']) && $data['type'] === 'sejour';
+    $type_label = $is_circuit ? 'Circuit' : ($is_sejour ? 'All Inclusive' : 'Golf');
+    $type_class = $is_circuit ? 'circuit' : ($is_sejour ? 'sejour' : 'golf');
+    $manual_payments = $order->get_meta('_vs08_manual_payments');
+    if (!is_array($manual_payments)) $manual_payments = [];
+    $order_status = $order->get_status();
+    $has_pending = !empty($si['pending_payments']) || $order_status === 'on-hold';
+?>
 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px">
     <div>
         <h1 class="ea-page-title">VS08-<?php echo $admin_order_id; ?> — <?php echo esc_html($titre); ?></h1>
         <p class="ea-page-sub" style="margin-bottom:0">
-            <span class="ea-badge ea-badge-<?php echo $is_circuit?'circuit':'golf'; ?>"><?php echo $is_circuit?'Circuit':'Golf'; ?></span>
+            <span class="ea-badge ea-badge-<?php echo $type_class; ?>"><?php echo $type_label; ?></span>
+            <?php if ($has_pending): ?>
+                <span class="ea-badge" style="background:#fef3c7;color:#92400e;border:1px solid #fbbf24">⏳ En attente de paiement</span>
+            <?php endif; ?>
             <?php if($si&&$si['solde_due']): ?><span class="ea-badge ea-badge-solde">Solde dû</span><?php elseif($si&&!empty($si['soldé_paye'])): ?><span class="ea-badge ea-badge-paid">Soldé ✓</span><?php endif; ?>
         </p>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
         <a href="<?php echo esc_url($contract_url); ?>" target="_blank" class="ea-btn ea-btn-outline">📄 Contrat</a>
-        <a href="<?php echo admin_url('post.php?post='.$admin_order_id.'&action=edit'); ?>" target="_blank" class="ea-btn ea-btn-outline">⚙️ WordPress</a>
         <a href="mailto:<?php echo esc_attr($fact['email']??''); ?>" class="ea-btn ea-btn-primary">✉️ Contacter</a>
         <?php if($si&&$si['solde_due']&&$si['solde']>0): ?>
         <button type="button" class="ea-btn ea-btn-outline" style="border-color:#e8724a;color:#e8724a" onclick="eaSendReminder(<?php echo $admin_order_id; ?>,this)">🔔 Envoyer rappel solde</button>
@@ -400,38 +411,133 @@ if (!$order) { echo '<p>Dossier introuvable.</p>'; } else {
     </div>
 </div>
 <div class="ea-detail-grid">
+    <!-- ═══ RÉCAPITULATIF ═══ -->
     <div class="ea-detail-card"><h3>📋 Récapitulatif</h3>
         <div class="ea-detail-row"><span>Destination</span><strong><?php echo esc_html($destination); ?></strong></div>
         <div class="ea-detail-row"><span>Départ</span><strong><?php echo !empty($params['date_depart'])?date('d/m/Y',strtotime($params['date_depart'])):'—'; ?></strong></div>
         <?php if($date_retour): ?><div class="ea-detail-row"><span>Retour</span><strong><?php echo $date_retour; ?></strong></div><?php endif; ?>
         <div class="ea-detail-row"><span>Durée</span><strong><?php echo $duree_j; ?>j / <?php echo $duree_n; ?>n</strong></div>
         <div class="ea-detail-row"><span>Voyageurs</span><strong><?php echo (int)($devis['nb_total']??0); ?> pers.</strong></div>
-        <?php if(!empty($params['aeroport'])): ?><div class="ea-detail-row"><span>Aéroport</span><strong><?php echo strtoupper($params['aeroport']); ?></strong></div><?php endif; ?>
-        <?php if(!empty($params['vol_aller_num'])): ?><div class="ea-detail-row"><span>Vol aller</span><strong><?php echo esc_html($params['vol_aller_num']); ?></strong></div><?php endif; ?>
-        <?php if(!empty($params['vol_retour_num'])): ?><div class="ea-detail-row"><span>Vol retour</span><strong><?php echo esc_html($params['vol_retour_num']); ?></strong></div><?php endif; ?>
+        <?php if(!empty($params['aeroport'])): ?><div class="ea-detail-row"><span>Aéroport départ</span><strong><?php echo strtoupper($params['aeroport']); ?></strong></div><?php endif; ?>
+        <?php $iata_dest_d = strtoupper($m['iata_dest'] ?? ''); if ($iata_dest_d): ?>
+        <div class="ea-detail-row"><span>Aéroport arrivée</span><strong><?php echo esc_html($iata_dest_d); ?></strong></div>
+        <?php endif; ?>
+        <?php if(!empty($params['vol_aller_num'])):
+            $va = '✈️ ' . esc_html($params['vol_aller_num']);
+            if (!empty($params['vol_aller_cie'])) $va .= ' (' . esc_html($params['vol_aller_cie']) . ')';
+            if (!empty($params['vol_aller_depart'])) $va .= ' · ' . esc_html($params['vol_aller_depart']);
+            if (!empty($params['vol_aller_arrivee'])) $va .= ' → ' . esc_html($params['vol_aller_arrivee']);
+        ?>
+        <div class="ea-detail-row"><span>Vol aller</span><strong><?php echo $va; ?></strong></div>
+        <?php endif; ?>
+        <?php if(!empty($params['vol_retour_num'])):
+            $vr = '✈️ ' . esc_html($params['vol_retour_num']);
+            if (!empty($params['vol_retour_cie'])) $vr .= ' (' . esc_html($params['vol_retour_cie']) . ')';
+            if (!empty($params['vol_retour_depart'])) $vr .= ' · ' . esc_html($params['vol_retour_depart']);
+            if (!empty($params['vol_retour_arrivee'])) $vr .= ' → ' . esc_html($params['vol_retour_arrivee']);
+        ?>
+        <div class="ea-detail-row"><span>Vol retour</span><strong><?php echo $vr; ?></strong></div>
+        <?php endif; ?>
     </div>
-    <div class="ea-detail-card"><h3>💰 Facturation</h3>
+
+    <!-- ═══ FACTURATION + PAIEMENTS ═══ -->
+    <div class="ea-detail-card"><h3>💰 Facturation & Paiements</h3>
         <div class="ea-detail-row"><span>Client</span><strong><?php echo esc_html(trim(($fact['prenom']??'').' '.strtoupper($fact['nom']??''))); ?></strong></div>
         <div class="ea-detail-row"><span>Email</span><strong><a href="mailto:<?php echo esc_attr($fact['email']??''); ?>" style="color:#59b7b7"><?php echo esc_html($fact['email']??''); ?></a></strong></div>
         <?php if(!empty($fact['tel'])): ?><div class="ea-detail-row"><span>Tél.</span><strong><a href="tel:<?php echo esc_attr($fact['tel']); ?>" style="color:#59b7b7"><?php echo esc_html($fact['tel']); ?></a></strong></div><?php endif; ?>
         <?php if(!empty($fact['adresse'])): ?><div class="ea-detail-row"><span>Adresse</span><strong><?php echo esc_html($fact['adresse'].', '.($fact['cp']??'').' '.($fact['ville']??'')); ?></strong></div><?php endif; ?>
         <div class="ea-detail-row" style="border-top:2px solid #f0ece4;padding-top:12px;margin-top:4px"><span style="font-weight:700">Total</span><strong style="font-size:18px"><?php echo number_format($total,2,',',' '); ?> €</strong></div>
-        <?php if($si): ?>
-        <div class="ea-detail-row"><span>Payé</span><strong style="color:#059669"><?php echo number_format($total-$si['solde'],2,',',' '); ?> €</strong></div>
-        <?php if($si['solde_due']&&$si['solde']>0): ?>
-        <div class="ea-detail-row"><span>Solde</span><strong style="color:#dc2626"><?php echo number_format($si['solde'],2,',',' '); ?> €</strong></div>
-        <?php if(!empty($si['solde_date'])): ?><div class="ea-detail-row"><span>Échéance</span><strong style="color:#e8724a"><?php echo esc_html($si['solde_date']); ?></strong></div><?php endif; ?>
-        <?php endif; endif; ?>
+        <?php
+        // ── Historique paiements ──
+        $all_pays = [];
+        if ($order->is_paid()) {
+            $pd = $order->get_date_paid(); $pm = $order->get_payment_method_title() ?: $order->get_payment_method();
+            $all_pays[] = ['date'=>$pd?$pd->date('d/m/Y'):'','montant'=>(float)$order->get_total(),'moyen'=>$pm?:'CB','status'=>'paid'];
+        } elseif ($order->has_status('on-hold')) {
+            $cd = $order->get_date_created();
+            $all_pays[] = ['date'=>$cd?$cd->date('d/m/Y'):'','montant'=>(float)$order->get_total(),'moyen'=>$order->get_payment_method_title()?:'Virement/Chèque','status'=>'pending'];
+        }
+        $solde_ids = $order->get_meta('_vs08v_solde_order_ids');
+        if (!is_array($solde_ids)) { $leg = $order->get_meta('_vs08v_solde_order_id'); $solde_ids = $leg ? [(int)$leg] : []; }
+        foreach ($solde_ids as $sid) { $so = wc_get_order($sid); if (!$so) continue;
+            $spd = $so->get_date_paid() ?: $so->get_date_created(); $spm = $so->get_payment_method_title() ?: $so->get_payment_method();
+            $all_pays[] = ['date'=>$spd?$spd->date('d/m/Y'):'','montant'=>(float)$so->get_total(),'moyen'=>$spm?:'—','status'=>$so->is_paid()?'paid':($so->has_status('on-hold')?'pending':'other')];
+        }
+        foreach ($manual_payments as $mp) { $all_pays[] = ['date'=>$mp['date']??'','montant'=>(float)($mp['montant']??0),'moyen'=>$mp['moyen']??'—','status'=>'paid']; }
+        $pbm = $order->get_meta('_vs08v_paybox_mail_payments');
+        if (is_array($pbm)) { foreach ($pbm as $p) { $all_pays[] = ['date'=>$p['date']??'','montant'=>(float)($p['amount']??0),'moyen'=>'Paybox Mail','status'=>'paid']; } }
+        $total_paye = 0; foreach ($all_pays as $ap) { if ($ap['status']==='paid') $total_paye += $ap['montant']; }
+        $solde_restant = max(0, $total - $total_paye);
+        ?>
+        <?php if (!empty($all_pays)): ?>
+        <div style="margin-top:12px;border-top:1px solid #f0ece4;padding-top:10px">
+            <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-family:'Outfit',sans-serif">Historique des paiements</div>
+            <?php foreach ($all_pays as $ap): ?>
+            <div class="ea-detail-row" style="font-size:13px">
+                <span><?php echo $ap['status']==='pending'?'⏳':'✅'; ?> <?php echo esc_html($ap['date']); ?> · <?php echo esc_html($ap['moyen']); ?><?php if($ap['status']==='pending'): ?> <em style="color:#92400e;font-size:11px">— en attente</em><?php endif; ?></span>
+                <strong style="color:<?php echo $ap['status']==='pending'?'#92400e':'#059669'; ?>"><?php echo number_format($ap['montant'],2,',',' '); ?> €</strong>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+        <div class="ea-detail-row" style="border-top:2px solid #edf8f8;padding-top:8px;margin-top:6px"><span style="color:#059669;font-weight:700">Total payé</span><strong style="color:#059669"><?php echo number_format($total_paye,2,',',' '); ?> €</strong></div>
+        <?php if($solde_restant > 0): ?>
+        <div class="ea-detail-row"><span style="color:#dc2626;font-weight:700">Solde restant</span><strong style="color:#dc2626"><?php echo number_format($solde_restant,2,',',' '); ?> €</strong></div>
+        <?php if($si&&!empty($si['solde_date'])): ?><div class="ea-detail-row"><span>Échéance</span><strong style="color:#e8724a"><?php echo esc_html($si['solde_date']); ?></strong></div><?php endif; ?>
+        <?php else: ?>
+        <div class="ea-detail-row"><span style="color:#059669;font-weight:700">✅ Entièrement payé</span><strong></strong></div>
+        <?php endif; ?>
+        <!-- ── Enregistrer paiement manuel ── -->
+        <div style="margin-top:14px;border-top:1px solid #f0ece4;padding-top:14px">
+            <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-family:'Outfit',sans-serif">➕ Enregistrer un paiement</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div><label style="font-size:10px;font-weight:600;color:#374151;display:block;margin-bottom:3px">Montant (€)</label>
+                    <input type="number" id="ea-pay-montant" step="0.01" min="0" placeholder="500.00" style="width:100%;padding:8px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;font-family:'Outfit',sans-serif;box-sizing:border-box">
+                </div>
+                <div><label style="font-size:10px;font-weight:600;color:#374151;display:block;margin-bottom:3px">Date</label>
+                    <input type="date" id="ea-pay-date" value="<?php echo date('Y-m-d'); ?>" style="width:100%;padding:8px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;font-family:'Outfit',sans-serif;box-sizing:border-box">
+                </div>
+            </div>
+            <div style="margin-top:8px"><label style="font-size:10px;font-weight:600;color:#374151;display:block;margin-bottom:3px">Moyen de paiement</label>
+                <select id="ea-pay-moyen" style="width:100%;padding:8px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;font-family:'Outfit',sans-serif">
+                    <option value="Carte bancaire">💳 Carte bancaire</option>
+                    <option value="Chèque">📝 Chèque</option>
+                    <option value="Chèque vacances">🏖️ Chèque vacances</option>
+                    <option value="Virement">🏦 Virement bancaire</option>
+                    <option value="Espèces">💶 Espèces</option>
+                </select>
+            </div>
+            <button type="button" class="ea-btn ea-btn-primary" style="margin-top:10px;width:100%" onclick="eaAddPayment(<?php echo $admin_order_id; ?>,this)">💰 Enregistrer le paiement</button>
+            <span id="ea-pay-fb" style="font-size:12px;font-family:'Outfit',sans-serif;margin-top:4px;display:block"></span>
+        </div>
     </div>
+
+    <!-- ═══ VOYAGEURS ═══ -->
     <div class="ea-detail-card"><h3>👥 Voyageurs (<?php echo count($voyageurs); ?>)</h3>
-        <?php foreach ($voyageurs as $i => $v): $ddn=$v['ddn']??$v['date_naissance']??''; ?>
-        <div class="ea-detail-row"><span><?php echo ($i+1).'. '.esc_html(($v['prenom']??'').' '.strtoupper($v['nom']??'')); ?></span><strong><?php if($ddn): ?>Né(e) <?php echo date('d/m/Y',strtotime($ddn)); ?><?php endif; ?><?php if(!empty($v['passeport'])): ?> · <?php echo esc_html($v['passeport']); ?><?php endif; ?></strong></div>
+        <?php foreach ($voyageurs as $i => $v):
+            $ddn = $v['ddn'] ?? $v['date_naissance'] ?? '';
+            $ddn_fmt = $ddn ? date('d/m/Y', strtotime($ddn)) : '';
+            $passeport = $v['passeport'] ?? $v['passport'] ?? '';
+            $passeport_exp = $v['passeport_expiration'] ?? $v['passport_expiry'] ?? $v['passeport_exp'] ?? '';
+        ?>
+        <div style="padding:8px 0;border-bottom:1px solid #f0ece4">
+            <div class="ea-detail-row"><span style="font-weight:600"><?php echo ($i+1).'. '.esc_html(($v['prenom']??'').' '.strtoupper($v['nom']??'')); ?></span><strong><?php if($ddn_fmt): ?>Né(e) <?php echo $ddn_fmt; ?><?php endif; ?></strong></div>
+            <?php if($passeport): ?>
+            <div style="font-size:12px;color:#6b7280;font-family:'Outfit',sans-serif;padding-left:16px;margin-top:2px">🛂 Passeport : <strong style="color:#0f2424"><?php echo esc_html($passeport); ?></strong><?php if($passeport_exp): ?> · Expire le <strong style="color:<?php echo strtotime($passeport_exp) < strtotime('+6 months') ? '#dc2626' : '#059669'; ?>"><?php echo date('d/m/Y', strtotime($passeport_exp)); ?></strong><?php endif; ?></div>
+            <?php else: ?>
+            <div style="font-size:11px;color:#e8724a;font-family:'Outfit',sans-serif;padding-left:16px;margin-top:2px">⚠️ Passeport non renseigné</div>
+            <?php endif; ?>
+        </div>
         <?php endforeach; ?>
     </div>
+
+    <!-- ═══ DÉTAIL PRIX ═══ -->
     <div class="ea-detail-card"><h3>📊 Détail prix</h3>
         <?php foreach ($devis['lines'] ?? [] as $l): ?><div class="ea-detail-row"><span><?php echo esc_html($l['label']); ?></span><strong><?php echo number_format($l['montant'],0,',',' '); ?> €</strong></div><?php endforeach; ?>
         <?php if(($data['assurance']??0)>0): ?><div class="ea-detail-row"><span>🛡️ Assurance</span><strong><?php echo number_format($data['assurance'],0,',',' '); ?> €</strong></div><?php endif; ?>
     </div>
+
+    <!-- ═══ NOTES INTERNES ═══ -->
     <div class="ea-detail-card ea-detail-full"><h3>📝 Notes internes</h3>
         <textarea class="ea-notes-textarea" id="ea-notes" placeholder="Notes privées…"><?php echo esc_textarea($admin_notes); ?></textarea>
         <div style="margin-top:10px;display:flex;align-items:center;gap:12px">
@@ -439,11 +545,13 @@ if (!$order) { echo '<p>Dossier introuvable.</p>'; } else {
             <span id="ea-notes-fb" style="font-size:12px;font-family:'Outfit',sans-serif"></span>
         </div>
     </div>
+
+    <!-- ═══ CARNET DE VOYAGE ═══ -->
     <div class="ea-detail-card ea-detail-full"><h3>📋 Carnet de voyage (<?php echo count($carnet_files); ?>)</h3>
-        <?php if(empty($carnet_files)): ?><p style="color:#9ca3af;font-size:13px">Aucun document. <a href="<?php echo admin_url('post.php?post='.$admin_order_id.'&action=edit'); ?>" target="_blank" style="color:#59b7b7">Uploader via WordPress →</a></p>
+        <?php if(empty($carnet_files)): ?><p style="color:#9ca3af;font-size:13px">Aucun document pour le moment.</p>
         <?php else: foreach ($carnet_files as $cf): if(empty($cf['url'])) continue; ?>
         <div class="ea-detail-row"><span><a href="<?php echo esc_url($cf['url']); ?>" target="_blank" style="color:#59b7b7;font-weight:600"><?php echo esc_html($cf['name']??basename($cf['url'])); ?></a></span><strong style="font-size:11px;color:#9ca3af"><?php echo esc_html($cf['date']??''); ?></strong></div>
-        <?php endforeach; ?><p style="margin-top:12px"><a href="<?php echo admin_url('post.php?post='.$admin_order_id.'&action=edit'); ?>" target="_blank" class="ea-btn ea-btn-outline" style="padding:6px 14px;font-size:11px">📎 Ajouter</a></p><?php endif; ?>
+        <?php endforeach; endif; ?>
     </div>
 </div>
 <?php }} ?>
@@ -495,6 +603,22 @@ function eaResendEmails(oid,btn){
         if(!res.success)alert(eaErrMsg(res));
         else setTimeout(function(){btn.textContent=orig},3000);
     }).catch(function(e){btn.disabled=false;btn.textContent=orig;alert(e.message||'Erreur réseau')});
+}
+function eaAddPayment(oid,btn){
+    var montant=parseFloat(document.getElementById('ea-pay-montant').value);
+    var date=document.getElementById('ea-pay-date').value;
+    var moyen=document.getElementById('ea-pay-moyen').value;
+    var fb=document.getElementById('ea-pay-fb');
+    if(!montant||montant<=0){fb.textContent='❌ Montant invalide';fb.style.color='#dc2626';return;}
+    if(!date){fb.textContent='❌ Date requise';fb.style.color='#dc2626';return;}
+    btn.disabled=true;btn.textContent='Enregistrement…';fb.textContent='';
+    var fd=new FormData();fd.append('action','vs08_admin_add_payment');fd.append('nonce',EA_NONCE_D);fd.append('order_id',oid);
+    fd.append('montant',montant);fd.append('date',date);fd.append('moyen',moyen);
+    fetch(EA_AJAX_D,{method:'POST',body:fd,credentials:'same-origin'}).then(eaAjaxJson).then(function(res){
+        btn.disabled=false;btn.textContent='💰 Enregistrer le paiement';
+        if(res.success){fb.textContent='✅ '+res.data;fb.style.color='#059669';setTimeout(function(){location.reload()},1500);}
+        else{fb.textContent='❌ '+(eaErrMsg(res)||'Erreur');fb.style.color='#dc2626';}
+    }).catch(function(e){btn.disabled=false;btn.textContent='💰 Enregistrer le paiement';fb.textContent='❌ '+e.message;fb.style.color='#dc2626'});
 }
 </script>
 

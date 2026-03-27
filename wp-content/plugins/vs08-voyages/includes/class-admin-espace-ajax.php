@@ -14,6 +14,7 @@ class VS08V_Admin_Espace_Ajax {
         add_action('wp_ajax_vs08_admin_send_reminder', [__CLASS__, 'ajax_send_reminder']);
         add_action('wp_ajax_vs08_admin_export_csv', [__CLASS__, 'ajax_export_csv']);
         add_action('wp_ajax_vs08_admin_resend_emails', [__CLASS__, 'ajax_resend_emails']);
+        add_action('wp_ajax_vs08_admin_add_payment', [__CLASS__, 'ajax_add_payment']);
     }
 
     private static function install_fatal_catcher($action) {
@@ -249,6 +250,72 @@ class VS08V_Admin_Espace_Ajax {
         $order->set_status('completed');
         $order->save();
         wp_send_json_success('Dossier marqué comme soldé.');
+    }
+
+    /**
+     * Enregistrer un paiement manuel (CB en agence, chèque, chèque vacances, virement, espèces).
+     * Stocké dans _vs08_manual_payments (array) + pris en compte par get_solde_info().
+     */
+    public static function ajax_add_payment() {
+        self::install_fatal_catcher('add_payment');
+        if (!check_ajax_referer('vs08_admin_actions', 'nonce', false)) wp_send_json_error('Nonce expiré.');
+        if (!current_user_can('manage_options')) wp_send_json_error('Non autorisé.');
+
+        $order_id = (int) ($_POST['order_id'] ?? 0);
+        $montant  = floatval($_POST['montant'] ?? 0);
+        $date     = sanitize_text_field($_POST['date'] ?? date('Y-m-d'));
+        $moyen    = sanitize_text_field($_POST['moyen'] ?? 'Carte bancaire');
+
+        if (!$order_id) wp_send_json_error('ID manquant.');
+        if ($montant <= 0) wp_send_json_error('Montant invalide.');
+
+        $order = wc_get_order($order_id);
+        if (!$order) wp_send_json_error('Commande introuvable.');
+
+        // Ajouter au tableau des paiements manuels
+        $payments = $order->get_meta('_vs08_manual_payments');
+        if (!is_array($payments)) $payments = [];
+        $payments[] = [
+            'montant' => $montant,
+            'date'    => date('d/m/Y', strtotime($date)),
+            'date_raw' => $date,
+            'moyen'   => $moyen,
+            'added_by' => wp_get_current_user()->display_name,
+            'added_at' => current_time('mysql'),
+        ];
+        $order->update_meta_data('_vs08_manual_payments', $payments);
+
+        // Recalculer si tout est payé
+        $data = VS08V_Traveler_Space::get_booking_data_from_order($order, true);
+        $total_voyage = floatval($data['total'] ?? 0);
+        $total_paye = (float) $order->get_total();
+        $solde_ids = $order->get_meta('_vs08v_solde_order_ids');
+        if (!is_array($solde_ids)) $solde_ids = [];
+        foreach ($solde_ids as $sid) { $so = wc_get_order($sid); if ($so && $so->is_paid()) $total_paye += (float) $so->get_total(); }
+        $pbm = $order->get_meta('_vs08v_paybox_mail_payments');
+        if (is_array($pbm)) foreach ($pbm as $p) $total_paye += (float) ($p['amount'] ?? 0);
+        foreach ($payments as $p) $total_paye += (float) ($p['montant'] ?? 0);
+        // Attention: on a compté $montant 2 fois (dans $payments ET ci-dessus), corriger
+        // Non car $payments inclut le nouveau paiement et la boucle ci-dessus parcourt $payments
+        // Recalcul propre
+        $total_paye_clean = (float) $order->get_total();
+        foreach ($solde_ids as $sid) { $so = wc_get_order($sid); if ($so && $so->is_paid()) $total_paye_clean += (float) $so->get_total(); }
+        if (is_array($pbm)) foreach ($pbm as $p) $total_paye_clean += (float) ($p['amount'] ?? 0);
+        foreach ($payments as $p) $total_paye_clean += (float) ($p['montant'] ?? 0);
+
+        if ($total_paye_clean >= $total_voyage) {
+            $order->update_meta_data('_vs08v_solde_marque_paye', current_time('mysql'));
+            $order->set_status('completed');
+        }
+
+        $order->save();
+
+        $note = sprintf('Paiement manuel enregistré : %s € par %s le %s (par %s)',
+            number_format($montant, 2, ',', ' '), $moyen, date('d/m/Y', strtotime($date)), wp_get_current_user()->display_name);
+        $order->add_order_note($note);
+        error_log('[VS08 Payment] ' . $note . ' — VS08-' . $order_id);
+
+        wp_send_json_success('Paiement de ' . number_format($montant, 2, ',', ' ') . ' € enregistré.');
     }
 
     public static function ajax_send_reminder() {

@@ -134,6 +134,13 @@ class VS08V_Traveler_Space {
                 $paid += (float) ($p['amount'] ?? 0);
             }
         }
+        // Paiements manuels admin (CB en agence, chèque, chèque vacances, virement, espèces)
+        $manual_payments = $order->get_meta('_vs08_manual_payments');
+        if (is_array($manual_payments)) {
+            foreach ($manual_payments as $mp) {
+                $paid += (float) ($mp['montant'] ?? 0);
+            }
+        }
         // Paiements en attente de validation (virement, cheque) : commandes on-hold
         $pending_payments = [];
         foreach ($solde_ids as $sid) {
