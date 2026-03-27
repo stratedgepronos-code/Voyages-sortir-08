@@ -252,6 +252,64 @@ if (class_exists('VS08C_Meta') && (!$f_type || $f_type === 'circuit')) {
     }
 }
 
+// ── Séjours All Inclusive (post_type vs08_sejour) ──
+if (class_exists('VS08S_Meta') && (!$f_type || $f_type === 'sejour')) {
+    $sejour_posts = get_posts([
+        'post_type'      => 'vs08_sejour',
+        'post_status'    => 'publish',
+        'posts_per_page' => -1,
+    ]);
+    foreach ($sejour_posts as $sp) {
+        $sm = VS08S_Meta::get($sp->ID);
+        if (($sm['statut'] ?? '') === 'archive') continue;
+
+        if ($f_dest) {
+            $sd = trim($sm['destination'] ?? '');
+            $spays = trim($sm['pays'] ?? '');
+            if (stripos($sd, $f_dest) === false && stripos($spays, $f_dest) === false) continue;
+        }
+
+        if ($f_airport) {
+            $aero_match = false;
+            foreach (($sm['aeroports'] ?? []) as $a) {
+                if (strtoupper(trim($a['code'] ?? '')) === $f_airport) { $aero_match = true; break; }
+            }
+            if (!$aero_match) continue;
+        }
+
+        $sthumb = get_the_post_thumbnail_url($sp->ID, 'medium');
+        if (!$sthumb && !empty($sm['galerie'][0])) $sthumb = $sm['galerie'][0];
+
+        $sflag = $sm['flag'] ?? '';
+        if (!$sflag && class_exists('VS08V_MetaBoxes')) $sflag = VS08V_MetaBoxes::get_flag_emoji($sm['pays'] ?? $sm['destination'] ?? '');
+
+        $s_prix = VS08S_Calculator::prix_appel($sp->ID);
+
+        $results[] = [
+            'id'             => $sp->ID,
+            'title'          => get_the_title($sp->ID),
+            'url'            => get_permalink($sp->ID),
+            'thumb'          => $sthumb,
+            'destination'    => trim($sm['destination'] ?? ''),
+            'pays'           => trim($sm['pays'] ?? ''),
+            'flag'           => $sflag,
+            'badge'          => $sm['badge'] ?? '',
+            'prix'           => $s_prix,
+            'has_vol'        => true,
+            'vol_estimate'   => false,
+            'duree'          => intval($sm['duree'] ?? 7),
+            'etoiles'        => intval($sm['hotel_etoiles'] ?? 5),
+            'pension'        => $sm['pension'] ?? 'ai',
+            'desc'           => !empty($sm['description_courte']) ? $sm['description_courte'] : wp_trim_words(get_post_field('post_content', $sp->ID), 25, '…'),
+            'hotel_nom'      => $sm['hotel_nom'] ?? '',
+            'type_voyage'    => 'sejour',
+            'transport_type' => 'vol',
+            'transfert_type' => $sm['transfert_type'] ?? '',
+            'pension_label'  => ['ai'=>'All Inclusive','pc'=>'Pension complète','dp'=>'Demi-pension','bb'=>'Petit-déj.','lo'=>'Logement seul'][$sm['pension'] ?? 'ai'] ?? 'All Inclusive',
+        ];
+    }
+}
+
 $active_filters = [];
 if ($f_type && isset($types_labels[$f_type]))   $active_filters[] = ['key'=>'type','label'=>$types_labels[$f_type]];
 if ($f_dest)    $active_filters[] = ['key'=>'dest','label'=>$f_dest];
@@ -532,6 +590,15 @@ $hero_video_url = get_theme_file_uri('assets/video/hero.mp4');
                             <span class="vs08-sr-inclus-item">🚐 Transferts</span>
                             <?php endif; ?>
                             <span class="vs08-sr-inclus-item">🏨 Hôtel</span>
+                        </div>
+                        <?php elseif ($r['type_voyage'] === 'sejour'): ?>
+                        <div class="vs08-sr-inclus">
+                            <span class="vs08-sr-inclus-item">✈️ Vol A/R</span>
+                            <span class="vs08-sr-inclus-item">🏨 <?php echo esc_html($r['hotel_nom'] ?: 'Hôtel'); ?> <?php echo str_repeat('★', intval($r['etoiles'] ?? 0)); ?></span>
+                            <span class="vs08-sr-inclus-item">🍽️ <?php echo esc_html($r['pension_label'] ?? 'All Inclusive'); ?></span>
+                            <?php if (!empty($r['transfert_type']) && $r['transfert_type'] !== 'aucun'): ?>
+                            <span class="vs08-sr-inclus-item">🚐 Transferts inclus</span>
+                            <?php endif; ?>
                         </div>
                         <?php endif; ?>
                         <div class="vs08-sr-meta">

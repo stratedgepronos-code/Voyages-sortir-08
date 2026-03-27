@@ -76,6 +76,12 @@ class VS08V_Traveler_Space {
                 }
             }
         }
+        // Séjours all inclusive
+        $data = $order->get_meta('_vs08s_booking_data');
+        if (!empty($data) && is_array($data)) {
+            $data['type'] = 'sejour';
+            return $data;
+        }
         return null;
     }
 
