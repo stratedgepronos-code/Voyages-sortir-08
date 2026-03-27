@@ -82,28 +82,37 @@ $has_map      = $has_hotel && (!empty($hotel_adresse) || !empty($hotel_map));
 $has_equip    = !empty($hotel_equip);
 ?>
 
-<script>var VS08S_DATA=<?php echo json_encode([
-    'id'=>$id,'titre'=>get_the_title(),'duree'=>$duree,
-    'iata_dest'=>strtoupper($m['iata_dest']??''),
-    'aeroports'=>$aeroports_js,
-    'periodes_fermees_vente'=>$periodes_fermees_js,
-    'vol_escales_autorisees'=>!empty($m['vol_escales_autorisees']),
-    'vol_escale_max_heures'=>floatval($m['vol_escale_max_heures']??5),
-    'hotel_code'=>$m['hotel_code']??'',
-    'hotel_codes'=>$m['hotel_codes']??[],
-    'pension'=>$m['pension']??'ai',
-    'transfert_prix'=>floatval($m['transfert_prix']??0),
-    'marge_type'=>$m['marge_type']??'pourcentage',
-    'marge_valeur'=>floatval($m['marge_valeur']??15),
-    'prix_bagage_soute'=>floatval($m['prix_bagage_soute']??0),
-    'prix_bagage_cabine'=>floatval($m['prix_bagage_cabine']??0),
-    'acompte_pct'=>floatval($m['acompte_pct']??30),
-    'delai_solde'=>intval($m['delai_solde']??30),
-    'booking_url'=>home_url('/reservation-sejour/'.$id),
-    'rest_url'=>rest_url('vs08s/v1/'),
-    'nonce'=>wp_create_nonce('wp_rest'),
-    'ajax_url'=>admin_url('admin-ajax.php'),
-]); ?>;</script>
+<?php
+$vs08s_js_flags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+if (defined('JSON_UNESCAPED_UNICODE')) {
+    $vs08s_js_flags |= JSON_UNESCAPED_UNICODE;
+}
+$vs08s_payload = [
+    'id'                     => (int) $id,
+    'titre'                  => get_the_title($id) ?: get_the_title(),
+    'duree'                  => $duree,
+    'iata_dest'              => strtoupper($m['iata_dest'] ?? ''),
+    'aeroports'              => $aeroports_js,
+    'periodes_fermees_vente' => $periodes_fermees_js,
+    'vol_escales_autorisees' => !empty($m['vol_escales_autorisees']),
+    'vol_escale_max_heures'  => floatval($m['vol_escale_max_heures'] ?? 5),
+    'hotel_code'             => $m['hotel_code'] ?? '',
+    'hotel_codes'            => $m['hotel_codes'] ?? [],
+    'pension'                => $m['pension'] ?? 'ai',
+    'transfert_prix'         => floatval($m['transfert_prix'] ?? 0),
+    'marge_type'             => $m['marge_type'] ?? 'pourcentage',
+    'marge_valeur'           => floatval($m['marge_valeur'] ?? 15),
+    'prix_bagage_soute'      => floatval($m['prix_bagage_soute'] ?? 0),
+    'prix_bagage_cabine'     => floatval($m['prix_bagage_cabine'] ?? 0),
+    'acompte_pct'            => floatval($m['acompte_pct'] ?? 30),
+    'delai_solde'            => (int) ($m['delai_solde'] ?? 30),
+    'booking_url'            => $id ? home_url('/reservation-sejour/' . (int) $id) : '',
+    'rest_url'               => rest_url('vs08s/v1/'),
+    'nonce'                  => wp_create_nonce('wp_rest'),
+    'ajax_url'               => admin_url('admin-ajax.php'),
+];
+?>
+<script>var VS08S_DATA=<?php echo wp_json_encode($vs08s_payload, $vs08s_js_flags); ?>;</script>
 
 <style>
 /* ═══ HERO ═══ */
@@ -265,7 +274,7 @@ $has_equip    = !empty($hotel_equip);
 </nav>
 
 <!-- ═══ PAGE ═══ -->
-<div class="sv-page">
+<div class="sv-page" id="sv-page" data-vs08-sejour-id="<?php echo esc_attr((string) (int) $id); ?>">
 <div class="sv-page-inner">
 
     <!-- ══ COLONNE GAUCHE ══ -->
@@ -750,6 +759,18 @@ function svScrollTo(id){var el=document.getElementById(id);if(!el)return;var nav
 // ── CALCULATEUR ──
 var sjState={aeroport:'',date:'',adults:2,rooms:1,vol_price:0,vol_offer_id:'',hotel_net:0,hotel_rate_key:'',hotel_board:'AI',hotel_room_name:''};
 
+/** Fusionne VS08S_DATA avec l’ID fiable (data-vs08-sejour-id) si le JSON inline était tronqué / id à 0 */
+function sjVs08Data(){
+    var D=(typeof VS08S_DATA==='object'&&VS08S_DATA!==null)?VS08S_DATA:{};
+    var rid=parseInt(D.id,10);
+    if(!rid||isNaN(rid)){
+        var el=document.getElementById('sv-page');
+        if(el) rid=parseInt(el.getAttribute('data-vs08-sejour-id')||'0',10)||0;
+    }
+    D.id=rid;
+    return D;
+}
+
 function sjOnAeroportChange(){
     var sel=document.getElementById('sv-aeroport');
     sjState.aeroport=sel?sel.value:'';
@@ -761,7 +782,7 @@ function sjOnAeroportChange(){
         dateBlock.style.display='block';
         // Init calendar
         if(typeof VS08Calendar!=='undefined'&&!window.sjCalDate){
-            var D=VS08S_DATA;
+            var D=sjVs08Data();
             var aero=null;
             for(var i=0;i<D.aeroports.length;i++){if(D.aeroports[i].code===sjState.aeroport){aero=D.aeroports[i];break}}
             window.sjCalDate=new VS08Calendar({
@@ -803,7 +824,7 @@ function sjSearchAll(){
     document.getElementById('sv-btn-reserver').disabled=true;
     document.getElementById('sv-sticky-btn').disabled=true;
 
-    var D=VS08S_DATA;
+    var D=sjVs08Data();
     Promise.all([sjSearchFlights(),sjSearchHotel()]).then(function(){
         loading.style.display='none';
         if(sjState.vol_price>0&&sjState.hotel_net>0){sjCalculateTotal()}
@@ -821,7 +842,7 @@ function sjParseRest(r){
 }
 
 function sjSearchFlights(){
-    var D=VS08S_DATA;
+    var D=sjVs08Data();
     return fetch(D.rest_url+'flights',{method:'POST',headers:{'Content-Type':'application/json','X-WP-Nonce':D.nonce},
         body:JSON.stringify({sejour_id:D.id,aeroport:sjState.aeroport,date:sjState.date,adults:sjState.adults,iata_dest:D.iata_dest||'',duree:D.duree||7})
     }).then(sjParseRest).then(function(data){
@@ -840,7 +861,7 @@ function sjSearchFlights(){
 }
 
 function sjSearchHotel(){
-    var D=VS08S_DATA;
+    var D=sjVs08Data();
     return fetch(D.rest_url+'hotel-availability',{method:'POST',headers:{'Content-Type':'application/json','X-WP-Nonce':D.nonce},
         body:JSON.stringify({sejour_id:D.id,date:sjState.date,adults:sjState.adults,rooms:sjState.rooms,hotel_code:D.hotel_code||'',hotel_codes:D.hotel_codes||[],duree:D.duree||7})
     }).then(sjParseRest).then(function(data){
@@ -859,7 +880,7 @@ function sjSearchHotel(){
 }
 
 function sjCalculateTotal(){
-    var D=VS08S_DATA;
+    var D=sjVs08Data();
     fetch(D.rest_url+'calculate',{method:'POST',headers:{'Content-Type':'application/json','X-WP-Nonce':D.nonce},
         body:JSON.stringify({sejour_id:D.id,date_depart:sjState.date,aeroport:sjState.aeroport,nb_adultes:sjState.adults,nb_chambres:sjState.rooms,vol_price:sjState.vol_price,hotel_net:sjState.hotel_net,hotel_rate_key:sjState.hotel_rate_key,hotel_board:sjState.hotel_board,hotel_room_name:sjState.hotel_room_name})
     }).then(function(r){return r.json()}).then(function(devis){
@@ -878,8 +899,9 @@ function sjCalculateTotal(){
 }
 
 function sjGoReserver(){
-    var params=new URLSearchParams({sejour_id:VS08S_DATA.id,aeroport:sjState.aeroport,date_depart:sjState.date,nb_adultes:sjState.adults,nb_chambres:sjState.rooms,vol_price:sjState.vol_price,vol_offer_id:sjState.vol_offer_id,hotel_net:sjState.hotel_net,hotel_rate_key:sjState.hotel_rate_key,hotel_board:sjState.hotel_board});
-    window.location.href=VS08S_DATA.booking_url+'?'+params.toString();
+    var D=sjVs08Data();
+    var params=new URLSearchParams({sejour_id:D.id,aeroport:sjState.aeroport,date_depart:sjState.date,nb_adultes:sjState.adults,nb_chambres:sjState.rooms,vol_price:sjState.vol_price,vol_offer_id:sjState.vol_offer_id,hotel_net:sjState.hotel_net,hotel_rate_key:sjState.hotel_rate_key,hotel_board:sjState.hotel_board});
+    window.location.href=D.booking_url+'?'+params.toString();
 }
 
 function sjFmt(n){return Number(n||0).toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:0})}

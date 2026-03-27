@@ -120,9 +120,38 @@ function vs08s_get_context_sejour_id() {
             return $pid;
         }
     }
+    if (!empty($_GET['page_id'])) {
+        $pid = absint($_GET['page_id']);
+        if ($pid && get_post_type($pid) === 'vs08_sejour') {
+            return $pid;
+        }
+    }
     $tid = (int) get_the_ID();
     if ($tid && get_post_type($tid) === 'vs08_sejour') {
         return $tid;
+    }
+    if (!empty($_SERVER['REQUEST_URI'])) {
+        $path = strtok((string) $_SERVER['REQUEST_URI'], '?');
+        $path = trim($path, '/');
+        if ($path !== '') {
+            $home_path = parse_url(home_url('/'), PHP_URL_PATH);
+            if (is_string($home_path) && $home_path !== '' && $home_path !== '/') {
+                $hp = trim($home_path, '/');
+                if ($hp !== '' && strpos($path, $hp . '/') === 0) {
+                    $path = substr($path, strlen($hp) + 1);
+                } elseif ($path === $hp) {
+                    $path = '';
+                }
+            }
+            if ($path !== '') {
+                foreach ([home_url('/' . $path . '/'), home_url('/' . $path)] as $u) {
+                    $found = url_to_postid($u);
+                    if ($found && get_post_type((int) $found) === 'vs08_sejour') {
+                        return (int) $found;
+                    }
+                }
+            }
+        }
     }
     return 0;
 }
