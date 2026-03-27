@@ -110,6 +110,7 @@ require_once VS08V_PATH . 'includes/class-contract.php';
 require_once VS08V_PATH . 'includes/class-emails.php';
 require_once VS08V_PATH . 'includes/class-traveler-space.php';
 require_once VS08V_PATH . 'includes/class-admin-dossiers.php';
+require_once VS08V_PATH . 'includes/class-admin-espace-ajax.php';
 require_once VS08V_PATH . 'includes/class-homepage-editor.php';
 VS08V_Homepage_Editor::register();
 require_once VS08V_PATH . 'includes/class-duplicate-voyage.php';
@@ -124,6 +125,7 @@ VS08V_Search::register();
 VS08V_REST::register();
 VS08V_Traveler_Space::register();
 VS08V_Admin_Dossiers::register();
+VS08V_Admin_Espace_Ajax::register();
 VS08V_Duplicate_Voyage::register();
 if (class_exists('VS08V_Paybox_Mail')) {
     VS08V_Paybox_Mail::register();

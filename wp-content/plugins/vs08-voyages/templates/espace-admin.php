@@ -7,8 +7,12 @@ $current_user = wp_get_current_user();
 // ── POST handler: notes admin ──
 if (isset($_POST['vs08_admin_action']) && $_POST['vs08_admin_action'] === 'save_notes' && !empty($_POST['order_id'])) {
     $oid = intval($_POST['order_id']);
-    if (wp_verify_nonce($_POST['_wpnonce'] ?? '', 'vs08_admin_notes_' . $oid) && current_user_can('manage_options')) {
-        update_post_meta($oid, '_vs08_admin_notes', sanitize_textarea_field($_POST['admin_notes']));
+    if (wp_verify_nonce($_POST['_wpnonce'] ?? '', 'vs08_admin_notes_' . $oid) && current_user_can('manage_options') && function_exists('wc_get_order')) {
+        $o = wc_get_order($oid);
+        if ($o) {
+            $o->update_meta_data('_vs08_admin_notes', sanitize_textarea_field($_POST['admin_notes'] ?? ''));
+            $o->save();
+        }
     }
 }
 
@@ -366,8 +370,11 @@ if (!$order) { echo '<p>Dossier introuvable.</p>'; } else {
         $total = (float)($data['total'] ?? 0);
         $si = VS08V_Traveler_Space::get_solde_info($admin_order_id);
         $contract_url = VS08V_Traveler_Space::get_contract_url($admin_order_id);
-        $carnet_files = get_post_meta($admin_order_id, '_vs08_carnet_files', true); if (!is_array($carnet_files)) $carnet_files = [];
-        $admin_notes = get_post_meta($admin_order_id, '_vs08_admin_notes', true) ?: '';
+        $carnet_files = $order->get_meta('_vs08_carnet_files');
+        if (!is_array($carnet_files)) {
+            $carnet_files = [];
+        }
+        $admin_notes = (string) $order->get_meta('_vs08_admin_notes');
         if ($is_circuit) { $pid=(int)($data['circuit_id']??0); $m=class_exists('VS08C_Meta')?VS08C_Meta::get($pid):[]; }
         else { $pid=(int)($data['voyage_id']??0); $m=class_exists('VS08V_MetaBoxes')?VS08V_MetaBoxes::get($pid):[]; }
         $destination = $m['destination'] ?? '';
@@ -443,35 +450,52 @@ if (!$order) { echo '<p>Dossier introuvable.</p>'; } else {
 <?php }} ?>
 <script>
 var EA_NONCE_D='<?php echo esc_js(wp_create_nonce('vs08_admin_actions')); ?>',EA_AJAX_D='<?php echo esc_url(admin_url('admin-ajax.php')); ?>';
+function eaAjaxJson(r){
+    return r.text().then(function(t){
+        var j=null;
+        try{ j=JSON.parse(t); }catch(e){}
+        if(j&&typeof j==='object'&&('success' in j)) return j;
+        if(!r.ok) throw new Error(t?t.substring(0,300):('HTTP '+r.status));
+        throw new Error(t?t.substring(0,300):'Réponse invalide');
+    });
+}
+function eaErrMsg(res){
+    if(!res||res.success) return '';
+    var d=res.data;
+    if(d&&typeof d==='object'&&d.message) return d.message;
+    if(typeof d==='string') return d;
+    return 'Erreur';
+}
 function eaSaveNotes(oid,btn){
     btn.disabled=true;btn.textContent='Enregistrement…';
     var fb=document.getElementById('ea-notes-fb');
     var fd=new FormData();fd.append('action','vs08_admin_save_notes');fd.append('nonce',EA_NONCE_D);fd.append('order_id',oid);fd.append('notes',document.getElementById('ea-notes').value);
-    fetch(EA_AJAX_D,{method:'POST',body:fd}).then(function(r){return r.json()}).then(function(res){
+    fetch(EA_AJAX_D,{method:'POST',body:fd,credentials:'same-origin'}).then(eaAjaxJson).then(function(res){
         btn.disabled=false;btn.textContent='Sauvegarder';
-        fb.textContent=res.success?'✅ Sauvegardé':'❌ Erreur';fb.style.color=res.success?'#059669':'#dc2626';
-        setTimeout(function(){fb.textContent=''},3000);
-    }).catch(function(){btn.disabled=false;btn.textContent='Sauvegarder';fb.textContent='❌ Erreur réseau';fb.style.color='#dc2626'});
+        if(res.success){fb.textContent='✅ Sauvegardé';fb.style.color='#059669';}
+        else{fb.textContent='❌ '+eaErrMsg(res);fb.style.color='#dc2626';}
+        setTimeout(function(){fb.textContent=''},5000);
+    }).catch(function(e){btn.disabled=false;btn.textContent='Sauvegarder';fb.textContent='❌ '+(e.message||'Erreur réseau');fb.style.color='#dc2626'});
 }
 function eaSendReminder(oid,btn){
     if(!confirm('Envoyer un rappel de solde au client ?'))return;
     btn.disabled=true;var orig=btn.textContent;btn.textContent='Envoi…';
     var fd=new FormData();fd.append('action','vs08_admin_send_reminder');fd.append('nonce',EA_NONCE_D);fd.append('order_id',oid);
-    fetch(EA_AJAX_D,{method:'POST',body:fd}).then(function(r){return r.json()}).then(function(res){
+    fetch(EA_AJAX_D,{method:'POST',body:fd,credentials:'same-origin'}).then(eaAjaxJson).then(function(res){
         btn.disabled=false;btn.textContent=res.success?'✅ Envoyé !':orig;
         if(res.success)setTimeout(function(){btn.textContent=orig},3000);
-        else alert(res.data||'Erreur');
-    }).catch(function(){btn.disabled=false;btn.textContent=orig;alert('Erreur réseau')});
+        else alert(eaErrMsg(res));
+    }).catch(function(e){btn.disabled=false;btn.textContent=orig;alert(e.message||'Erreur réseau')});
 }
 function eaResendEmails(oid,btn){
     if(!confirm('Re-envoyer les emails de réservation (admin + client) ?'))return;
     btn.disabled=true;var orig=btn.textContent;btn.textContent='Envoi…';
     var fd=new FormData();fd.append('action','vs08_admin_resend_emails');fd.append('nonce',EA_NONCE_D);fd.append('order_id',oid);
-    fetch(EA_AJAX_D,{method:'POST',body:fd}).then(function(r){return r.json()}).then(function(res){
+    fetch(EA_AJAX_D,{method:'POST',body:fd,credentials:'same-origin'}).then(eaAjaxJson).then(function(res){
         btn.disabled=false;btn.textContent=res.success?'✅ Emails envoyés !':orig;
-        if(!res.success)alert(res.data||'Erreur');
+        if(!res.success)alert(eaErrMsg(res));
         else setTimeout(function(){btn.textContent=orig},3000);
-    }).catch(function(){btn.disabled=false;btn.textContent=orig;alert('Erreur réseau')});
+    }).catch(function(e){btn.disabled=false;btn.textContent=orig;alert(e.message||'Erreur réseau')});
 }
 </script>
 
