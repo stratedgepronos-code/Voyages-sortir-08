@@ -110,6 +110,8 @@ require_once VS08V_PATH . 'includes/class-contract.php';
 require_once VS08V_PATH . 'includes/class-emails.php';
 require_once VS08V_PATH . 'includes/class-traveler-space.php';
 require_once VS08V_PATH . 'includes/class-admin-dossiers.php';
+require_once VS08V_PATH . 'includes/class-homepage-editor.php';
+VS08V_Homepage_Editor::register();
 require_once VS08V_PATH . 'includes/class-duplicate-voyage.php';
 try {
     require_once VS08V_PATH . 'includes/class-paybox-mail.php';

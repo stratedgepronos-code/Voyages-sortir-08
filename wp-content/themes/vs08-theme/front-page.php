@@ -851,9 +851,11 @@ document.addEventListener('DOMContentLoaded', function() {
             <a href="<?php echo esc_url(home_url('/golf')); ?>" class="fp-section-link">Tous les séjours golf →</a>
         </div>
         <div class="fp-cards-grid">
-            <?php if (class_exists('VS08V_Homepage_Editor') && VS08V_Homepage_Editor::render_home_cards()) : ?>
-                <?php echo VS08V_Homepage_Editor::render_home_cards(); ?>
-            <?php else :
+            <?php
+            $fp_home_cards_html = class_exists('VS08V_Homepage_Editor') ? VS08V_Homepage_Editor::render_home_cards() : '';
+            if ($fp_home_cards_html) :
+                echo $fp_home_cards_html;
+            else :
                 $fp_cdc_badge_map    = ['new'=>'Nouveauté','promo'=>'Promo','best'=>'Best-seller','derniere'=>'Dernières places'];
                 $fp_cdc_pension_map  = ['bb'=>'Petit-déj.','dp'=>'Demi-pension','pc'=>'Pension complète','ai'=>'All inclusive','mixed'=>'Formule mixte'];
                 $fp_cdc_transf_map   = ['groupes'=>'🚌 Transferts groupés','prives'=>'🚐 Transferts privés','voiture'=>'🚗 Location voiture'];
