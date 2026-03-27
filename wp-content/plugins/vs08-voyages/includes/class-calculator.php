@@ -227,7 +227,9 @@ class VS08V_Calculator {
         $acompte_pct       = floatval($m['acompte_pct'] ?? 30);
         $acompte_base      = $total * $acompte_pct / 100;
         $cout_vol_total    = $prix_vol_par_pers * $nb_total;
-        $plancher_vol      = $cout_vol_total + $prix_bag_soute + $prix_bag_golf; // vols + bagages
+        $bag_soute_total   = $prix_bagage_soute * $nb_bagage_soute;
+        $bag_golf_total    = ($golf_bag_free ? 0 : $prix_bagage_golf * $nb_bagage_golf);
+        $plancher_vol      = $cout_vol_total + $bag_soute_total + $bag_golf_total; // vols + bagages
 
         // Si l'acompte de base ne couvre pas les vols+bagages → augmenter le %
         $acompte_pct_final = $acompte_pct;

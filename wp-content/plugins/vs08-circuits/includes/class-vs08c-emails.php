@@ -20,27 +20,24 @@ class VS08C_Emails {
         if (isset($dispatching[$order_id])) return;
         $dispatching[$order_id] = true;
 
+        // Flag direct en base AVANT tout
+        $already = get_post_meta($order_id, '_vs08c_emails_sent', true);
+        if ($already) { unset($dispatching[$order_id]); return; }
+        update_post_meta($order_id, '_vs08c_emails_sent', current_time('mysql'));
+        error_log('[VS08C Emails] dispatch(' . $order_id . ') — flag posé (direct DB)');
+
         $order = wc_get_order($order_id);
         if (!$order) { unset($dispatching[$order_id]); return; }
-        if ($order->get_meta('_vs08c_emails_sent')) { unset($dispatching[$order_id]); return; }
 
         $data = null;
-        try { $data = VS08C_Contract::get_booking_data($order_id); } catch (\Throwable $e) { error_log('[VS08C Emails] get_booking_data CRASH: ' . $e->getMessage()); }
-        if (!$data || ($data['type'] ?? '') !== 'circuit') {
-            unset($dispatching[$order_id]);
-            return;
-        }
-
-        // ═══ FLAG IMMÉDIAT avant toute opération coûteuse ═══
-        $order->update_meta_data('_vs08c_emails_sent', current_time('mysql'));
-        $order->save();
-        error_log('[VS08C Emails] dispatch(' . $order_id . ') — flag posé, début');
+        try { $data = VS08C_Contract::get_booking_data($order_id); } catch (\Throwable $e) { error_log('[VS08C Emails] get_booking_data: ' . $e->getMessage()); }
+        if (!$data || ($data['type'] ?? '') !== 'circuit') { unset($dispatching[$order_id]); return; }
 
         $contract_html = '';
-        try { $contract_html = VS08C_Contract::generate($order_id); } catch (\Throwable $e) { error_log('[VS08C Emails] Contract CRASH: ' . $e->getMessage()); }
+        try { $contract_html = VS08C_Contract::generate($order_id); } catch (\Throwable $e) { error_log('[VS08C Emails] Contract: ' . $e->getMessage()); }
 
-        try { self::send_admin($order_id, $order, $data, $contract_html ?: ''); } catch (\Throwable $e) { error_log('[VS08C Emails] send_admin CRASH: ' . $e->getMessage()); }
-        try { self::send_client($order_id, $order, $data, $contract_html ?: ''); } catch (\Throwable $e) { error_log('[VS08C Emails] send_client CRASH: ' . $e->getMessage()); }
+        try { self::send_admin($order_id, $order, $data, $contract_html ?: ''); } catch (\Throwable $e) { error_log('[VS08C Emails] send_admin: ' . $e->getMessage()); }
+        try { self::send_client($order_id, $order, $data, $contract_html ?: ''); } catch (\Throwable $e) { error_log('[VS08C Emails] send_client: ' . $e->getMessage()); }
 
         error_log('[VS08C Emails] dispatch(' . $order_id . ') — terminé OK');
         unset($dispatching[$order_id]);

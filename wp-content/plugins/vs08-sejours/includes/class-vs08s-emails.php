@@ -17,21 +17,20 @@ class VS08S_Emails {
         if (isset($dispatching[$order_id])) return;
         $dispatching[$order_id] = true;
 
+        $already = get_post_meta($order_id, '_vs08s_emails_sent', true);
+        if ($already) { unset($dispatching[$order_id]); return; }
+        update_post_meta($order_id, '_vs08s_emails_sent', current_time('mysql'));
+
         $order = wc_get_order($order_id);
         if (!$order) { unset($dispatching[$order_id]); return; }
-        if ($order->get_meta('_vs08s_emails_sent')) { unset($dispatching[$order_id]); return; }
 
         $data = $order->get_meta('_vs08s_booking_data');
         if (empty($data) || !is_array($data)) { unset($dispatching[$order_id]); return; }
 
-        // ═══ FLAG IMMÉDIAT ═══
-        $order->update_meta_data('_vs08s_emails_sent', current_time('mysql'));
-        $order->save();
-
         $contract_html = '';
-        try { $contract_html = VS08S_Contract::generate($order_id); } catch (\Throwable $e) { error_log('[VS08S Emails] Contract CRASH: ' . $e->getMessage()); }
-        try { self::send_admin($order_id, $data, $contract_html); } catch (\Throwable $e) { error_log('[VS08S Emails] send_admin CRASH: ' . $e->getMessage()); }
-        try { self::send_client($order_id, $data, $contract_html); } catch (\Throwable $e) { error_log('[VS08S Emails] send_client CRASH: ' . $e->getMessage()); }
+        try { $contract_html = VS08S_Contract::generate($order_id); } catch (\Throwable $e) { error_log('[VS08S Emails] Contract: ' . $e->getMessage()); }
+        try { self::send_admin($order_id, $data, $contract_html); } catch (\Throwable $e) { error_log('[VS08S Emails] send_admin: ' . $e->getMessage()); }
+        try { self::send_client($order_id, $data, $contract_html); } catch (\Throwable $e) { error_log('[VS08S Emails] send_client: ' . $e->getMessage()); }
 
         unset($dispatching[$order_id]);
         error_log('[VS08S Emails] dispatch(' . $order_id . ') OK');
