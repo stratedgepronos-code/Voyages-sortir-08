@@ -25,7 +25,7 @@ class VS08_Checkout_Payment {
     }
 
     public static function register() {
-        add_filter('woocommerce_payment_gateways', [__CLASS__, 'register_gateway']);
+        add_filter('woocommerce_payment_gateways', [__CLASS__, 'alter_payment_gateways']);
         add_filter('woocommerce_available_payment_gateways', [__CLASS__, 'filter_gateways'], 50);
         add_action('woocommerce_checkout_order_processed', [__CLASS__, 'maybe_send_pre_reservation_emails'], 30, 3);
         add_action('woocommerce_checkout_order_processed', [__CLASS__, 'clear_session_payment_mode'], 999, 1);
@@ -39,7 +39,13 @@ class VS08_Checkout_Payment {
         }
     }
 
-    public static function register_gateway($methods) {
+    /**
+     * Retire virement (BACS) et chèque du cœur WooCommerce + enregistre la passerelle agence VS08.
+     */
+    public static function alter_payment_gateways($methods) {
+        $methods = array_values(array_filter((array) $methods, function ($class) {
+            return !in_array($class, ['WC_Gateway_BACS', 'WC_Gateway_Cheque'], true);
+        }));
         $methods[] = 'VS08V_Gateway_Agence';
         return $methods;
     }
