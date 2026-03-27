@@ -5,6 +5,13 @@ class VS08S_Emails {
 
     const ADMIN_RECIPIENTS = ['sortir08.ag@wanadoo.fr', 'sortir08@wanadoo.fr'];
 
+    private static function email_scalar_title($v, $fallback) {
+        if (is_scalar($v) && (string) $v !== '') {
+            return (string) $v;
+        }
+        return $fallback;
+    }
+
     public static function dispatch($order_id) {
         $order = wc_get_order($order_id);
         if (!$order) return;
@@ -20,8 +27,16 @@ class VS08S_Emails {
             error_log('[VS08S Emails] Contract crash: ' . $e->getMessage());
         }
 
-        self::send_admin($order_id, $data, $contract_html);
-        self::send_client($order_id, $data, $contract_html);
+        try {
+            self::send_admin($order_id, $data, $contract_html);
+        } catch (\Throwable $e) {
+            error_log('[VS08S Emails] send_admin CRASH: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+        }
+        try {
+            self::send_client($order_id, $data, $contract_html);
+        } catch (\Throwable $e) {
+            error_log('[VS08S Emails] send_client CRASH: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+        }
 
         $order->update_meta_data('_vs08s_emails_sent', current_time('mysql'));
         $order->save();
@@ -32,7 +47,7 @@ class VS08S_Emails {
         $fact = $data['facturation'] ?? [];
         $params = $data['params'] ?? [];
         $devis = $data['devis'] ?? [];
-        $titre = $data['sejour_titre'] ?? 'Séjour';
+        $titre = self::email_scalar_title($data['sejour_titre'] ?? null, 'Séjour');
         $client = trim(($fact['prenom'] ?? '') . ' ' . strtoupper($fact['nom'] ?? ''));
         $total = floatval($data['total'] ?? 0);
         $acompte = floatval($data['acompte'] ?? 0);
@@ -89,7 +104,12 @@ class VS08S_Emails {
         }
 
         foreach (self::ADMIN_RECIPIENTS as $to) {
-            $ok = wp_mail($to, $subject, $body, $headers, $attachments);
+            try {
+                $ok = wp_mail($to, $subject, $body, $headers, $attachments);
+            } catch (\Throwable $e) {
+                error_log('[VS08S Emails] wp_mail admin exception: ' . $e->getMessage());
+                $ok = false;
+            }
             error_log('[VS08S Emails] Admin to ' . $to . ' => ' . ($ok ? 'OK' : 'FAIL'));
         }
 
@@ -101,7 +121,7 @@ class VS08S_Emails {
         $email = $fact['email'] ?? '';
         if (empty($email) || !is_email($email)) return;
 
-        $titre = $data['sejour_titre'] ?? 'Séjour';
+        $titre = self::email_scalar_title($data['sejour_titre'] ?? null, 'Séjour');
         $prenom = $fact['prenom'] ?? 'Cher voyageur';
         $total = number_format(floatval($data['total'] ?? 0), 2, ',', ' ');
         $params = $data['params'] ?? [];
@@ -126,7 +146,12 @@ class VS08S_Emails {
 
         $body = self::wrapper($subject, $html);
         $headers = ['Content-Type: text/html; charset=UTF-8', 'From: Voyages Sortir 08 <noreply@sortirmonde.fr>'];
-        $ok = wp_mail($email, $subject, $body, $headers);
+        try {
+            $ok = wp_mail($email, $subject, $body, $headers);
+        } catch (\Throwable $e) {
+            error_log('[VS08S Emails] wp_mail client exception: ' . $e->getMessage());
+            $ok = false;
+        }
         error_log('[VS08S Emails] Client to ' . $email . ' => ' . ($ok ? 'OK' : 'FAIL'));
     }
 

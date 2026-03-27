@@ -8,6 +8,13 @@ class VS08C_Emails {
         'sortir08@wanadoo.fr',
     ];
 
+    private static function email_scalar_title($v, $fallback) {
+        if (is_scalar($v) && (string) $v !== '') {
+            return (string) $v;
+        }
+        return $fallback;
+    }
+
     public static function dispatch($order_id) {
         $order = wc_get_order($order_id);
         if (!$order) return;
@@ -24,8 +31,16 @@ class VS08C_Emails {
 
         $contract_html = VS08C_Contract::generate($order_id);
 
-        self::send_admin($order_id, $order, $data, $contract_html ?: '');
-        self::send_client($order_id, $order, $data, $contract_html ?: '');
+        try {
+            self::send_admin($order_id, $order, $data, $contract_html ?: '');
+        } catch (\Throwable $e) {
+            error_log('[VS08C Emails] send_admin CRASH: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+        }
+        try {
+            self::send_client($order_id, $order, $data, $contract_html ?: '');
+        } catch (\Throwable $e) {
+            error_log('[VS08C Emails] send_client CRASH: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+        }
 
         // Flag posé APRÈS l'envoi
         $order->update_meta_data('_vs08c_emails_sent', current_time('mysql'));
@@ -37,7 +52,7 @@ class VS08C_Emails {
         $fact   = $data['facturation'] ?? [];
         $params = $data['params'] ?? [];
         $devis  = $data['devis'] ?? [];
-        $titre  = $data['circuit_titre'] ?? 'Circuit';
+        $titre  = self::email_scalar_title($data['circuit_titre'] ?? null, 'Circuit');
         $client = trim(($fact['prenom'] ?? '') . ' ' . strtoupper($fact['nom'] ?? ''));
         $total  = number_format(floatval($data['total'] ?? 0), 2, ',', ' ');
         $nb     = intval($devis['nb_total'] ?? 1);
@@ -73,7 +88,7 @@ class VS08C_Emails {
         $email = $fact['email'] ?? '';
         if (!$email || !is_email($email)) return;
 
-        $titre   = $data['circuit_titre'] ?? 'Circuit';
+        $titre   = self::email_scalar_title($data['circuit_titre'] ?? null, 'Circuit');
         $prenom  = $fact['prenom'] ?? 'Cher voyageur';
         $params  = $data['params'] ?? [];
         $devis   = $data['devis'] ?? [];
@@ -169,7 +184,12 @@ class VS08C_Emails {
         $host = function_exists('home_url') ? (string) wp_parse_url(home_url(), PHP_URL_HOST) : 'localhost';
         $host = preg_replace('/^www\./', '', $host) ?: 'localhost';
         $headers = ['Content-Type: text/html; charset=UTF-8', 'From: Voyages Sortir 08 <noreply@' . $host . '>'];
-        $result = wp_mail($to, $subject, $html, $headers);
+        try {
+            $result = wp_mail($to, $subject, $html, $headers);
+        } catch (\Throwable $e) {
+            error_log('[VS08C Emails] wp_mail exception: ' . $e->getMessage());
+            $result = false;
+        }
         $dest = is_array($to) ? implode(', ', $to) : $to;
         error_log('[VS08C Emails] wp_mail to ' . $dest . ' => ' . ($result ? 'OK' : 'FAIL') . ' — ' . $subject);
     }

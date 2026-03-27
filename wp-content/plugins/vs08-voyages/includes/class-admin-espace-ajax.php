@@ -52,6 +52,11 @@ class VS08V_Admin_Espace_Ajax {
         if (!empty($data) && is_array($data)) {
             return $data;
         }
+        $data = $order->get_meta('_vs08s_booking_data');
+        if (!empty($data) && is_array($data)) {
+            $data['type'] = 'sejour';
+            return $data;
+        }
         if (class_exists('VS08V_Traveler_Space')) {
             $data = VS08V_Traveler_Space::get_booking_data_from_order($order, true);
             if (!empty($data) && is_array($data)) {
@@ -68,11 +73,18 @@ class VS08V_Admin_Espace_Ajax {
         }
 
         $is_circuit = isset($data['type']) && $data['type'] === 'circuit';
+        $is_sejour = isset($data['type']) && $data['type'] === 'sejour';
         $params = is_array($data['params'] ?? null) ? $data['params'] : [];
         $fact = is_array($data['facturation'] ?? null) ? $data['facturation'] : [];
         $devis = is_array($data['devis'] ?? null) ? $data['devis'] : [];
-        $titre_raw = $is_circuit ? ($data['circuit_titre'] ?? 'Circuit') : ($data['voyage_titre'] ?? 'Séjour golf');
-        $titre = (is_scalar($titre_raw) && $titre_raw !== '') ? (string) $titre_raw : ($is_circuit ? 'Circuit' : 'Séjour golf');
+        if ($is_circuit) {
+            $titre_raw = $data['circuit_titre'] ?? 'Circuit';
+        } elseif ($is_sejour) {
+            $titre_raw = $data['sejour_titre'] ?? 'Séjour';
+        } else {
+            $titre_raw = $data['voyage_titre'] ?? 'Séjour golf';
+        }
+        $titre = (is_scalar($titre_raw) && $titre_raw !== '') ? (string) $titre_raw : ($is_circuit ? 'Circuit' : ($is_sejour ? 'Séjour' : 'Séjour golf'));
         $email = !empty($fact['email']) ? sanitize_email((string) $fact['email']) : sanitize_email((string) $order->get_billing_email());
         if (!$email || !is_email($email)) {
             return ['success' => false, 'error' => 'Email client introuvable ou invalide.'];
@@ -115,7 +127,7 @@ class VS08V_Admin_Espace_Ajax {
             . '<h2 style="color:#1a3a3a;margin:0 0 16px">Ré-envoi simple déclenché depuis l’espace admin</h2>'
             . '<table style="width:100%;border-collapse:collapse;margin:18px 0;font-size:14px">'
             . '<tr><td style="padding:10px;border:1px solid #e5e7eb;background:#f9f6f0;font-weight:600;width:180px">Dossier</td><td style="padding:10px;border:1px solid #e5e7eb">VS08-' . $order->get_id() . '</td></tr>'
-            . '<tr><td style="padding:10px;border:1px solid #e5e7eb;background:#f9f6f0;font-weight:600">Type</td><td style="padding:10px;border:1px solid #e5e7eb">' . ($is_circuit ? 'Circuit' : 'Golf') . '</td></tr>'
+            . '<tr><td style="padding:10px;border:1px solid #e5e7eb;background:#f9f6f0;font-weight:600">Type</td><td style="padding:10px;border:1px solid #e5e7eb">' . ($is_circuit ? 'Circuit' : ($is_sejour ? 'Séjour' : 'Golf')) . '</td></tr>'
             . '<tr><td style="padding:10px;border:1px solid #e5e7eb;background:#f9f6f0;font-weight:600">Client</td><td style="padding:10px;border:1px solid #e5e7eb">' . esc_html($client) . '</td></tr>'
             . '<tr><td style="padding:10px;border:1px solid #e5e7eb;background:#f9f6f0;font-weight:600">Email</td><td style="padding:10px;border:1px solid #e5e7eb">' . esc_html($email) . '</td></tr>'
             . '<tr><td style="padding:10px;border:1px solid #e5e7eb;background:#f9f6f0;font-weight:600">Voyage</td><td style="padding:10px;border:1px solid #e5e7eb">' . esc_html($titre) . '</td></tr>'
@@ -123,8 +135,18 @@ class VS08V_Admin_Espace_Ajax {
             . '<p><a href="' . esc_url(home_url('/espace-admin/dossier/' . $order->get_id() . '/')) . '" style="display:inline-block;padding:12px 28px;background:#2a7f7f;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">Voir le dossier admin</a></p>'
             . '</div></div></body></html>';
 
-        $client_sent = wp_mail($email, $subject_client, $body_client, $headers);
-        $admins_sent = wp_mail(['sortir08.ag@wanadoo.fr', 'sortir08@wanadoo.fr'], $subject_admin, $body_admin, $headers);
+        $client_sent = false;
+        $admins_sent = false;
+        try {
+            $client_sent = wp_mail($email, $subject_client, $body_client, $headers);
+        } catch (\Throwable $e) {
+            error_log('[VS08 Resend Fallback] wp_mail client exception: ' . $e->getMessage());
+        }
+        try {
+            $admins_sent = wp_mail(['sortir08.ag@wanadoo.fr', 'sortir08@wanadoo.fr'], $subject_admin, $body_admin, $headers);
+        } catch (\Throwable $e) {
+            error_log('[VS08 Resend Fallback] wp_mail admins exception: ' . $e->getMessage());
+        }
 
         error_log('[VS08 Resend Fallback] client=' . ($client_sent ? 'OK' : 'FAIL') . ' admins=' . ($admins_sent ? 'OK' : 'FAIL') . ' order=' . $order->get_id());
 
@@ -211,6 +233,12 @@ class VS08V_Admin_Espace_Ajax {
             $data = $order->get_meta('_vs08c_booking_data');
         }
         if (empty($data) || !is_array($data)) {
+            $data = $order->get_meta('_vs08s_booking_data');
+        }
+        if ((empty($data) || !is_array($data)) && class_exists('VS08V_Traveler_Space')) {
+            $data = VS08V_Traveler_Space::get_booking_data_from_order($order, true);
+        }
+        if (empty($data) || !is_array($data)) {
             wp_send_json_error('Pas de données de réservation.');
         }
 
@@ -221,8 +249,15 @@ class VS08V_Admin_Espace_Ajax {
         }
 
         $is_circuit = isset($data['type']) && $data['type'] === 'circuit';
-        $titre_raw = $is_circuit ? ($data['circuit_titre'] ?? 'Circuit') : ($data['voyage_titre'] ?? 'Séjour golf');
-        $titre = (is_scalar($titre_raw) && $titre_raw !== '') ? (string) $titre_raw : ($is_circuit ? 'Circuit' : 'Séjour golf');
+        $is_sejour = isset($data['type']) && $data['type'] === 'sejour';
+        if ($is_circuit) {
+            $titre_raw = $data['circuit_titre'] ?? 'Circuit';
+        } elseif ($is_sejour) {
+            $titre_raw = $data['sejour_titre'] ?? 'Séjour';
+        } else {
+            $titre_raw = $data['voyage_titre'] ?? 'Séjour golf';
+        }
+        $titre = (is_scalar($titre_raw) && $titre_raw !== '') ? (string) $titre_raw : ($is_circuit ? 'Circuit' : ($is_sejour ? 'Séjour' : 'Séjour golf'));
 
         $body = '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:20px">'
             . '<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">'
@@ -237,7 +272,12 @@ class VS08V_Admin_Espace_Ajax {
         $headers = ['Content-Type: text/html; charset=UTF-8', self::safe_from_header()];
 
         error_log('[VS08 Reminder] Tentative d\'envoi à ' . $email . ' pour VS08-' . $order_id);
-        $sent = wp_mail($email, 'Rappel : solde à régler — ' . $titre, $body, $headers);
+        $sent = false;
+        try {
+            $sent = wp_mail($email, 'Rappel : solde à régler — ' . $titre, $body, $headers);
+        } catch (\Throwable $e) {
+            error_log('[VS08 Reminder] wp_mail exception: ' . $e->getMessage());
+        }
         error_log('[VS08 Reminder] to ' . $email . ' => ' . ($sent ? 'OK' : 'FAIL'));
 
         if ($sent) {
@@ -349,6 +389,7 @@ class VS08V_Admin_Espace_Ajax {
 
         $order->delete_meta_data('_vs08v_emails_sent');
         $order->delete_meta_data('_vs08c_emails_sent');
+        $order->delete_meta_data('_vs08s_emails_sent');
         $order->save();
 
         $sent = false;
@@ -388,6 +429,23 @@ class VS08V_Admin_Espace_Ajax {
             } catch (\Throwable $e) {
                 $errors[] = 'Circuit: ' . $e->getMessage();
                 error_log('[VS08 Resend] Circuit: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+            }
+        }
+
+        if (class_exists('VS08S_Emails')) {
+            error_log('[VS08 Resend] Tentative VS08S_Emails::dispatch(' . $order_id . ')');
+            try {
+                VS08S_Emails::dispatch($order_id);
+                $order_check = wc_get_order($order_id);
+                if ($order_check && $order_check->get_meta('_vs08s_emails_sent')) {
+                    $sent = true;
+                    error_log('[VS08 Resend] Séjour OK');
+                } else {
+                    error_log('[VS08 Resend] Séjour: dispatch terminé sans flag');
+                }
+            } catch (\Throwable $e) {
+                $errors[] = 'Séjour: ' . $e->getMessage();
+                error_log('[VS08 Resend] Séjour: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
             }
         }
 

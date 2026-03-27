@@ -8,6 +8,14 @@ class VS08V_Emails {
         'sortir08@wanadoo.fr',
     ];
 
+    /** Titre / chaîne pour email (évite TypeError sprintf si meta corrompue). */
+    private static function email_scalar_title($v, $fallback) {
+        if (is_scalar($v) && (string) $v !== '') {
+            return (string) $v;
+        }
+        return $fallback;
+    }
+
     /**
      * Point d'entrée : envoie les emails admin + client pour une commande.
      * Ne s'exécute qu'une fois par commande (flag _vs08v_emails_sent).
@@ -47,8 +55,16 @@ class VS08V_Emails {
             $contract_html = '';
         }
 
-        self::send_admin_notification($order_id, $order, $data, $contract_html ?: '');
-        self::send_client_confirmation($order_id, $order, $data, $contract_html ?: '');
+        try {
+            self::send_admin_notification($order_id, $order, $data, $contract_html ?: '');
+        } catch (\Throwable $e) {
+            error_log('[VS08 Emails] send_admin_notification CRASH: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+        }
+        try {
+            self::send_client_confirmation($order_id, $order, $data, $contract_html ?: '');
+        } catch (\Throwable $e) {
+            error_log('[VS08 Emails] send_client_confirmation CRASH: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+        }
 
         // Flag posé APRÈS l'envoi
         $order->update_meta_data('_vs08v_emails_sent', current_time('mysql'));
@@ -65,7 +81,7 @@ class VS08V_Emails {
         $devis      = $data['devis'] ?? [];
         $voyageurs  = $data['voyageurs'] ?? [];
         $options    = $data['options'] ?? [];
-        $titre      = $data['voyage_titre'] ?? 'Séjour golf';
+        $titre      = self::email_scalar_title($data['voyage_titre'] ?? null, 'Séjour golf');
         $client     = trim(($fact['prenom'] ?? '') . ' ' . strtoupper($fact['nom'] ?? ''));
         $nb         = intval($devis['nb_total'] ?? 1);
         $total      = floatval($data['total'] ?? 0);
@@ -216,7 +232,12 @@ class VS08V_Emails {
 
         // Envoyer séparément à chaque admin
         foreach (self::ADMIN_RECIPIENTS as $admin_email) {
-            $result = wp_mail($admin_email, $subject, $body, $headers, $attachments);
+            try {
+                $result = wp_mail($admin_email, $subject, $body, $headers, $attachments);
+            } catch (\Throwable $e) {
+                error_log('[VS08 Emails] wp_mail admin exception: ' . $e->getMessage());
+                $result = false;
+            }
             error_log('[VS08 Emails] Admin notification to ' . $admin_email . ' => ' . ($result ? 'OK' : 'FAIL'));
         }
 
@@ -234,7 +255,7 @@ class VS08V_Emails {
         $email = $fact['email'] ?? '';
         if (empty($email) || !is_email($email)) return;
 
-        $titre  = $data['voyage_titre'] ?? 'Séjour golf';
+        $titre  = self::email_scalar_title($data['voyage_titre'] ?? null, 'Séjour golf');
         $prenom = $fact['prenom'] ?? 'Cher voyageur';
         $params = $data['params'] ?? [];
         $total  = number_format(floatval($data['total'] ?? 0), 2, ',', ' ');
@@ -251,7 +272,7 @@ class VS08V_Emails {
             . '<p style="font-size:16px;color:#555;margin:0 0 24px;">Votre réservation a bien été enregistrée. Vous trouverez ci-dessous votre contrat de vente.</p>'
             . '<table cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;background:#edf8f8;border-radius:8px;">'
             . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Voyage</td><td style="padding:12px 16px;">' . esc_html($titre) . '</td></tr>'
-            . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Date de départ</td><td style="padding:12px 16px;">' . esc_html($params['date_depart'] ? date('d/m/Y', strtotime($params['date_depart'])) : '') . '</td></tr>'
+            . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Date de départ</td><td style="padding:12px 16px;">' . esc_html(!empty($params['date_depart']) ? date('d/m/Y', strtotime((string) $params['date_depart'])) : '') . '</td></tr>'
             . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">N° contrat</td><td style="padding:12px 16px;">VS08-' . $order_id . '</td></tr>'
             . '<tr style="font-weight:bold;font-size:16px;"><td style="padding:12px 16px;color:#1a3a3a;">Total</td><td style="padding:12px 16px;color:#e8724a;">' . $total . ' &euro;</td></tr>'
             . '</table>'
@@ -318,7 +339,12 @@ class VS08V_Emails {
             'Content-Type: text/html; charset=UTF-8',
             'From: Voyages Sortir 08 <noreply@sortirmonde.fr>',
         ];
-        $result = wp_mail($recipients, $subject, $html_body, $headers);
+        try {
+            $result = wp_mail($recipients, $subject, $html_body, $headers);
+        } catch (\Throwable $e) {
+            error_log('[VS08 Emails] wp_mail exception: ' . $e->getMessage());
+            $result = false;
+        }
         $to = is_array($recipients) ? implode(', ', $recipients) : $recipients;
         error_log('[VS08 Emails] wp_mail to ' . $to . ' => ' . ($result ? 'OK' : 'FAIL') . ' — ' . $subject);
     }
