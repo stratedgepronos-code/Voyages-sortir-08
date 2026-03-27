@@ -1,0 +1,6 @@
+; ── VS08 Séjours — Configuration API Bedsonline / Hotelbeds ──
+; Obtenez vos clés sur : https://developer.hotelbeds.com/
+;
+beds_api_key = ""
+beds_api_secret = ""
+beds_sandbox = 1

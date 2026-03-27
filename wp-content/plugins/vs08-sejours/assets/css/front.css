@@ -1,0 +1,119 @@
+/* ═══════════════════════════════════════════════════════════════
+   VS08 Séjours — Front CSS
+   Même design system que Golf & Circuits (sv-* prefix réutilisé)
+═══════════════════════════════════════════════════════════════ */
+
+:root {
+    --sj-teal: #59b7b7;
+    --sj-dark: #0f2424;
+    --sj-cream: #f9f6f0;
+    --sj-coral: #e8724a;
+    --sj-gold: #c8a45e;
+    --sj-font: 'Outfit', sans-serif;
+    --sj-serif: 'Playfair Display', serif;
+}
+
+/* ── Hero ── */
+.sj-hero { position:relative; height:78vh; min-height:560px; display:flex; align-items:flex-end; background-size:cover; background-position:center; background-color:#1a1a1a; }
+.sj-hero-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(10,28,28,.96) 0%, rgba(10,28,28,.2) 60%, transparent 100%); }
+.sj-hero-content { position:relative; z-index:2; width:100%; padding:0 80px 56px; display:flex; flex-direction:column; align-items:flex-start; }
+.sj-hero-dest { display:inline-flex; align-items:center; gap:8px; background:rgba(89,183,183,.18); border:1px solid rgba(89,183,183,.4); color:#7ecece; padding:5px 14px; border-radius:100px; font-size:12px; font-weight:700; font-family:var(--sj-font); margin-bottom:14px; }
+.sj-hero h1 { font-size:clamp(28px,4.5vw,58px); color:#fff; font-family:var(--sj-serif); line-height:1.1; margin:0 0 16px; max-width:700px; }
+.sj-hero-meta { display:flex; gap:8px; flex-wrap:wrap; }
+.sj-meta-chip { display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.15); padding:5px 12px; border-radius:100px; font-size:12px; font-weight:600; color:#fff; font-family:var(--sj-font); }
+
+/* ── Page layout ── */
+.sj-page { background:var(--sj-cream); padding:40px 0 60px; }
+.sj-page-inner { max-width:1460px; margin:0 auto; padding:0 80px; display:grid; grid-template-columns:1fr 390px; gap:36px; align-items:start; }
+
+/* ── Cards ── */
+.sj-card { background:#fff; border-radius:16px; padding:32px; box-shadow:0 1px 8px rgba(0,0,0,.06); margin-bottom:20px; }
+.sj-section-title { font-size:20px; font-weight:700; color:var(--sj-dark); font-family:var(--sj-serif); margin:0 0 20px; display:flex; align-items:center; gap:10px; }
+
+/* ── Highlights ── */
+.sj-highlights { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:12px; }
+.sj-highlight { display:flex; align-items:flex-start; gap:10px; padding:14px; background:var(--sj-cream); border-radius:12px; }
+.sj-highlight-icon { font-size:20px; flex-shrink:0; }
+.sj-highlight-text { font-size:13px; font-weight:600; color:var(--sj-dark); font-family:var(--sj-font); line-height:1.4; }
+
+/* ── Galerie ── */
+.sj-gallery { display:grid; grid-template-columns:2fr 1fr; grid-template-rows:220px 220px; gap:8px; border-radius:18px; overflow:hidden; margin-bottom:28px; }
+.sj-gal-item { overflow:hidden; cursor:pointer; position:relative; }
+.sj-gal-item img { width:100%; height:100%; object-fit:cover; transition:transform .5s; }
+.sj-gal-item:hover img { transform:scale(1.06); }
+.sj-gal-item:first-child { grid-row:span 2; }
+
+/* ── Inclus / Non-inclus ── */
+.sj-inclus-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+.sj-inclus-box { padding:24px; border-radius:14px; }
+.sj-inclus-box.yes { background:#ecfdf5; border:1px solid rgba(89,183,183,.2); }
+.sj-inclus-box.no { background:#fef2f2; border:1px solid rgba(220,38,38,.1); }
+.sj-inclus-box h3 { font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin:0 0 12px; font-family:var(--sj-font); }
+.sj-inclus-box.yes h3 { color:var(--sj-teal); }
+.sj-inclus-box.no h3 { color:#dc2626; }
+.sj-inclus-box ul { margin:0; padding:0; list-style:none; }
+.sj-inclus-box li { padding:6px 0; font-size:14px; color:#374151; padding-left:20px; position:relative; font-family:var(--sj-font); }
+.sj-inclus-box.yes li::before { content:'✓'; position:absolute; left:0; color:var(--sj-teal); font-weight:bold; }
+.sj-inclus-box.no li::before { content:'✗'; position:absolute; left:0; color:#dc2626; font-weight:bold; }
+
+/* ── Calc card (sidebar droite) ── */
+.sj-calc-col { position:sticky; top:100px; }
+.sj-calc-card { background:#fff; border-radius:22px; padding:28px; box-shadow:0 8px 40px rgba(0,0,0,.1); }
+.sj-calc-title { font-size:20px; font-weight:700; color:var(--sj-dark); font-family:var(--sj-serif); margin-bottom:4px; }
+.sj-calc-sub { font-size:12px; color:#6b7280; font-family:var(--sj-font); margin-bottom:18px; }
+.sj-field { margin-bottom:14px; }
+.sj-field label { display:block; font-size:10px; font-weight:700; color:#1a3a3a; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; font-family:var(--sj-font); }
+.sj-field select, .sj-field input { width:100%; border:1.5px solid #e5e7eb; border-radius:10px; padding:10px 12px; font-size:13px; font-family:var(--sj-font); color:var(--sj-dark); background:#fafafa; }
+.sj-field select:focus, .sj-field input:focus { border-color:var(--sj-teal); outline:none; }
+.sj-field-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+/* ── Price result ── */
+.sj-price-result { background:var(--sj-cream); border-radius:14px; padding:18px; margin:16px 0; display:none; }
+.sj-price-line { display:flex; justify-content:space-between; padding:4px 0; font-size:12px; font-family:var(--sj-font); color:#4a5568; border-bottom:1px solid #ede9e0; }
+.sj-price-line:last-child { border-bottom:none; }
+.sj-price-total { display:flex; justify-content:space-between; padding:12px 0 0; border-top:2px solid var(--sj-teal); margin-top:8px; }
+.sj-price-total-lbl { font-size:13px; font-weight:700; color:var(--sj-dark); font-family:var(--sj-font); }
+.sj-price-total-val { font-size:28px; font-weight:800; color:var(--sj-teal); font-family:var(--sj-font); }
+.sj-price-per { font-size:11px; color:#6b7280; font-family:var(--sj-font); text-align:right; margin-top:2px; }
+
+/* ── CTA ── */
+.sj-btn-book { display:block; width:100%; padding:16px; background:var(--sj-coral); color:#fff; border:none; border-radius:14px; font-size:17px; font-weight:700; font-family:var(--sj-font); cursor:pointer; text-align:center; text-decoration:none; margin-top:16px; transition:all .3s; }
+.sj-btn-book:hover { background:#d4603c; transform:translateY(-2px); box-shadow:0 8px 24px rgba(232,114,74,.3); }
+.sj-btn-book:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+/* ── Hotel loading ── */
+.sj-hotel-loading { display:none; align-items:center; gap:10px; padding:14px; font-size:13px; color:#6b7280; font-family:var(--sj-font); }
+.sj-hotel-loading.active { display:flex; }
+.sj-hotel-spinner { width:18px; height:18px; border:2.5px solid #e5e7eb; border-top-color:var(--sj-teal); border-radius:50%; animation:sj-spin .7s linear infinite; }
+@keyframes sj-spin { to { transform:rotate(360deg); } }
+
+/* ── Hotel result ── */
+.sj-hotel-result { display:none; background:#ecfdf5; border:1px solid rgba(89,183,183,.2); border-radius:12px; padding:14px; margin-bottom:14px; }
+.sj-hotel-result.active { display:block; }
+.sj-hotel-result-name { font-size:14px; font-weight:700; color:var(--sj-dark); font-family:var(--sj-font); }
+.sj-hotel-result-board { font-size:12px; color:var(--sj-teal); font-weight:600; font-family:var(--sj-font); }
+.sj-hotel-result-price { font-size:18px; font-weight:800; color:var(--sj-teal); font-family:var(--sj-font); margin-top:6px; }
+
+/* ── Responsive ── */
+@media (max-width:1100px) {
+    .sj-page-inner { grid-template-columns:1fr; padding:0 24px; }
+    .sj-calc-col { position:static; }
+    .sj-hero-content { padding:0 24px 40px; }
+}
+@media (max-width:768px) {
+    .sj-page-inner { padding:0 16px; }
+    .sj-hero-content { padding:0 20px 32px; }
+    .sj-highlights { grid-template-columns:1fr 1fr; }
+    .sj-inclus-grid { grid-template-columns:1fr; }
+    .sj-gallery { grid-template-columns:1fr; grid-template-rows:200px; }
+    .sj-gal-item:first-child { grid-row:span 1; }
+    .sj-gal-item:nth-child(n+2) { display:none; }
+    .sj-gal-item:nth-child(2) { display:block; }
+}
+@media (max-width:480px) {
+    .sj-hero { height:50vh; min-height:360px; }
+    .sj-hero h1 { font-size:24px; }
+    .sj-highlights { grid-template-columns:1fr; }
+    .sj-card { padding:20px; border-radius:14px; }
+    .sj-field-row { grid-template-columns:1fr; }
+}
