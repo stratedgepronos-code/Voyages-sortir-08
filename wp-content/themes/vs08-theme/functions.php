@@ -1517,42 +1517,52 @@ add_action('wp_ajax_vs08_admin_mark_paid', function() {
 
 // ── Envoyer rappel solde manuellement ──
 add_action('wp_ajax_vs08_admin_send_reminder', function() {
-    check_ajax_referer('vs08_admin_actions', 'nonce');
-    if (!current_user_can('manage_options')) wp_send_json_error('Non autorisé.');
-    $order_id = intval($_POST['order_id'] ?? 0);
-    $order = wc_get_order($order_id);
-    if (!$order) wp_send_json_error('Commande introuvable.');
-    $data = VS08V_Traveler_Space::get_booking_data_from_order($order, true);
-    if (!$data) wp_send_json_error('Pas de données.');
-    $si = VS08V_Traveler_Space::get_solde_info($order_id);
-    if (!$si || !$si['solde_due'] || $si['solde'] <= 0) wp_send_json_error('Pas de solde dû.');
-    $customer_id = $order->get_customer_id();
-    $user = $customer_id ? get_userdata($customer_id) : null;
-    $email = $user ? $user->user_email : $order->get_billing_email();
-    if (!$email) wp_send_json_error('Pas d\'email client.');
-    $is_circuit = isset($data['type']) && $data['type'] === 'circuit';
-    $titre = $is_circuit ? ($data['circuit_titre'] ?? 'Circuit') : ($data['voyage_titre'] ?? 'Séjour golf');
-    $solde_fmt = number_format($si['solde'], 2, ',', ' ');
-    $solde_date = $si['solde_date'] ?? '';
-    $body = '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:20px">'
-        . '<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">'
-        . '<div style="background:#1a3a3a;padding:24px;text-align:center;color:#fff;font-family:Georgia,serif;font-size:20px">Voyages Sortir 08</div>'
-        . '<div style="padding:28px 32px">'
-        . '<h2 style="color:#1a3a3a;margin:0 0 16px">Rappel : solde à régler</h2>'
-        . '<p style="font-size:15px;color:#333;line-height:1.6">Bonjour,</p>'
-        . '<p style="font-size:15px;color:#333;line-height:1.6">Pour votre voyage <strong>' . esc_html($titre) . '</strong>, il reste un solde de <strong>' . $solde_fmt . ' €</strong> à régler'
-        . ($solde_date ? ' avant le <strong>' . esc_html($solde_date) . '</strong>' : '') . '.</p>'
-        . '<p style="margin-top:20px"><a href="' . esc_url(VS08V_Traveler_Space::base_url()) . '" style="display:inline-block;padding:12px 28px;background:#2a7f7f;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">Accéder à mon espace voyageur</a></p>'
-        . '<p style="margin-top:16px;font-size:12px;color:#999">Dossier VS08-' . $order_id . '</p>'
-        . '</div></div></body></html>';
-    $headers = ['Content-Type: text/html; charset=UTF-8', 'From: Voyages Sortir 08 <noreply@sortirmonde.fr>'];
-    $sent = wp_mail($email, 'Rappel : solde à régler — ' . $titre, $body, $headers);
-    if ($sent) {
-        $order->update_meta_data('_vs08_manual_reminder_' . date('Ymd'), current_time('mysql'));
-        $order->save();
-        wp_send_json_success('Rappel envoyé à ' . $email);
-    } else {
-        wp_send_json_error('Erreur d\'envoi.');
+    try {
+        check_ajax_referer('vs08_admin_actions', 'nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error('Non autorisé.');
+        $order_id = intval($_POST['order_id'] ?? 0);
+        $order = wc_get_order($order_id);
+        if (!$order) wp_send_json_error('Commande introuvable.');
+        $data = VS08V_Traveler_Space::get_booking_data_from_order($order, true);
+        if (!$data) wp_send_json_error('Pas de données de réservation.');
+        $si = VS08V_Traveler_Space::get_solde_info($order_id);
+        if (!$si || !$si['solde_due'] || $si['solde'] <= 0) wp_send_json_error('Pas de solde dû sur ce dossier.');
+        $customer_id = $order->get_customer_id();
+        $user = $customer_id ? get_userdata($customer_id) : null;
+        $email = $user ? $user->user_email : ($order->get_billing_email() ?: '');
+        if (!$email) {
+            $fact = $data['facturation'] ?? [];
+            $email = $fact['email'] ?? '';
+        }
+        if (!$email) wp_send_json_error('Pas d\'email client trouvé.');
+        $is_circuit = isset($data['type']) && $data['type'] === 'circuit';
+        $titre = $is_circuit ? ($data['circuit_titre'] ?? 'Circuit') : ($data['voyage_titre'] ?? 'Séjour golf');
+        $solde_fmt = number_format($si['solde'], 2, ',', ' ');
+        $solde_date = $si['solde_date'] ?? '';
+        $body = '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:20px">'
+            . '<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">'
+            . '<div style="background:#1a3a3a;padding:24px;text-align:center;color:#fff;font-family:Georgia,serif;font-size:20px">Voyages Sortir 08</div>'
+            . '<div style="padding:28px 32px">'
+            . '<h2 style="color:#1a3a3a;margin:0 0 16px">Rappel : solde à régler</h2>'
+            . '<p style="font-size:15px;color:#333;line-height:1.6">Bonjour,</p>'
+            . '<p style="font-size:15px;color:#333;line-height:1.6">Pour votre voyage <strong>' . esc_html($titre) . '</strong>, il reste un solde de <strong>' . $solde_fmt . ' €</strong> à régler'
+            . ($solde_date ? ' avant le <strong>' . esc_html($solde_date) . '</strong>' : '') . '.</p>'
+            . '<p style="margin-top:20px"><a href="' . esc_url(home_url('/espace-voyageur/')) . '" style="display:inline-block;padding:12px 28px;background:#2a7f7f;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">Accéder à mon espace voyageur</a></p>'
+            . '<p style="margin-top:16px;font-size:12px;color:#999">Dossier VS08-' . $order_id . '</p>'
+            . '</div></div></body></html>';
+        $headers = ['Content-Type: text/html; charset=UTF-8', 'From: Voyages Sortir 08 <noreply@sortirmonde.fr>'];
+        $sent = wp_mail($email, 'Rappel : solde à régler — ' . $titre, $body, $headers);
+        error_log('[VS08 Reminder] wp_mail to ' . $email . ' => ' . ($sent ? 'OK' : 'FAIL'));
+        if ($sent) {
+            $order->update_meta_data('_vs08_manual_reminder_' . date('Ymd'), current_time('mysql'));
+            $order->save();
+            wp_send_json_success('Rappel envoyé à ' . $email);
+        } else {
+            wp_send_json_error('Erreur d\'envoi email.');
+        }
+    } catch (\Throwable $e) {
+        error_log('[VS08 Reminder CRASH] ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+        wp_send_json_error('Erreur: ' . $e->getMessage());
     }
 });
 
@@ -1621,17 +1631,17 @@ add_action('wp_ajax_vs08_admin_resend_emails', function() {
     // Tenter golf
     try {
         if (class_exists('VS08V_Emails')) VS08V_Emails::dispatch($order_id);
-    } catch (Exception $e) {
+    } catch (\Throwable $e) {
         $errors[] = 'Golf: ' . $e->getMessage();
-        error_log('[VS08 Resend] Golf error: ' . $e->getMessage());
+        error_log('[VS08 Resend] Golf error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
     }
 
     // Tenter circuit
     try {
         if (class_exists('VS08C_Emails')) VS08C_Emails::dispatch($order_id);
-    } catch (Exception $e) {
+    } catch (\Throwable $e) {
         $errors[] = 'Circuit: ' . $e->getMessage();
-        error_log('[VS08 Resend] Circuit error: ' . $e->getMessage());
+        error_log('[VS08 Resend] Circuit error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
     }
 
     // Vérifier si ça a marché
