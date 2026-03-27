@@ -203,14 +203,16 @@ class VS08C_Calculator {
         $result['total']    = round($total, 2);
         $result['par_pers'] = $nb_total > 0 ? round($total / $nb_total, 2) : 0;
 
-        // Acompte
+        // Acompte — ne peut JAMAIS être inférieur au prix des vols + bagages
         $acompte_pct = floatval($m['acompte_pct'] ?? 30);
         $acompte     = ceil($total * $acompte_pct / 100);
 
-        // Règle : acompte ≥ prix des vols
+        // Plancher : vols + bagages
         $cout_vol_total = $prix_vol_final * $nb_total;
-        if ($cout_vol_total > 0 && $acompte < $cout_vol_total && $total > 0) {
-            $pct_reel    = ($cout_vol_total / $total) * 100;
+        $bagage_total   = floatval($m['prix_bagage'] ?? 0) * $nb_total;
+        $plancher_vol   = $cout_vol_total + $bagage_total;
+        if ($plancher_vol > 0 && $acompte < $plancher_vol && $total > 0) {
+            $pct_reel    = ($plancher_vol / $total) * 100;
             $acompte_pct = ceil($pct_reel / 5) * 5;
             $acompte     = ceil($total * $acompte_pct / 100);
         }

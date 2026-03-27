@@ -78,7 +78,13 @@ class VS08S_Calculator {
         $date_depart = $params['date_depart'] ?? '';
         $jours_avant = $date_depart ? max(0, (strtotime($date_depart) - time()) / 86400) : 999;
         $payer_tout = $jours_avant <= $delai_solde;
-        $acompte = $payer_tout ? $total : round($total * $acompte_pct / 100, 2);
+
+        // Acompte = max(30% du total, coût vols + bagages)
+        // L'agence doit couvrir au minimum les vols + bagages payés immédiatement
+        $plancher_vol = $vol_total + $supp_aero_total + $bag_soute_total + $bag_cabine_total;
+        $acompte_pct_val = round($total * $acompte_pct / 100, 2);
+        $acompte = $payer_tout ? $total : max($acompte_pct_val, $plancher_vol);
+        $acompte_pct_final = $total > 0 ? round($acompte / $total * 100, 1) : $acompte_pct;
 
         // ── Lignes de devis ──
         $lines = [];
@@ -96,6 +102,8 @@ class VS08S_Calculator {
             'total'       => round($total, 2),
             'acompte'     => round($acompte, 2),
             'acompte_pct' => $acompte_pct,
+            'acompte_pct_final' => $acompte_pct_final,
+            'acompte_plancher_vol' => $plancher_vol > $acompte_pct_val,
             'payer_tout'  => $payer_tout,
             'nb_total'    => $nb,
             'nb_chambres' => $nb_chambres,
