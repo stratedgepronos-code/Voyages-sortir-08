@@ -1160,3 +1160,160 @@ add_action('template_redirect', function() {
     $wpdb->update($wpdb->prefix . 'vs08_newsletter', ['active' => 0], ['token' => sanitize_text_field($_GET['token'])]);
     wp_die('<div style="max-width:500px;margin:80px auto;text-align:center;font-family:sans-serif"><h1>Désinscription confirmée</h1><p style="color:#666;margin-top:16px">Vous ne recevrez plus nos emails.</p><a href="' . esc_url(home_url('/')) . '" style="display:inline-block;margin-top:24px;padding:12px 28px;background:#59b7b7;color:#fff;border-radius:100px;text-decoration:none;font-weight:700">Retour au site</a></div>', 'Désinscription');
 });
+
+/* ============================================================
+   CARNET DE VOYAGE — Meta box admin sur les commandes WooCommerce
+   Permet d'uploader des fichiers (PDF, images) que le client
+   verra dans son espace membre sous "Carnet de voyage"
+============================================================ */
+add_action('add_meta_boxes', function() {
+    add_meta_box(
+        'vs08_carnet_voyage',
+        '📋 Carnet de voyage (documents client)',
+        'vs08_carnet_metabox_render',
+        'shop_order',
+        'normal',
+        'default'
+    );
+    // HPOS compat
+    if (class_exists('Automattic\WooCommerce\Utilities\OrderUtil') && Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_enabled()) {
+        add_meta_box('vs08_carnet_voyage', '📋 Carnet de voyage (documents client)', 'vs08_carnet_metabox_render', 'woocommerce_page_wc-orders', 'normal', 'default');
+    }
+});
+
+function vs08_carnet_metabox_render($post_or_order) {
+    $order_id = is_object($post_or_order) && method_exists($post_or_order, 'get_id') ? $post_or_order->get_id() : (is_object($post_or_order) ? $post_or_order->ID : 0);
+    if (!$order_id) return;
+    wp_nonce_field('vs08_carnet_save', 'vs08_carnet_nonce');
+    $files = get_post_meta($order_id, '_vs08_carnet_files', true);
+    if (!is_array($files)) $files = [];
+    ?>
+    <style>
+    .vs08-carnet-list{margin:0 0 12px;padding:0;list-style:none}
+    .vs08-carnet-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f9f9f9;border:1px solid #e5e5e5;border-radius:8px;margin-bottom:6px;font-size:13px}
+    .vs08-carnet-item a{color:#2a7f7f;font-weight:600;text-decoration:none;flex:1}
+    .vs08-carnet-item .vs08-carnet-date{color:#999;font-size:11px}
+    .vs08-carnet-item .vs08-carnet-del{color:#dc3545;cursor:pointer;font-size:16px;border:none;background:none;padding:0}
+    </style>
+    <ul class="vs08-carnet-list" id="vs08-carnet-list">
+    <?php foreach ($files as $i => $f): ?>
+        <li class="vs08-carnet-item">
+            <a href="<?php echo esc_url($f['url']); ?>" target="_blank"><?php echo esc_html($f['name']); ?></a>
+            <span class="vs08-carnet-date"><?php echo esc_html($f['date'] ?? ''); ?></span>
+            <button type="button" class="vs08-carnet-del" onclick="this.closest('li').remove()">✕</button>
+            <input type="hidden" name="vs08_carnet[<?php echo $i; ?>][url]" value="<?php echo esc_attr($f['url']); ?>">
+            <input type="hidden" name="vs08_carnet[<?php echo $i; ?>][name]" value="<?php echo esc_attr($f['name']); ?>">
+            <input type="hidden" name="vs08_carnet[<?php echo $i; ?>][date]" value="<?php echo esc_attr($f['date'] ?? ''); ?>">
+        </li>
+    <?php endforeach; ?>
+    </ul>
+    <button type="button" class="button" id="vs08-carnet-add" onclick="vs08CarnetAdd()">📎 Ajouter un document</button>
+    <p class="description" style="margin-top:8px">Uploadez les vouchers, billets d'avion, programme détaillé... Le client les verra dans "Carnet de voyage" de son espace membre.</p>
+    <script>
+    var vs08CarnetIdx = <?php echo count($files); ?>;
+    function vs08CarnetAdd() {
+        var frame = wp.media({title:'Choisir un document', button:{text:'Ajouter au carnet'}, multiple:true});
+        frame.on('select', function(){
+            frame.state().get('selection').each(function(att){
+                var a = att.toJSON();
+                var i = vs08CarnetIdx++;
+                var li = document.createElement('li');
+                li.className = 'vs08-carnet-item';
+                li.innerHTML = '<a href="'+a.url+'" target="_blank">'+a.filename+'</a>'
+                    + '<span class="vs08-carnet-date"><?php echo esc_js(current_time('Y-m-d')); ?></span>'
+                    + '<button type="button" class="vs08-carnet-del" onclick="this.closest(\'li\').remove()">✕</button>'
+                    + '<input type="hidden" name="vs08_carnet['+i+'][url]" value="'+a.url+'">'
+                    + '<input type="hidden" name="vs08_carnet['+i+'][name]" value="'+a.filename+'">'
+                    + '<input type="hidden" name="vs08_carnet['+i+'][date]" value="<?php echo esc_js(current_time('Y-m-d')); ?>">';
+                document.getElementById('vs08-carnet-list').appendChild(li);
+            });
+        });
+        frame.open();
+    }
+    </script>
+    <?php
+}
+
+add_action('save_post_shop_order', 'vs08_carnet_save', 20);
+add_action('woocommerce_process_shop_order_meta', 'vs08_carnet_save', 20);
+function vs08_carnet_save($order_id) {
+    if (!isset($_POST['vs08_carnet_nonce']) || !wp_verify_nonce($_POST['vs08_carnet_nonce'], 'vs08_carnet_save')) return;
+    $files = [];
+    if (!empty($_POST['vs08_carnet']) && is_array($_POST['vs08_carnet'])) {
+        foreach ($_POST['vs08_carnet'] as $f) {
+            $url = esc_url_raw($f['url'] ?? '');
+            $name = sanitize_text_field($f['name'] ?? '');
+            $date = sanitize_text_field($f['date'] ?? '');
+            if ($url) $files[] = ['url' => $url, 'name' => $name, 'date' => $date];
+        }
+    }
+    update_post_meta($order_id, '_vs08_carnet_files', $files);
+}
+
+/* ============================================================
+   SOLDE REMINDERS — Étendre aux circuits
+   Le cron existant (vs08v_solde_reminder) appelle 
+   VS08V_Emails::run_solde_reminders() qui ne traite que les golf.
+   On ajoute un hook pour les circuits.
+============================================================ */
+add_action('vs08v_solde_reminder', 'vs08_circuit_solde_reminders');
+function vs08_circuit_solde_reminders() {
+    if (!function_exists('wc_get_orders') || !class_exists('VS08C_Meta')) return;
+    $orders = wc_get_orders(['limit' => -1, 'status' => array_keys(wc_get_order_statuses()), 'return' => 'ids']);
+    $today = date('Y-m-d');
+    foreach ($orders as $order_id) {
+        $order = wc_get_order($order_id);
+        if (!$order) continue;
+        $data = $order->get_meta('_vs08c_booking_data');
+        if (empty($data) || !is_array($data) || ($data['type'] ?? '') !== 'circuit') continue;
+        if (!class_exists('VS08V_Traveler_Space')) continue;
+        $solde_info = VS08V_Traveler_Space::get_solde_info($order_id);
+        if (!$solde_info || !$solde_info['solde_due'] || $solde_info['solde'] <= 0) continue;
+        $params = $data['params'] ?? [];
+        $date_depart = $params['date_depart'] ?? '';
+        if (!$date_depart) continue;
+        $circuit_id = (int)($data['circuit_id'] ?? 0);
+        $m = VS08C_Meta::get($circuit_id);
+        $delai_solde = (int)($m['delai_solde'] ?? 30);
+        $deadline_ts = strtotime($date_depart) - ($delai_solde * 86400);
+        $deadline_ymd = date('Y-m-d', $deadline_ts);
+        $days_left = (strtotime($deadline_ymd) - strtotime($today)) / 86400;
+        if ($days_left < 0) continue;
+        $customer_id = $order->get_customer_id();
+        if (!$customer_id) continue;
+        $user = get_userdata($customer_id);
+        $email = $user ? $user->user_email : $order->get_billing_email();
+        if (!$email) continue;
+        $titre = $data['circuit_titre'] ?? 'Circuit';
+        $solde_fmt = number_format($solde_info['solde'], 2, ',', ' ');
+        $solde_date_fmt = $solde_info['solde_date'] ?? date('d/m/Y', $deadline_ts);
+        $espace_url = VS08V_Traveler_Space::base_url();
+        $body = '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:20px">'
+            . '<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">'
+            . '<div style="background:#1a3a3a;padding:24px;text-align:center;color:#fff;font-family:Georgia,serif;font-size:20px">Voyages Sortir 08</div>'
+            . '<div style="padding:28px 32px">'
+            . '<h2 style="color:#1a3a3a;margin:0 0 16px">Rappel : solde à régler</h2>'
+            . '<p style="font-size:15px;color:#333;line-height:1.6">Bonjour,</p>'
+            . '<p style="font-size:15px;color:#333;line-height:1.6">Pour votre circuit <strong>' . esc_html($titre) . '</strong>, il reste un solde de <strong>' . $solde_fmt . ' €</strong> à régler avant le <strong>' . esc_html($solde_date_fmt) . '</strong>.</p>'
+            . '<p style="margin-top:20px"><a href="' . esc_url($espace_url) . '" style="display:inline-block;padding:12px 28px;background:#2a7f7f;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">Accéder à mon espace voyageur</a></p>'
+            . '<p style="margin-top:16px;font-size:12px;color:#999">Dossier VS08-' . $order_id . '</p>'
+            . '</div></div></body></html>';
+        $headers = ['Content-Type: text/html; charset=UTF-8', 'From: Voyages Sortir 08 <noreply@sortirmonde.fr>'];
+        if ($days_left <= 14 && $days_left > 3 && !$order->get_meta('_vs08c_solde_reminder_14')) {
+            wp_mail([$email], 'Rappel : solde à régler avant le ' . $solde_date_fmt . ' — ' . $titre, $body, $headers);
+            $order->update_meta_data('_vs08c_solde_reminder_14', current_time('mysql'));
+            $order->save();
+        } elseif ($days_left <= 3 && $days_left >= 0 && !$order->get_meta('_vs08c_solde_reminder_3')) {
+            wp_mail([$email], 'Dernier rappel : solde à régler — ' . $titre, $body, $headers);
+            $order->update_meta_data('_vs08c_solde_reminder_3', current_time('mysql'));
+            $order->save();
+        }
+    }
+}
+
+// S'assurer que le cron est planifié
+add_action('init', function() {
+    if (!wp_next_scheduled('vs08v_solde_reminder')) {
+        wp_schedule_event(time(), 'daily', 'vs08v_solde_reminder');
+    }
+});

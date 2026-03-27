@@ -1277,10 +1277,11 @@ get_header();
                         if ($is_circuit):
                             $cid = (int)($d['circuit_id'] ?? 0);
                             $mm = class_exists('VS08C_Meta') ? VS08C_Meta::get($cid) : [];
-                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : '';
+                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? (is_array($gal[0]) ? ($gal[0]['url'] ?? '') : $gal[0]) : '';
+                            if (!$img) $img = get_the_post_thumbnail_url($cid, 'medium');
                             $dest = $mm['destination'] ?? ''; $hnom = '';
                             $titre = $d['circuit_titre'] ?? 'Circuit';
-                            $si = null;
+                            $si = VS08V_Traveler_Space::get_solde_info($ord->get_id());
                         else:
                             $vid = (int)($d['voyage_id'] ?? 0);
                             $mm = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($vid) : [];
@@ -1331,7 +1332,9 @@ get_header();
                         $is_circuit = isset($item['type']) && $item['type'] === 'circuit';
                         if ($is_circuit):
                             $cid = (int)($d['circuit_id'] ?? 0); $mm = class_exists('VS08C_Meta') ? VS08C_Meta::get($cid) : [];
-                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : ''; $dest = $mm['destination'] ?? ''; $hnom = ''; $titre = $d['circuit_titre'] ?? 'Circuit';
+                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? (is_array($gal[0]) ? ($gal[0]['url'] ?? '') : $gal[0]) : '';
+                            if (!$img) $img = get_the_post_thumbnail_url($cid, 'medium');
+                            $dest = $mm['destination'] ?? ''; $hnom = ''; $titre = $d['circuit_titre'] ?? 'Circuit';
                         else:
                             $vid = (int)($d['voyage_id'] ?? 0); $mm = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($vid) : [];
                             $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : ''; $dest = $mm['destination'] ?? ''; $hnom = $mm['hotel_nom'] ?? ($mm['hotel']['nom'] ?? ''); $titre = $d['voyage_titre'] ?? 'Séjour golf';
@@ -1344,6 +1347,11 @@ get_header();
                                 <?php if(!$img): ?><span class="ev-trip-placeholder"><?php echo $is_circuit ? '🗺️' : '⛳'; ?></span><?php endif; ?>
                                 <span class="ev-badge ev-badge-past">Passé</span>
                                 <?php if ($is_circuit): ?><span class="ev-badge ev-badge-circuit">Circuit</span><?php endif; ?>
+                                <?php
+                                $si_past = VS08V_Traveler_Space::get_solde_info($ord->get_id());
+                                if ($si_past && !empty($si_past['soldé_paye'])): ?>
+                                <span class="ev-badge ev-badge-solde-paid">Soldé ✓</span>
+                                <?php endif; ?>
                             </div>
                             <div class="ev-trip-body">
                                 <h3><?php echo esc_html($titre); ?></h3>
@@ -1370,8 +1378,10 @@ get_header();
                         $is_circuit = isset($item['type']) && $item['type'] === 'circuit';
                         if ($is_circuit):
                             $cid = (int)($d['circuit_id'] ?? 0); $mm = class_exists('VS08C_Meta') ? VS08C_Meta::get($cid) : [];
-                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : ''; $dest = $mm['destination'] ?? ''; $hnom = ''; $titre = $d['circuit_titre'] ?? 'Circuit';
-                            $si = null;
+                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? (is_array($gal[0]) ? ($gal[0]['url'] ?? '') : $gal[0]) : '';
+                            if (!$img) $img = get_the_post_thumbnail_url($cid, 'medium');
+                            $dest = $mm['destination'] ?? ''; $hnom = ''; $titre = $d['circuit_titre'] ?? 'Circuit';
+                            $si = VS08V_Traveler_Space::get_solde_info($ord->get_id());
                         else:
                             $vid = (int)($d['voyage_id'] ?? 0); $mm = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($vid) : [];
                             $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : ''; $dest = $mm['destination'] ?? ''; $hnom = $mm['hotel_nom'] ?? ($mm['hotel']['nom'] ?? ''); $titre = $d['voyage_titre'] ?? 'Séjour golf';
