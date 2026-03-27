@@ -73,11 +73,17 @@ class VS08S_Bedsonline {
         }
 
         // Construire les occupations
+        // IMPORTANT: adults = nombre TOTAL de voyageurs, pas par chambre
+        // Il faut répartir les adultes entre les chambres
+        $adults_per_room = max(1, intval(ceil($adults / $rooms)));
+        $remaining = $adults;
         $occupancies = [];
         for ($i = 0; $i < $rooms; $i++) {
+            $in_this_room = min($adults_per_room, $remaining);
+            $remaining -= $in_this_room;
             $occupancies[] = [
-                'rooms'   => 1,
-                'adults'  => $adults,
+                'rooms'    => 1,
+                'adults'   => max(1, $in_this_room),
                 'children' => 0,
             ];
         }
@@ -92,6 +98,8 @@ class VS08S_Bedsonline {
                 'hotel' => array_map('intval', $hotel_codes),
             ],
         ];
+
+        error_log('[VS08S Bedsonline] Recherche: hotels=' . implode(',', $hotel_codes) . ' in=' . $check_in . ' out=' . $check_out . ' adults=' . $adults . ' rooms=' . $rooms . ' (per_room=' . $adults_per_room . ')');
 
         // Cache : éviter de rappeler l'API pour la même requête
         $cache_key = 'vs08s_beds_' . md5(json_encode($body));
@@ -127,8 +135,15 @@ class VS08S_Bedsonline {
         // Extraire les résultats pertinents
         $results = self::parse_availability($data);
 
-        // Cacher 10 minutes
-        set_transient($cache_key, $results, 600);
+        // Debug: log les prix retournés
+        foreach ($results as $h) {
+            foreach ($h['rooms'] as $r) {
+                error_log('[VS08S Bedsonline] Hotel=' . $h['code'] . ' Room=' . $r['room_name'] . ' Board=' . $r['board_code'] . ' Net=' . $r['net_price'] . '€ RateType=' . $r['rate_type']);
+            }
+        }
+
+        // Cacher 2 minutes (phase test — repasser à 600 en production)
+        set_transient($cache_key, $results, 120);
 
         return $results;
     }
