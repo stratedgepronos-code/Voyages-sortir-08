@@ -686,9 +686,10 @@ get_header();
             $recap_marge     = vs08v_find_line($recap_montants, 'Marge');
             ?>
 
-            <!-- DEBUG: TOUTES LES LIGNES DU DEVIS -->
+            <!-- DEBUG: TOUTES LES LIGNES DU DEVIS (admin only) -->
+            <?php if (current_user_can('manage_options')): ?>
             <div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;padding:10px 12px;margin-bottom:8px">
-                <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px;font-family:'Outfit',sans-serif">🔍 DÉTAIL CALCUL (debug)</div>
+                <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px;font-family:'Outfit',sans-serif">🔍 DÉTAIL CALCUL (admin)</div>
                 <?php foreach ($recap_montants as $dl): ?>
                 <div style="display:flex;justify-content:space-between;font-size:11px;font-family:'Outfit',sans-serif;padding:2px 0;color:#78350f">
                     <span><?php echo esc_html($dl['label']); ?> <span style="color:#a3a3a3"><?php echo esc_html($dl['detail'] ?? ''); ?></span></span>
@@ -700,6 +701,7 @@ get_header();
                     <span><?php echo number_format($devis['total'], 0, ',', ' '); ?> €</span>
                 </div>
             </div>
+            <?php endif; ?>
 
             <!-- 1. VOL ALLER -->
             <div class="bk-recap-row" id="bk-recap-row-vol">
