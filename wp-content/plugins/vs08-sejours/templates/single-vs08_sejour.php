@@ -808,29 +808,39 @@ function sjSearchAll(){
     }).catch(function(err){loading.style.display='none'});
 }
 
+function sjParseRest(r){
+    return r.text().then(function(txt){
+        var data={};
+        try{data=txt?JSON.parse(txt):{}}catch(e){}
+        if(!r.ok){throw new Error((data&&data.message)?data.message:('Erreur HTTP '+r.status));}
+        return data;
+    });
+}
+
 function sjSearchFlights(){
     var D=VS08S_DATA;
     return fetch(D.rest_url+'flights',{method:'POST',headers:{'Content-Type':'application/json','X-WP-Nonce':D.nonce},
-        body:JSON.stringify({sejour_id:D.id,aeroport:sjState.aeroport,date:sjState.date,adults:sjState.adults})
-    }).then(function(r){return r.json()}).then(function(data){
-        if(data&&data.combos&&data.combos.length>0){
-            sjState.vol_price=parseFloat(data.combos[0].total_amount||data.combos[0].price||0)/sjState.adults;
-            sjState.vol_offer_id=data.combos[0].id||'';
-        }else if(data&&data.data&&Array.isArray(data.data)&&data.data.length>0){
-            var offers=data.data;offers.sort(function(a,b){return(a.total_amount||999999)-(b.total_amount||999999)});
-            sjState.vol_price=parseFloat(offers[0].total_amount||0)/sjState.adults;
-            sjState.vol_offer_id=offers[0].id||'';
+        body:JSON.stringify({sejour_id:D.id,aeroport:sjState.aeroport,date:sjState.date,adults:sjState.adults,iata_dest:D.iata_dest||'',duree:D.duree||7})
+    }).then(sjParseRest).then(function(data){
+        var offers=(data&&data.combos&&data.combos.length>0)?data.combos:((data&&data.data&&Array.isArray(data.data))?data.data:((data&&data.flights&&Array.isArray(data.flights))?data.flights:[]));
+        if(offers.length>0){
+            offers.sort(function(a,b){return((a.price_per_pax||a.total_amount||999999)-(b.price_per_pax||b.total_amount||999999))});
+            sjState.vol_price=parseFloat(offers[0].price_per_pax||((offers[0].total_amount||0)/sjState.adults)||0);
+            sjState.vol_offer_id=offers[0].offer_id||offers[0].id||'';
         }
         var st=document.getElementById('sv-vol-st');
         if(st){st.textContent=sjState.vol_price>0?'✅ Vols trouvés — '+sjFmt(sjState.vol_price)+'€/pers':'❌ Aucun vol disponible';st.style.color=sjState.vol_price>0?'#059669':'#dc2626'}
-    }).catch(function(){});
+    }).catch(function(err){
+        var st=document.getElementById('sv-vol-st');
+        if(st){st.textContent='❌ '+(err&&err.message?err.message:'Erreur vols');st.style.color='#dc2626'}
+    });
 }
 
 function sjSearchHotel(){
     var D=VS08S_DATA;
     return fetch(D.rest_url+'hotel-availability',{method:'POST',headers:{'Content-Type':'application/json','X-WP-Nonce':D.nonce},
-        body:JSON.stringify({sejour_id:D.id,date:sjState.date,adults:sjState.adults,rooms:sjState.rooms})
-    }).then(function(r){return r.json()}).then(function(data){
+        body:JSON.stringify({sejour_id:D.id,date:sjState.date,adults:sjState.adults,rooms:sjState.rooms,hotel_code:D.hotel_code||'',hotel_codes:D.hotel_codes||[],duree:D.duree||7})
+    }).then(sjParseRest).then(function(data){
         if(data&&data.best){
             sjState.hotel_net=parseFloat(data.best.net_price||0);
             sjState.hotel_rate_key=data.best.rate_key||'';
@@ -839,7 +849,10 @@ function sjSearchHotel(){
             var hr=document.getElementById('sv-hotel-result');
             if(hr){hr.classList.add('active');document.getElementById('sv-hotel-result-name').textContent=data.hotel_name+' — '+(data.best.room_name||'');document.getElementById('sv-hotel-result-board').textContent=data.best.board_name||sjState.hotel_board;document.getElementById('sv-hotel-result-price').textContent=sjFmt(sjState.hotel_net)+'€ net'}
         }
-    }).catch(function(){});
+    }).catch(function(err){
+        var loading=document.getElementById('sv-price-loading');
+        if(loading){loading.textContent='❌ '+(err&&err.message?err.message:'Erreur hôtel');loading.style.display='block';loading.style.color='#dc2626'}
+    });
 }
 
 function sjCalculateTotal(){

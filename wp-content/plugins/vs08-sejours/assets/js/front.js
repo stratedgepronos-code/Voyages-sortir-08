@@ -112,6 +112,17 @@
         });
     }
 
+    function parseRestResponse(r) {
+        return r.text().then(function(txt) {
+            var data = {};
+            try { data = txt ? JSON.parse(txt) : {}; } catch (e) {}
+            if (!r.ok) {
+                throw new Error((data && data.message) ? data.message : ('Erreur HTTP ' + r.status));
+            }
+            return data;
+        });
+    }
+
     // ── Recherche vols via Duffel ──
     function searchFlights() {
         return fetch(vs08s.rest_url + 'flights', {
@@ -122,22 +133,26 @@
                 aeroport: state.aeroport,
                 date: state.date,
                 adults: state.adults,
+                iata_dest: vs08s.iata_dest || '',
+                duree: vs08s.duree || 7
             })
         })
-        .then(function(r) { return r.json(); })
+        .then(parseRestResponse)
         .then(function(data) {
             if (data.code || data.message) {
                 showError('Vols : ' + (data.message || 'Aucun vol trouvé'));
                 return null;
             }
             // Prendre le meilleur prix
-            var offers = data.data || data;
+            var offers = data.combos || data.data || data.flights || data;
             if (Array.isArray(offers) && offers.length > 0) {
                 // Trier par prix
-                offers.sort(function(a, b) { return (a.total_amount || a.price || 999999) - (b.total_amount || b.price || 999999); });
+                offers.sort(function(a, b) {
+                    return (a.price_per_pax || a.total_amount || a.price || 999999) - (b.price_per_pax || b.total_amount || b.price || 999999);
+                });
                 var best = offers[0];
-                state.vol_price = parseFloat(best.total_amount || best.price || 0) / state.adults;
-                state.vol_offer_id = best.id || '';
+                state.vol_price = parseFloat(best.price_per_pax || ((best.total_amount || best.price || 0) / state.adults) || 0);
+                state.vol_offer_id = best.offer_id || best.id || '';
                 return best;
             }
             showError('Aucun vol trouvé pour ces dates.');
@@ -155,9 +170,12 @@
                 date: state.date,
                 adults: state.adults,
                 rooms: state.rooms,
+                hotel_code: vs08s.hotel_code || '',
+                hotel_codes: vs08s.hotel_codes || [],
+                duree: vs08s.duree || 7
             })
         })
-        .then(function(r) { return r.json(); })
+        .then(parseRestResponse)
         .then(function(data) {
             if (data.code || !data.best) {
                 showError('Hôtel : ' + (data.message || 'Aucune disponibilité'));

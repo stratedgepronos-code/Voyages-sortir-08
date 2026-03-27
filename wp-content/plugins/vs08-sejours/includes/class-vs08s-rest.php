@@ -5,6 +5,11 @@ class VS08S_Rest {
 
     const NS = 'vs08s/v1';
 
+    private static function json_params(\WP_REST_Request $req) {
+        $params = $req->get_json_params();
+        return is_array($params) ? $params : [];
+    }
+
     public static function register() {
         add_action('rest_api_init', [__CLASS__, 'register_routes']);
     }
@@ -43,51 +48,74 @@ class VS08S_Rest {
      * Recherche de vols via Duffel (réutilise la classe existante).
      */
     public static function search_flights(\WP_REST_Request $req) {
-        $sejour_id = intval($req->get_param('sejour_id'));
-        $aeroport  = strtoupper(sanitize_text_field($req->get_param('aeroport') ?? ''));
-        $date      = sanitize_text_field($req->get_param('date') ?? '');
-        $adults    = max(1, intval($req->get_param('adults') ?? 2));
+        $params    = self::json_params($req);
+        $sejour_id = intval($params['sejour_id'] ?? $req->get_param('sejour_id'));
+        $aeroport  = strtoupper(sanitize_text_field($params['aeroport'] ?? $req->get_param('aeroport') ?? ''));
+        $date      = sanitize_text_field($params['date'] ?? $params['date_depart'] ?? $req->get_param('date') ?? '');
+        $adults    = max(1, intval($params['adults'] ?? $params['nb_adultes'] ?? $req->get_param('adults') ?? 2));
 
         $m = VS08S_Meta::get($sejour_id);
-        if (empty($m['iata_dest'])) {
-            return new \WP_Error('no_dest', 'Code IATA destination manquant.', ['status' => 400]);
+        $iata_dest = strtoupper(sanitize_text_field($params['iata_dest'] ?? ($m['iata_dest'] ?? '')));
+        $duree = intval($params['duree'] ?? ($m['duree'] ?? 7));
+
+        if (!$sejour_id) {
+            return new \WP_Error('no_sejour', 'ID séjour manquant.', ['status' => 400]);
+        }
+        if (empty($aeroport)) {
+            return new \WP_Error('no_origin', 'Aéroport de départ manquant.', ['status' => 400]);
+        }
+        if (empty($date)) {
+            return new \WP_Error('no_date', 'Date de départ manquante.', ['status' => 400]);
+        }
+        if (empty($iata_dest)) {
+            return new \WP_Error('no_dest', 'Code IATA destination manquant dans la fiche séjour.', ['status' => 400]);
         }
 
-        $duree = intval($m['duree'] ?? 7);
         $date_retour = date('Y-m-d', strtotime($date . ' +' . $duree . ' days'));
 
         // Utiliser la classe Duffel du plugin vs08-voyages
-        if (!class_exists('VS08V_DuffelApi')) {
+        if (!class_exists('VS08_Duffel_API')) {
             return new \WP_Error('no_duffel', 'Plugin vs08-voyages requis pour la recherche de vols.', ['status' => 500]);
         }
 
-        $result = VS08V_DuffelApi::search_offers([
-            'origin'      => $aeroport,
-            'destination' => $m['iata_dest'],
-            'departure'   => $date,
-            'return'      => $date_retour,
-            'adults'      => $adults,
-            'cabin_class' => 'economy',
-            'max_connections' => 1,
-        ]);
+        $opts = [
+            'max_connections' => !empty($m['vol_escales_autorisees']) ? 1 : 0,
+            'max_layover_minutes' => max(60, intval(($m['vol_escale_max_heures'] ?? 5) * 60)),
+        ];
+        $result = VS08_Duffel_API::search_flights($aeroport, $iata_dest, $date, $adults, $date_retour, $opts);
 
         if (is_wp_error($result)) {
             return $result;
         }
 
-        return rest_ensure_response($result);
+        return rest_ensure_response([
+            'data' => $result['flights'] ?? [],
+            'combos' => $result['flights'] ?? [],
+            'ref_price_per_pax' => $result['ref_price_per_pax'] ?? 0,
+            'passengers' => $result['passengers'] ?? $adults,
+            'origin' => $result['origin'] ?? $aeroport,
+            'destination' => $result['destination'] ?? $iata_dest,
+            'date' => $result['date'] ?? $date,
+        ]);
     }
 
     /**
      * Recherche de disponibilité hôtel via Bedsonline.
      */
     public static function hotel_availability(\WP_REST_Request $req) {
-        $sejour_id = intval($req->get_param('sejour_id'));
-        $date      = sanitize_text_field($req->get_param('date') ?? '');
-        $adults    = max(1, intval($req->get_param('adults') ?? 2));
-        $rooms     = max(1, intval($req->get_param('rooms') ?? 1));
+        $params    = self::json_params($req);
+        $sejour_id = intval($params['sejour_id'] ?? $req->get_param('sejour_id'));
+        $date      = sanitize_text_field($params['date'] ?? $params['date_depart'] ?? $req->get_param('date') ?? '');
+        $adults    = max(1, intval($params['adults'] ?? $params['nb_adultes'] ?? $req->get_param('adults') ?? 2));
+        $rooms     = max(1, intval($params['rooms'] ?? $params['nb_chambres'] ?? $req->get_param('rooms') ?? 1));
 
         $m = VS08S_Meta::get($sejour_id);
+        if (!$sejour_id) {
+            return new \WP_Error('no_sejour', 'ID séjour manquant.', ['status' => 400]);
+        }
+        if (empty($date)) {
+            return new \WP_Error('no_date', 'Date de départ manquante.', ['status' => 400]);
+        }
 
         // Collecter tous les codes hôtel
         $codes = [];
@@ -95,13 +123,19 @@ class VS08S_Rest {
         if (!empty($m['hotel_codes']) && is_array($m['hotel_codes'])) {
             $codes = array_merge($codes, $m['hotel_codes']);
         }
+        if (!empty($params['hotel_code'])) {
+            $codes[] = sanitize_text_field($params['hotel_code']);
+        }
+        if (!empty($params['hotel_codes']) && is_array($params['hotel_codes'])) {
+            $codes = array_merge($codes, array_map('sanitize_text_field', $params['hotel_codes']));
+        }
         $codes = array_unique(array_filter($codes));
 
         if (empty($codes)) {
-            return new \WP_Error('no_codes', 'Aucun code hôtel Bedsonline configuré.', ['status' => 400]);
+            return new \WP_Error('no_codes', 'Aucun code hôtel Bedsonline configuré dans la fiche séjour.', ['status' => 400]);
         }
 
-        $duree = intval($m['duree'] ?? 7);
+        $duree = intval($params['duree'] ?? ($m['duree'] ?? 7));
         $check_in  = $date;
         $check_out = date('Y-m-d', strtotime($date . ' +' . $duree . ' days'));
 
