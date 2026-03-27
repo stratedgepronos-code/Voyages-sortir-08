@@ -328,6 +328,18 @@ $periodes_fermees_vente_js = array_values(array_map(function($p) {
     .sv-highlights{grid-template-columns:1fr 1fr}
     .sv-room-grid{grid-template-columns:1fr 1fr}
 }
+@media(max-width:480px){
+    .sv-hero{height:50vh;min-height:360px}
+    .sv-hero-content h1{font-size:24px}
+    .sv-hero-meta{gap:6px}
+    .sv-meta-chip{font-size:11px;padding:4px 10px}
+    .sv-highlights{grid-template-columns:1fr}
+    .sv-room-grid{grid-template-columns:1fr}
+    .sv-card{padding:20px;border-radius:14px}
+    .sv-section-title{font-size:17px}
+    .sv-golf-grid{grid-template-columns:1fr}
+    .sv-navbar{display:none}
+}
 </style>
 
 <!-- Logo imprimé uniquement -->

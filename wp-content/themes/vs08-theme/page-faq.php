@@ -26,6 +26,13 @@ get_header();
 .faq-cta p{font-family:'Outfit',sans-serif;font-size:15px;color:#6b7280;margin:0 0 16px}
 .faq-cta a{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:#59b7b7;color:#fff;border-radius:100px;font-weight:700;text-decoration:none;font-family:'Outfit',sans-serif;font-size:14px;transition:all .25s}
 .faq-cta a:hover{background:#3d9a9a;transform:translateY(-2px)}
+@media(max-width:640px){
+    .faq-hero{padding:110px 20px 40px}
+    .faq-inner{padding:0 16px}
+    .faq-q{padding:16px 18px;border-radius:12px}
+    .faq-q h3{font-size:14px}
+    .faq-cta{padding:20px;margin-top:24px}
+}
 </style>
 
 <section class="faq-hero">
