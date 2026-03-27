@@ -13,6 +13,7 @@ class VS08V_Homepage_Editor {
         add_action('wp_ajax_vs08v_home_editor_products_by_destination', [__CLASS__, 'ajax_products_by_destination']);
         add_action('wp_ajax_vs08v_home_editor_save_slot', [__CLASS__, 'ajax_save_slot']);
         add_action('wp_ajax_vs08v_home_editor_save_departs_slot', [__CLASS__, 'ajax_save_departs_slot']);
+        add_action('wp_ajax_vs08v_home_editor_save_generic', [__CLASS__, 'ajax_save_generic']);
         add_action('wp_footer', [__CLASS__, 'render_front_editor']);
     }
 
@@ -541,8 +542,34 @@ class VS08V_Homepage_Editor {
             document.querySelectorAll('[data-vs08-home-edit-slot]').forEach(function(btn){
                 btn.addEventListener('click', function(e){
                     e.preventDefault();
+                    e.stopPropagation();
                     var section = btn.getAttribute('data-vs08-home-section') || 'coups';
                     open(parseInt(btn.getAttribute('data-vs08-home-edit-slot') || '0', 10), section);
+                });
+            });
+
+            // ══ AUTO-DISCOVER: ajouter ✏️ sur TOUTES les cards produit de la homepage ══
+            var sectionSelectors = [
+                { selector: '.sh-card', section: 'golf_showcase', parent: '.sh-grid' },
+                { selector: '.dl-card-link, .dl-card', section: 'circuits', parent: '.dl-half' },
+                { selector: '.fp-ucard', section: 'univers', parent: '.fp-bento' },
+            ];
+            sectionSelectors.forEach(function(cfg) {
+                var cards = document.querySelectorAll(cfg.selector);
+                cards.forEach(function(card, idx) {
+                    if (card.querySelector('.vs08-home-edit-btn')) return;
+                    card.style.position = 'relative';
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'vs08-home-edit-btn';
+                    btn.setAttribute('aria-label', 'Modifier ce produit');
+                    btn.textContent = '✏️';
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        open(idx + 1, cfg.section);
+                    });
+                    card.appendChild(btn);
                 });
             });
             document.getElementById('vs08-home-cancel').addEventListener('click', close);
@@ -579,10 +606,17 @@ class VS08V_Homepage_Editor {
                     alert('Choisissez un produit avant de valider.');
                     return;
                 }
-                var action = currentSection === 'departs' ? 'vs08v_home_editor_save_departs_slot' : 'vs08v_home_editor_save_slot';
+                var action;
+                if (currentSection === 'coups') action = 'vs08v_home_editor_save_slot';
+                else if (currentSection === 'departs') action = 'vs08v_home_editor_save_departs_slot';
+                else action = 'vs08v_home_editor_save_generic';
+
+                var payload = { slot: currentSlot, product_id: selectedProductId };
+                if (action === 'vs08v_home_editor_save_generic') payload.section = currentSection;
+
                 btnSave.disabled = true;
                 btnSave.textContent = 'Enregistrement...';
-                post(action, { slot: currentSlot, product_id: selectedProductId }).then(function(res){
+                post(action, payload).then(function(res){
                     if (res && res.success) {
                         window.location.reload();
                         return;
@@ -590,7 +624,7 @@ class VS08V_Homepage_Editor {
                     alert((res && res.data) ? res.data : 'Erreur de sauvegarde.');
                 }).finally(function(){
                     btnSave.disabled = false;
-                    btnSave.textContent = currentSection === 'departs' ? 'Remplacer le départ' : 'Remplacer le produit';
+                    btnSave.textContent = 'Remplacer le produit';
                 });
             });
         })();
@@ -603,47 +637,58 @@ class VS08V_Homepage_Editor {
         $q = sanitize_text_field(wp_unslash($_POST['q'] ?? ''));
         if (mb_strlen($q) < 2) wp_send_json_success([]);
 
-        $ids = get_posts([
-            'post_type'      => 'vs08_voyage',
-            'post_status'    => 'publish',
-            'posts_per_page' => 12,
-            's'              => $q,
-            'fields'         => 'ids',
-        ]);
         $out = [];
+
+        // Séjours golf
+        $ids = get_posts(['post_type' => 'vs08_voyage', 'post_status' => 'publish', 'posts_per_page' => 8, 's' => $q, 'fields' => 'ids']);
         foreach ($ids as $id) {
             $m = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($id) : [];
             if (($m['statut'] ?? 'actif') === 'archive') continue;
             $out[] = [
-                'id'          => $id,
-                'title'       => get_the_title($id),
-                'destination' => $m['destination'] ?? '',
-                'pays'        => $m['pays'] ?? '',
-                'flag'        => class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : ($m['flag'] ?? ''),
+                'id' => $id, 'title' => get_the_title($id), 'type' => 'golf',
+                'destination' => $m['destination'] ?? '', 'pays' => $m['pays'] ?? '',
+                'flag' => class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : ($m['flag'] ?? ''),
             ];
         }
+
+        // Circuits
+        $cids = get_posts(['post_type' => 'vs08_circuit', 'post_status' => 'publish', 'posts_per_page' => 8, 's' => $q, 'fields' => 'ids']);
+        foreach ($cids as $id) {
+            $m = class_exists('VS08C_Meta') ? VS08C_Meta::get($id) : [];
+            $out[] = [
+                'id' => $id, 'title' => '🗺️ ' . get_the_title($id), 'type' => 'circuit',
+                'destination' => $m['destination'] ?? '', 'pays' => $m['pays'] ?? '',
+                'flag' => $m['flag'] ?? '',
+            ];
+        }
+
         wp_send_json_success($out);
     }
 
     public static function ajax_destinations() {
         self::guard_ajax();
-        $ids = get_posts([
-            'post_type'      => 'vs08_voyage',
-            'post_status'    => 'publish',
-            'posts_per_page' => -1,
-            'fields'         => 'ids',
-        ]);
         $map = [];
+
+        // Golf destinations
+        $ids = get_posts(['post_type' => 'vs08_voyage', 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids']);
         foreach ($ids as $id) {
             $m = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($id) : [];
             if (($m['statut'] ?? 'actif') === 'archive') continue;
             $dest = trim((string) ($m['destination'] ?? ''));
-            if ($dest === '') continue;
-            if (!isset($map[$dest])) {
-                $flag = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : ($m['flag'] ?? '');
-                $map[$dest] = ['value' => $dest, 'label' => trim(($flag ? $flag . ' ' : '') . $dest)];
-            }
+            if ($dest === '' || isset($map[$dest])) continue;
+            $flag = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : ($m['flag'] ?? '');
+            $map[$dest] = ['value' => $dest, 'label' => trim(($flag ? $flag . ' ' : '') . $dest)];
         }
+
+        // Circuit destinations
+        $cids = get_posts(['post_type' => 'vs08_circuit', 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids']);
+        foreach ($cids as $id) {
+            $m = class_exists('VS08C_Meta') ? VS08C_Meta::get($id) : [];
+            $dest = trim((string) ($m['destination'] ?? ''));
+            if ($dest === '' || isset($map[$dest])) continue;
+            $map[$dest] = ['value' => $dest, 'label' => trim(($m['flag'] ?? '') . ' ' . $dest)];
+        }
+
         usort($map, function($a, $b){ return strcmp($a['label'], $b['label']); });
         wp_send_json_success(array_values($map));
     }
@@ -652,23 +697,25 @@ class VS08V_Homepage_Editor {
         self::guard_ajax();
         $destination = trim(sanitize_text_field(wp_unslash($_POST['destination'] ?? '')));
         if ($destination === '') wp_send_json_success([]);
-        $ids = get_posts([
-            'post_type'      => 'vs08_voyage',
-            'post_status'    => 'publish',
-            'posts_per_page' => -1,
-            'fields'         => 'ids',
-        ]);
         $out = [];
+
+        // Golf
+        $ids = get_posts(['post_type' => 'vs08_voyage', 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids']);
         foreach ($ids as $id) {
             $m = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($id) : [];
             if (($m['statut'] ?? 'actif') === 'archive') continue;
             if (trim((string) ($m['destination'] ?? '')) !== $destination) continue;
-            $out[] = [
-                'id'    => $id,
-                'title' => get_the_title($id),
-                'flag'  => class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : ($m['flag'] ?? ''),
-            ];
+            $out[] = ['id' => $id, 'title' => '⛳ ' . get_the_title($id), 'flag' => class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : ($m['flag'] ?? '')];
         }
+
+        // Circuits
+        $cids = get_posts(['post_type' => 'vs08_circuit', 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids']);
+        foreach ($cids as $id) {
+            $m = class_exists('VS08C_Meta') ? VS08C_Meta::get($id) : [];
+            if (trim((string) ($m['destination'] ?? '')) !== $destination) continue;
+            $out[] = ['id' => $id, 'title' => '🗺️ ' . get_the_title($id), 'flag' => $m['flag'] ?? ''];
+        }
+
         wp_send_json_success($out);
     }
 
@@ -683,7 +730,7 @@ class VS08V_Homepage_Editor {
             wp_send_json_error('Produit invalide.');
         }
         $post = get_post($product_id);
-        if (!$post || $post->post_type !== 'vs08_voyage' || $post->post_status !== 'publish') {
+        if (!$post || !in_array($post->post_type, ['vs08_voyage', 'vs08_circuit']) || $post->post_status !== 'publish') {
             wp_send_json_error('Produit non publié.');
         }
         $slots = self::get_slots();
@@ -703,7 +750,7 @@ class VS08V_Homepage_Editor {
             wp_send_json_error('Produit invalide.');
         }
         $post = get_post($product_id);
-        if (!$post || $post->post_type !== 'vs08_voyage' || $post->post_status !== 'publish') {
+        if (!$post || !in_array($post->post_type, ['vs08_voyage', 'vs08_circuit']) || $post->post_status !== 'publish') {
             wp_send_json_error('Produit non publié.');
         }
         $slots = self::get_departs_slots();
@@ -713,9 +760,46 @@ class VS08V_Homepage_Editor {
     }
 
     private static function guard_ajax() {
-        check_ajax_referer('vs08v_home_editor', 'nonce');
+        if (!check_ajax_referer('vs08v_home_editor', 'nonce', false)) {
+            wp_send_json_error('Nonce expiré.');
+        }
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Permission refusée.');
         }
+    }
+
+    /**
+     * Sauvegarde générique pour n'importe quelle section de la homepage.
+     * Accepte golf ET circuits.
+     */
+    public static function ajax_save_generic() {
+        self::guard_ajax();
+        $section = sanitize_key($_POST['section'] ?? '');
+        $slot = intval($_POST['slot'] ?? 0);
+        $product_id = intval($_POST['product_id'] ?? 0);
+        if (!$section || $slot < 1) wp_send_json_error('Données invalides.');
+        $post = get_post($product_id);
+        if (!$post || !in_array($post->post_type, ['vs08_voyage', 'vs08_circuit']) || $post->post_status !== 'publish') {
+            wp_send_json_error('Produit non publié.');
+        }
+        $option = 'vs08v_homepage_' . $section . '_slots';
+        $slots = get_option($option, []);
+        if (!is_array($slots)) $slots = [];
+        $slots[$slot] = $product_id;
+        update_option($option, $slots, false);
+        wp_send_json_success(['section' => $section, 'slot' => $slot, 'product_id' => $product_id]);
+    }
+
+    /**
+     * Récupère les IDs sauvegardés pour une section donnée.
+     */
+    public static function get_section_slots($section, $count = 4) {
+        $slots = get_option('vs08v_homepage_' . sanitize_key($section) . '_slots', []);
+        if (!is_array($slots)) $slots = [];
+        $out = [];
+        for ($i = 1; $i <= $count; $i++) {
+            $out[$i] = intval($slots[$i] ?? 0);
+        }
+        return $out;
     }
 }
