@@ -43,46 +43,173 @@ class VS08V_Emails {
     }
 
     /**
-     * Email aux 2 administrateurs avec résumé + contrat complet.
+     * Email aux 2 administrateurs avec TOUTES les infos + contrat en PJ.
      */
     private static function send_admin_notification($order_id, $order, $data, $contract_html) {
-        $fact   = $data['facturation'] ?? [];
-        $params = $data['params'] ?? [];
-        $devis  = $data['devis'] ?? [];
-        $titre  = $data['voyage_titre'] ?? 'Séjour golf';
-        $client = trim(($fact['prenom'] ?? '') . ' ' . strtoupper($fact['nom'] ?? ''));
-        $nb     = intval($devis['nb_total'] ?? 1);
-        $total  = number_format(floatval($data['total'] ?? 0), 2, ',', ' ');
+        $fact       = $data['facturation'] ?? [];
+        $params     = $data['params'] ?? [];
+        $devis      = $data['devis'] ?? [];
+        $voyageurs  = $data['voyageurs'] ?? [];
+        $options    = $data['options'] ?? [];
+        $titre      = $data['voyage_titre'] ?? 'Séjour golf';
+        $client     = trim(($fact['prenom'] ?? '') . ' ' . strtoupper($fact['nom'] ?? ''));
+        $nb         = intval($devis['nb_total'] ?? 1);
+        $total      = floatval($data['total'] ?? 0);
+        $acompte    = floatval($data['acompte'] ?? 0);
+        $payer_tout = !empty($data['payer_tout']);
+        $assurance  = floatval($data['assurance'] ?? 0);
 
-        $subject = sprintf(
-            'Nouvelle réservation VS08-%d — %s — %s',
-            $order_id,
-            $titre,
-            $client
-        );
+        $voyage_id  = intval($data['voyage_id'] ?? 0);
+        $m          = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($voyage_id) : [];
+        $duree      = intval($m['duree'] ?? 7);
+        $duree_j    = intval($m['duree_jours'] ?? ($duree + 1));
+        $destination = $m['destination'] ?? '';
+        $hotel_nom  = $m['hotel_nom'] ?? ($m['hotel']['nom'] ?? '');
+        $hotel_et   = intval($m['hotel_etoiles'] ?? ($m['hotel']['etoiles'] ?? 0));
+        $pension_labels = ['bb'=>'Petit-déjeuner','dp'=>'Demi-pension','pc'=>'Pension complète','ai'=>'Tout inclus','lo'=>'Logement seul'];
+        $pension    = $pension_labels[$m['pension'] ?? ''] ?? '';
+        $date_depart = $params['date_depart'] ?? '';
+        $date_retour = $date_depart && $duree > 0 ? date('d/m/Y', strtotime($date_depart . ' +' . $duree . ' days')) : '';
+        $aeroport   = strtoupper($params['aeroport'] ?? '');
+        $delai_solde = intval($m['delai_solde'] ?? 30);
 
-        $body = self::email_wrapper(
-            $subject,
-            '<div style="padding:24px 32px;">'
-            . '<h2 style="margin:0 0 16px;color:#1a3a3a;font-family:Georgia,serif;">Nouvelle réservation</h2>'
-            . '<table cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:14px;width:100%;">'
-            . '<tr><td style="padding:6px 10px;border:1px solid #e0e0e0;background:#f8f8f8;font-weight:bold;width:35%;">N° contrat</td><td style="padding:6px 10px;border:1px solid #e0e0e0;">VS08-' . $order_id . '</td></tr>'
-            . '<tr><td style="padding:6px 10px;border:1px solid #e0e0e0;background:#f8f8f8;font-weight:bold;">Client</td><td style="padding:6px 10px;border:1px solid #e0e0e0;">' . esc_html($client) . '</td></tr>'
-            . '<tr><td style="padding:6px 10px;border:1px solid #e0e0e0;background:#f8f8f8;font-weight:bold;">Email</td><td style="padding:6px 10px;border:1px solid #e0e0e0;">' . esc_html($fact['email'] ?? '') . '</td></tr>'
-            . '<tr><td style="padding:6px 10px;border:1px solid #e0e0e0;background:#f8f8f8;font-weight:bold;">Tél.</td><td style="padding:6px 10px;border:1px solid #e0e0e0;">' . esc_html($fact['tel'] ?? '') . '</td></tr>'
-            . '<tr><td style="padding:6px 10px;border:1px solid #e0e0e0;background:#f8f8f8;font-weight:bold;">Voyage</td><td style="padding:6px 10px;border:1px solid #e0e0e0;">' . esc_html($titre) . '</td></tr>'
-            . '<tr><td style="padding:6px 10px;border:1px solid #e0e0e0;background:#f8f8f8;font-weight:bold;">Date de départ</td><td style="padding:6px 10px;border:1px solid #e0e0e0;">' . esc_html($params['date_depart'] ?? '') . '</td></tr>'
-            . '<tr><td style="padding:6px 10px;border:1px solid #e0e0e0;background:#f8f8f8;font-weight:bold;">Voyageurs</td><td style="padding:6px 10px;border:1px solid #e0e0e0;">' . $nb . ' personne(s)</td></tr>'
-            . '<tr style="font-weight:bold;"><td style="padding:6px 10px;border:1px solid #e0e0e0;background:#edf8f8;">Total</td><td style="padding:6px 10px;border:1px solid #e0e0e0;background:#edf8f8;font-size:16px;">' . $total . ' &euro;</td></tr>'
-            . '</table>'
-            . self::voyageurs_table($data['voyageurs'] ?? [])
-            . '<p style="margin-top:16px;"><a href="' . esc_url(admin_url('post.php?post=' . $order_id . '&action=edit')) . '" style="display:inline-block;padding:10px 24px;background:#2a7f7f;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;">Voir la commande dans WordPress</a></p>'
-            . '</div>'
-            . '<div style="border-top:3px solid #2a7f7f;margin-top:8px;"></div>'
-            . $contract_html
-        );
+        $subject = sprintf('🆕 Réservation VS08-%d — %s — %s — %s €', $order_id, $titre, $client, number_format($total, 0, ',', ' '));
 
-        self::send(self::ADMIN_RECIPIENTS, $subject, $body);
+        // Helper pour une ligne de tableau
+        $tr = function($label, $value, $highlight = false) {
+            $bg = $highlight ? '#edf8f8' : '#fff';
+            $fw = $highlight ? 'font-weight:bold;font-size:16px;' : '';
+            return '<tr><td style="padding:10px 14px;border:1px solid #e5e7eb;background:#f9f6f0;font-weight:600;width:200px;color:#374151;font-size:13px">' . $label . '</td>'
+                 . '<td style="padding:10px 14px;border:1px solid #e5e7eb;background:' . $bg . ';' . $fw . 'color:#0f2424;font-size:14px">' . $value . '</td></tr>';
+        };
+
+        $html = '<div style="padding:28px 32px">';
+
+        // ── TITRE ──
+        $html .= '<h2 style="margin:0 0 6px;color:#0f2424;font-family:Georgia,serif;font-size:24px">🆕 Nouvelle réservation</h2>';
+        $html .= '<p style="margin:0 0 24px;color:#6b7280;font-size:14px">Dossier VS08-' . $order_id . ' · ' . date('d/m/Y H:i') . '</p>';
+
+        // ── RÉCAPITULATIF DU VOYAGE ──
+        $html .= '<h3 style="color:#59b7b7;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 10px;font-family:Arial,sans-serif">📋 Récapitulatif du voyage</h3>';
+        $html .= '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin-bottom:24px">';
+        $html .= $tr('Voyage', esc_html($titre));
+        $html .= $tr('Destination', esc_html($destination));
+        $html .= $tr('Date de départ', $date_depart ? date('d/m/Y', strtotime($date_depart)) : '—');
+        if ($date_retour) $html .= $tr('Date de retour', $date_retour);
+        $html .= $tr('Durée', $duree_j . ' jours / ' . $duree . ' nuits');
+        if ($hotel_nom) $html .= $tr('Hébergement', esc_html($hotel_nom) . ($hotel_et ? ' ' . str_repeat('★', $hotel_et) : ''));
+        if ($pension) $html .= $tr('Pension', esc_html($pension));
+        $html .= $tr('Voyageurs', $nb . ' personne(s)');
+        if ($aeroport) $html .= $tr('Aéroport de départ', $aeroport);
+        if (!empty($params['vol_aller_num'])) $html .= $tr('Vol aller', '✈️ ' . esc_html($params['vol_aller_num']) . (!empty($params['vol_aller_cie']) ? ' (' . esc_html($params['vol_aller_cie']) . ')' : '') . ' — ' . esc_html($params['vol_aller_depart'] ?? '') . ' → ' . esc_html($params['vol_aller_arrivee'] ?? ''));
+        if (!empty($params['vol_retour_num'])) $html .= $tr('Vol retour', '✈️ ' . esc_html($params['vol_retour_num']) . (!empty($params['vol_aller_cie']) ? ' (' . esc_html($params['vol_aller_cie']) . ')' : '') . ' — ' . esc_html($params['vol_retour_depart'] ?? '') . ' → ' . esc_html($params['vol_retour_arrivee'] ?? ''));
+        // Transferts
+        $transfert_labels = ['groupes'=>'🚌 Transferts groupés','prives'=>'🚐 Transferts privés','voiture'=>'🚗 Location de voiture'];
+        $transfert_type = $m['transfert_type'] ?? $m['transport_type'] ?? '';
+        if (!empty($transfert_type) && isset($transfert_labels[$transfert_type])) {
+            $html .= $tr('Transferts', $transfert_labels[$transfert_type]);
+        }
+        $html .= '</table>';
+
+        // ── CLIENT & FACTURATION ──
+        $html .= '<h3 style="color:#59b7b7;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 10px;font-family:Arial,sans-serif">💰 Client & Facturation</h3>';
+        $html .= '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin-bottom:24px">';
+        $html .= $tr('Client', esc_html($client));
+        $html .= $tr('Email', '<a href="mailto:' . esc_attr($fact['email'] ?? '') . '" style="color:#59b7b7">' . esc_html($fact['email'] ?? '') . '</a>');
+        if (!empty($fact['tel'])) $html .= $tr('Téléphone', '<a href="tel:' . esc_attr($fact['tel']) . '" style="color:#59b7b7">' . esc_html($fact['tel']) . '</a>');
+        if (!empty($fact['adresse'])) $html .= $tr('Adresse', esc_html($fact['adresse'] . ', ' . ($fact['cp'] ?? '') . ' ' . ($fact['ville'] ?? '')));
+        $html .= '</table>';
+
+        // ── VOYAGEURS ──
+        if (!empty($voyageurs)) {
+            $html .= '<h3 style="color:#59b7b7;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 10px;font-family:Arial,sans-serif">👥 Voyageurs (' . count($voyageurs) . ')</h3>';
+            $html .= '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin-bottom:24px">';
+            $html .= '<tr style="background:#0f2424;color:#fff"><th style="padding:8px 10px;text-align:left;font-size:11px">N°</th><th style="padding:8px 10px;text-align:left;font-size:11px">Nom</th><th style="padding:8px 10px;text-align:left;font-size:11px">Prénom</th><th style="padding:8px 10px;text-align:left;font-size:11px">DDN</th><th style="padding:8px 10px;text-align:left;font-size:11px">Type</th><th style="padding:8px 10px;text-align:left;font-size:11px">Passeport</th></tr>';
+            foreach ($voyageurs as $i => $v) {
+                $bg = ($i % 2 === 0) ? '#fff' : '#f9f6f0';
+                $ddn = $v['ddn'] ?? $v['date_naissance'] ?? '';
+                if ($ddn && preg_match('/^\d{4}-\d{2}-\d{2}$/', $ddn)) $ddn = date('d/m/Y', strtotime($ddn));
+                $type = (isset($v['type']) && $v['type'] === 'golfeur') ? '⛳ Golfeur' : '👤 Accompagnant';
+                $html .= '<tr style="background:' . $bg . '">'
+                    . '<td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px">' . ($i + 1) . '</td>'
+                    . '<td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px;font-weight:bold">' . esc_html(strtoupper($v['nom'] ?? '')) . '</td>'
+                    . '<td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px">' . esc_html($v['prenom'] ?? '') . '</td>'
+                    . '<td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px">' . esc_html($ddn ?: '—') . '</td>'
+                    . '<td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px">' . $type . '</td>'
+                    . '<td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:13px">' . esc_html($v['passeport'] ?? '—') . '</td>'
+                    . '</tr>';
+            }
+            $html .= '</table>';
+        }
+
+        // ── DÉTAIL DU PRIX ──
+        $html .= '<h3 style="color:#59b7b7;font-size:12px;text-transform:uppercase;letter-spacing:2px;margin:0 0 10px;font-family:Arial,sans-serif">📊 Détail du prix</h3>';
+        $html .= '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin-bottom:8px">';
+        foreach ($devis['lines'] ?? [] as $line) {
+            $html .= '<tr><td style="padding:8px 14px;border-bottom:1px solid #f0ece4;font-size:13px;color:#374151">' . esc_html($line['label']) . '</td>'
+                   . '<td style="padding:8px 14px;border-bottom:1px solid #f0ece4;font-size:13px;font-weight:bold;text-align:right;color:#0f2424">' . number_format($line['montant'], 0, ',', ' ') . ' €</td></tr>';
+        }
+        if ($assurance > 0) {
+            $html .= '<tr><td style="padding:8px 14px;border-bottom:1px solid #f0ece4;font-size:13px;color:#374151">🛡️ Assurance Multirisques</td>'
+                   . '<td style="padding:8px 14px;border-bottom:1px solid #f0ece4;font-size:13px;font-weight:bold;text-align:right;color:#0f2424">' . number_format($assurance, 0, ',', ' ') . ' €</td></tr>';
+        }
+        $html .= '</table>';
+
+        // ── PAIEMENT ──
+        $html .= '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin-bottom:24px;border:2px solid #59b7b7;border-radius:8px">';
+        $html .= '<tr style="background:#0f2424"><td style="padding:12px 14px;font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#7ecece;font-weight:bold" colspan="2">💳 Paiement</td></tr>';
+        $html .= '<tr><td style="padding:10px 14px;font-size:14px;font-weight:bold;color:#0f2424">Total voyage</td><td style="padding:10px 14px;font-size:22px;font-weight:bold;text-align:right;color:#0f2424">' . number_format($total, 2, ',', ' ') . ' €</td></tr>';
+        if ($payer_tout) {
+            $html .= '<tr><td style="padding:10px 14px;font-size:13px;color:#059669" colspan="2">✅ Paiement intégral requis (départ dans moins de ' . $delai_solde . ' jours)</td></tr>';
+            $html .= '<tr style="background:#ecfdf5"><td style="padding:10px 14px;font-size:14px;font-weight:bold;color:#059669">Payé à la réservation</td><td style="padding:10px 14px;font-size:18px;font-weight:bold;text-align:right;color:#059669">' . number_format($total, 2, ',', ' ') . ' €</td></tr>';
+        } else {
+            $html .= '<tr style="background:#edf8f8"><td style="padding:10px 14px;font-size:14px;font-weight:bold;color:#59b7b7">Acompte payé</td><td style="padding:10px 14px;font-size:18px;font-weight:bold;text-align:right;color:#59b7b7">' . number_format($acompte, 2, ',', ' ') . ' €</td></tr>';
+            $html .= '<tr><td style="padding:10px 14px;font-size:14px;color:#dc2626;font-weight:600">Solde restant</td><td style="padding:10px 14px;font-size:16px;font-weight:bold;text-align:right;color:#dc2626">' . number_format($total - $acompte, 2, ',', ' ') . ' €</td></tr>';
+            $solde_date = $date_depart ? date('d/m/Y', strtotime($date_depart) - ($delai_solde * 86400)) : '';
+            if ($solde_date) $html .= '<tr><td style="padding:10px 14px;font-size:12px;color:#e8724a" colspan="2">📅 Échéance solde : <strong>' . $solde_date . '</strong> (' . $delai_solde . ' jours avant le départ)</td></tr>';
+        }
+        $html .= '</table>';
+
+        // ── LIENS ──
+        $html .= '<div style="margin-top:20px;text-align:center">';
+        $html .= '<a href="' . esc_url(home_url('/espace-admin/dossier/' . $order_id . '/')) . '" style="display:inline-block;padding:14px 28px;background:#59b7b7;color:#fff;text-decoration:none;border-radius:100px;font-weight:bold;font-size:15px;margin-right:12px">📁 Voir dans l\'espace admin</a>';
+        $html .= '<a href="' . esc_url(admin_url('post.php?post=' . $order_id . '&action=edit')) . '" style="display:inline-block;padding:14px 28px;background:#0f2424;color:#fff;text-decoration:none;border-radius:100px;font-weight:bold;font-size:15px">⚙️ WordPress</a>';
+        $html .= '</div>';
+
+        $html .= '</div>';
+
+        // ── Générer le PDF du contrat en pièce jointe ──
+        $attachments = [];
+        if (!empty($contract_html)) {
+            $tmp_file = wp_tempnam('contrat-VS08-' . $order_id . '.html');
+            if ($tmp_file) {
+                $full_html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Contrat VS08-' . $order_id . '</title></head><body>' . $contract_html . '</body></html>';
+                file_put_contents($tmp_file, $full_html);
+                // Renommer en .html pour que le client puisse l'ouvrir
+                $html_file = str_replace('.tmp', '.html', $tmp_file);
+                if ($html_file === $tmp_file) $html_file .= '.html';
+                rename($tmp_file, $html_file);
+                $attachments[] = $html_file;
+            }
+        }
+
+        $body = self::email_wrapper($subject, $html);
+
+        $headers = [
+            'Content-Type: text/html; charset=UTF-8',
+            'From: Voyages Sortir 08 <noreply@sortirmonde.fr>',
+        ];
+
+        // Envoyer séparément à chaque admin
+        foreach (self::ADMIN_RECIPIENTS as $admin_email) {
+            $result = wp_mail($admin_email, $subject, $body, $headers, $attachments);
+            error_log('[VS08 Emails] Admin notification to ' . $admin_email . ' => ' . ($result ? 'OK' : 'FAIL'));
+        }
+
+        // Nettoyer le fichier temporaire
+        foreach ($attachments as $f) {
+            if (file_exists($f)) @unlink($f);
+        }
     }
 
     /**

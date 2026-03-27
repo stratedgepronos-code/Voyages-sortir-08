@@ -1621,41 +1621,43 @@ add_action('wp_ajax_vs08_admin_resend_emails', function() {
     $order = wc_get_order($order_id);
     if (!$order) wp_send_json_error('Commande introuvable.');
 
-    // Lire les données directement depuis les meta
-    $data = $order->get_meta('_vs08v_booking_data');
-    $is_circuit = false;
-    if (empty($data) || !is_array($data)) {
-        $data = $order->get_meta('_vs08c_booking_data');
-        $is_circuit = true;
+    // Supprimer les flags pour forcer le re-envoi
+    $order->delete_meta_data('_vs08v_emails_sent');
+    $order->delete_meta_data('_vs08c_emails_sent');
+    $order->save();
+
+    $sent = false;
+    $errors = [];
+
+    // Tenter golf (email complet avec contrat en PJ)
+    try {
+        if (class_exists('VS08V_Emails')) {
+            VS08V_Emails::dispatch($order_id);
+            $order_check = wc_get_order($order_id);
+            if ($order_check->get_meta('_vs08v_emails_sent')) $sent = true;
+        }
+    } catch (\Throwable $e) {
+        $errors[] = 'Golf: ' . $e->getMessage();
+        error_log('[VS08 Resend] Golf: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
     }
-    if (empty($data) || !is_array($data)) wp_send_json_error('Pas de données de réservation.');
 
-    $fact = $data['facturation'] ?? [];
-    $params = $data['params'] ?? [];
-    $titre = $is_circuit ? ($data['circuit_titre'] ?? 'Circuit') : ($data['voyage_titre'] ?? 'Séjour golf');
-    $client = trim(($fact['prenom'] ?? '') . ' ' . strtoupper($fact['nom'] ?? ''));
-    $total = number_format((float)($data['total'] ?? 0), 2, ',', ' ');
+    // Tenter circuit
+    try {
+        if (class_exists('VS08C_Emails')) {
+            VS08C_Emails::dispatch($order_id);
+            $order_check = wc_get_order($order_id);
+            if ($order_check->get_meta('_vs08c_emails_sent')) $sent = true;
+        }
+    } catch (\Throwable $e) {
+        $errors[] = 'Circuit: ' . $e->getMessage();
+        error_log('[VS08 Resend] Circuit: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+    }
 
-    $body = '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:20px">'
-        . '<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden">'
-        . '<div style="background:#1a3a3a;padding:24px;text-align:center;color:#fff;font-size:20px">Voyages Sortir 08</div>'
-        . '<div style="padding:28px 32px">'
-        . '<h2 style="color:#1a3a3a;margin:0 0 16px">Réservation VS08-' . $order_id . '</h2>'
-        . '<table style="width:100%;border-collapse:collapse;font-size:14px">'
-        . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold">Client</td><td style="padding:8px;border:1px solid #e5e5e5">' . esc_html($client) . '</td></tr>'
-        . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold">Email</td><td style="padding:8px;border:1px solid #e5e5e5">' . esc_html($fact['email'] ?? '') . '</td></tr>'
-        . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold">Tél.</td><td style="padding:8px;border:1px solid #e5e5e5">' . esc_html($fact['tel'] ?? '') . '</td></tr>'
-        . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold">Voyage</td><td style="padding:8px;border:1px solid #e5e5e5">' . esc_html($titre) . '</td></tr>'
-        . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold">Départ</td><td style="padding:8px;border:1px solid #e5e5e5">' . (!empty($params['date_depart']) ? date('d/m/Y', strtotime($params['date_depart'])) : '—') . '</td></tr>'
-        . '<tr style="font-weight:bold"><td style="padding:8px;border:1px solid #e5e5e5;background:#edf8f8">Total</td><td style="padding:8px;border:1px solid #e5e5e5;background:#edf8f8;font-size:16px">' . $total . ' €</td></tr>'
-        . '</table></div></div></body></html>';
-
-    $subject = 'Réservation VS08-' . $order_id . ' — ' . $titre;
-    $headers = ['Content-Type: text/html; charset=UTF-8', 'From: Voyages Sortir 08 <noreply@sortirmonde.fr>'];
-
-    $ok1 = wp_mail('sortir08@wanadoo.fr', $subject, $body, $headers);
-    $ok2 = wp_mail('sortir08.ag@wanadoo.fr', $subject, $body, $headers);
-
-    if ($ok1 || $ok2) wp_send_json_success('Email envoyé aux admins !');
-    else wp_send_json_error('Échec envoi SMTP.');
+    if ($sent) {
+        wp_send_json_success('Emails complets envoyés (avec contrat en PJ) !');
+    } else {
+        $msg = 'Échec de l\'envoi.';
+        if (!empty($errors)) $msg .= ' ' . implode(' / ', $errors);
+        wp_send_json_error($msg);
+    }
 });
