@@ -216,9 +216,134 @@ class VS08V_Homepage_Editor {
         return array_slice($cards, 0, self::SLOTS_COUNT);
     }
 
+    /**
+     * Carte « coups de cœur » pour un circuit (même grille HTML que le golf).
+     */
+    private static function build_circuit_card_data(\WP_Post $post) {
+        if (!class_exists('VS08C_Meta')) {
+            return null;
+        }
+        $post_id = (int) $post->ID;
+        $m       = VS08C_Meta::get($post_id);
+        $dest    = trim((string) ($m['destination'] ?? ''));
+        $pays    = trim((string) ($m['pays'] ?? ''));
+        $flag    = VS08C_Meta::resolve_flag($m);
+
+        $img = get_the_post_thumbnail_url($post_id, 'large');
+        if (!$img && !empty($m['galerie'][0])) {
+            $img = $m['galerie'][0];
+        }
+        if (!$img) {
+            $img = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1000&q=80';
+        }
+
+        $desc = trim(wp_strip_all_tags((string) get_the_excerpt($post_id)));
+        if ($desc === '') {
+            $desc = wp_trim_words(wp_strip_all_tags((string) $post->post_content), 22, '…');
+        }
+        if ($desc === '') {
+            $desc = 'Circuit accompagné : découvrez les incontournables avec un guide francophone.';
+        }
+
+        $badge_html = self::build_badge_html($m['badge'] ?? '');
+
+        $golfs = [];
+        $hotels = $m['hotels'] ?? [];
+        if (is_array($hotels)) {
+            foreach ($hotels as $h) {
+                if (!is_array($h)) {
+                    continue;
+                }
+                $name = trim((string) ($h['nom'] ?? $h['name'] ?? ''));
+                if ($name === '') {
+                    continue;
+                }
+                $golfs[] = ['name' => $name, 'meta' => ''];
+                if (count($golfs) >= 3) {
+                    break;
+                }
+            }
+        }
+        if (empty($golfs)) {
+            $dj = (int) ($m['duree_jours'] ?? 0);
+            $golfs[] = [
+                'name' => $dj > 0 ? ('🗺️ ' . $dj . ' jours') : 'Circuit organisé',
+                'meta' => '',
+            ];
+        }
+
+        $prix = 0;
+        if (class_exists('VS08C_Search')) {
+            $prix = (int) round((float) VS08C_Search::get_prix_min_for_circuit($m));
+        }
+        if ($prix <= 0) {
+            $prix = (int) round((float) get_post_meta($post_id, 'vs08c_prix_min', true));
+        }
+        if ($prix <= 0 && !empty($m['prix_double'])) {
+            $prix = (int) round((float) $m['prix_double']);
+        }
+
+        $duree_j  = (int) ($m['duree_jours'] ?? 0);
+        $dur_chip = $duree_j > 0 ? '🗓️ ' . $duree_j . ' jours' : '';
+
+        $transp_map = [
+            'bus'     => '🚌 Bus clim.',
+            '4x4'     => '🚙 4×4',
+            'voiture' => '🚗 Voiture',
+            'train'   => '🚄 Train',
+            'mixed'   => '🚐 Transport',
+        ];
+        $transp_key = (string) ($m['transport'] ?? 'bus');
+        $trans_lbl  = $transp_map[$transp_key] ?? '';
+
+        $pension_map = [
+            'bb'    => '☕ Petit-déj.',
+            'dp'    => '🍽️ Demi-pension',
+            'pc'    => '🍽️ Pension complète',
+            'ai'    => '🍽️ All inclusive',
+            'mixed' => '🍽️ Selon programme',
+        ];
+        $pension = strtolower((string) ($m['pension'] ?? ''));
+        $pen_lbl = ($pension !== '' && isset($pension_map[$pension])) ? $pension_map[$pension] : '';
+
+        $highlights = array_values(array_filter([
+            $dur_chip,
+            $trans_lbl,
+            $pen_lbl,
+            !empty($m['guide_lang']) ? '🗣️ ' . trim((string) $m['guide_lang']) : '',
+            '✈️ Vol',
+            '🗺️ Circuit',
+        ]));
+
+        return [
+            'id'          => $post_id,
+            'title'       => get_the_title($post_id),
+            'url'         => get_permalink($post_id),
+            'img'         => $img,
+            'flag'        => $flag,
+            'destination' => $dest,
+            'pays'        => $pays,
+            'hotel_nom'   => '',
+            'etoiles'     => '',
+            'desc'        => $desc,
+            'badge_html'  => $badge_html,
+            'golfs'       => $golfs,
+            'highlights'  => array_slice($highlights, 0, 9),
+            'prix'        => $prix,
+        ];
+    }
+
     private static function build_card_data($post_id) {
         $post = get_post($post_id);
-        if (!$post || $post->post_type !== 'vs08_voyage' || $post->post_status !== 'publish') return null;
+        if (!$post || $post->post_status !== 'publish') {
+            return null;
+        }
+        if ($post->post_type === 'vs08_circuit') {
+            return self::build_circuit_card_data($post);
+        }
+        if ($post->post_type !== 'vs08_voyage') {
+            return null;
+        }
 
         $m = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($post_id) : [];
         if (($m['statut'] ?? 'actif') === 'archive') return null;
@@ -565,7 +690,7 @@ class VS08V_Homepage_Editor {
             // ══ AUTO-DISCOVER: ajouter ✏️ sur TOUTES les cards produit de la homepage ══
             var sectionSelectors = [
                 { selector: '.sh-card', section: 'golf_showcase', parent: '.sh-grid' },
-                { selector: '.dl-card-link, .dl-card', section: 'circuits', parent: '.dl-half' },
+                { selector: '.dl-item', section: 'circuits', parent: '.dl-grid' },
                 { selector: '.fp-ucard', section: 'univers', parent: '.fp-bento' },
             ];
             sectionSelectors.forEach(function(cfg) {
@@ -826,6 +951,45 @@ class VS08V_Homepage_Editor {
         $slots[$slot] = $product_id;
         update_option($option, $slots, false);
         wp_send_json_success(['section' => $section, 'slot' => $slot, 'product_id' => $product_id]);
+    }
+
+    /**
+     * Données d’une ligne « Circuits / Road-trip » (accueil) à partir d’un ID circuit.
+     *
+     * @return array<string,mixed>|null
+     */
+    public static function build_homepage_dl_circuit_entry($post_id) {
+        $post_id = (int) $post_id;
+        if ($post_id <= 0 || get_post_type($post_id) !== 'vs08_circuit' || get_post_status($post_id) !== 'publish') {
+            return null;
+        }
+        if (!class_exists('VS08C_Meta')) {
+            return null;
+        }
+        $dl_m       = VS08C_Meta::get($post_id);
+        $dl_transport = $dl_m['transport'] ?? 'bus';
+        $dl_prix_min  = get_post_meta($post_id, 'vs08c_prix_min', true);
+        $dl_prix_val  = $dl_prix_min > 0 ? (float) $dl_prix_min : (float) ($dl_m['prix_double'] ?? 0);
+        $flag_r       = VS08C_Meta::resolve_flag($dl_m);
+        $dl_flag_show = trim((string) ($dl_m['flag'] ?? ''));
+        if ($dl_flag_show === '') {
+            $dl_flag_show = $flag_r;
+        }
+        return [
+            'id'        => $post_id,
+            'title'     => get_the_title($post_id),
+            'link'      => get_permalink($post_id),
+            'img'       => get_the_post_thumbnail_url($post_id, 'medium_large') ?: (!empty($dl_m['galerie'][0]) ? $dl_m['galerie'][0] : ''),
+            'pays'      => trim($dl_flag_show . ' ' . ($dl_m['pays'] ?? '')),
+            'prix'      => $dl_prix_val > 0 ? number_format($dl_prix_val, 0, ',', ' ') . '€' : '',
+            'jours'     => !empty($dl_m['duree_jours']) ? (int) $dl_m['duree_jours'] . ' jours' : '',
+            'desc'      => has_excerpt($post_id) ? get_the_excerpt($post_id) : wp_trim_words(strip_tags((string) get_post_field('post_content', $post_id)), 20),
+            'pension'   => $dl_m['pension'] ?? '',
+            'transport' => $dl_transport,
+            'guide'     => $dl_m['guide_lang'] ?? '',
+            'badge'     => $dl_m['badge'] ?? '',
+            'hotels'    => $dl_m['hotels'] ?? [],
+        ];
     }
 
     /**

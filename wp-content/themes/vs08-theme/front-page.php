@@ -981,54 +981,152 @@ document.addEventListener('DOMContentLoaded', function() {
         $fp_badge_map = ['new'=>'Nouveauté','promo'=>'Promo','best'=>'Best-seller','derniere'=>'Dernières places'];
         $fp_pension_map = ['bb'=>'Petit-déj.','dp'=>'Demi-pension','pc'=>'Pension comp.','ai'=>'All inclusive','mixed'=>'Selon prog.'];
         $fp_sh_transf_map = ['groupes'=>'🚌 Transferts groupés','prives'=>'🚐 Transferts privés','voiture'=>'🚗 Location voiture'];
-        $fp_golf_q = new WP_Query(['post_type'=>'vs08_voyage','post_status'=>'publish','posts_per_page'=>4,'orderby'=>'date','order'=>'DESC','meta_query'=>[['key'=>'vs08v_data','compare'=>'EXISTS']]]);
-        while ($fp_golf_q->have_posts()) : $fp_golf_q->the_post();
-            $fp_gid    = get_the_ID();
-            $fp_gm     = get_post_meta($fp_gid, 'vs08v_data', true) ?: [];
-            $fp_gimg   = get_the_post_thumbnail_url($fp_gid, 'medium_large') ?: (!empty($fp_gm['galerie'][0]) ? $fp_gm['galerie'][0] : '');
-            $fp_gprix_data = class_exists('VS08V_Search') ? VS08V_Search::compute_prix_appel($fp_gm, $fp_gid) : ['prix' => 0, 'has_vol' => false, 'vol_estimate' => false];
-            $fp_gprix_n = (int) ($fp_gprix_data['prix'] ?? 0);
-            $fp_gprix  = $fp_gprix_n > 0 ? number_format($fp_gprix_n, 0, ',', ' ') . '€' : '';
-            $fp_gprice_hint = '';
-            if ($fp_gprix_n > 0) {
-                if (!empty($fp_gprix_data['has_vol'])) {
-                    $fp_gprice_hint = 'Vol inclus (dernier meilleur tarif vu sur le site).';
-                } elseif (!empty($fp_gprix_data['vol_estimate'])) {
-                    $fp_gprice_hint = 'Vol estimé — actualisé après recherche.';
+        $fp_sh_trans_circuit = ['bus'=>'🚌 Bus clim.','4x4'=>'🚙 4×4','voiture'=>'🚗 Voiture','train'=>'🚄 Train','mixed'=>'🚐 Mixte'];
+        $fp_golf_q_args = null;
+        if (class_exists('VS08V_Homepage_Editor')) {
+            $fp_sh_slots = VS08V_Homepage_Editor::get_section_slots('golf_showcase', 4);
+            $fp_sh_ordered = [];
+            for ($fp_si = 1; $fp_si <= 4; $fp_si++) {
+                $fp_sid = (int) ($fp_sh_slots[$fp_si] ?? 0);
+                if ($fp_sid > 0 && get_post_status($fp_sid) === 'publish') {
+                    $fp_sh_ordered[] = $fp_sid;
                 }
             }
-            $fp_gpays  = trim(($fp_gm['flag'] ?? '').' '.($fp_gm['pays'] ?? ''));
-            $fp_gg_nn = (int) ($fp_gm['duree'] ?? 0);
-            $fp_gg_nj = (int) ($fp_gm['duree_jours'] ?? 0);
-            if ($fp_gg_nj < 1 && $fp_gg_nn > 0) {
-                $fp_gg_nj = $fp_gg_nn + 1;
+            if (!empty($fp_sh_ordered)) {
+                while (count($fp_sh_ordered) < 4) {
+                    $fp_more = get_posts([
+                        'post_type'      => 'vs08_voyage',
+                        'post_status'    => 'publish',
+                        'posts_per_page' => 12,
+                        'orderby'        => 'date',
+                        'order'          => 'DESC',
+                        'post__not_in'   => $fp_sh_ordered,
+                        'meta_query'     => [['key' => 'vs08v_data', 'compare' => 'EXISTS']],
+                        'fields'         => 'ids',
+                    ]);
+                    $fp_added = false;
+                    foreach ($fp_more as $fp_mid) {
+                        $fp_mid = (int) $fp_mid;
+                        if (!in_array($fp_mid, $fp_sh_ordered, true)) {
+                            $fp_sh_ordered[] = $fp_mid;
+                            $fp_added = true;
+                        }
+                        if (count($fp_sh_ordered) >= 4) {
+                            break;
+                        }
+                    }
+                    if (!$fp_added) {
+                        break;
+                    }
+                }
+                $fp_golf_q_args = [
+                    'post_type'      => ['vs08_voyage', 'vs08_circuit'],
+                    'post_status'    => 'publish',
+                    'post__in'       => array_slice($fp_sh_ordered, 0, 4),
+                    'orderby'        => 'post__in',
+                    'posts_per_page' => 4,
+                ];
             }
-            $fp_gdur_badge = ($fp_gg_nj > 0 && $fp_gg_nn > 0) ? ($fp_gg_nj . 'J / ' . $fp_gg_nn . 'N') : ($fp_gg_nn > 0 ? $fp_gg_nn . 'N' : ($fp_gg_nj > 0 ? $fp_gg_nj . 'J' : ''));
-            $fp_ggolfs = $fp_gm['golfs'] ?? [];
-            $fp_gnbparc = 0;
-            if (!empty($fp_ggolfs) && is_array($fp_ggolfs)) {
-                $fp_gnbparc = count($fp_ggolfs);
+        }
+        $fp_golf_q = new WP_Query($fp_golf_q_args !== null ? $fp_golf_q_args : [
+            'post_type'      => 'vs08_voyage',
+            'post_status'    => 'publish',
+            'posts_per_page' => 4,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+            'meta_query'     => [['key' => 'vs08v_data', 'compare' => 'EXISTS']],
+        ]);
+        while ($fp_golf_q->have_posts()) : $fp_golf_q->the_post();
+            $fp_gid     = get_the_ID();
+            $fp_golf_pt = get_post_type($fp_gid);
+            if ($fp_golf_pt === 'vs08_circuit' && class_exists('VS08C_Meta')) {
+                $fp_cm = VS08C_Meta::get($fp_gid);
+                $fp_gm = [];
+                $fp_gimg = get_the_post_thumbnail_url($fp_gid, 'medium_large') ?: (!empty($fp_cm['galerie'][0]) ? $fp_cm['galerie'][0] : '');
+                $fp_gprix_n = 0;
+                if (class_exists('VS08C_Search')) {
+                    $fp_gprix_n = (int) round((float) VS08C_Search::get_prix_min_for_circuit($fp_cm));
+                }
+                if ($fp_gprix_n <= 0) {
+                    $fp_gprix_n = (int) round((float) get_post_meta($fp_gid, 'vs08c_prix_min', true));
+                }
+                if ($fp_gprix_n <= 0 && !empty($fp_cm['prix_double'])) {
+                    $fp_gprix_n = (int) round((float) $fp_cm['prix_double']);
+                }
+                $fp_gprix       = $fp_gprix_n > 0 ? number_format($fp_gprix_n, 0, ',', ' ') . '€' : '';
+                $fp_gprice_hint = '';
+                $fp_fl          = VS08C_Meta::resolve_flag($fp_cm);
+                $fp_gpays       = trim($fp_fl . ' ' . ($fp_cm['pays'] ?? ''));
+                $fp_gg_nn       = 0;
+                $fp_gg_nj       = 0;
+                $fp_dj_c        = (int) ($fp_cm['duree_jours'] ?? 0);
+                $fp_gdur_badge  = $fp_dj_c > 0 ? ($fp_dj_c . ' jours') : '';
+                $fp_ggolfs      = [];
+                $fp_hot_c       = $fp_cm['hotels'] ?? [];
+                if (is_array($fp_hot_c)) {
+                    foreach (array_slice($fp_hot_c, 0, 3) as $fp_th) {
+                        if (!is_array($fp_th)) {
+                            continue;
+                        }
+                        $fp_nm = trim((string) ($fp_th['nom'] ?? $fp_th['name'] ?? ''));
+                        if ($fp_nm !== '') {
+                            $fp_ggolfs[] = ['nom' => $fp_nm, 'trous' => ''];
+                        }
+                    }
+                }
+                $fp_gnbgolf   = '';
+                $fp_gtfl      = $fp_sh_trans_circuit[$fp_cm['transport'] ?? ''] ?? '';
+                $fp_gvol_chip = '✈️ Vol';
+                $fp_gpension  = isset($fp_pension_map[$fp_cm['pension'] ?? '']) ? $fp_pension_map[$fp_cm['pension']] : '';
+                $fp_gbadge    = $fp_cm['badge'] ?? '';
+                $fp_gbuggy    = false;
+            } else {
+                $fp_gm     = get_post_meta($fp_gid, 'vs08v_data', true) ?: [];
+                $fp_gimg   = get_the_post_thumbnail_url($fp_gid, 'medium_large') ?: (!empty($fp_gm['galerie'][0]) ? $fp_gm['galerie'][0] : '');
+                $fp_gprix_data = class_exists('VS08V_Search') ? VS08V_Search::compute_prix_appel($fp_gm, $fp_gid) : ['prix' => 0, 'has_vol' => false, 'vol_estimate' => false];
+                $fp_gprix_n = (int) ($fp_gprix_data['prix'] ?? 0);
+                $fp_gprix  = $fp_gprix_n > 0 ? number_format($fp_gprix_n, 0, ',', ' ') . '€' : '';
+                $fp_gprice_hint = '';
+                if ($fp_gprix_n > 0) {
+                    if (!empty($fp_gprix_data['has_vol'])) {
+                        $fp_gprice_hint = 'Vol inclus (dernier meilleur tarif vu sur le site).';
+                    } elseif (!empty($fp_gprix_data['vol_estimate'])) {
+                        $fp_gprice_hint = 'Vol estimé — actualisé après recherche.';
+                    }
+                }
+                $fp_gpays  = trim(($fp_gm['flag'] ?? '').' '.($fp_gm['pays'] ?? ''));
+                $fp_gg_nn = (int) ($fp_gm['duree'] ?? 0);
+                $fp_gg_nj = (int) ($fp_gm['duree_jours'] ?? 0);
+                if ($fp_gg_nj < 1 && $fp_gg_nn > 0) {
+                    $fp_gg_nj = $fp_gg_nn + 1;
+                }
+                $fp_gdur_badge = ($fp_gg_nj > 0 && $fp_gg_nn > 0) ? ($fp_gg_nj . 'J / ' . $fp_gg_nn . 'N') : ($fp_gg_nn > 0 ? $fp_gg_nn . 'N' : ($fp_gg_nj > 0 ? $fp_gg_nj . 'J' : ''));
+                $fp_ggolfs = $fp_gm['golfs'] ?? [];
+                $fp_gnbparc = 0;
+                if (!empty($fp_ggolfs) && is_array($fp_ggolfs)) {
+                    $fp_gnbparc = count($fp_ggolfs);
+                }
+                if ($fp_gnbparc < 1 && !empty($fp_gm['nb_parcours'])) {
+                    $fp_gnbparc = (int) $fp_gm['nb_parcours'];
+                }
+                $fp_gnbgolf = $fp_gnbparc > 0 ? $fp_gnbparc . ' parcours' : '';
+                $fp_gtf = (string) ($fp_gm['transfert_type'] ?? '');
+                $fp_gtfl = $fp_sh_transf_map[$fp_gtf] ?? '';
+                $fp_gtt = (string) ($fp_gm['transport_type'] ?? 'vol');
+                $fp_gvol_chip = '';
+                if ($fp_gtt === 'vol' || $fp_gtt === '') {
+                    $fp_gvol_chip = '✈️ Vols inclus';
+                } elseif ($fp_gtt === 'vol_option') {
+                    $fp_gvol_chip = '✈️ Vol en option';
+                } elseif ($fp_gtt === 'sans_vol') {
+                    $fp_gvol_chip = '🏨 Sans vol';
+                } elseif ($fp_gtt === 'voiture') {
+                    $fp_gvol_chip = '🚗 Accès voiture';
+                }
+                $fp_gbadge = $fp_gm['badge'] ?? '';
+                $fp_gpension = isset($fp_pension_map[$fp_gm['pension'] ?? '']) ? $fp_pension_map[$fp_gm['pension']] : '';
+                $fp_gbuggy = ($fp_gm['buggy'] ?? '') === 'inclus';
             }
-            if ($fp_gnbparc < 1 && !empty($fp_gm['nb_parcours'])) {
-                $fp_gnbparc = (int) $fp_gm['nb_parcours'];
-            }
-            $fp_gnbgolf = $fp_gnbparc > 0 ? $fp_gnbparc . ' parcours' : '';
-            $fp_gtf = (string) ($fp_gm['transfert_type'] ?? '');
-            $fp_gtfl = $fp_sh_transf_map[$fp_gtf] ?? '';
-            $fp_gtt = (string) ($fp_gm['transport_type'] ?? 'vol');
-            $fp_gvol_chip = '';
-            if ($fp_gtt === 'vol' || $fp_gtt === '') {
-                $fp_gvol_chip = '✈️ Vols inclus';
-            } elseif ($fp_gtt === 'vol_option') {
-                $fp_gvol_chip = '✈️ Vol en option';
-            } elseif ($fp_gtt === 'sans_vol') {
-                $fp_gvol_chip = '🏨 Sans vol';
-            } elseif ($fp_gtt === 'voiture') {
-                $fp_gvol_chip = '🚗 Accès voiture';
-            }
-            $fp_gbadge = $fp_gm['badge'] ?? '';
-            $fp_gpension = isset($fp_pension_map[$fp_gm['pension'] ?? '']) ? $fp_pension_map[$fp_gm['pension']] : '';
-            $fp_gbuggy = ($fp_gm['buggy'] ?? '') === 'inclus';
         ?>
             <a href="<?php echo esc_url(get_permalink()); ?>" class="sh-card">
                 <div class="sh-card-img">
@@ -1046,13 +1144,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         <?php if($fp_gtfl !== ''): ?><span class="sh-chip"><?php echo esc_html($fp_gtfl); ?></span><?php endif; ?>
                         <?php if($fp_gpension): ?><span class="sh-chip">🍽️ <?php echo esc_html($fp_gpension); ?></span><?php endif; ?>
                         <?php if($fp_gvol_chip !== ''): ?><span class="sh-chip"><?php echo esc_html($fp_gvol_chip); ?></span><?php endif; ?>
+                        <?php if ($fp_golf_pt === 'vs08_circuit') : ?>
+                        <span class="sh-chip">🗺️ Circuit</span>
+                        <?php else : ?>
                         <span class="sh-chip">🧳 Soute + sac golf</span>
                         <?php if($fp_gbuggy): ?><span class="sh-chip">🛞 Buggy inclus</span><?php endif; ?>
+                        <?php endif; ?>
                     </div>
                     <?php if(!empty($fp_ggolfs)): ?>
                     <div class="sh-golfs">
                         <?php foreach(array_slice($fp_ggolfs, 0, 2) as $fg): ?>
-                        <span class="sh-golf-name">⛳ <?php echo esc_html($fg['nom'] ?? ''); ?><?php if(!empty($fg['trous'])): ?> · <?php echo esc_html($fg['trous']); ?> trous<?php endif; ?></span>
+                        <span class="sh-golf-name"><?php echo $fp_golf_pt === 'vs08_circuit' ? '🏨 ' : '⛳ '; ?><?php echo esc_html($fg['nom'] ?? ''); ?><?php if(!empty($fg['trous'])): ?> · <?php echo esc_html($fg['trous']); ?> trous<?php endif; ?></span>
                         <?php endforeach; ?>
                     </div>
                     <?php endif; ?>
@@ -1116,6 +1218,29 @@ document.addEventListener('DOMContentLoaded', function() {
         wp_reset_postdata();
         $dl_guided = array_slice($dl_guided, 0, 3);
         $dl_roadtrips = array_slice($dl_roadtrips, 0, 3);
+        if (class_exists('VS08V_Homepage_Editor')) {
+            $dl_circ_slots = VS08V_Homepage_Editor::get_section_slots('circuits', 6);
+            for ($dl_oi = 1; $dl_oi <= 3; $dl_oi++) {
+                $dl_oid = (int) ($dl_circ_slots[$dl_oi] ?? 0);
+                if ($dl_oid > 0) {
+                    $dl_orow = VS08V_Homepage_Editor::build_homepage_dl_circuit_entry($dl_oid);
+                    if ($dl_orow !== null) {
+                        $dl_guided[$dl_oi - 1] = $dl_orow;
+                    }
+                }
+            }
+            for ($dl_oi = 4; $dl_oi <= 6; $dl_oi++) {
+                $dl_oid = (int) ($dl_circ_slots[$dl_oi] ?? 0);
+                if ($dl_oid > 0) {
+                    $dl_orow = VS08V_Homepage_Editor::build_homepage_dl_circuit_entry($dl_oid);
+                    if ($dl_orow !== null) {
+                        $dl_roadtrips[$dl_oi - 4] = $dl_orow;
+                    }
+                }
+            }
+            $dl_guided    = array_values($dl_guided);
+            $dl_roadtrips = array_values($dl_roadtrips);
+        }
         ?>
         <div class="dl-grid">
             <div class="dl-half dl-dark">
