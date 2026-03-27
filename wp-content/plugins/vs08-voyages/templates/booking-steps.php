@@ -1869,6 +1869,197 @@ bk_options_total = 0;
 // Init : afficher les valeurs du recap
 bkUpdateTotal();
 
+// ══════════════════════════════════════════════════════════════════════════════
+// SHOW MORE + FILTRES — Wrapper autour de bkRenderCombos
+// ══════════════════════════════════════════════════════════════════════════════
+var bk_all_combos = [];
+var bkBaseRenderCombos = bkRenderCombos;
+
+bkRenderCombos = function(combos) {
+    bk_all_combos = combos || [];
+    bkBaseRenderCombos(combos);
+
+    // Show-more: masquer au-delà de 3
+    var list = document.getElementById('bk-combo-list');
+    if (!list) return;
+    var cards = list.querySelectorAll('.combo-card');
+    var VISIBLE = 3;
+    var old = list.querySelector('.bk-show-more');
+    if (old) old.remove();
+    if (cards.length > VISIBLE) {
+        for (var i = VISIBLE; i < cards.length; i++) {
+            cards[i].classList.add('bk-flights-hidden');
+        }
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'bk-show-more';
+        var hidden = cards.length - VISIBLE;
+        btn.textContent = 'Voir ' + hidden + ' autre' + (hidden > 1 ? 's' : '') + ' combinaison' + (hidden > 1 ? 's' : '') + ' ▾';
+        btn.addEventListener('click', function() {
+            list.querySelectorAll('.combo-card.bk-flights-hidden').forEach(function(c) { c.classList.remove('bk-flights-hidden'); });
+            btn.remove();
+        });
+        list.appendChild(btn);
+    }
+
+    // Compteurs filtres
+    bkUpdateFilterCounts(combos);
+    bkPositionSidebar();
+};
+
+function bkUpdateFilterCounts(combos) {
+    if (!combos) combos = bk_all_combos;
+    var nAll = combos.length, nDirect = 0, nEscale = 0;
+    combos.forEach(function(c) {
+        var isDirect = (!c.aller || !c.aller.stops || c.aller.stops === 0) && (!c.retour || !c.retour.stops || c.retour.stops === 0);
+        if (isDirect) nDirect++; else nEscale++;
+    });
+    var eAll = document.getElementById('bkf-n-all');
+    var eDirect = document.getElementById('bkf-n-direct');
+    var eEscale = document.getElementById('bkf-n-escale');
+    if (eAll) eAll.textContent = nAll;
+    if (eDirect) eDirect.textContent = nDirect;
+    if (eEscale) eEscale.textContent = nEscale;
+}
+
+function bkApplyFilters() {
+    if (!bk_all_combos.length) return;
+    var typeVal = document.querySelector('input[name="bkf_type"]:checked');
+    var sortVal = document.querySelector('input[name="bkf_sort"]:checked');
+    var type = typeVal ? typeVal.value : 'all';
+    var sort = sortVal ? sortVal.value : 'price';
+
+    var filtered = bk_all_combos.filter(function(c) {
+        if (type === 'all') return true;
+        var isDirect = (!c.aller || !c.aller.stops || c.aller.stops === 0) && (!c.retour || !c.retour.stops || c.retour.stops === 0);
+        return type === 'direct' ? isDirect : !isDirect;
+    });
+
+    filtered.sort(function(a, b) {
+        if (sort === 'price') return (a.total_delta || 0) - (b.total_delta || 0);
+        if (sort === 'duration') {
+            var da = (a.aller ? a.aller.duration_min || 0 : 0) + (a.retour ? a.retour.duration_min || 0 : 0);
+            var db = (b.aller ? b.aller.duration_min || 0 : 0) + (b.retour ? b.retour.duration_min || 0 : 0);
+            return da - db;
+        }
+        if (sort === 'depart') {
+            return (a.aller ? a.aller.depart_time || '' : '').localeCompare(b.aller ? b.aller.depart_time || '' : '');
+        }
+        return 0;
+    });
+
+    bkBaseRenderCombos(filtered);
+
+    // Re-apply show-more
+    var list = document.getElementById('bk-combo-list');
+    if (list) {
+        var cards = list.querySelectorAll('.combo-card');
+        var VISIBLE = 3;
+        var old = list.querySelector('.bk-show-more');
+        if (old) old.remove();
+        if (cards.length > VISIBLE) {
+            for (var j = VISIBLE; j < cards.length; j++) cards[j].classList.add('bk-flights-hidden');
+            var btn2 = document.createElement('button');
+            btn2.type = 'button'; btn2.className = 'bk-show-more';
+            var h = cards.length - VISIBLE;
+            btn2.textContent = 'Voir ' + h + ' autre' + (h > 1 ? 's' : '') + ' ▾';
+            btn2.addEventListener('click', function() {
+                list.querySelectorAll('.combo-card.bk-flights-hidden').forEach(function(c) { c.classList.remove('bk-flights-hidden'); });
+                btn2.remove();
+            });
+            list.appendChild(btn2);
+        }
+    }
+}
+
+document.querySelectorAll('input[name="bkf_type"],input[name="bkf_sort"]').forEach(function(el) {
+    el.addEventListener('change', bkApplyFilters);
+});
+var bkfReset = document.getElementById('bkf-reset');
+if (bkfReset) {
+    bkfReset.addEventListener('click', function() {
+        document.querySelectorAll('input[name="bkf_type"][value="all"],input[name="bkf_sort"][value="price"]').forEach(function(r) { r.checked = true; });
+        bkApplyFilters();
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SIDEBAR POSITION — marge gauche, stop avant footer
+// ══════════════════════════════════════════════════════════════════════════════
+function bkPositionSidebar() {
+    var sidebar = document.getElementById('bk-filters-sidebar');
+    var inner = document.querySelector('.bk-inner');
+    if (!sidebar || !inner) return;
+    var step1 = document.getElementById('bk-step-1');
+    // Afficher uniquement sur l'étape 1
+    if (!step1 || step1.style.display === 'none') { sidebar.style.display = 'none'; return; }
+
+    var rect = inner.getBoundingClientRect();
+    var sidebarW = 200, gap = 18;
+    var spaceLeft = rect.left - gap - sidebarW;
+    if (spaceLeft >= 10) {
+        sidebar.style.left = (rect.left - gap - sidebarW) + 'px';
+        sidebar.style.display = '';
+    } else {
+        sidebar.style.display = 'none';
+    }
+
+    // Stop before footer
+    var footer = document.querySelector('.ft-wrap') || document.querySelector('footer');
+    if (footer) {
+        var fTop = footer.getBoundingClientRect().top;
+        var sH = sidebar.offsetHeight;
+        if (fTop < sH + 200) {
+            sidebar.style.opacity = '0'; sidebar.style.pointerEvents = 'none';
+        } else {
+            sidebar.style.opacity = '1'; sidebar.style.pointerEvents = '';
+        }
+    }
+}
+window.addEventListener('scroll', bkPositionSidebar, {passive: true});
+window.addEventListener('resize', bkPositionSidebar);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// BOUTON RECAP — s'adapte à l'étape en cours
+// ══════════════════════════════════════════════════════════════════════════════
+(function() {
+    var recapBtn = document.getElementById('bk-recap-btn');
+    var recapWrap = document.getElementById('bk-recap-btn-wrap');
+    if (!recapBtn || !recapWrap) return;
+
+    function updateRecapBtn() {
+        var s1 = document.getElementById('bk-step-1');
+        var s2 = document.getElementById('bk-step-2');
+        var s3 = document.getElementById('bk-step-3');
+        var s4 = document.getElementById('bk-step-4');
+
+        if (s1 && s1.style.display !== 'none') {
+            recapBtn.textContent = 'Continuer →';
+            recapBtn.onclick = function() { bkGo(2); };
+            recapWrap.style.display = 'block';
+        } else if (s2 && s2.style.display !== 'none') {
+            recapBtn.textContent = 'Continuer →';
+            recapBtn.onclick = function() { bkGo(3); };
+            recapWrap.style.display = 'block';
+        } else if (s3 && s3.style.display !== 'none') {
+            recapBtn.textContent = 'Vérifier et confirmer →';
+            recapBtn.onclick = function() { bkGo(4); };
+            recapWrap.style.display = 'block';
+        } else {
+            recapWrap.style.display = 'none';
+        }
+        bkPositionSidebar();
+    }
+
+    // Observer les changements de step
+    var origBkGo = window.bkGo;
+    window.bkGo = function(step) {
+        origBkGo(step);
+        setTimeout(updateRecapBtn, 100);
+    };
+    updateRecapBtn();
+})();
+
 </script>
 
 <?php get_footer(); ?>
