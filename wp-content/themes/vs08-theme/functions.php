@@ -1508,3 +1508,106 @@ add_action('wp_ajax_vs08_admin_mark_paid', function() {
     $order->save();
     wp_send_json_success('Dossier marqué comme soldé.');
 });
+
+/* ============================================================
+   ESPACE ADMIN — AJAX handlers
+============================================================ */
+
+// ── Sauvegarder notes admin (AJAX, sans refresh) ──
+add_action('wp_ajax_vs08_admin_save_notes', function() {
+    check_ajax_referer('vs08_admin_actions', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Non autorisé.');
+    $order_id = intval($_POST['order_id'] ?? 0);
+    $notes = sanitize_textarea_field($_POST['notes'] ?? '');
+    if (!$order_id) wp_send_json_error('ID manquant.');
+    update_post_meta($order_id, '_vs08_admin_notes', $notes);
+    wp_send_json_success('Notes sauvegardées.');
+});
+
+// ── Envoyer rappel solde manuellement ──
+add_action('wp_ajax_vs08_admin_send_reminder', function() {
+    check_ajax_referer('vs08_admin_actions', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Non autorisé.');
+    $order_id = intval($_POST['order_id'] ?? 0);
+    $order = wc_get_order($order_id);
+    if (!$order) wp_send_json_error('Commande introuvable.');
+    $data = VS08V_Traveler_Space::get_booking_data_from_order($order, true);
+    if (!$data) wp_send_json_error('Pas de données.');
+    $si = VS08V_Traveler_Space::get_solde_info($order_id);
+    if (!$si || !$si['solde_due'] || $si['solde'] <= 0) wp_send_json_error('Pas de solde dû.');
+    $customer_id = $order->get_customer_id();
+    $user = $customer_id ? get_userdata($customer_id) : null;
+    $email = $user ? $user->user_email : $order->get_billing_email();
+    if (!$email) wp_send_json_error('Pas d\'email client.');
+    $is_circuit = isset($data['type']) && $data['type'] === 'circuit';
+    $titre = $is_circuit ? ($data['circuit_titre'] ?? 'Circuit') : ($data['voyage_titre'] ?? 'Séjour golf');
+    $solde_fmt = number_format($si['solde'], 2, ',', ' ');
+    $solde_date = $si['solde_date'] ?? '';
+    $body = '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:20px">'
+        . '<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">'
+        . '<div style="background:#1a3a3a;padding:24px;text-align:center;color:#fff;font-family:Georgia,serif;font-size:20px">Voyages Sortir 08</div>'
+        . '<div style="padding:28px 32px">'
+        . '<h2 style="color:#1a3a3a;margin:0 0 16px">Rappel : solde à régler</h2>'
+        . '<p style="font-size:15px;color:#333;line-height:1.6">Bonjour,</p>'
+        . '<p style="font-size:15px;color:#333;line-height:1.6">Pour votre voyage <strong>' . esc_html($titre) . '</strong>, il reste un solde de <strong>' . $solde_fmt . ' €</strong> à régler'
+        . ($solde_date ? ' avant le <strong>' . esc_html($solde_date) . '</strong>' : '') . '.</p>'
+        . '<p style="margin-top:20px"><a href="' . esc_url(VS08V_Traveler_Space::base_url()) . '" style="display:inline-block;padding:12px 28px;background:#2a7f7f;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold">Accéder à mon espace voyageur</a></p>'
+        . '<p style="margin-top:16px;font-size:12px;color:#999">Dossier VS08-' . $order_id . '</p>'
+        . '</div></div></body></html>';
+    $headers = ['Content-Type: text/html; charset=UTF-8', 'From: Voyages Sortir 08 <noreply@sortirmonde.fr>'];
+    $sent = wp_mail($email, 'Rappel : solde à régler — ' . $titre, $body, $headers);
+    if ($sent) {
+        $order->update_meta_data('_vs08_manual_reminder_' . date('Ymd'), current_time('mysql'));
+        $order->save();
+        wp_send_json_success('Rappel envoyé à ' . $email);
+    } else {
+        wp_send_json_error('Erreur d\'envoi.');
+    }
+});
+
+// ── Export CSV des dossiers ──
+add_action('wp_ajax_vs08_admin_export_csv', function() {
+    if (!current_user_can('manage_options')) wp_die('Non autorisé.');
+    check_admin_referer('vs08_export_csv');
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="vs08-dossiers-' . date('Y-m-d') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM UTF-8
+    fputcsv($out, ['N° Dossier', 'Type', 'Client', 'Email', 'Téléphone', 'Voyage', 'Destination', 'Date départ', 'Durée', 'Voyageurs', 'Total', 'Payé', 'Solde', 'Statut'], ';');
+    $orders = wc_get_orders(['limit' => -1, 'status' => array_keys(wc_get_order_statuses()), 'orderby' => 'date', 'order' => 'DESC']);
+    $today = date('Y-m-d');
+    foreach ($orders as $order) {
+        $data = VS08V_Traveler_Space::get_booking_data_from_order($order, true);
+        if (!$data) continue;
+        $is_circuit = isset($data['type']) && $data['type'] === 'circuit';
+        $fact = $data['facturation'] ?? []; $params = $data['params'] ?? []; $devis = $data['devis'] ?? [];
+        $total = (float)($data['total'] ?? 0);
+        $si = VS08V_Traveler_Space::get_solde_info($order->get_id());
+        $paye = $si ? ($total - $si['solde']) : $total;
+        $solde = $si ? $si['solde'] : 0;
+        $dest = '';
+        if ($is_circuit) { $pid=(int)($data['circuit_id']??0); if ($pid && class_exists('VS08C_Meta')) { $cm=VS08C_Meta::get($pid); $dest=$cm['destination']??''; } }
+        else { $pid=(int)($data['voyage_id']??0); if ($pid && class_exists('VS08V_MetaBoxes')) { $vm=VS08V_MetaBoxes::get($pid); $dest=$vm['destination']??''; } }
+        $m2 = $is_circuit ? (class_exists('VS08C_Meta') ? VS08C_Meta::get((int)($data['circuit_id']??0)) : []) : (class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get((int)($data['voyage_id']??0)) : []);
+        $duree = (int)($m2['duree'] ?? 7);
+        $dep = $params['date_depart'] ?? '';
+        fputcsv($out, [
+            'VS08-' . $order->get_id(),
+            $is_circuit ? 'Circuit' : 'Golf',
+            trim(($fact['prenom']??'') . ' ' . ($fact['nom']??'')),
+            $fact['email'] ?? '',
+            $fact['tel'] ?? '',
+            $is_circuit ? ($data['circuit_titre'] ?? '') : ($data['voyage_titre'] ?? ''),
+            $dest,
+            $dep ? date('d/m/Y', strtotime($dep)) : '',
+            $duree . ' nuits',
+            (int)($devis['nb_total'] ?? 0),
+            number_format($total, 2, ',', ' ') . ' €',
+            number_format($paye, 2, ',', ' ') . ' €',
+            number_format($solde, 2, ',', ' ') . ' €',
+            ($dep && $dep >= $today) ? 'À venir' : 'Passé',
+        ], ';');
+    }
+    fclose($out);
+    exit;
+});

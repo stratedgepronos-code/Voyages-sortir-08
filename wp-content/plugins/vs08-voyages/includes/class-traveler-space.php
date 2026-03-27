@@ -558,9 +558,9 @@ class VS08V_Traveler_Space {
         add_rewrite_tag('%vs08_admin%', '([a-z]+)');
         add_rewrite_tag('%vs08_admin_order%', '([0-9]+)');
 
-        if (get_option('vs08v_espace_rewrite_v', '') !== '3.0') {
+        if (get_option('vs08v_espace_rewrite_v', '') !== '3.1') {
             flush_rewrite_rules(false);
-            update_option('vs08v_espace_rewrite_v', '3.0');
+            update_option('vs08v_espace_rewrite_v', '3.1');
         }
     }
 

@@ -230,9 +230,67 @@ new Chart(document.getElementById('ea-chart-count'),{type:'line',data:{labels:<?
 new Chart(document.getElementById('ea-chart-dest'),{type:'bar',data:{labels:<?php echo json_encode(array_keys($top_dests)); ?>,datasets:[{data:<?php echo json_encode(array_values($top_dests)); ?>,backgroundColor:['#59b7b7','#e8724a','#c8a45e','#8b5cf6','#ec4899','#14b8a6'],borderRadius:6,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{stepSize:1}},y:{grid:{display:false}}}}});
 </script>
 
+<!-- Derniers messages + Activité récente -->
+<div class="ea-charts-grid">
+    <div class="ea-chart-card" style="height:auto">
+        <div class="ea-chart-title">💬 Derniers messages clients</div>
+        <?php
+        $recent_msgs = array_reverse(array_slice($messages_admin, -5));
+        if (empty($recent_msgs)): ?>
+        <p style="color:#9ca3af;font-size:13px;text-align:center;padding:20px">Aucun message.</p>
+        <?php else: foreach ($recent_msgs as $rm): ?>
+        <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f5f3ef;font-size:12px">
+            <div style="width:32px;height:32px;border-radius:50%;background:#edf8f8;display:flex;align-items:center;justify-content:center;color:#59b7b7;font-weight:700;font-size:13px;flex-shrink:0"><?php echo mb_strtoupper(mb_substr($rm['client_name'] ?? '?', 0, 1)); ?></div>
+            <div style="flex:1;min-width:0">
+                <div style="display:flex;justify-content:space-between"><strong style="color:#0f2424"><?php echo esc_html($rm['client_name'] ?? ''); ?></strong><span style="color:#9ca3af;font-size:10px"><?php echo esc_html($rm['date_fmt'] ?? ''); ?></span></div>
+                <div style="color:#374151;font-weight:600"><?php echo esc_html($rm['sujet'] ?? ''); ?></div>
+                <div style="color:#6b7280"><?php echo esc_html(mb_substr($rm['message'] ?? '', 0, 60)); ?><?php echo mb_strlen($rm['message'] ?? '') > 60 ? '…' : ''; ?></div>
+            </div>
+        </div>
+        <?php endforeach; ?>
+        <div style="text-align:center;margin-top:12px"><a href="<?php echo home_url('/espace-admin/messages/'); ?>" class="ea-btn ea-btn-outline" style="padding:6px 16px;font-size:11px">Voir tous les messages →</a></div>
+        <?php endif; ?>
+    </div>
+    <div class="ea-chart-card" style="height:auto">
+        <div class="ea-chart-title">📋 Activité récente</div>
+        <?php
+        global $wpdb;
+        $nl_count = (int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}vs08_newsletter WHERE active = 1");
+        $nl_month = (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}vs08_newsletter WHERE active = 1 AND created_at >= %s", date('Y-m-01 00:00:00')));
+        ?>
+        <div style="display:flex;gap:16px;margin-bottom:16px">
+            <div style="flex:1;background:#edf8f8;border-radius:12px;padding:14px;text-align:center">
+                <div style="font-size:24px;font-weight:700;color:#0f2424;font-family:'Playfair Display',serif"><?php echo $nl_count; ?></div>
+                <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Abonnés newsletter</div>
+            </div>
+            <div style="flex:1;background:#fef3e8;border-radius:12px;padding:14px;text-align:center">
+                <div style="font-size:24px;font-weight:700;color:#0f2424;font-family:'Playfair Display',serif"><?php echo $nl_month; ?></div>
+                <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Ce mois</div>
+            </div>
+        </div>
+        <?php
+        // 5 dernières réservations
+        $recent_orders = array_slice($all_orders, 0, 5);
+        foreach ($recent_orders as $ro):
+            $ro_date = $ro['order']->get_date_created() ? $ro['order']->get_date_created()->format('d/m/Y H:i') : '';
+        ?>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f3ef;font-size:12px">
+            <div>
+                <span class="ea-badge ea-badge-<?php echo $ro['type']; ?>" style="font-size:9px"><?php echo $ro['type'] === 'golf' ? '⛳' : '🗺️'; ?></span>
+                <a href="<?php echo home_url('/espace-admin/dossier/' . $ro['order']->get_id() . '/'); ?>" style="color:#59b7b7;font-weight:600;text-decoration:none">VS08-<?php echo $ro['order']->get_id(); ?></a>
+                <span style="color:#6b7280"> — <?php echo esc_html($ro['client_name']); ?></span>
+            </div>
+            <span style="color:#9ca3af"><?php echo $ro_date; ?></span>
+        </div>
+        <?php endforeach; ?>
+        <div style="text-align:center;margin-top:12px"><a href="<?php echo home_url('/espace-admin/dossiers/'); ?>" class="ea-btn ea-btn-outline" style="padding:6px 16px;font-size:11px">Voir tous les dossiers →</a></div>
+    </div>
+</div>
+
 <?php elseif ($admin_view === 'dossiers'): ?>
 <h1 class="ea-page-title">Dossiers</h1>
-<p class="ea-page-sub"><?php echo count($all_orders); ?> réservation(s)</p>
+<p class="ea-page-sub"><?php echo count($all_orders); ?> réservation(s) <a href="<?php echo esc_url(wp_nonce_url(admin_url('admin-ajax.php?action=vs08_admin_export_csv'), 'vs08_export_csv')); ?>" class="ea-btn ea-btn-outline" style="margin-left:12px;padding:6px 16px;font-size:12px">📥 Exporter CSV</a></p>
+<script>var EA_NONCE='<?php echo esc_js(wp_create_nonce('vs08_admin_actions')); ?>',EA_AJAX='<?php echo esc_url(admin_url('admin-ajax.php')); ?>';</script>
 <div class="ea-tabs">
     <button class="ea-tab active" onclick="eaFilter('all',this)">Tous</button>
     <button class="ea-tab" onclick="eaFilter('upcoming',this)">À venir</button>
@@ -298,6 +356,9 @@ if (!$order) { echo '<p>Dossier introuvable.</p>'; } else {
         <a href="<?php echo esc_url($contract_url); ?>" target="_blank" class="ea-btn ea-btn-outline">📄 Contrat</a>
         <a href="<?php echo admin_url('post.php?post='.$admin_order_id.'&action=edit'); ?>" target="_blank" class="ea-btn ea-btn-outline">⚙️ WordPress</a>
         <a href="mailto:<?php echo esc_attr($fact['email']??''); ?>" class="ea-btn ea-btn-primary">✉️ Contacter</a>
+        <?php if($si&&$si['solde_due']&&$si['solde']>0): ?>
+        <button type="button" class="ea-btn ea-btn-outline" style="border-color:#e8724a;color:#e8724a" onclick="eaSendReminder(<?php echo $admin_order_id; ?>,this)">🔔 Envoyer rappel solde</button>
+        <?php endif; ?>
     </div>
 </div>
 <div class="ea-detail-grid">
@@ -334,9 +395,11 @@ if (!$order) { echo '<p>Dossier introuvable.</p>'; } else {
         <?php if(($data['assurance']??0)>0): ?><div class="ea-detail-row"><span>🛡️ Assurance</span><strong><?php echo number_format($data['assurance'],0,',',' '); ?> €</strong></div><?php endif; ?>
     </div>
     <div class="ea-detail-card ea-detail-full"><h3>📝 Notes internes</h3>
-        <form method="post"><?php wp_nonce_field('vs08_admin_notes_'.$admin_order_id); ?><input type="hidden" name="vs08_admin_action" value="save_notes"><input type="hidden" name="order_id" value="<?php echo $admin_order_id; ?>">
-        <textarea class="ea-notes-textarea" name="admin_notes" placeholder="Notes privées…"><?php echo esc_textarea($admin_notes); ?></textarea>
-        <div style="margin-top:10px"><button type="submit" class="ea-btn ea-btn-primary">Sauvegarder</button></div></form>
+        <textarea class="ea-notes-textarea" id="ea-notes" placeholder="Notes privées…"><?php echo esc_textarea($admin_notes); ?></textarea>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:12px">
+            <button type="button" class="ea-btn ea-btn-primary" onclick="eaSaveNotes(<?php echo $admin_order_id; ?>,this)">Sauvegarder</button>
+            <span id="ea-notes-fb" style="font-size:12px;font-family:'Outfit',sans-serif"></span>
+        </div>
     </div>
     <div class="ea-detail-card ea-detail-full"><h3>📋 Carnet de voyage (<?php echo count($carnet_files); ?>)</h3>
         <?php if(empty($carnet_files)): ?><p style="color:#9ca3af;font-size:13px">Aucun document. <a href="<?php echo admin_url('post.php?post='.$admin_order_id.'&action=edit'); ?>" target="_blank" style="color:#59b7b7">Uploader via WordPress →</a></p>
@@ -346,6 +409,29 @@ if (!$order) { echo '<p>Dossier introuvable.</p>'; } else {
     </div>
 </div>
 <?php }} ?>
+<script>
+var EA_NONCE_D='<?php echo esc_js(wp_create_nonce('vs08_admin_actions')); ?>',EA_AJAX_D='<?php echo esc_url(admin_url('admin-ajax.php')); ?>';
+function eaSaveNotes(oid,btn){
+    btn.disabled=true;btn.textContent='Enregistrement…';
+    var fb=document.getElementById('ea-notes-fb');
+    var fd=new FormData();fd.append('action','vs08_admin_save_notes');fd.append('nonce',EA_NONCE_D);fd.append('order_id',oid);fd.append('notes',document.getElementById('ea-notes').value);
+    fetch(EA_AJAX_D,{method:'POST',body:fd}).then(function(r){return r.json()}).then(function(res){
+        btn.disabled=false;btn.textContent='Sauvegarder';
+        fb.textContent=res.success?'✅ Sauvegardé':'❌ Erreur';fb.style.color=res.success?'#059669':'#dc2626';
+        setTimeout(function(){fb.textContent=''},3000);
+    }).catch(function(){btn.disabled=false;btn.textContent='Sauvegarder';fb.textContent='❌ Erreur réseau';fb.style.color='#dc2626'});
+}
+function eaSendReminder(oid,btn){
+    if(!confirm('Envoyer un rappel de solde au client ?'))return;
+    btn.disabled=true;var orig=btn.textContent;btn.textContent='Envoi…';
+    var fd=new FormData();fd.append('action','vs08_admin_send_reminder');fd.append('nonce',EA_NONCE_D);fd.append('order_id',oid);
+    fetch(EA_AJAX_D,{method:'POST',body:fd}).then(function(r){return r.json()}).then(function(res){
+        btn.disabled=false;btn.textContent=res.success?'✅ Envoyé !':orig;
+        if(res.success)setTimeout(function(){btn.textContent=orig},3000);
+        else alert(res.data||'Erreur');
+    }).catch(function(){btn.disabled=false;btn.textContent=orig;alert('Erreur réseau')});
+}
+</script>
 
 <?php elseif ($admin_view === 'clients'): ?>
 <?php $users = get_users(['role__in'=>['customer','subscriber'],'orderby'=>'registered','order'=>'DESC','number'=>200]); ?>
