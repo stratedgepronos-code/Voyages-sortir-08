@@ -512,10 +512,14 @@ class VS08V_Admin_Espace_Ajax {
         delete_post_meta($order_id, '_vs08v_emails_sent');
         delete_post_meta($order_id, '_vs08c_emails_sent');
         delete_post_meta($order_id, '_vs08s_emails_sent');
+        delete_post_meta($order_id, '_vs08v_pre_res_emails_sent');
+        delete_post_meta($order_id, '_vs08c_pre_res_emails_sent');
         // Aussi nettoyer dans le format HPOS si activé
         $order->delete_meta_data('_vs08v_emails_sent');
         $order->delete_meta_data('_vs08c_emails_sent');
         $order->delete_meta_data('_vs08s_emails_sent');
+        $order->delete_meta_data('_vs08v_pre_res_emails_sent');
+        $order->delete_meta_data('_vs08c_pre_res_emails_sent');
         // PAS de $order->save() ici — c'est dispatch() qui fera le save avec le flag
 
         $sent = false;

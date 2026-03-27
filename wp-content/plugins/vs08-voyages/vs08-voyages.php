@@ -130,6 +130,12 @@ VS08V_Duplicate_Voyage::register();
 if (class_exists('VS08V_Paybox_Mail')) {
     VS08V_Paybox_Mail::register();
 }
+
+add_action('woocommerce_loaded', function() {
+    require_once VS08V_PATH . 'includes/class-gateway-agence.php';
+    require_once VS08V_PATH . 'includes/class-vs08-checkout-payment.php';
+    VS08_Checkout_Payment::register();
+});
 add_action('init', ['VS08V_PostType', 'register']);
 
 add_action('wp_mail_failed', function($wp_error) {
@@ -274,11 +280,16 @@ add_action('template_redirect', function() {
 
     $token = sanitize_text_field($_GET['vs08_cart']);
     $transient_key = 'vs08_cart_' . $token;
-    $product_id = get_transient($transient_key);
+    $raw = get_transient($transient_key);
+    list($product_id, $pay_mode) = class_exists('VS08_Checkout_Payment')
+        ? VS08_Checkout_Payment::parse_cart_transient_payload($raw)
+        : [is_array($raw) ? (int) ($raw['product_id'] ?? 0) : (int) $raw, (is_array($raw) && (($raw['payment_mode'] ?? '') === 'agency')) ? 'agency' : 'card'];
 
-    if (!$product_id) return; // Déjà utilisé ou expiré
+    if (!$product_id) {
+        return;
+    }
 
-    delete_transient($transient_key); // Usage unique
+    delete_transient($transient_key);
 
     if (!function_exists('WC') || !WC()) return;
 
@@ -290,6 +301,11 @@ add_action('template_redirect', function() {
         elseif (method_exists(WC(), 'initialize_cart')) { WC()->initialize_cart(); }
     }
     if (!WC()->cart) return;
+
+    if (WC()->session) {
+        $sk = class_exists('VS08_Checkout_Payment') ? VS08_Checkout_Payment::SESSION_KEY : 'vs08_checkout_payment_mode';
+        WC()->session->set($sk, $pay_mode === 'agency' ? 'agency' : 'card');
+    }
 
     WC()->cart->empty_cart();
     WC()->cart->add_to_cart((int) $product_id, 1);

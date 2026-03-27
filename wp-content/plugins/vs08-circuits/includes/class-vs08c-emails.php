@@ -43,7 +43,52 @@ class VS08C_Emails {
         unset($dispatching[$order_id]);
     }
 
-    private static function send_admin($order_id, $order, $data, $contract_html) {
+    public static function dispatch_pre_reservation($order_id) {
+        static $lock = [];
+        if (isset($lock[$order_id])) {
+            return;
+        }
+        $lock[$order_id] = true;
+        if (get_post_meta($order_id, '_vs08c_pre_res_emails_sent', true)) {
+            unset($lock[$order_id]);
+            return;
+        }
+        update_post_meta($order_id, '_vs08c_pre_res_emails_sent', current_time('mysql'));
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            unset($lock[$order_id]);
+            return;
+        }
+        $data = null;
+        try {
+            $data = VS08C_Contract::get_booking_data($order_id);
+        } catch (\Throwable $e) {
+            error_log('[VS08C Emails] pre_res get_booking_data: ' . $e->getMessage());
+        }
+        if (!$data || ($data['type'] ?? '') !== 'circuit') {
+            unset($lock[$order_id]);
+            return;
+        }
+        $contract_html = '';
+        try {
+            $contract_html = VS08C_Contract::generate($order_id);
+        } catch (\Throwable $e) {
+            error_log('[VS08C Emails] pre_res Contract: ' . $e->getMessage());
+        }
+        try {
+            self::send_admin($order_id, $order, $data, $contract_html ?: '', true);
+        } catch (\Throwable $e) {
+            error_log('[VS08C Emails] pre_res send_admin: ' . $e->getMessage());
+        }
+        try {
+            self::send_client($order_id, $order, $data, $contract_html ?: '', true);
+        } catch (\Throwable $e) {
+            error_log('[VS08C Emails] pre_res send_client: ' . $e->getMessage());
+        }
+        unset($lock[$order_id]);
+    }
+
+    private static function send_admin($order_id, $order, $data, $contract_html, $pre_res = false) {
         $fact   = $data['facturation'] ?? [];
         $params = $data['params'] ?? [];
         $devis  = $data['devis'] ?? [];
@@ -52,11 +97,18 @@ class VS08C_Emails {
         $total  = number_format(floatval($data['total'] ?? 0), 2, ',', ' ');
         $nb     = intval($devis['nb_total'] ?? 1);
 
-        $subject = sprintf('🗺️ Nouvelle résa Circuit VS08-%d — %s — %s', $order_id, $titre, $client);
+        $subject = $pre_res
+            ? sprintf('📝 Pré-réservation circuit (agence) VS08-%d — %s — %s', $order_id, $titre, $client)
+            : sprintf('🗺️ Nouvelle résa Circuit VS08-%d — %s — %s', $order_id, $titre, $client);
+
+        $head_block = $pre_res
+            ? '<h2 style="margin:0 0 16px;color:#92400e;font-family:Georgia,serif;">📝 Pré-réservation circuit (agence)</h2>'
+                . '<p style="margin:0 0 18px;color:#78350f;font-size:14px;line-height:1.55;background:#fef3c7;padding:12px 14px;border-radius:10px;border:1px solid #fbbf24">Le client a choisi le <strong>règlement en agence</strong>. Ce dossier <strong>n’est pas un contrat de vente définitif</strong> tant que le paiement n’est pas encaissé.</p>'
+            : '<h2 style="margin:0 0 16px;color:#1a3a3a;font-family:Georgia,serif;">🗺️ Nouvelle réservation Circuit</h2>';
 
         $body = self::email_wrapper($subject,
             '<div style="padding:24px 32px;">'
-            . '<h2 style="margin:0 0 16px;color:#1a3a3a;font-family:Georgia,serif;">🗺️ Nouvelle réservation Circuit</h2>'
+            . $head_block
             . '<table cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:14px;width:100%;">'
             . self::tr('N° contrat', 'VS08-' . $order_id)
             . self::tr('Client', esc_html($client))
@@ -78,7 +130,7 @@ class VS08C_Emails {
         self::send(self::ADMIN_RECIPIENTS, $subject, $body);
     }
 
-    private static function send_client($order_id, $order, $data, $contract_html) {
+    private static function send_client($order_id, $order, $data, $contract_html, $pre_res = false) {
         $fact  = $data['facturation'] ?? [];
         $email = $fact['email'] ?? '';
         if (!$email || !is_email($email)) return;
@@ -92,23 +144,36 @@ class VS08C_Emails {
         $duree_j = intval($m['duree_jours'] ?? (intval($m['duree'] ?? 7) + 1));
         $duree_n = intval($m['duree'] ?? 7);
 
-        $subject = sprintf('Votre réservation — %s — Voyages Sortir 08', $titre);
+        $subject = $pre_res
+            ? sprintf('Votre pré-réservation circuit — %s — Voyages Sortir 08', $titre)
+            : sprintf('Votre réservation — %s — Voyages Sortir 08', $titre);
+
+        $intro = $pre_res
+            ? '<p style="font-size:16px;color:#555;margin:0 0 12px;">Merci ' . esc_html($prenom) . ' ! Nous avons enregistré votre <strong>pré-réservation</strong> avec <strong>règlement en agence</strong>.</p>'
+                . '<p style="font-size:14px;color:#78350f;margin:0 0 24px;line-height:1.55;background:#fef3c7;padding:14px 16px;border-radius:10px;border:1px solid #fbbf24"><strong>Important :</strong> ce document <strong>n’est pas un contrat de vente définitif</strong>. Le prix peut évoluer tant que le paiement n’est pas encaissé. Après règlement, le contrat de vente vous sera transmis.</p>'
+            : '<p style="font-size:16px;color:#555;margin:0 0 24px;">Votre réservation pour le circuit <strong>' . esc_html($titre) . '</strong> a bien été enregistrée. Vous trouverez ci-dessous votre contrat de vente.</p>';
+
+        $ref_l = $pre_res ? 'N° dossier' : 'N° contrat';
+        $tot_l = $pre_res ? 'Total indicatif' : 'Total';
+        $foot = $pre_res
+            ? '<div style="padding:16px 32px;text-align:center;font-size:12px;color:#888;">Fiche de pré-réservation ci-dessous :</div>'
+            : '<div style="padding:16px 32px;text-align:center;font-size:12px;color:#888;">Votre contrat de vente ci-dessous :</div>';
 
         $body = self::email_wrapper($subject,
             '<div style="padding:32px;">'
             . '<h1 style="margin:0 0 8px;color:#1a3a3a;font-family:Georgia,serif;font-size:24px;">Merci ' . esc_html($prenom) . ' !</h1>'
-            . '<p style="font-size:16px;color:#555;margin:0 0 24px;">Votre réservation pour le circuit <strong>' . esc_html($titre) . '</strong> a bien été enregistrée. Vous trouverez ci-dessous votre contrat de vente.</p>'
+            . $intro
             . '<table cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;background:#edf8f8;border-radius:8px;">'
             . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Circuit</td><td style="padding:12px 16px;">' . esc_html($titre) . '</td></tr>'
             . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Date de départ</td><td style="padding:12px 16px;">' . esc_html(!empty($params['date_depart']) ? date('d/m/Y', strtotime($params['date_depart'])) : '') . '</td></tr>'
             . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Durée</td><td style="padding:12px 16px;">' . $duree_j . ' jours / ' . $duree_n . ' nuits</td></tr>'
-            . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">N° contrat</td><td style="padding:12px 16px;">VS08-' . $order_id . '</td></tr>'
-            . '<tr style="font-weight:bold;font-size:16px;"><td style="padding:12px 16px;color:#1a3a3a;">Total</td><td style="padding:12px 16px;color:#e8724a;">' . $total . ' €</td></tr>'
+            . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">' . esc_html($ref_l) . '</td><td style="padding:12px 16px;">VS08-' . $order_id . '</td></tr>'
+            . '<tr style="font-weight:bold;font-size:16px;"><td style="padding:12px 16px;color:#1a3a3a;">' . esc_html($tot_l) . '</td><td style="padding:12px 16px;color:#e8724a;">' . $total . ' €</td></tr>'
             . '</table>'
             . self::prix_detail_table($devis, $data)
             . '<p style="margin-top:24px;color:#6b7280;font-size:13px;line-height:1.6;">Un conseiller prendra contact avec vous sous 24h pour finaliser votre dossier.<br>Pour toute question : <a href="tel:0326652863" style="color:#3d9a9a">03 26 65 28 63</a> ou <a href="mailto:sortir08.ag@wanadoo.fr" style="color:#3d9a9a">sortir08.ag@wanadoo.fr</a></p>'
             . '</div>'
-            . (empty($contract_html) ? '' : '<div style="border-top:3px solid #2a7f7f;margin-top:8px;"></div><div style="padding:16px 32px;text-align:center;font-size:12px;color:#888;">Votre contrat de vente ci-dessous :</div>' . $contract_html)
+            . (empty($contract_html) ? '' : '<div style="border-top:3px solid #2a7f7f;margin-top:8px;"></div>' . $foot . $contract_html)
         );
 
         self::send([$email], $subject, $body);

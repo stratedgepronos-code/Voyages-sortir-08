@@ -122,6 +122,15 @@ class VS08C_Booking {
             'ville'   => sanitize_text_field($_POST['fact_ville'] ?? ''),
         ];
 
+        $payment_mode = sanitize_text_field($_POST['vs08_payment_mode'] ?? 'card');
+        if (!in_array($payment_mode, ['card', 'agency'], true)) {
+            $payment_mode = 'card';
+        }
+        if ($payment_mode === 'agency' && empty($_POST['vs08_agence_confirm'])) {
+            return ['error' => 'Cochez la case « Paiement en agence » et acceptez que le prix n’est pas définitivement bloqué tant que le règlement n’est pas effectué.'];
+        }
+        $reglement_agence = ($payment_mode === 'agency');
+
         // Créer le produit WooCommerce
         $booking_data = [
             'circuit_id'      => $circuit_id,
@@ -135,8 +144,10 @@ class VS08C_Booking {
             'acompte'         => $acompte,
             'acompte_pct'     => $acompte_pct,
             'payer_tout'      => $payer_tout,
-            'voyageurs'       => $voyageurs,
-            'facturation'     => $facturation,
+            'voyageurs'        => $voyageurs,
+            'facturation'      => $facturation,
+            'reglement_agence' => $reglement_agence,
+            'payment_mode'     => $payment_mode,
         ];
 
         $product_id = VS08C_Woo::create_booking_product($booking_data);
@@ -146,7 +157,10 @@ class VS08C_Booking {
 
         // Transient pour reconstruire le panier (même pattern vs08-voyages)
         $cart_token = wp_generate_password(32, false);
-        set_transient('vs08c_cart_' . $cart_token, $product_id, 900);
+        set_transient('vs08c_cart_' . $cart_token, [
+            'product_id'   => $product_id,
+            'payment_mode' => $payment_mode,
+        ], 900);
 
         // Ajout panier classique (fallback)
         try {

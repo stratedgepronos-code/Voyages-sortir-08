@@ -86,6 +86,8 @@ class VS08C_Contract {
             if ($solde_ts > time()) $solde_date = date('d/m/Y', $solde_ts);
         }
 
+        $is_prereservation = !empty($data['reglement_agence']) && $order && !$order->is_paid();
+
         ob_start();
 ?>
 <!DOCTYPE html>
@@ -107,8 +109,17 @@ class VS08C_Contract {
     </tr></table>
 </div>
 
+<?php if (!empty($is_prereservation)) : ?>
+<div style="background:#fef3c7;color:#78350f;padding:16px 32px;font-size:13px;line-height:1.55;border-bottom:2px solid #f59e0b;">
+    <strong>Pré-réservation — règlement en agence</strong><br>
+    Ce document ne constitue <strong>pas un contrat de vente définitif</strong>. Aucun paiement par carte bancaire n’a été encaissé en ligne.
+    Le prix peut encore évoluer tant que le règlement n’est pas effectué en agence ou validé par <?php echo esc_html($c['name']); ?>.
+    Après encaissement (notamment par CB sur le site), le <strong>contrat de vente définitif</strong> vous sera communiqué.
+</div>
+<?php endif; ?>
+
 <div style="background:#2a7f7f;color:#fff;padding:12px 32px;font-size:16px;font-weight:bold;text-align:center;">
-    Contrat de vente N° <?php echo $contrat_num; ?> du <?php echo $date_contrat; ?>
+    <?php echo !empty($is_prereservation) ? 'Fiche de pré-réservation' : 'Contrat de vente'; ?> N° <?php echo $contrat_num; ?> du <?php echo $date_contrat; ?>
 </div>
 
 <div style="padding:24px 32px 16px;">

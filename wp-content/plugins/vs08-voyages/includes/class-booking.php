@@ -118,20 +118,31 @@ class VS08V_Booking {
             'ville'  => sanitize_text_field($_POST['fact_ville'] ?? ''),
         ];
 
+        $payment_mode = sanitize_text_field($_POST['vs08_payment_mode'] ?? 'card');
+        if (!in_array($payment_mode, ['card', 'agency'], true)) {
+            $payment_mode = 'card';
+        }
+        if ($payment_mode === 'agency' && empty($_POST['vs08_agence_confirm'])) {
+            return ['error' => 'Cochez la case « Paiement en agence » et acceptez que le prix n’est pas définitivement bloqué tant que le règlement n’est pas effectué.'];
+        }
+        $reglement_agence = ($payment_mode === 'agency');
+
         // Créer le produit WooCommerce et rediriger
         $woo = new VS08V_Woo();
         $product_id = $woo->create_booking_product([
-            'voyage_id'       => $voyage_id,
-            'voyage_titre'    => get_the_title($voyage_id),
-            'params'          => $params,
-            'devis'           => $devis,
-            'options'         => $options_selected,
-            'assurance'       => $assurance,
-            'total'           => $total_final,
-            'acompte'         => $acompte,
-            'payer_tout'      => $payer_tout,
-            'voyageurs'       => $voyageurs,
-            'facturation'     => $facturation,
+            'voyage_id'        => $voyage_id,
+            'voyage_titre'     => get_the_title($voyage_id),
+            'params'           => $params,
+            'devis'            => $devis,
+            'options'          => $options_selected,
+            'assurance'        => $assurance,
+            'total'            => $total_final,
+            'acompte'          => $acompte,
+            'payer_tout'       => $payer_tout,
+            'voyageurs'        => $voyageurs,
+            'facturation'      => $facturation,
+            'reglement_agence' => $reglement_agence,
+            'payment_mode'     => $payment_mode,
         ]);
 
         if (is_wp_error($product_id)) {
@@ -143,7 +154,10 @@ class VS08V_Booking {
         // ce qui élimine le problème de cookies de session non enregistrés
         // entre la requête AJAX/REST et la redirection JavaScript.
         $cart_token = wp_generate_password(32, false);
-        set_transient('vs08_cart_' . $cart_token, $product_id, 900); // 15 min
+        set_transient('vs08_cart_' . $cart_token, [
+            'product_id'    => $product_id,
+            'payment_mode'  => $payment_mode,
+        ], 900);
 
         // Tenter aussi l'ajout au panier classique (fallback si cookies fonctionnent)
         try {

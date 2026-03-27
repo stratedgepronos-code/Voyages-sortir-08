@@ -112,8 +112,13 @@ add_action('template_redirect', function() {
     if (!function_exists('is_checkout') || !is_checkout()) return;
 
     $token = sanitize_text_field($_GET['vs08c_cart']);
-    $product_id = get_transient('vs08c_cart_' . $token);
-    if (!$product_id) return;
+    $raw = get_transient('vs08c_cart_' . $token);
+    list($product_id, $pay_mode) = class_exists('VS08_Checkout_Payment')
+        ? VS08_Checkout_Payment::parse_cart_transient_payload($raw)
+        : [is_array($raw) ? (int) ($raw['product_id'] ?? 0) : (int) $raw, (is_array($raw) && (($raw['payment_mode'] ?? '') === 'agency')) ? 'agency' : 'card'];
+    if (!$product_id) {
+        return;
+    }
     delete_transient('vs08c_cart_' . $token);
 
     if (!function_exists('WC') || !WC()) return;
@@ -123,6 +128,11 @@ add_action('template_redirect', function() {
         elseif (method_exists(WC(), 'initialize_cart')) WC()->initialize_cart();
     }
     if (!WC()->cart) return;
+
+    if (WC()->session) {
+        $sk = class_exists('VS08_Checkout_Payment') ? VS08_Checkout_Payment::SESSION_KEY : 'vs08_checkout_payment_mode';
+        WC()->session->set($sk, $pay_mode === 'agency' ? 'agency' : 'card');
+    }
 
     WC()->cart->empty_cart();
     WC()->cart->add_to_cart((int) $product_id, 1);

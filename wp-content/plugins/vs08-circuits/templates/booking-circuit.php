@@ -492,6 +492,24 @@ var BK_CIRCUIT = <?php echo json_encode([
 
             <div id="bkc-recap-final" style="border-radius:14px;margin-bottom:20px"></div>
 
+            <div style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px;font-family:'Outfit',sans-serif">
+                <div style="font-size:13px;font-weight:700;color:#0f2424;margin-bottom:10px">💳 Mode de règlement</div>
+                <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start;margin-bottom:12px">
+                    <input type="radio" name="bkc-payment-mode" value="card" checked style="margin-top:4px;flex-shrink:0">
+                    <span style="font-size:13px;color:#374151;line-height:1.5"><strong>Payer par carte bancaire</strong> (Paybox sécurisé)</span>
+                </label>
+                <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start">
+                    <input type="radio" name="bkc-payment-mode" value="agency" id="bkc-payment-agency" style="margin-top:4px;flex-shrink:0">
+                    <span style="font-size:13px;color:#374151;line-height:1.5"><strong>Paiement en agence</strong> (pré-réservation)</span>
+                </label>
+                <div id="bkc-agence-confirm-wrap" style="display:none;margin:12px 0 0 28px">
+                    <label style="display:flex;gap:8px;cursor:pointer;align-items:flex-start">
+                        <input type="checkbox" id="bkc-agence-confirm" style="margin-top:2px;flex-shrink:0">
+                        <span style="font-size:11px;color:#6b7280;line-height:1.45">Je comprends que le <strong>prix n’est pas définitivement bloqué</strong> tant que le règlement n’a pas été effectué en agence.</span>
+                    </label>
+                </div>
+            </div>
+
             <div style="background:#fff8f0;border:1.5px solid #f0dcc0;border-radius:12px;padding:16px;margin-bottom:16px">
                 <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start">
                     <input type="checkbox" id="bkc-confirm-info" style="margin-top:3px;flex-shrink:0">
@@ -1205,6 +1223,11 @@ var BK_CIRCUIT = <?php echo json_encode([
     window.bkcSubmit = function() {
         var errEl = document.getElementById('bkc-error');
         if (!document.getElementById('bkc-confirm-info').checked) { alert("Veuillez certifier l'exactitude des informations voyageurs."); return; }
+        var pm = (document.querySelector('input[name="bkc-payment-mode"]:checked')||{}).value || 'card';
+        if (pm === 'agency') {
+            var ac = document.getElementById('bkc-agence-confirm');
+            if (!ac || !ac.checked) { alert('Cochez la case relative au paiement en agence (prix non bloqué).'); return; }
+        }
         if (!document.getElementById('bkc-cgu').checked) { alert('Veuillez accepter les conditions générales de vente et la politique de confidentialité.'); return; }
         if (submitting) return;
         submitting = true;
@@ -1234,7 +1257,9 @@ var BK_CIRCUIT = <?php echo json_encode([
             fact_adresse:(document.getElementById('fact-adresse')||{}).value||'',
             fact_cp:(document.getElementById('fact-cp')||{}).value||'',
             fact_ville:(document.getElementById('fact-ville')||{}).value||'',
-            assurance: bkc_insurance_check ? '1' : '0'
+            assurance: bkc_insurance_check ? '1' : '0',
+            vs08_payment_mode: pm,
+            vs08_agence_confirm: (pm === 'agency' && document.getElementById('bkc-agence-confirm') && document.getElementById('bkc-agence-confirm').checked) ? '1' : ''
         };
         document.querySelectorAll('.bkc-voyageur').forEach(function(row){ row.querySelectorAll('input').forEach(function(input){ if(input.name) data[input.name]=input.value; }); });
         document.querySelectorAll('input[name^="options["]').forEach(function(inp){ var n=inp.getAttribute('name'); var m=n&&n.match(/options\[([^\]]+)\]/); if(m) data['options['+m[1]+']']=inp.value; });
@@ -1243,6 +1268,18 @@ var BK_CIRCUIT = <?php echo json_encode([
         function fail(){errEl.textContent='Erreur réseau. Vérifiez votre connexion.';errEl.style.display='block';submitting=false;btn.disabled=false;btn.textContent='🔒 Procéder au paiement →';load.style.display='none';}
         jQuery.post(BK.ajax_url, data).done(done).fail(fail);
     };
+
+    (function() {
+        function syncBkcAgence() {
+            var a = document.getElementById('bkc-payment-agency');
+            var w = document.getElementById('bkc-agence-confirm-wrap');
+            if (w && a) w.style.display = a.checked ? 'block' : 'none';
+        }
+        document.querySelectorAll('input[name="bkc-payment-mode"]').forEach(function(r) {
+            r.addEventListener('change', syncBkcAgence);
+        });
+        syncBkcAgence();
+    })();
 })();
 
 /* ═══ Recap button — mirrors current step's action ═══ */

@@ -581,6 +581,24 @@ get_header();
 
                 <div id="bk-recap-final" style="border-radius:14px;margin-bottom:20px"></div>
 
+                <div style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px;font-family:'Outfit',sans-serif">
+                    <div style="font-size:13px;font-weight:700;color:#0f2424;margin-bottom:10px">💳 Mode de règlement</div>
+                    <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start;margin-bottom:12px">
+                        <input type="radio" name="bk-payment-mode" value="card" checked style="margin-top:4px;flex-shrink:0">
+                        <span style="font-size:13px;color:#374151;line-height:1.5"><strong>Payer par carte bancaire</strong> (Paybox sécurisé) — encaissement de l’acompte ou du montant dû en ligne.</span>
+                    </label>
+                    <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start">
+                        <input type="radio" name="bk-payment-mode" value="agency" id="bk-payment-agency" style="margin-top:4px;flex-shrink:0">
+                        <span style="font-size:13px;color:#374151;line-height:1.5"><strong>Paiement en agence</strong> (pré-réservation)</span>
+                    </label>
+                    <div id="bk-agence-confirm-wrap" style="display:none;margin:12px 0 0 28px">
+                        <label style="display:flex;gap:8px;cursor:pointer;align-items:flex-start">
+                            <input type="checkbox" id="bk-agence-confirm" style="margin-top:2px;flex-shrink:0">
+                            <span style="font-size:11px;color:#6b7280;line-height:1.45">Je comprends qu’il s’agit d’une <strong>pré-réservation</strong> : le <strong>prix n’est pas définitivement bloqué</strong> tant que le règlement n’a pas été effectué en agence.</span>
+                        </label>
+                    </div>
+                </div>
+
                 <!-- Clause légale conforme au Code du Tourisme (art. L211-8 et suivants) et Directive UE 2015/2302 -->
                 <div style="background:#fff8f0;border:1.5px solid #f0dcc0;border-radius:12px;padding:16px;margin-bottom:16px">
                     <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start">
@@ -1768,6 +1786,15 @@ function bkSubmit() {
         alert('Veuillez certifier l\'exactitude des informations voyageurs (noms, dates de naissance, passeports).');
         return;
     }
+    var payModeEl = document.querySelector('input[name="bk-payment-mode"]:checked');
+    var payMode = payModeEl ? payModeEl.value : 'card';
+    if (payMode === 'agency') {
+        var ag = document.getElementById('bk-agence-confirm');
+        if (!ag || !ag.checked) {
+            alert('Pour un règlement en agence, cochez la case confirmant que le prix n’est pas bloqué tant que le paiement n’est pas effectué.');
+            return;
+        }
+    }
     var cgu = document.getElementById('bk-cgu');
     if (!cgu || !cgu.checked) {
         alert('Veuillez accepter les conditions générales de vente.');
@@ -1810,6 +1837,8 @@ function bkSubmit() {
         fact_adresse    : (document.getElementById('fact-adresse') || {}).value || '',
         fact_cp         : (document.getElementById('fact-cp')      || {}).value || '',
         fact_ville      : (document.getElementById('fact-ville')   || {}).value || '',
+        vs08_payment_mode : payMode,
+        vs08_agence_confirm : (payMode === 'agency' && document.getElementById('bk-agence-confirm') && document.getElementById('bk-agence-confirm').checked) ? '1' : '',
     };
 
     // Voyageurs
@@ -1871,6 +1900,20 @@ bk_options_total = 0;
 
 // Init : afficher les valeurs du recap
 bkUpdateTotal();
+
+(function() {
+    function syncBkAgenceWrap() {
+        var agency = document.getElementById('bk-payment-agency');
+        var w = document.getElementById('bk-agence-confirm-wrap');
+        if (w && agency) {
+            w.style.display = agency.checked ? 'block' : 'none';
+        }
+    }
+    document.querySelectorAll('input[name="bk-payment-mode"]').forEach(function(r) {
+        r.addEventListener('change', syncBkAgenceWrap);
+    });
+    syncBkAgenceWrap();
+})();
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SHOW MORE + FILTRES — Wrapper autour de bkRenderCombos

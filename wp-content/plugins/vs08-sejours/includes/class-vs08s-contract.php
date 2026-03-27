@@ -48,6 +48,8 @@ class VS08S_Contract {
         $date_retour = $date_depart ? date('d/m/Y', strtotime($date_depart . ' +' . $duree . ' days')) : '';
         $nb = intval($devis['nb_total'] ?? 2);
 
+        $is_prereservation = !empty($data['reglement_agence']) && $order && !$order->is_paid();
+
         ob_start();
         ?>
         <div style="font-family:Arial,sans-serif;max-width:800px;margin:0 auto;padding:20px;font-size:13px;color:#222">
@@ -58,7 +60,13 @@ class VS08S_Contract {
                 <div style="font-size:11px;color:#888">Immatriculation : <?php echo $c['immat']; ?> — Garantie : <?php echo $c['garantie']; ?></div>
             </div>
 
-            <h2 style="color:#0f2424;font-size:18px;margin:0 0 16px">CONTRAT DE VENTE — VS08-<?php echo $order_id; ?></h2>
+            <?php if (!empty($is_prereservation)) : ?>
+            <div style="background:#fef3c7;color:#78350f;padding:14px 20px;font-size:12px;line-height:1.5;margin:0 0 16px;border-radius:8px;border:1px solid #fbbf24">
+                <strong>Pré-réservation</strong> — Document indicatif, pas un contrat de vente définitif tant qu’aucun paiement n’a été encaissé. Le prix peut évoluer.
+            </div>
+            <?php endif; ?>
+
+            <h2 style="color:#0f2424;font-size:18px;margin:0 0 16px"><?php echo !empty($is_prereservation) ? 'FICHE DE PRÉ-RÉSERVATION' : 'CONTRAT DE VENTE'; ?> — VS08-<?php echo $order_id; ?></h2>
             <p style="font-size:12px;color:#888;margin:0 0 20px">Date : <?php echo date('d/m/Y H:i'); ?></p>
 
             <h3 style="color:#59b7b7;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px">Descriptif du voyage</h3>
