@@ -43,6 +43,12 @@ get_header();
             </a>
         </nav>
 
+        <?php if (current_user_can('manage_options')): ?>
+        <a href="<?php echo esc_url(home_url('/espace-admin/')); ?>" class="ev-nav-item" style="background:rgba(89,183,183,.1);margin:0 12px 8px;border-radius:12px">
+            <span class="ev-nav-icon">⚙️</span> Espace admin
+        </a>
+        <?php endif; ?>
+
         <div class="ev-sidebar-footer">
             <a href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>" class="ev-nav-item ev-nav-logout">
                 <span class="ev-nav-icon">⏻</span> Déconnexion

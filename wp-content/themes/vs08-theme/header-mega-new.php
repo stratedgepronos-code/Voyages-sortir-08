@@ -106,6 +106,9 @@ $vs08_circuits_url = add_query_arg(['type' => 'circuit'], $vs08_res);
         <li>
             <?php if (is_user_logged_in()) : ?>
                 <a href="<?php echo esc_url(home_url('/espace-voyageur/')); ?>" class="nav-account" aria-label="Mon espace voyageur"><span class="nav-account-icon" aria-hidden="true"></span>Mon espace</a>
+                <?php if (current_user_can('manage_options')) : ?>
+                <a href="<?php echo esc_url(home_url('/espace-admin/')); ?>" class="nav-account" aria-label="Administration" style="margin-left:6px;background:#0f2424;color:#59b7b7;padding:6px 14px;border-radius:100px;font-size:12px;font-weight:700">⚙ Admin</a>
+                <?php endif; ?>
             <?php else : ?>
                 <a href="<?php echo esc_url(home_url('/connexion/')); ?>" class="nav-account" aria-label="Se connecter ou s'inscrire"><span class="nav-account-icon" aria-hidden="true"></span>Se connecter / s'inscrire</a>
             <?php endif; ?>
