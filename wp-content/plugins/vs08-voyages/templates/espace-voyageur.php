@@ -1275,6 +1275,7 @@ get_header();
             .ev-msg-sent-item .ev-msg-sent-head{display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-bottom:6px}
             .ev-msg-sent-item .ev-msg-sent-subj{font-size:13px;font-weight:700;color:#0f2424}
             .ev-msg-sent-item .ev-msg-sent-body{font-size:12px;color:#6b7280;margin-top:4px;line-height:1.5}
+            @keyframes evMsgSlideIn{from{opacity:0;transform:translateY(-10px);max-height:0}to{opacity:1;transform:translateY(0);max-height:200px}}
             @media(max-width:768px){.ev-msg-grid{grid-template-columns:1fr}}
             </style>
 
@@ -1316,10 +1317,10 @@ get_header();
                     $sent_messages = get_user_meta($current_user->ID, '_vs08_messages_sent', true);
                     if (!is_array($sent_messages)) $sent_messages = [];
                     $sent_messages = array_reverse(array_slice($sent_messages, -10)); // 10 derniers
-                    if (!empty($sent_messages)):
                     ?>
-                    <div class="ev-msg-sent-list">
+                    <div class="ev-msg-sent-list" id="ev-msg-sent-list" <?php if (empty($sent_messages)): ?>style="display:none"<?php endif; ?>>
                         <h3>📨 Messages envoyés</h3>
+                        <div id="ev-msg-sent-items">
                         <?php foreach ($sent_messages as $sm): ?>
                         <div class="ev-msg-sent-item">
                             <div class="ev-msg-sent-head">
@@ -1330,8 +1331,8 @@ get_header();
                             <div class="ev-msg-sent-body"><?php echo esc_html(mb_substr($sm['message'] ?? '', 0, 120)); ?><?php echo mb_strlen($sm['message'] ?? '') > 120 ? '…' : ''; ?></div>
                         </div>
                         <?php endforeach; ?>
+                        </div>
                     </div>
-                    <?php endif; ?>
                 </div>
 
                 <div class="ev-msg-info">
@@ -1363,8 +1364,12 @@ get_header();
                 if (!form) return;
                 form.addEventListener('submit', function(e){
                     e.preventDefault();
-                    var sujet = document.getElementById('ev-msg-sujet').value.trim();
-                    var message = document.getElementById('ev-msg-body').value.trim();
+                    var sujetEl = document.getElementById('ev-msg-sujet');
+                    var msgEl = document.getElementById('ev-msg-body');
+                    var orderEl = document.getElementById('ev-msg-order');
+                    var sujet = sujetEl.value.trim();
+                    var message = msgEl.value.trim();
+                    var orderId = orderEl.value;
                     if (!sujet || !message) { fb.className='ev-msg-feedback error'; fb.textContent='Veuillez remplir tous les champs.'; return; }
                     btn.disabled = true; btn.textContent = 'Envoi en cours…';
                     fb.className='ev-msg-feedback'; fb.style.display='none';
@@ -1373,14 +1378,34 @@ get_header();
                     fd.append('nonce', '<?php echo esc_js(wp_create_nonce('vs08v_member_contact')); ?>');
                     fd.append('sujet', sujet);
                     fd.append('message', message);
-                    fd.append('order_id', document.getElementById('ev-msg-order').value);
+                    fd.append('order_id', orderId);
                     fetch('<?php echo esc_url(admin_url('admin-ajax.php')); ?>', {method:'POST', body:fd})
                         .then(function(r){ return r.json(); })
                         .then(function(res){
                             btn.disabled = false; btn.textContent = 'Envoyer le message →';
                             if (res.success) {
-                                fb.className='ev-msg-feedback success'; fb.textContent='✅ Message envoyé ! Nous vous répondrons dans les meilleurs délais.';
+                                fb.className='ev-msg-feedback success';
+                                fb.textContent='✅ Message envoyé avec succès ! Nous vous répondrons dans les meilleurs délais.';
+                                // Injecter le message dans la liste immédiatement
+                                var list = document.getElementById('ev-msg-sent-list');
+                                var items = document.getElementById('ev-msg-sent-items');
+                                if (list && items) {
+                                    list.style.display = '';
+                                    var now = new Date();
+                                    var dateFmt = String(now.getDate()).padStart(2,'0') + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + now.getFullYear() + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+                                    var dossierTxt = orderId ? 'Dossier VS08-' + orderId : '';
+                                    var preview = message.length > 120 ? message.substring(0, 120) + '…' : message;
+                                    var newItem = document.createElement('div');
+                                    newItem.className = 'ev-msg-sent-item';
+                                    newItem.style.animation = 'evMsgSlideIn .4s ease';
+                                    newItem.innerHTML = '<div class="ev-msg-sent-head"><span>' + dateFmt + '</span>' + (dossierTxt ? '<span>' + dossierTxt + '</span>' : '') + '</div>'
+                                        + '<div class="ev-msg-sent-subj">' + sujet.replace(/</g,'&lt;') + '</div>'
+                                        + '<div class="ev-msg-sent-body">' + preview.replace(/</g,'&lt;') + '</div>';
+                                    items.insertBefore(newItem, items.firstChild);
+                                }
                                 form.reset();
+                                // Scroll vers le feedback
+                                fb.scrollIntoView({behavior:'smooth', block:'nearest'});
                             } else {
                                 fb.className='ev-msg-feedback error'; fb.textContent=res.data || 'Erreur lors de l\'envoi.';
                             }
