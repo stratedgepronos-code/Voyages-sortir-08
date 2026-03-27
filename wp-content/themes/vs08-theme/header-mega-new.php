@@ -115,9 +115,84 @@ $vs08_circuits_url = add_query_arg(['type' => 'circuit'], $vs08_res);
         </li>
         <li><a href="<?php echo esc_url($vs08_devis_hub); ?>" class="cta-link">Devis gratuit</a></li>
     </ul>
-    <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
 </nav>
 </header>
+
+<!-- MENU MOBILE DRAWER -->
+<div class="vs08-mobile-menu" id="vs08-mobile-menu" aria-hidden="true">
+    <div class="vs08-mm-backdrop" id="vs08-mm-backdrop"></div>
+    <div class="vs08-mm-panel">
+        <div class="vs08-mm-header">
+            <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/img/logo.png'); ?>" alt="<?php bloginfo('name'); ?>" style="height:28px">
+            <button class="vs08-mm-close" id="vs08-mm-close" aria-label="Fermer">&times;</button>
+        </div>
+        <nav class="vs08-mm-nav">
+            <a href="<?php echo esc_url(home_url('/resultats-recherche?type=sejour_golf')); ?>">⛳ Séjours Golf</a>
+            <a href="<?php echo esc_url(home_url('/resultats-recherche?type=circuit')); ?>">🗺️ Circuits</a>
+            <a href="<?php echo esc_url(home_url('/resultats-recherche?type=sejour')); ?>">🏖️ All Inclusive</a>
+            <a href="<?php echo esc_url(home_url('/qui-sommes-nous')); ?>">Qui sommes-nous</a>
+            <a href="<?php echo esc_url(home_url('/avis-clients')); ?>">Avis clients</a>
+            <a href="<?php echo esc_url(home_url('/contact')); ?>">Contact</a>
+            <div class="vs08-mm-sep"></div>
+            <?php if (is_user_logged_in()) : ?>
+                <a href="<?php echo esc_url(home_url('/espace-voyageur/')); ?>" class="vs08-mm-accent">✈ Mon espace voyageur</a>
+                <?php if (current_user_can('manage_options')) : ?>
+                <a href="<?php echo esc_url(home_url('/espace-admin/')); ?>" class="vs08-mm-admin">⚙ Espace admin</a>
+                <?php endif; ?>
+                <a href="<?php echo esc_url(wp_logout_url(home_url('/'))); ?>" style="color:#9ca3af">Déconnexion</a>
+            <?php else : ?>
+                <a href="<?php echo esc_url(home_url('/connexion/')); ?>" class="vs08-mm-accent">Se connecter</a>
+            <?php endif; ?>
+            <a href="<?php echo esc_url($vs08_devis_hub); ?>" class="vs08-mm-cta">Devis gratuit →</a>
+        </nav>
+        <div class="vs08-mm-footer">
+            <div>📞 <a href="tel:0326652863" style="color:#59b7b7">03 26 65 28 63</a></div>
+            <div style="font-size:11px;color:#6b7280;margin-top:4px">Lun–Ven 9h–18h30 · Sam 9h–18h</div>
+        </div>
+    </div>
+</div>
+
+<style>
+.vs08-mobile-menu{position:fixed;inset:0;z-index:100000;pointer-events:none;visibility:hidden}
+.vs08-mobile-menu.open{pointer-events:auto;visibility:visible}
+.vs08-mm-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background .3s}
+.vs08-mobile-menu.open .vs08-mm-backdrop{background:rgba(0,0,0,.5)}
+.vs08-mm-panel{position:absolute;top:0;right:-320px;width:min(320px,85vw);height:100%;background:#fff;box-shadow:-8px 0 40px rgba(0,0,0,.15);display:flex;flex-direction:column;transition:right .3s cubic-bezier(.4,0,.2,1);overflow-y:auto}
+.vs08-mobile-menu.open .vs08-mm-panel{right:0}
+.vs08-mm-header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid #f0ece4}
+.vs08-mm-close{border:none;background:none;font-size:28px;color:#6b7280;cursor:pointer;padding:0;line-height:1}
+.vs08-mm-nav{flex:1;padding:12px 0}
+.vs08-mm-nav a{display:block;padding:14px 24px;color:#0f2424;text-decoration:none;font-family:'Outfit',sans-serif;font-size:15px;font-weight:500;transition:background .15s;border-bottom:1px solid #f9f6f0}
+.vs08-mm-nav a:hover,.vs08-mm-nav a:active{background:#f9f6f0}
+.vs08-mm-sep{height:1px;background:#e5e7eb;margin:8px 24px}
+.vs08-mm-accent{color:#59b7b7!important;font-weight:700!important}
+.vs08-mm-admin{color:#0f2424!important;font-weight:700!important;background:#edf8f8!important}
+.vs08-mm-cta{background:#59b7b7!important;color:#fff!important;margin:12px 20px!important;border-radius:100px!important;text-align:center!important;font-weight:700!important;padding:14px 24px!important}
+.vs08-mm-footer{padding:20px 24px;border-top:1px solid #f0ece4;font-family:'Outfit',sans-serif;font-size:13px;color:#374151}
+/* Hamburger animation */
+.nav-toggle.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+.nav-toggle.open span:nth-child(2){opacity:0}
+.nav-toggle.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
+.nav-toggle span{transition:all .3s}
+</style>
+
+<script>
+(function(){
+    var toggle = document.getElementById('nav-toggle');
+    var menu = document.getElementById('vs08-mobile-menu');
+    var close = document.getElementById('vs08-mm-close');
+    var backdrop = document.getElementById('vs08-mm-backdrop');
+    if (!toggle || !menu) return;
+    function open(){ menu.classList.add('open'); toggle.classList.add('open'); toggle.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; }
+    function shut(){ menu.classList.remove('open'); toggle.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); document.body.style.overflow=''; }
+    toggle.addEventListener('click', function(){ menu.classList.contains('open') ? shut() : open(); });
+    if (close) close.addEventListener('click', shut);
+    if (backdrop) backdrop.addEventListener('click', shut);
+    // Fermer sur navigation
+    menu.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', function(){ setTimeout(shut, 150); }); });
+})();
+</script>
 
 <!-- OVERLAY RECHERCHE GLOBALE -->
 <div class="vs08-search-overlay" id="vs08-search-overlay" aria-hidden="true">
