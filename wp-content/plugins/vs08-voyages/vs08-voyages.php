@@ -132,6 +132,26 @@ if (class_exists('VS08V_Paybox_Mail')) {
 }
 add_action('init', ['VS08V_PostType', 'register']);
 
+add_action('wp_mail_failed', function($wp_error) {
+    if (!($wp_error instanceof WP_Error)) {
+        return;
+    }
+    $message = $wp_error->get_error_message();
+    $data = $wp_error->get_error_data();
+    if (is_array($data)) {
+        $summary = [];
+        foreach (['to', 'subject', 'phpmailer_exception_code'] as $key) {
+            if (!empty($data[$key])) {
+                $summary[] = $key . '=' . (is_array($data[$key]) ? implode(',', $data[$key]) : $data[$key]);
+            }
+        }
+        if (!empty($summary)) {
+            $message .= ' [' . implode(' | ', $summary) . ']';
+        }
+    }
+    error_log('[VS08 wp_mail_failed] ' . $message);
+}, 10, 1);
+
 // Titres admin pour nos pages custom (complète le mu-plugin fix-php81-deprecations)
 add_action('admin_enqueue_scripts', function($hook_suffix) {
     if (!isset($_GET['page'])) return;
