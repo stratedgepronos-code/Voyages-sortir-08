@@ -21,10 +21,16 @@ class VS08V_Emails {
      * Ne s'exécute qu'une fois par commande (flag _vs08v_emails_sent).
      */
     public static function dispatch($order_id) {
-        $order = wc_get_order($order_id);
-        if (!$order) return;
+        // Verrou anti-réentrance : empêche la boucle infinie
+        // ($order->save() dans dispatch peut déclencher des hooks WC qui rappellent dispatch)
+        static $dispatching = [];
+        if (isset($dispatching[$order_id])) return;
+        $dispatching[$order_id] = true;
 
-        if ($order->get_meta('_vs08v_emails_sent')) return;
+        $order = wc_get_order($order_id);
+        if (!$order) { unset($dispatching[$order_id]); return; }
+
+        if ($order->get_meta('_vs08v_emails_sent')) { unset($dispatching[$order_id]); return; }
 
         $data = null;
         $contract_html = '';
@@ -40,13 +46,13 @@ class VS08V_Emails {
             $data = $order->get_meta('_vs08v_booking_data');
             if (empty($data) || !is_array($data)) {
                 error_log('[VS08 Emails] dispatch(' . $order_id . ') — pas de booking_data');
+                unset($dispatching[$order_id]);
                 return;
             }
         }
 
-        // Copier les booking_data sur la commande pour accès futur
-        $order->update_meta_data('_vs08v_booking_data', $data);
-        $order->save();
+        // NE PAS faire $order->save() ici — ça déclenchait une boucle infinie
+        // (les hooks WooCommerce rappelaient dispatch() avant que le flag soit posé)
 
         try {
             $contract_html = VS08V_Contract::generate($order_id);
@@ -66,9 +72,11 @@ class VS08V_Emails {
             error_log('[VS08 Emails] send_client_confirmation CRASH: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
         }
 
-        // Flag posé APRÈS l'envoi
+        // Flag + booking_data posés APRÈS l'envoi (un seul save)
+        $order->update_meta_data('_vs08v_booking_data', $data);
         $order->update_meta_data('_vs08v_emails_sent', current_time('mysql'));
         $order->save();
+        unset($dispatching[$order_id]);
         error_log('[VS08 Emails] dispatch(' . $order_id . ') — emails envoyés OK');
     }
 

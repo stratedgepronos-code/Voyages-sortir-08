@@ -13,12 +13,16 @@ class VS08S_Emails {
     }
 
     public static function dispatch($order_id) {
+        static $dispatching = [];
+        if (isset($dispatching[$order_id])) return;
+        $dispatching[$order_id] = true;
+
         $order = wc_get_order($order_id);
-        if (!$order) return;
-        if ($order->get_meta('_vs08s_emails_sent')) return;
+        if (!$order) { unset($dispatching[$order_id]); return; }
+        if ($order->get_meta('_vs08s_emails_sent')) { unset($dispatching[$order_id]); return; }
 
         $data = $order->get_meta('_vs08s_booking_data');
-        if (empty($data) || !is_array($data)) return;
+        if (empty($data) || !is_array($data)) { unset($dispatching[$order_id]); return; }
 
         $contract_html = '';
         try {
@@ -40,6 +44,7 @@ class VS08S_Emails {
 
         $order->update_meta_data('_vs08s_emails_sent', current_time('mysql'));
         $order->save();
+        unset($dispatching[$order_id]);
         error_log('[VS08S Emails] dispatch(' . $order_id . ') OK');
     }
 
