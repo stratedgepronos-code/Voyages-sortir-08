@@ -423,6 +423,43 @@ class VS08V_Search {
     }
 
     private static function build_card($post) {
+        // Séjours all inclusive
+        if ($post->post_type === 'vs08_sejour' && class_exists('VS08S_Meta')) {
+            $m = VS08S_Meta::get($post->ID);
+            if (($m['statut'] ?? 'actif') === 'archive') return null;
+            $thumb = get_the_post_thumbnail_url($post->ID, 'medium');
+            if (!$thumb && !empty($m['galerie'][0])) $thumb = $m['galerie'][0];
+            $sflag = $m['flag'] ?? '';
+            if (!$sflag && class_exists('VS08V_MetaBoxes')) $sflag = VS08V_MetaBoxes::get_flag_emoji($m['pays'] ?? $m['destination'] ?? '');
+            $prix = class_exists('VS08S_Calculator') ? VS08S_Calculator::prix_appel($post->ID) : 0;
+            return [
+                'id' => $post->ID, 'title' => get_the_title($post->ID), 'url' => get_permalink($post->ID),
+                'thumbnail' => $thumb ?: '', 'destination' => $m['destination'] ?? '', 'pays' => $m['pays'] ?? '',
+                'flag' => $sflag, 'prix' => $prix, 'has_vol' => true, 'vol_estimate' => false,
+                'duree' => $m['duree'] ?? '', 'duree_jours' => $m['duree_jours'] ?? '',
+                'nb_parcours' => '', 'niveau' => '', 'badge' => $m['badge'] ?? '',
+                'hotel_nom' => $m['hotel_nom'] ?? '', 'post_type' => 'vs08_sejour', 'type_voyage' => 'sejour',
+            ];
+        }
+
+        // Circuits
+        if ($post->post_type === 'vs08_circuit' && class_exists('VS08C_Meta')) {
+            $m = VS08C_Meta::get($post->ID);
+            if (($m['statut'] ?? '') === 'archive') return null;
+            $thumb = get_the_post_thumbnail_url($post->ID, 'medium');
+            if (!$thumb) { $gal = $m['galerie'] ?? ($m['photos'] ?? []); $thumb = !empty($gal[0]) ? (is_array($gal[0]) ? ($gal[0]['url'] ?? '') : $gal[0]) : ''; }
+            $cflag = class_exists('VS08C_Meta') ? VS08C_Meta::resolve_flag($m) : ($m['flag'] ?? '');
+            return [
+                'id' => $post->ID, 'title' => get_the_title($post->ID), 'url' => get_permalink($post->ID),
+                'thumbnail' => $thumb ?: '', 'destination' => $m['destination'] ?? '', 'pays' => $m['pays'] ?? '',
+                'flag' => $cflag, 'prix' => floatval($m['prix_double'] ?? 0), 'has_vol' => false, 'vol_estimate' => false,
+                'duree' => $m['duree'] ?? '', 'duree_jours' => $m['duree_jours'] ?? '',
+                'nb_parcours' => '', 'niveau' => '', 'badge' => $m['badge'] ?? '',
+                'hotel_nom' => '', 'post_type' => 'vs08_circuit', 'type_voyage' => 'circuit',
+            ];
+        }
+
+        // Golf (défaut)
         $m = VS08V_MetaBoxes::get($post->ID);
 
         $statut = $m['statut'] ?? 'actif';

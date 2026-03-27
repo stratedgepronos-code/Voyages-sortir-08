@@ -180,3 +180,9 @@ register_activation_hook(__FILE__, function() {
 register_deactivation_hook(__FILE__, function() {
     flush_rewrite_rules();
 });
+
+// ── Intégrer dans la recherche globale ──
+add_filter("vs08v_search_post_types", function($types) {
+    $types[] = "vs08_circuit";
+    return $types;
+});

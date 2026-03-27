@@ -102,6 +102,7 @@ $vs08_circuits_url = add_query_arg(['type' => 'circuit'], $vs08_res);
                 </div>
             </div>
         </li>
+        <li><a href="<?php echo esc_url(home_url('/resultats-recherche?type=sejour')); ?>">All Inclusive</a></li>
         <li><a href="<?php echo esc_url(home_url('/contact')); ?>">Contact</a></li>
         <li>
             <?php if (is_user_logged_in()) : ?>

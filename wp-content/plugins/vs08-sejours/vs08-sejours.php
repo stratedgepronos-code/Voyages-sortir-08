@@ -79,6 +79,12 @@ add_action('woocommerce_thankyou', function($order_id) {
     VS08S_Emails::dispatch($order_id);
 }, 1);
 
+// ── Intégrer dans la recherche globale ──
+add_filter('vs08v_search_post_types', function($types) {
+    $types[] = 'vs08_sejour';
+    return $types;
+});
+
 // ── Intégrer dans l'espace admin (dossiers) ──
 add_filter('vs08v_dossier_extra_order_ids', function($ids) {
     if (!function_exists('wc_get_orders')) return $ids;
