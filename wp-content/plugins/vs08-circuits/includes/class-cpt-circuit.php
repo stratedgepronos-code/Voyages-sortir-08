@@ -25,7 +25,7 @@ class VS08C_CPT {
             'supports'      => ['title', 'editor', 'thumbnail', 'excerpt'],
             'has_archive'   => true,
             'rewrite'       => ['slug' => 'circuits'],
-            'show_in_rest'  => true,
+            'show_in_rest'  => false,
         ]);
     }
 }

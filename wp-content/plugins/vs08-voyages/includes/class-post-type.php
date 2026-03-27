@@ -18,7 +18,7 @@ class VS08V_PostType {
             'supports'      => ['title','editor','thumbnail','excerpt','comments'],
             'has_archive'   => false,
             'rewrite'       => ['slug' => 'sejour'],
-            'show_in_rest'  => true,
+            'show_in_rest'  => false,
         ]);
     }
 }

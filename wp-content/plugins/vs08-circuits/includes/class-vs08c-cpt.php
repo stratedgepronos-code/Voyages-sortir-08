@@ -23,7 +23,7 @@ class VS08C_CPT {
             'supports'      => ['title', 'thumbnail', 'excerpt'],
             'has_archive'   => true,
             'rewrite'       => ['slug' => 'circuit', 'with_front' => false],
-            'show_in_rest'  => true,
+            'show_in_rest'  => false,
         ]);
     }
 }
