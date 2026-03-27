@@ -395,6 +395,9 @@ add_action('template_redirect', function() {
 // Secours ultime : redirection JS sur la page thank you classique.
 add_action('woocommerce_thankyou', function($order_id) {
     if (!$order_id) return;
+    // Filet de sécurité : dispatch email si pas encore fait
+    VS08V_Emails::dispatch($order_id);
+    if (class_exists('VS08C_Emails')) VS08C_Emails::dispatch($order_id);
     $order = wc_get_order($order_id);
     $target = vs08v_get_espace_url_for_order($order);
     if (!$target) return;

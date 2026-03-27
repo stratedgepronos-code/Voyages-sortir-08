@@ -1486,34 +1486,6 @@ function vs08_messages_admin_page() {
 }
 
 /* ============================================================
-   ESPACE ADMIN — AJAX handlers (notes, marquer comme soldé)
-============================================================ */
-add_action('wp_ajax_vs08_admin_save_notes', function() {
-    check_ajax_referer('vs08_admin_actions', 'nonce');
-    if (!current_user_can('manage_options')) wp_send_json_error('Non autorisé.');
-    $order_id = intval($_POST['order_id'] ?? 0);
-    $notes = sanitize_textarea_field($_POST['notes'] ?? '');
-    if (!$order_id) wp_send_json_error('ID manquant.');
-    update_post_meta($order_id, '_vs08_admin_notes', $notes);
-    wp_send_json_success('Notes sauvegardées.');
-});
-
-add_action('wp_ajax_vs08_admin_mark_paid', function() {
-    check_ajax_referer('vs08_admin_actions', 'nonce');
-    if (!current_user_can('manage_options')) wp_send_json_error('Non autorisé.');
-    $order_id = intval($_POST['order_id'] ?? 0);
-    if (!$order_id) wp_send_json_error('ID manquant.');
-    $order = wc_get_order($order_id);
-    if (!$order) wp_send_json_error('Commande introuvable.');
-    // Marquer comme payé : set status completed + meta
-    $order->update_meta_data('_vs08v_solde_paye', current_time('mysql'));
-    $order->update_meta_data('_vs08c_solde_paye', current_time('mysql'));
-    $order->set_status('completed');
-    $order->save();
-    wp_send_json_success('Dossier marqué comme soldé.');
-});
-
-/* ============================================================
    ESPACE ADMIN — AJAX handlers
 ============================================================ */
 
@@ -1526,6 +1498,21 @@ add_action('wp_ajax_vs08_admin_save_notes', function() {
     if (!$order_id) wp_send_json_error('ID manquant.');
     update_post_meta($order_id, '_vs08_admin_notes', $notes);
     wp_send_json_success('Notes sauvegardées.');
+});
+
+// ── Marquer un dossier comme soldé ──
+add_action('wp_ajax_vs08_admin_mark_paid', function() {
+    check_ajax_referer('vs08_admin_actions', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Non autorisé.');
+    $order_id = intval($_POST['order_id'] ?? 0);
+    if (!$order_id) wp_send_json_error('ID manquant.');
+    $order = wc_get_order($order_id);
+    if (!$order) wp_send_json_error('Commande introuvable.');
+    $order->update_meta_data('_vs08v_solde_paye', current_time('mysql'));
+    $order->update_meta_data('_vs08c_solde_paye', current_time('mysql'));
+    $order->set_status('completed');
+    $order->save();
+    wp_send_json_success('Dossier marqué comme soldé.');
 });
 
 // ── Envoyer rappel solde manuellement ──
@@ -1629,17 +1616,75 @@ add_action('wp_ajax_vs08_admin_resend_emails', function() {
     $order->delete_meta_data('_vs08c_emails_sent');
     $order->save();
 
-    // Tenter golf puis circuit
-    if (class_exists('VS08V_Emails')) VS08V_Emails::dispatch($order_id);
-    if (class_exists('VS08C_Emails')) VS08C_Emails::dispatch($order_id);
+    $errors = [];
+
+    // Tenter golf
+    try {
+        if (class_exists('VS08V_Emails')) VS08V_Emails::dispatch($order_id);
+    } catch (Exception $e) {
+        $errors[] = 'Golf: ' . $e->getMessage();
+        error_log('[VS08 Resend] Golf error: ' . $e->getMessage());
+    }
+
+    // Tenter circuit
+    try {
+        if (class_exists('VS08C_Emails')) VS08C_Emails::dispatch($order_id);
+    } catch (Exception $e) {
+        $errors[] = 'Circuit: ' . $e->getMessage();
+        error_log('[VS08 Resend] Circuit error: ' . $e->getMessage());
+    }
 
     // Vérifier si ça a marché
-    $order = wc_get_order($order_id); // reload
+    $order = wc_get_order($order_id);
     $sent_golf = $order->get_meta('_vs08v_emails_sent');
     $sent_circuit = $order->get_meta('_vs08c_emails_sent');
+
     if ($sent_golf || $sent_circuit) {
         wp_send_json_success('Emails renvoyés avec succès !');
     } else {
-        wp_send_json_error('Échec de l\'envoi. Vérifiez les logs.');
+        // Fallback: envoyer un email simple avec le récap
+        $data = VS08V_Traveler_Space::get_booking_data_from_order($order, true);
+        if ($data) {
+            $is_circuit = isset($data['type']) && $data['type'] === 'circuit';
+            $fact = $data['facturation'] ?? [];
+            $titre = $is_circuit ? ($data['circuit_titre'] ?? 'Circuit') : ($data['voyage_titre'] ?? 'Séjour golf');
+            $client = trim(($fact['prenom'] ?? '') . ' ' . strtoupper($fact['nom'] ?? ''));
+            $total = number_format((float)($data['total'] ?? 0), 2, ',', ' ');
+            $params = $data['params'] ?? [];
+
+            $body = '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:20px">'
+                . '<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">'
+                . '<div style="background:#1a3a3a;padding:24px;text-align:center;color:#fff;font-family:Georgia,serif;font-size:20px">Voyages Sortir 08</div>'
+                . '<div style="padding:28px 32px">'
+                . '<h2 style="color:#1a3a3a;margin:0 0 16px">Nouvelle réservation</h2>'
+                . '<table style="width:100%;border-collapse:collapse;font-size:14px">'
+                . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold">N°</td><td style="padding:8px;border:1px solid #e5e5e5">VS08-' . $order_id . '</td></tr>'
+                . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold">Type</td><td style="padding:8px;border:1px solid #e5e5e5">' . ($is_circuit ? 'Circuit' : 'Séjour golf') . '</td></tr>'
+                . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold">Client</td><td style="padding:8px;border:1px solid #e5e5e5">' . esc_html($client) . '</td></tr>'
+                . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold">Email</td><td style="padding:8px;border:1px solid #e5e5e5">' . esc_html($fact['email'] ?? '') . '</td></tr>'
+                . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold">Tél.</td><td style="padding:8px;border:1px solid #e5e5e5">' . esc_html($fact['tel'] ?? '') . '</td></tr>'
+                . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold">Voyage</td><td style="padding:8px;border:1px solid #e5e5e5">' . esc_html($titre) . '</td></tr>'
+                . '<tr><td style="padding:8px;border:1px solid #e5e5e5;background:#f8f8f8;font-weight:bold">Départ</td><td style="padding:8px;border:1px solid #e5e5e5">' . (!empty($params['date_depart']) ? date('d/m/Y', strtotime($params['date_depart'])) : '—') . '</td></tr>'
+                . '<tr style="font-weight:bold"><td style="padding:8px;border:1px solid #e5e5e5;background:#edf8f8">Total</td><td style="padding:8px;border:1px solid #e5e5e5;background:#edf8f8;font-size:16px">' . $total . ' €</td></tr>'
+                . '</table>'
+                . '<p style="margin-top:16px"><a href="' . esc_url(admin_url('post.php?post=' . $order_id . '&action=edit')) . '" style="display:inline-block;padding:10px 24px;background:#2a7f7f;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold">Voir dans WordPress</a></p>'
+                . '</div></div></body></html>';
+
+            $headers = ['Content-Type: text/html; charset=UTF-8', 'From: Voyages Sortir 08 <noreply@sortirmonde.fr>'];
+            $subject = 'Réservation VS08-' . $order_id . ' — ' . $titre . ' — ' . $client;
+
+            $ok1 = wp_mail('sortir08@wanadoo.fr', $subject, $body, $headers);
+            $ok2 = wp_mail('sortir08.ag@wanadoo.fr', $subject, $body, $headers);
+            error_log('[VS08 Resend Fallback] wp_mail sortir08@wanadoo.fr => ' . ($ok1 ? 'OK' : 'FAIL'));
+            error_log('[VS08 Resend Fallback] wp_mail sortir08.ag@wanadoo.fr => ' . ($ok2 ? 'OK' : 'FAIL'));
+
+            if ($ok1 || $ok2) {
+                wp_send_json_success('Email récapitulatif envoyé (mode simplifié).');
+            } else {
+                wp_send_json_error('Échec total. Erreurs: ' . implode(' / ', $errors));
+            }
+        } else {
+            wp_send_json_error('Pas de données de réservation sur cette commande. Erreurs: ' . implode(' / ', $errors));
+        }
     }
 });
