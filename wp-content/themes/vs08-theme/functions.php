@@ -1,6 +1,22 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
+/* ============================================================
+   SMTP — Envoi d'emails via Hostinger (obligatoire)
+   Sans ça, wp_mail() utilise mail() de PHP qui est bloqué.
+============================================================ */
+add_action('phpmailer_init', function($phpmailer) {
+    $phpmailer->isSMTP();
+    $phpmailer->Host       = 'smtp.hostinger.com';
+    $phpmailer->SMTPAuth   = true;
+    $phpmailer->Port       = 465;
+    $phpmailer->SMTPSecure = 'ssl';
+    $phpmailer->Username   = 'noreply@sortirmonde.fr';
+    $phpmailer->Password   = 'REMPLACER_PAR_LE_MOT_DE_PASSE'; // ← à changer !
+    $phpmailer->From       = 'noreply@sortirmonde.fr';
+    $phpmailer->FromName   = 'Voyages Sortir 08';
+});
+
 
 /* ============================================================
    SETUP DU THÈME
