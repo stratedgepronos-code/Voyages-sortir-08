@@ -208,6 +208,9 @@ var BK_CIRCUIT = <?php echo json_encode([
 .bkc-combo-price-sub{font-size:9px;color:#9ca3af;font-family:'Outfit',sans-serif}
 .bkc-combo-check{width:24px;height:24px;border-radius:50%;background:#59b7b7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;opacity:0;transition:all .2s}
 .bkc-combo-card.selected .bkc-combo-check{opacity:1}
+.bkc-combo-hidden{display:none!important}
+.bkc-show-more{display:block;width:100%;padding:12px;background:#f9f6f0;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;font-weight:600;color:#59b7b7;cursor:pointer;font-family:'Outfit',sans-serif;text-align:center;margin-top:8px;transition:all .2s}
+.bkc-show-more:hover{background:#edf8f8;border-color:#59b7b7}
 .bkc-combo-leg{display:flex;align-items:center;gap:10px;padding:6px 0;font-family:'Outfit',sans-serif;font-size:12px;color:#4a5568;flex-wrap:wrap}
 .bkc-combo-leg-badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 8px;border-radius:6px;flex-shrink:0}
 .bkc-combo-leg-badge.aller{background:#edf8f8;color:#3d9a9a}
@@ -878,6 +881,27 @@ var BK_CIRCUIT = <?php echo json_encode([
             card.addEventListener('click', (function(i){ return function(){ bkcSelectCombo(i); }; })(idx));
             list.appendChild(card);
         });
+
+        // ── SHOW MORE: masquer au-delà de 3 combos ──
+        var allCards = list.querySelectorAll('.bkc-combo-card');
+        var VISIBLE = 3;
+        var oldBtn = list.querySelector('.bkc-show-more');
+        if (oldBtn) oldBtn.remove();
+        if (allCards.length > VISIBLE) {
+            for (var h = VISIBLE; h < allCards.length; h++) {
+                allCards[h].classList.add('bkc-combo-hidden');
+            }
+            var showBtn = document.createElement('button');
+            showBtn.type = 'button';
+            showBtn.className = 'bkc-show-more';
+            var hidden = allCards.length - VISIBLE;
+            showBtn.textContent = 'Voir ' + hidden + ' autre' + (hidden > 1 ? 's' : '') + ' combinaison' + (hidden > 1 ? 's' : '') + ' ▾';
+            showBtn.addEventListener('click', function() {
+                list.querySelectorAll('.bkc-combo-card.bkc-combo-hidden').forEach(function(c) { c.classList.remove('bkc-combo-hidden'); });
+                showBtn.remove();
+            });
+            list.appendChild(showBtn);
+        }
     }
 
     function bkcInitSidebarFilters() {
@@ -920,6 +944,29 @@ var BK_CIRCUIT = <?php echo json_encode([
             });
             var noMatch = document.getElementById('bkc-combo-no-match');
             if (noMatch) noMatch.style.display = visible === 0 ? 'block' : 'none';
+
+            // Re-appliquer show-more sur les résultats filtrés
+            var comboList = document.getElementById('bkc-combo-list');
+            var oldShowBtn = comboList ? comboList.querySelector('.bkc-show-more') : null;
+            if (oldShowBtn) oldShowBtn.remove();
+            cards.forEach(function(c) { c.classList.remove('bkc-combo-hidden'); });
+            var visibleCards = [];
+            cards.forEach(function(c) { if (c.style.display !== 'none') visibleCards.push(c); });
+            var VISIBLE_LIMIT = 3;
+            if (visibleCards.length > VISIBLE_LIMIT && comboList) {
+                for (var vi = VISIBLE_LIMIT; vi < visibleCards.length; vi++) {
+                    visibleCards[vi].classList.add('bkc-combo-hidden');
+                }
+                var newBtn = document.createElement('button');
+                newBtn.type = 'button'; newBtn.className = 'bkc-show-more';
+                var hh = visibleCards.length - VISIBLE_LIMIT;
+                newBtn.textContent = 'Voir ' + hh + ' autre' + (hh > 1 ? 's' : '') + ' combinaison' + (hh > 1 ? 's' : '') + ' ▾';
+                newBtn.addEventListener('click', function() {
+                    document.querySelectorAll('.bkc-combo-card.bkc-combo-hidden').forEach(function(c) { c.classList.remove('bkc-combo-hidden'); });
+                    newBtn.remove();
+                });
+                comboList.appendChild(newBtn);
+            }
         }
 
         radios.forEach(function(r){ r.addEventListener('change', applyFilters); });
