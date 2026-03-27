@@ -179,6 +179,8 @@ class VS08S_Meta {
 
             <div class="vs08s-section">
                 <h3>🏨 Hôtel principal</h3>
+                <!-- Champ caché pour stocker les données IA complètes -->
+                <textarea name="vs08s[hotel_ia_json]" id="vs08s-hotel-ia-json" style="display:none"><?php echo esc_textarea(json_encode($m['hotel'] ?? [])); ?></textarea>
                 <div class="vs08s-row cols-3">
                     <div class="vs08s-field">
                         <label>Nom de l'hôtel</label>
@@ -220,6 +222,8 @@ class VS08S_Meta {
                     <label>Équipements & Services (un par ligne)</label>
                     <textarea name="vs08s[hotel_equipements]" id="vs08s-hotel-equip" rows="5" placeholder="Piscine extérieure&#10;Spa & Hammam&#10;Restaurant buffet&#10;Animation en soirée&#10;WiFi gratuit&#10;Salle de sport&#10;Club enfants"><?php echo esc_textarea($m['hotel_equipements'] ?? ''); ?></textarea>
                 </div>
+                <!-- JSON brut de l'IA — stocké pour le template -->
+                <input type="hidden" name="vs08s[hotel_data_json]" id="vs08s-hotel-data-json" value="<?php echo esc_attr($m['hotel_data_json'] ?? ''); ?>">
             </div>
 
             <div class="vs08s-section">
@@ -544,7 +548,7 @@ class VS08S_Meta {
                 list.insertAdjacentHTML('beforeend', makePeriodeRow(idx, p));
             });
 
-            // IA Auto-fill hôtel
+            // IA Auto-fill hôtel (scanner dédié séjour all-inclusive)
             var iaBtn = document.getElementById('vs08s-ia-btn');
             if (iaBtn) {
                 iaBtn.addEventListener('click', function() {
@@ -555,14 +559,14 @@ class VS08S_Meta {
                     if (!name) { alert('Entrez le nom de l\'hôtel.'); return; }
 
                     iaBtn.disabled = true;
-                    btnTxt.textContent = '🔄 Recherche en cours...';
+                    btnTxt.textContent = '🔄 Recherche IA en cours...';
                     status.style.display = 'block';
                     status.style.background = 'rgba(89,183,183,.2)';
                     status.style.color = '#7ecece';
-                    status.textContent = '🔍 L\'IA recherche les informations de « ' + name + ' » à « ' + dest + ' »...';
+                    status.textContent = '🔍 L\'IA recherche les informations complètes de « ' + name + ' »... (30-60 sec)';
 
                     var fd = new FormData();
-                    fd.append('action', 'vs08v_scan_hotel_by_name');
+                    fd.append('action', 'vs08s_scan_hotel');
                     fd.append('nonce', '<?php echo wp_create_nonce("vs08v_scan_hotel"); ?>');
                     fd.append('hotel_name', name);
                     fd.append('destination', dest);
@@ -574,37 +578,129 @@ class VS08S_Meta {
                         btnTxt.textContent = '🔍 Rechercher et remplir';
                         if (res.success && res.data) {
                             var d = res.data;
-                            // Remplir les champs
-                            if (d.nom) document.querySelector('[name="vs08s[hotel_nom]"]').value = d.nom;
-                            if (d.etoiles) document.querySelector('[name="vs08s[hotel_etoiles]"]').value = d.etoiles;
-                            if (d.adresse) document.getElementById('vs08s-hotel-adresse').value = d.adresse;
-                            if (d.description) document.getElementById('vs08s-hotel-desc').value = d.description;
-                            if (d.map_embed_url) document.getElementById('vs08s-hotel-map-url').value = d.map_embed_url;
+                            var filled = [];
 
-                            // Équipements
+                            // Nom + étoiles
+                            if (d.nom) { document.querySelector('[name="vs08s[hotel_nom]"]').value = d.nom; filled.push('nom'); }
+                            if (d.etoiles) { document.querySelector('[name="vs08s[hotel_etoiles]"]').value = d.etoiles; filled.push('étoiles'); }
+                            if (d.adresse) { document.getElementById('vs08s-hotel-adresse').value = d.adresse; filled.push('adresse'); }
+
+                            // Description longue
+                            if (d.desc) { document.getElementById('vs08s-hotel-desc').value = d.desc; filled.push('description'); }
+
+                            // Map (on ne la remplit pas automatiquement)
+
+                            // Équipements : construire la liste texte
+                            var equipLabels = {piscine_ext:'Piscine extérieure',piscine_int:'Piscine intérieure',spa:'Spa / Thalasso',hammam:'Hammam',fitness:'Salle de fitness',restaurant:'Restaurant',bar:'Bar',wifi:'Wi-Fi gratuit',clim:'Climatisation',plage_privee:'Plage privée',animation:'Animation jour & soir',kids_club:'Club enfants',tennis:'Courts de tennis',aquagym:'Aquagym',plongee:'Plongée',kayak:'Kayak',volley:'Beach-volley',disco:'Discothèque',boutique:'Boutique',parking:'Parking',navette:'Navette aéroport'};
+                            var equipList = [];
                             if (d.equipements && Array.isArray(d.equipements)) {
-                                document.getElementById('vs08s-hotel-equip').value = d.equipements.join('\n');
+                                d.equipements.forEach(function(e) { equipList.push(equipLabels[e] || e); });
+                            }
+                            // Ajouter restaurants, bars, piscines comme lignes
+                            if (d.restaurants && Array.isArray(d.restaurants)) {
+                                d.restaurants.forEach(function(r) {
+                                    if (r.nom) equipList.push('🍽️ Restaurant ' + r.nom + (r.cuisine ? ' (' + r.cuisine + ')' : '') + (r.desc ? ' — ' + r.desc : ''));
+                                });
+                            }
+                            if (d.bars && Array.isArray(d.bars)) {
+                                d.bars.forEach(function(b) {
+                                    if (b.nom) equipList.push('🍸 Bar ' + b.nom + (b.desc ? ' — ' + b.desc : ''));
+                                });
+                            }
+                            if (d.piscines && Array.isArray(d.piscines)) {
+                                d.piscines.forEach(function(p) {
+                                    equipList.push('🏊 Piscine ' + (p.type || '') + (p.chauffee === 'oui' ? ' (chauffée)' : '') + (p.desc ? ' — ' + p.desc : ''));
+                                });
+                            }
+                            if (d.plage && d.plage.desc) {
+                                equipList.push('🏖️ Plage ' + (d.plage.type || '') + ' — ' + d.plage.desc);
+                            }
+                            if (d.animations && d.animations.desc) {
+                                equipList.push('🎭 ' + d.animations.desc);
+                            }
+                            if (d.spa && d.spa.desc) {
+                                equipList.push('🧖 Spa ' + (d.spa.nom || '') + ' — ' + d.spa.desc);
+                            }
+                            if (d.enfants && d.enfants.desc) {
+                                equipList.push('👶 ' + d.enfants.desc);
+                            }
+                            // Sports
+                            var sportLabels = {tennis:'Tennis',volley:'Beach-volley',aquagym:'Aquagym',kayak:'Kayak',plongee:'Plongée',football:'Football',basketball:'Basketball','ping-pong':'Ping-pong',petanque:'Pétanque',tir_arc:'Tir à l\'arc',mini_golf:'Mini-golf'};
+                            if (d.sports && Array.isArray(d.sports) && d.sports.length > 0) {
+                                equipList.push('🏃 Sports : ' + d.sports.map(function(s) { return sportLabels[s] || s; }).join(', '));
+                            }
+                            // Chambres
+                            if (d.chambres) {
+                                var chambreTypes = {standard:'Standard',superieure:'Supérieure',suite:'Suite',familiale:'Familiale'};
+                                Object.keys(d.chambres).forEach(function(type) {
+                                    var ch = d.chambres[type];
+                                    if (ch.dispo === '1' || ch.dispo === 1) {
+                                        var line = '🛏️ Chambre ' + (chambreTypes[type] || type);
+                                        if (ch.superficie) line += ' (' + ch.superficie + 'm²)';
+                                        if (ch.desc) line += ' — ' + ch.desc;
+                                        equipList.push(line);
+                                    }
+                                });
                             }
 
-                            // Description courte du séjour (si vide)
+                            if (equipList.length > 0) {
+                                document.getElementById('vs08s-hotel-equip').value = equipList.join('\n');
+                                filled.push(equipList.length + ' équipements');
+                            }
+
+                            // Description courte du séjour
                             var descCourte = document.querySelector('[name="vs08s[description_courte]"]');
-                            if (descCourte && !descCourte.value.trim() && d.accroche) {
-                                descCourte.value = d.accroche;
+                            if (descCourte && !descCourte.value.trim()) {
+                                var accroche = d.desc_courte || '';
+                                if (!accroche && d.desc) accroche = d.desc.split('.').slice(0, 2).join('.') + '.';
+                                if (accroche) { descCourte.value = accroche; filled.push('accroche'); }
                             }
 
-                            // Inclus (si vide)
+                            // Inclus / Non inclus
                             var inclus = document.querySelector('[name="vs08s[inclus]"]');
-                            if (inclus && !inclus.value.trim() && d.inclus) {
-                                inclus.value = d.inclus;
+                            if (inclus && !inclus.value.trim()) {
+                                var inclus_txt = d.inclus_list || '';
+                                if (!inclus_txt && d.all_inclusive_details) {
+                                    inclus_txt = 'Vol aller-retour\nHébergement\n' + d.all_inclusive_details.replace(/\. /g, '\n');
+                                }
+                                if (inclus_txt) { inclus.value = inclus_txt; filled.push('inclus'); }
                             }
+                            var nonInclus = document.querySelector('[name="vs08s[non_inclus]"]');
+                            if (nonInclus && !nonInclus.value.trim() && d.non_inclus_list) {
+                                nonInclus.value = d.non_inclus_list;
+                                filled.push('non-inclus');
+                            }
+
+                            // Localisation
+                            if (d.loc_desc && document.getElementById('vs08s-hotel-desc')) {
+                                var desc = document.getElementById('vs08s-hotel-desc').value;
+                                if (d.loc_desc && desc.indexOf(d.loc_desc) === -1) {
+                                    document.getElementById('vs08s-hotel-desc').value = desc + '\n\n📍 ' + d.loc_desc;
+                                }
+                            }
+
+                            // TripAdvisor
+                            if (d.tripadvisor_note || d.dist_aero || d.all_inclusive_details) {
+                                var extra = [];
+                                if (d.tripadvisor_note) extra.push('TripAdvisor : ' + d.tripadvisor_note + '/5');
+                                if (d.dist_aero) extra.push('Aéroport : ' + d.dist_aero + ' km');
+                                if (d.dist_centre) extra.push('Centre-ville : ' + d.dist_centre + ' km');
+                                if (d.dist_plage) extra.push('Plage : ' + (d.dist_plage === '0' ? 'sur place' : d.dist_plage + ' m'));
+                                if (d.nb_chambres_total) extra.push(d.nb_chambres_total + ' chambres');
+                                if (extra.length > 0) filled.push(extra.join(', '));
+                            }
+
+                            // Stocker le JSON brut complet dans un champ caché
+                            var jsonField = document.getElementById('vs08s-hotel-data-json');
+                            if (jsonField) jsonField.value = JSON.stringify(d);
 
                             status.style.background = 'rgba(34,197,94,.2)';
                             status.style.color = '#22c55e';
-                            status.textContent = '✅ Informations remplies avec succès ! Vérifiez et ajustez si besoin.';
+                            status.textContent = '✅ Rempli : ' + filled.join(', ') + '. Vérifiez et ajustez !';
                         } else {
                             status.style.background = 'rgba(220,38,38,.2)';
                             status.style.color = '#ef4444';
-                            status.textContent = '❌ ' + (res.data || 'Aucune info trouvée. Essayez avec un nom plus précis.');
+                            status.textContent = '❌ ' + (res.data || 'Aucune info trouvée.');
                         }
                     })
                     .catch(function(err) {
@@ -612,7 +708,7 @@ class VS08S_Meta {
                         btnTxt.textContent = '🔍 Rechercher et remplir';
                         status.style.background = 'rgba(220,38,38,.2)';
                         status.style.color = '#ef4444';
-                        status.textContent = '❌ Erreur réseau : ' + err.message;
+                        status.textContent = '❌ Erreur : ' + err.message;
                     });
                 });
             }
@@ -670,6 +766,7 @@ class VS08S_Meta {
         $m['hotel_map_url']     = esc_url_raw($raw['hotel_map_url'] ?? '');
         $m['hotel_description'] = sanitize_textarea_field($raw['hotel_description'] ?? '');
         $m['hotel_equipements'] = sanitize_textarea_field($raw['hotel_equipements'] ?? '');
+        $m['hotel_data_json']   = $raw['hotel_data_json'] ?? ''; // JSON brut de l'IA
         $m['pension']           = sanitize_text_field($raw['pension'] ?? 'ai');
         $m['iata_dest']         = strtoupper(sanitize_text_field($raw['iata_dest'] ?? ''));
         $m['ville_arrivee']     = sanitize_text_field($raw['ville_arrivee'] ?? '');

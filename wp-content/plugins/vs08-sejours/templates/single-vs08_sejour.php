@@ -38,6 +38,28 @@ $annulation   = $m['annulation'] ?? [];
 $prix_appel   = VS08S_Calculator::prix_appel($id);
 $transport_type = $m['transport_type'] ?? 'vol';
 
+// Données riches hôtel (JSON IA)
+$hd_raw = $m['hotel_data_json'] ?? '';
+$hd = !empty($hd_raw) ? json_decode($hd_raw, true) : [];
+if (!is_array($hd)) $hd = [];
+$tripadvisor_note = floatval($hd['tripadvisor_note'] ?? 0);
+$tripadvisor_url  = $hd['tripadvisor_url'] ?? '';
+$dist_aero   = $hd['dist_aero'] ?? '';
+$dist_centre = $hd['dist_centre'] ?? '';
+$dist_plage  = $hd['dist_plage'] ?? '';
+$loc_desc    = $hd['loc_desc'] ?? '';
+$ai_details  = $hd['all_inclusive_details'] ?? '';
+$restaurants = $hd['restaurants'] ?? [];
+$bars        = $hd['bars'] ?? [];
+$piscines    = $hd['piscines'] ?? [];
+$plage       = $hd['plage'] ?? [];
+$animations  = $hd['animations'] ?? [];
+$spa_data    = $hd['spa'] ?? [];
+$enfants     = $hd['enfants'] ?? [];
+$sports      = $hd['sports'] ?? [];
+$chambres    = $hd['chambres'] ?? [];
+$has_rich    = !empty($hd);
+
 // Aéroports pour JS
 $aeroports_js = [];
 foreach ($aeroports as $a) {
@@ -231,6 +253,7 @@ $has_equip    = !empty($hotel_equip);
     <div class="sv-navbar-inner">
         <button class="sv-nav-btn active" onclick="svScrollTo('sec-presentation')">📄 Présentation</button>
         <?php if ($has_hotel): ?><button class="sv-nav-btn" onclick="svScrollTo('sec-hebergement')">🏨 Hébergement</button><?php endif; ?>
+        <?php if (!empty($restaurants) || !empty($bars)): ?><button class="sv-nav-btn" onclick="svScrollTo('sec-resto')">🍽️ Restaurants</button><?php endif; ?>
         <?php if ($has_equip): ?><button class="sv-nav-btn" onclick="svScrollTo('sec-equipements')">🏊 Équipements</button><?php endif; ?>
         <?php if ($has_compris): ?><button class="sv-nav-btn" onclick="svScrollTo('sec-compris')">✅ Inclus</button><?php endif; ?>
         <?php if ($has_map): ?><button class="sv-nav-btn" onclick="svScrollTo('sec-map')">🗺️ Carte</button><?php endif; ?>
@@ -268,15 +291,39 @@ $has_equip    = !empty($hotel_equip);
         <?php if ($has_hotel): ?>
         <div class="sv-card" id="sec-hebergement">
             <h2 class="sv-section-title">🏨 Votre hébergement</h2>
+
+            <!-- En-tête : Nom + étoiles + TripAdvisor -->
             <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px">
                 <div style="flex:1;min-width:280px">
-                    <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#0f2424;margin-bottom:4px"><?php echo esc_html($hotel_nom); ?></div>
-                    <div style="font-size:14px;color:#c8a45e;margin-bottom:8px"><?php echo str_repeat('★ ', $hotel_etoiles); ?></div>
-                    <?php if ($hotel_adresse): ?>
-                    <div style="font-size:13px;color:#6b7280;font-family:'Outfit',sans-serif;margin-bottom:12px">📍 <?php echo esc_html($hotel_adresse); ?></div>
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                        <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#0f2424"><?php echo esc_html($hotel_nom); ?></div>
+                        <div style="font-size:16px;color:#f59e0b"><?php echo str_repeat('★', $hotel_etoiles); ?></div>
+                    </div>
+
+                    <?php if ($tripadvisor_note > 0):
+                        $ta_full = floor($tripadvisor_note); $ta_half = ($tripadvisor_note - $ta_full) >= 0.3 ? 1 : 0; $ta_empty = 5 - $ta_full - $ta_half;
+                        $ta_tag = $tripadvisor_url ? 'a' : 'span'; $ta_href = $tripadvisor_url ? ' href="'.esc_url($tripadvisor_url).'" target="_blank" rel="noopener"' : '';
+                    ?>
+                    <div style="margin-top:8px">
+                        <<?php echo $ta_tag; ?><?php echo $ta_href; ?> style="display:inline-flex;align-items:center;gap:0;text-decoration:none;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);border:1px solid #e5e7eb">
+                            <span style="display:flex;align-items:center;gap:6px;background:#34e0a1;padding:6px 12px">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="7" cy="14" r="3.2" stroke="#fff" stroke-width="1.4"/><circle cx="7" cy="14" r="1.1" fill="#fff"/><circle cx="17" cy="14" r="3.2" stroke="#fff" stroke-width="1.4"/><circle cx="17" cy="14" r="1.1" fill="#fff"/><path d="M12 6.5C8.8 6.5 5.5 8.3 4 11h1.8c1.2-1.6 3.5-2.8 6.2-2.8s5 1.2 6.2 2.8H20c-1.5-2.7-4.8-4.5-8-4.5z" fill="#fff"/><polygon points="12,3.5 10.8,6 13.2,6" fill="#fff"/></svg>
+                                <span style="font-size:16px;font-weight:800;color:#fff;font-family:'Outfit',sans-serif"><?php echo number_format($tripadvisor_note, 1, ',', ''); ?></span>
+                            </span>
+                            <span style="display:flex;align-items:center;gap:5px;background:#fff;padding:6px 14px 6px 10px">
+                                <span style="display:inline-flex;gap:3px">
+                                    <?php for ($b = 0; $b < $ta_full; $b++): ?><svg width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.5" fill="#00aa6c"/></svg><?php endfor; ?>
+                                    <?php if ($ta_half): ?><svg width="13" height="13" viewBox="0 0 16 16"><defs><clipPath id="ta-h"><rect x="0" y="0" width="8" height="16"/></clipPath></defs><circle cx="8" cy="8" r="7.5" fill="#dce8e3"/><circle cx="8" cy="8" r="7.5" fill="#00aa6c" clip-path="url(#ta-h)"/></svg><?php endif; ?>
+                                    <?php for ($b = 0; $b < $ta_empty; $b++): ?><svg width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.5" fill="#dce8e3"/></svg><?php endfor; ?>
+                                </span>
+                                <span style="font-size:11px;font-weight:600;color:#00aa6c;font-family:'Outfit',sans-serif;letter-spacing:.3px;text-transform:uppercase">Tripadvisor</span>
+                            </span>
+                        </<?php echo $ta_tag; ?>>
+                    </div>
                     <?php endif; ?>
-                    <?php if ($hotel_desc): ?>
-                    <div style="font-size:14px;line-height:1.75;color:#374151;font-family:'Outfit',sans-serif"><?php echo nl2br(esc_html($hotel_desc)); ?></div>
+
+                    <?php if ($hotel_adresse): ?>
+                    <div style="font-size:13px;color:#6b7280;font-family:'Outfit',sans-serif;margin-top:10px">📍 <?php echo esc_html($hotel_adresse); ?></div>
                     <?php endif; ?>
                 </div>
                 <?php if (!empty($galerie[0])): ?>
@@ -285,17 +332,134 @@ $has_equip    = !empty($hotel_equip);
                 </div>
                 <?php endif; ?>
             </div>
+
+            <!-- Description -->
+            <?php if ($hotel_desc): ?>
+            <div style="font-size:14px;line-height:1.75;color:#374151;font-family:'Outfit',sans-serif;margin-bottom:16px"><?php echo nl2br(esc_html($hotel_desc)); ?></div>
+            <?php endif; ?>
+
+            <!-- Distance cards -->
+            <?php if ($dist_aero || $dist_centre || $dist_plage): ?>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+                <?php if ($dist_aero): ?>
+                <div style="flex:1;min-width:120px;background:#f9f6f0;border-radius:12px;padding:14px;text-align:center">
+                    <div style="font-size:22px">✈️</div>
+                    <div style="font-size:12px;font-weight:700;color:#0f2424;font-family:'Outfit',sans-serif;margin-top:4px">Aéroport</div>
+                    <div style="font-size:14px;font-weight:800;color:#59b7b7;font-family:'Outfit',sans-serif"><?php echo esc_html($dist_aero); ?> km</div>
+                </div>
+                <?php endif; ?>
+                <?php if ($dist_centre): ?>
+                <div style="flex:1;min-width:120px;background:#f9f6f0;border-radius:12px;padding:14px;text-align:center">
+                    <div style="font-size:22px">🏙️</div>
+                    <div style="font-size:12px;font-weight:700;color:#0f2424;font-family:'Outfit',sans-serif;margin-top:4px">Centre-ville</div>
+                    <div style="font-size:14px;font-weight:800;color:#59b7b7;font-family:'Outfit',sans-serif"><?php echo esc_html($dist_centre); ?> km</div>
+                </div>
+                <?php endif; ?>
+                <?php if ($dist_plage): ?>
+                <div style="flex:1;min-width:120px;background:#f9f6f0;border-radius:12px;padding:14px;text-align:center">
+                    <div style="font-size:22px">🏖️</div>
+                    <div style="font-size:12px;font-weight:700;color:#0f2424;font-family:'Outfit',sans-serif;margin-top:4px">Plage</div>
+                    <div style="font-size:14px;font-weight:800;color:#59b7b7;font-family:'Outfit',sans-serif"><?php echo $dist_plage == '0' ? 'Sur place' : esc_html($dist_plage) . ' m'; ?></div>
+                </div>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
+
+            <!-- All Inclusive details -->
+            <?php if ($ai_details): ?>
+            <div style="background:#edf8f8;border:1px solid #b7dfdf;border-radius:12px;padding:16px;margin-bottom:16px">
+                <div style="font-size:13px;font-weight:700;color:#0f2424;font-family:'Outfit',sans-serif;margin-bottom:6px">🍽️ Votre formule <?php echo esc_html($pension); ?></div>
+                <div style="font-size:13px;line-height:1.7;color:#374151;font-family:'Outfit',sans-serif"><?php echo nl2br(esc_html($ai_details)); ?></div>
+            </div>
+            <?php endif; ?>
+
+            <!-- Badges -->
             <div style="display:flex;flex-wrap:wrap;gap:8px">
                 <span style="background:#edf8f8;border:1px solid #b7dfdf;border-radius:8px;padding:5px 10px;font-size:12px;font-family:'Outfit',sans-serif;color:#1a3a3a">🍽️ <?php echo esc_html($pension); ?></span>
                 <?php if ($transfert_type !== 'aucun'): ?>
                 <span style="background:#edf8f8;border:1px solid #b7dfdf;border-radius:8px;padding:5px 10px;font-size:12px;font-family:'Outfit',sans-serif;color:#1a3a3a"><?php echo esc_html($transfert_map[$transfert_type] ?? ''); ?></span>
                 <?php endif; ?>
                 <span style="background:#edf8f8;border:1px solid #b7dfdf;border-radius:8px;padding:5px 10px;font-size:12px;font-family:'Outfit',sans-serif;color:#1a3a3a">🌙 <?php echo $duree; ?> nuits</span>
+                <?php if (!empty($hd['nb_chambres_total'])): ?>
+                <span style="background:#edf8f8;border:1px solid #b7dfdf;border-radius:8px;padding:5px 10px;font-size:12px;font-family:'Outfit',sans-serif;color:#1a3a3a">🏨 <?php echo esc_html($hd['nb_chambres_total']); ?> chambres</span>
+                <?php endif; ?>
             </div>
         </div>
         <?php endif; ?>
 
-        <!-- ÉQUIPEMENTS -->
+        <!-- RESTAURANTS & BARS -->
+        <?php if (!empty($restaurants) || !empty($bars)): ?>
+        <div class="sv-card">
+            <h2 class="sv-section-title">🍽️ Restaurants & Bars</h2>
+            <?php if (!empty($restaurants)): ?>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:16px">
+                <?php foreach ($restaurants as $resto): if (empty($resto['nom']) && empty($resto['desc'])) continue; ?>
+                <div style="background:#f9f6f0;border-radius:12px;padding:16px">
+                    <div style="font-size:15px;font-weight:700;color:#0f2424;font-family:'Outfit',sans-serif;margin-bottom:4px">🍽️ <?php echo esc_html($resto['nom'] ?? 'Restaurant'); ?></div>
+                    <?php if (!empty($resto['cuisine'])): ?><div style="font-size:11px;color:#59b7b7;font-weight:600;font-family:'Outfit',sans-serif;margin-bottom:6px"><?php echo esc_html(ucfirst($resto['type'] ?? '') . ' · ' . $resto['cuisine']); ?></div><?php endif; ?>
+                    <?php if (!empty($resto['desc'])): ?><div style="font-size:13px;color:#374151;font-family:'Outfit',sans-serif;line-height:1.6"><?php echo esc_html($resto['desc']); ?></div><?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+            <?php if (!empty($bars)): ?>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <?php foreach ($bars as $bar): if (empty($bar['nom'])) continue; ?>
+                <span style="background:#0f2424;color:#fff;border-radius:8px;padding:6px 12px;font-size:12px;font-family:'Outfit',sans-serif;font-weight:600">🍸 <?php echo esc_html($bar['nom']); ?></span>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <!-- CHAMBRES -->
+        <?php if (!empty($chambres)): $chambre_labels = ['standard'=>'Standard','superieure'=>'Supérieure','suite'=>'Suite','familiale'=>'Familiale'];
+        $has_any_chambre = false; foreach ($chambres as $ch) { if (($ch['dispo'] ?? '0') == '1') { $has_any_chambre = true; break; } }
+        if ($has_any_chambre): ?>
+        <div class="sv-card">
+            <h2 class="sv-section-title">🛏️ Types de chambres</h2>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px">
+                <?php foreach ($chambres as $type => $ch): if (($ch['dispo'] ?? '0') != '1') continue; ?>
+                <div style="background:#f9f6f0;border-radius:12px;padding:16px">
+                    <div style="font-size:15px;font-weight:700;color:#0f2424;font-family:'Outfit',sans-serif;margin-bottom:4px"><?php echo esc_html($chambre_labels[$type] ?? ucfirst($type)); ?></div>
+                    <?php if (!empty($ch['superficie'])): ?><div style="font-size:12px;color:#59b7b7;font-weight:700;font-family:'Outfit',sans-serif;margin-bottom:6px">📐 <?php echo esc_html($ch['superficie']); ?> m²</div><?php endif; ?>
+                    <?php if (!empty($ch['desc'])): ?><div style="font-size:13px;color:#374151;font-family:'Outfit',sans-serif;line-height:1.6"><?php echo esc_html($ch['desc']); ?></div><?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; endif; ?>
+
+        <!-- SPA -->
+        <?php if (!empty($spa_data['desc'])): ?>
+        <div class="sv-card">
+            <h2 class="sv-section-title">🧖 Spa & Bien-être</h2>
+            <?php if (!empty($spa_data['nom'])): ?><div style="font-size:16px;font-weight:700;color:#0f2424;font-family:'Playfair Display',serif;margin-bottom:8px"><?php echo esc_html($spa_data['nom']); ?><?php if (!empty($spa_data['superficie'])): ?> <span style="font-size:12px;color:#6b7280;font-weight:400">(<?php echo esc_html($spa_data['superficie']); ?> m²)</span><?php endif; ?></div><?php endif; ?>
+            <div style="font-size:14px;line-height:1.75;color:#374151;font-family:'Outfit',sans-serif;margin-bottom:10px"><?php echo nl2br(esc_html($spa_data['desc'])); ?></div>
+            <?php if (!empty($spa_data['soins'])): ?><div style="font-size:12px;color:#6b7280;font-family:'Outfit',sans-serif">💆 Soins : <?php echo esc_html($spa_data['soins']); ?></div><?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <!-- ANIMATIONS & ENFANTS -->
+        <?php if (!empty($animations['desc']) || !empty($enfants['desc'])): ?>
+        <div class="sv-card">
+            <h2 class="sv-section-title">🎭 Animations & Loisirs</h2>
+            <?php if (!empty($animations['jour'])): ?>
+            <div style="margin-bottom:12px"><span style="font-weight:700;color:#0f2424;font-family:'Outfit',sans-serif">☀️ Journée :</span> <span style="font-size:14px;color:#374151;font-family:'Outfit',sans-serif"><?php echo esc_html($animations['jour']); ?></span></div>
+            <?php endif; ?>
+            <?php if (!empty($animations['soir'])): ?>
+            <div style="margin-bottom:12px"><span style="font-weight:700;color:#0f2424;font-family:'Outfit',sans-serif">🌙 Soirée :</span> <span style="font-size:14px;color:#374151;font-family:'Outfit',sans-serif"><?php echo esc_html($animations['soir']); ?></span></div>
+            <?php endif; ?>
+            <?php if (!empty($enfants['desc'])): ?>
+            <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:14px;margin-top:12px">
+                <div style="font-size:13px;font-weight:700;color:#0f2424;font-family:'Outfit',sans-serif;margin-bottom:4px">👶 Club Enfants<?php if (!empty($enfants['ages'])): ?> (<?php echo esc_html($enfants['ages']); ?>)<?php endif; ?></div>
+                <div style="font-size:13px;color:#374151;font-family:'Outfit',sans-serif;line-height:1.6"><?php echo esc_html($enfants['desc']); ?></div>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <!-- ÉQUIPEMENTS (simple grille) -->
         <?php if ($has_equip): ?>
         <div class="sv-card" id="sec-equipements">
             <h2 class="sv-section-title">🏊 Équipements & Services</h2>
@@ -303,20 +467,23 @@ $has_equip    = !empty($hotel_equip);
                 <?php foreach (explode("\n", $hotel_equip) as $eq):
                     $eq = trim($eq); if (!$eq) continue;
                     $icon = '✅';
-                    if (stripos($eq, 'piscine') !== false) $icon = '🏊';
-                    elseif (stripos($eq, 'spa') !== false || stripos($eq, 'hammam') !== false) $icon = '🧖';
-                    elseif (stripos($eq, 'restaurant') !== false || stripos($eq, 'buffet') !== false) $icon = '🍽️';
-                    elseif (stripos($eq, 'wifi') !== false || stripos($eq, 'internet') !== false) $icon = '📶';
-                    elseif (stripos($eq, 'sport') !== false || stripos($eq, 'fitness') !== false || stripos($eq, 'gym') !== false) $icon = '🏋️';
-                    elseif (stripos($eq, 'plage') !== false || stripos($eq, 'beach') !== false) $icon = '🏖️';
-                    elseif (stripos($eq, 'enfant') !== false || stripos($eq, 'kids') !== false || stripos($eq, 'club') !== false) $icon = '👶';
-                    elseif (stripos($eq, 'animation') !== false) $icon = '🎭';
-                    elseif (stripos($eq, 'bar') !== false) $icon = '🍸';
+                    if (stripos($eq, 'piscine') !== false || stripos($eq, '🏊') !== false) $icon = '🏊';
+                    elseif (stripos($eq, 'spa') !== false || stripos($eq, 'hammam') !== false || stripos($eq, '🧖') !== false) $icon = '🧖';
+                    elseif (stripos($eq, 'restaurant') !== false || stripos($eq, 'buffet') !== false || stripos($eq, '🍽') !== false) $icon = '🍽️';
+                    elseif (stripos($eq, 'wifi') !== false || stripos($eq, '📶') !== false) $icon = '📶';
+                    elseif (stripos($eq, 'sport') !== false || stripos($eq, 'fitness') !== false || stripos($eq, '🏋') !== false) $icon = '🏋️';
+                    elseif (stripos($eq, 'plage') !== false || stripos($eq, 'beach') !== false || stripos($eq, '🏖') !== false) $icon = '🏖️';
+                    elseif (stripos($eq, 'enfant') !== false || stripos($eq, 'kids') !== false || stripos($eq, '👶') !== false) $icon = '👶';
+                    elseif (stripos($eq, 'animation') !== false || stripos($eq, '🎭') !== false) $icon = '🎭';
+                    elseif (stripos($eq, 'bar') !== false || stripos($eq, '🍸') !== false) $icon = '🍸';
                     elseif (stripos($eq, 'parking') !== false) $icon = '🅿️';
                     elseif (stripos($eq, 'tennis') !== false) $icon = '🎾';
-                    elseif (stripos($eq, 'golf') !== false) $icon = '⛳';
+                    elseif (stripos($eq, 'chambre') !== false || stripos($eq, '🛏') !== false) $icon = '🛏️';
+                    elseif (stripos($eq, 'sport') !== false || stripos($eq, '🏃') !== false) $icon = '🏃';
+                    // Si l'item commence déjà par un emoji, ne pas doubler
+                    if (preg_match('/^[\x{1F300}-\x{1FAD6}]/u', $eq)) $icon = '';
                 ?>
-                <div class="sv-equip-item"><span><?php echo $icon; ?></span> <?php echo esc_html($eq); ?></div>
+                <div class="sv-equip-item"><?php if ($icon): ?><span><?php echo $icon; ?></span><?php endif; ?> <?php echo esc_html($eq); ?></div>
                 <?php endforeach; ?>
             </div>
         </div>

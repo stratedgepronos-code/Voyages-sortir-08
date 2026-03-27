@@ -35,6 +35,7 @@ require_once VS08S_PATH . 'includes/class-vs08s-booking.php';
 require_once VS08S_PATH . 'includes/class-vs08s-woo.php';
 require_once VS08S_PATH . 'includes/class-vs08s-contract.php';
 require_once VS08S_PATH . 'includes/class-vs08s-emails.php';
+require_once VS08S_PATH . 'includes/class-vs08s-hotel-scanner.php';
 
 // ── Initialisation ──
 add_action('init', ['VS08S_CPT', 'register']);
@@ -42,6 +43,37 @@ VS08S_Meta::register();
 VS08S_Rest::register();
 VS08S_Booking::register();
 VS08S_Woo::register();
+
+// ── Booking endpoint: /reservation-sejour/{id}/ ──
+add_action('init', function() {
+    add_rewrite_rule('^reservation-sejour/([0-9]+)/?$', 'index.php?vs08s_booking=1&vs08s_sejour_id=$matches[1]', 'top');
+    add_rewrite_tag('%vs08s_booking%', '([0-9]+)');
+    add_rewrite_tag('%vs08s_sejour_id%', '([0-9]+)');
+});
+
+add_action('init', function() {
+    if (get_option('vs08s_flush_rewrite')) {
+        delete_option('vs08s_flush_rewrite');
+        flush_rewrite_rules();
+    }
+}, 99);
+
+add_action('template_redirect', function() {
+    if (get_query_var('vs08s_booking')) {
+        $tpl = VS08S_PATH . 'templates/booking-sejour.php';
+        if (file_exists($tpl)) { include $tpl; exit; }
+    }
+});
+
+register_activation_hook(__FILE__, function() {
+    VS08S_CPT::register();
+    add_rewrite_rule('^reservation-sejour/([0-9]+)/?$', 'index.php?vs08s_booking=1&vs08s_sejour_id=$matches[1]', 'top');
+    add_rewrite_tag('%vs08s_booking%', '([0-9]+)');
+    add_rewrite_tag('%vs08s_sejour_id%', '([0-9]+)');
+    flush_rewrite_rules();
+    update_option('vs08s_flush_rewrite', 1);
+});
+VS08S_HotelScanner::register();
 
 // ── Assets frontend ──
 add_action('wp_enqueue_scripts', function() {
