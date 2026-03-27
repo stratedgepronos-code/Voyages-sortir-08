@@ -1191,9 +1191,13 @@ add_action('add_meta_boxes', function() {
         'normal',
         'default'
     );
-    // HPOS compat
-    if (class_exists('Automattic\WooCommerce\Utilities\OrderUtil') && Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_enabled()) {
-        add_meta_box('vs08_carnet_voyage', '📋 Carnet de voyage (documents client)', 'vs08_carnet_metabox_render', 'woocommerce_page_wc-orders', 'normal', 'default');
+    // HPOS compat — seulement si la méthode existe
+    if (class_exists('Automattic\WooCommerce\Utilities\OrderUtil') && method_exists('Automattic\WooCommerce\Utilities\OrderUtil', 'custom_orders_table_enabled')) {
+        try {
+            if (Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_enabled()) {
+                add_meta_box('vs08_carnet_voyage', '📋 Carnet de voyage (documents client)', 'vs08_carnet_metabox_render', 'woocommerce_page_wc-orders', 'normal', 'default');
+            }
+        } catch (Exception $e) {}
     }
 });
 

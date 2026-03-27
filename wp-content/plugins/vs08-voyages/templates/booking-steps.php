@@ -106,6 +106,19 @@ get_header();
 .combo-more{text-align:center;padding:11px;font-size:14px;font-weight:600;color:#59b7b7;cursor:pointer;border-top:1px solid #e5e7eb;transition:color .15s;background:#fafafa}
 .combo-more:hover{color:#0f2424}
 .bk-flights-hidden{display:none}
+.bk-show-more{display:block;width:100%;padding:12px;background:#f9f6f0;border:1.5px solid #e5e7eb;border-radius:12px;font-size:14px;font-weight:600;color:#59b7b7;cursor:pointer;font-family:'Outfit',sans-serif;text-align:center;margin-top:8px;transition:all .2s}
+.bk-show-more:hover{background:#edf8f8;border-color:#59b7b7}
+.bk-filters-sidebar{position:fixed;top:160px;width:200px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;font-family:'Outfit',sans-serif;box-shadow:0 2px 12px rgba(0,0,0,.06);z-index:50;transition:opacity .3s}
+.bkf-title{font-size:16px;font-weight:700;color:#0f2424;margin-bottom:14px}
+.bkf-section{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #e5e7eb}
+.bkf-section:last-of-type{border-bottom:none;margin-bottom:8px;padding-bottom:0}
+.bkf-label{font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.bkf-check{display:flex;align-items:center;gap:7px;font-size:13px;color:#4b5563;cursor:pointer;padding:4px 0;transition:color .15s}
+.bkf-check:hover{color:#0f2424}
+.bkf-check input[type=radio]{accent-color:#3d9a9a;margin:0}
+.bkf-n{font-size:11px;background:#e5e7eb;color:#6b7280;border-radius:8px;padding:1px 6px;font-weight:700;margin-left:auto}
+.bkf-reset{width:100%;padding:7px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'Outfit',sans-serif}
+.bkf-reset:hover{border-color:#3d9a9a;color:#3d9a9a}
 .bk-combo-loading{display:flex;align-items:center;gap:10px;font-size:15px;color:#9ca3af;font-family:'Outfit',sans-serif;padding:20px 0}
 /* ── Badge escale / direct ── */
 .combo-conn-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;letter-spacing:.3px;border-radius:20px;padding:2px 9px;white-space:nowrap;flex-shrink:0}
@@ -236,6 +249,25 @@ get_header();
 </style>
 
 <div class="bk-wrap">
+
+<!-- SIDEBAR FILTRES VOLS -->
+<aside class="bk-filters-sidebar" id="bk-filters-sidebar" style="display:none">
+    <div class="bkf-title">Filtres</div>
+    <div class="bkf-section">
+        <div class="bkf-label">Type de vol</div>
+        <label class="bkf-check"><input type="radio" name="bkf_type" value="all" checked> Tous <span class="bkf-n" id="bkf-n-all"></span></label>
+        <label class="bkf-check"><input type="radio" name="bkf_type" value="direct"> ✈ Vol direct <span class="bkf-n" id="bkf-n-direct"></span></label>
+        <label class="bkf-check"><input type="radio" name="bkf_type" value="escale"> ⇄ Avec escale <span class="bkf-n" id="bkf-n-escale"></span></label>
+    </div>
+    <div class="bkf-section">
+        <div class="bkf-label">Trier par</div>
+        <label class="bkf-check"><input type="radio" name="bkf_sort" value="price" checked> Prix</label>
+        <label class="bkf-check"><input type="radio" name="bkf_sort" value="duration"> Durée</label>
+        <label class="bkf-check"><input type="radio" name="bkf_sort" value="depart"> Heure départ</label>
+    </div>
+    <button type="button" class="bkf-reset" id="bkf-reset">↺ Réinitialiser</button>
+</aside>
+
 <div class="bk-inner">
 
     <!-- COLONNE PRINCIPALE -->
@@ -798,6 +830,11 @@ get_header();
             <div style="font-size:11px;font-weight:700;color:#7ecece;text-transform:uppercase;letter-spacing:1.5px;font-family:'Outfit',sans-serif;margin-bottom:12px">Besoin d'aide ?</div>
             <div style="font-size:16px;font-weight:700;color:#fff;font-family:'Playfair Display',serif;margin-bottom:4px">03 26 65 28 63</div>
             <div style="font-size:11px;color:rgba(255,255,255,.5);font-family:'Outfit',sans-serif;line-height:1.7">Lun–Ven 09h–12h / 14h–18h30<br>Sam 09h–12h / 14h–18h00</div>
+        </div>
+
+        <!-- Bouton Continuer sous recap -->
+        <div id="bk-recap-btn-wrap" style="margin-top:14px;display:none">
+            <button class="bk-btn-next" style="width:100%" id="bk-recap-btn">Continuer →</button>
         </div>
     </div>
 

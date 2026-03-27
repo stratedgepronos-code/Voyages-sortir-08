@@ -46,7 +46,7 @@ if (!is_array($messages_admin)) $messages_admin = [];
 
 <style>
 .ea-page{display:flex;min-height:100vh;background:#f5f3ef;font-family:'Outfit',sans-serif}
-.ea-sidebar{width:260px;background:linear-gradient(180deg,#0f2424 0%,#1a3e3e 100%);color:#fff;display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.ea-sidebar{width:260px;background:linear-gradient(180deg,#0f2424 0%,#1a3e3e 100%);color:#fff;display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;padding-top:72px}
 .ea-sidebar-header{padding:28px 24px 20px;border-bottom:1px solid rgba(255,255,255,.08)}
 .ea-sidebar-logo{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fff;letter-spacing:1px}
 .ea-sidebar-sub{font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:2px;margin-top:4px}
