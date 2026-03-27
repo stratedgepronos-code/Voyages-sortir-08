@@ -154,16 +154,39 @@ class VS08S_Meta {
 
         <!-- ═══ HÔTEL & BEDSONLINE ═══ -->
         <div class="vs08s-panel" id="panel-hotel">
+
+            <!-- ── MODULE IA : Recherche par nom ── -->
+            <?php $claude_ok = class_exists('VS08V_HotelScanner'); ?>
+            <?php if ($claude_ok): ?>
+            <div style="background:linear-gradient(135deg,#0f2424,#1a4a4a);border-radius:14px;padding:20px;margin-bottom:20px">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                    <span style="font-size:22px">🤖</span>
+                    <div>
+                        <h3 style="color:#fff;margin:0;font-size:15px;font-weight:700">Remplir avec l'IA</h3>
+                        <p style="color:rgba(255,255,255,.6);font-size:12px;margin:0">Entrez le nom de l'hôtel et la destination, l'IA remplit automatiquement la description, les équipements et les infos pratiques.</p>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+                    <input type="text" id="vs08s-ia-hotel-name" placeholder="Nom de l'hôtel (ex: Radisson Blu Djerba)" value="<?php echo esc_attr($hotel_nom); ?>" style="flex:2;min-width:200px;background:#fff;border:1.5px solid rgba(255,255,255,.35);border-radius:8px;padding:10px 14px;font-size:14px;font-family:inherit">
+                    <input type="text" id="vs08s-ia-destination" placeholder="Destination (ex: Djerba, Tunisie)" value="<?php echo esc_attr($destination . ($pays ? ', ' . $pays : '')); ?>" style="flex:1;min-width:150px;background:#fff;border:1.5px solid rgba(255,255,255,.35);border-radius:8px;padding:10px 14px;font-size:14px;font-family:inherit">
+                    <button type="button" id="vs08s-ia-btn" style="background:#59b7b7;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap">
+                        🔍 <span id="vs08s-ia-btn-txt">Rechercher et remplir</span>
+                    </button>
+                </div>
+                <div id="vs08s-ia-status" style="display:none;margin-top:8px;padding:8px 12px;border-radius:8px;font-size:12px"></div>
+            </div>
+            <?php endif; ?>
+
             <div class="vs08s-section">
                 <h3>🏨 Hôtel principal</h3>
                 <div class="vs08s-row cols-3">
                     <div class="vs08s-field">
                         <label>Nom de l'hôtel</label>
-                        <input type="text" name="vs08s[hotel_nom]" value="<?php echo esc_attr($hotel_nom); ?>" placeholder="Ex: Radisson Blu Resort">
+                        <input type="text" name="vs08s[hotel_nom]" id="vs08s-hotel-nom" value="<?php echo esc_attr($hotel_nom); ?>" placeholder="Ex: Radisson Blu Resort">
                     </div>
                     <div class="vs08s-field">
                         <label>Étoiles</label>
-                        <select name="vs08s[hotel_etoiles]">
+                        <select name="vs08s[hotel_etoiles]" id="vs08s-hotel-etoiles">
                             <?php for ($i = 1; $i <= 5; $i++): ?>
                             <option value="<?php echo $i; ?>" <?php selected($hotel_etoiles, $i); ?>><?php echo str_repeat('★', $i); ?></option>
                             <?php endfor; ?>
@@ -177,6 +200,25 @@ class VS08S_Meta {
                             <?php endforeach; ?>
                         </select>
                     </div>
+                </div>
+                <div class="vs08s-row">
+                    <div class="vs08s-field">
+                        <label>Adresse de l'hôtel</label>
+                        <input type="text" name="vs08s[hotel_adresse]" id="vs08s-hotel-adresse" value="<?php echo esc_attr($m['hotel_adresse'] ?? ''); ?>" placeholder="Ex: Zone Touristique, Midoun, Djerba">
+                    </div>
+                    <div class="vs08s-field">
+                        <label>URL Google Maps embed</label>
+                        <input type="text" name="vs08s[hotel_map_url]" id="vs08s-hotel-map-url" value="<?php echo esc_attr($m['hotel_map_url'] ?? ''); ?>" placeholder="https://www.google.com/maps/embed?pb=...">
+                        <p class="vs08s-hint">Google Maps → Partager → Intégrer → copier l'URL src="..."</p>
+                    </div>
+                </div>
+                <div class="vs08s-field">
+                    <label>Description de l'hôtel</label>
+                    <textarea name="vs08s[hotel_description]" id="vs08s-hotel-desc" rows="5" placeholder="L'IA remplira automatiquement ce champ..."><?php echo esc_textarea($m['hotel_description'] ?? ''); ?></textarea>
+                </div>
+                <div class="vs08s-field">
+                    <label>Équipements & Services (un par ligne)</label>
+                    <textarea name="vs08s[hotel_equipements]" id="vs08s-hotel-equip" rows="5" placeholder="Piscine extérieure&#10;Spa & Hammam&#10;Restaurant buffet&#10;Animation en soirée&#10;WiFi gratuit&#10;Salle de sport&#10;Club enfants"><?php echo esc_textarea($m['hotel_equipements'] ?? ''); ?></textarea>
                 </div>
             </div>
 
@@ -502,6 +544,79 @@ class VS08S_Meta {
                 list.insertAdjacentHTML('beforeend', makePeriodeRow(idx, p));
             });
 
+            // IA Auto-fill hôtel
+            var iaBtn = document.getElementById('vs08s-ia-btn');
+            if (iaBtn) {
+                iaBtn.addEventListener('click', function() {
+                    var name = document.getElementById('vs08s-ia-hotel-name').value.trim();
+                    var dest = document.getElementById('vs08s-ia-destination').value.trim();
+                    var status = document.getElementById('vs08s-ia-status');
+                    var btnTxt = document.getElementById('vs08s-ia-btn-txt');
+                    if (!name) { alert('Entrez le nom de l\'hôtel.'); return; }
+
+                    iaBtn.disabled = true;
+                    btnTxt.textContent = '🔄 Recherche en cours...';
+                    status.style.display = 'block';
+                    status.style.background = 'rgba(89,183,183,.2)';
+                    status.style.color = '#7ecece';
+                    status.textContent = '🔍 L\'IA recherche les informations de « ' + name + ' » à « ' + dest + ' »...';
+
+                    var fd = new FormData();
+                    fd.append('action', 'vs08v_scan_hotel_by_name');
+                    fd.append('nonce', '<?php echo wp_create_nonce("vs08v_scan_hotel"); ?>');
+                    fd.append('hotel_name', name);
+                    fd.append('destination', dest);
+
+                    fetch('<?php echo admin_url("admin-ajax.php"); ?>', { method: 'POST', body: fd })
+                    .then(function(r) { return r.json(); })
+                    .then(function(res) {
+                        iaBtn.disabled = false;
+                        btnTxt.textContent = '🔍 Rechercher et remplir';
+                        if (res.success && res.data) {
+                            var d = res.data;
+                            // Remplir les champs
+                            if (d.nom) document.querySelector('[name="vs08s[hotel_nom]"]').value = d.nom;
+                            if (d.etoiles) document.querySelector('[name="vs08s[hotel_etoiles]"]').value = d.etoiles;
+                            if (d.adresse) document.getElementById('vs08s-hotel-adresse').value = d.adresse;
+                            if (d.description) document.getElementById('vs08s-hotel-desc').value = d.description;
+                            if (d.map_embed_url) document.getElementById('vs08s-hotel-map-url').value = d.map_embed_url;
+
+                            // Équipements
+                            if (d.equipements && Array.isArray(d.equipements)) {
+                                document.getElementById('vs08s-hotel-equip').value = d.equipements.join('\n');
+                            }
+
+                            // Description courte du séjour (si vide)
+                            var descCourte = document.querySelector('[name="vs08s[description_courte]"]');
+                            if (descCourte && !descCourte.value.trim() && d.accroche) {
+                                descCourte.value = d.accroche;
+                            }
+
+                            // Inclus (si vide)
+                            var inclus = document.querySelector('[name="vs08s[inclus]"]');
+                            if (inclus && !inclus.value.trim() && d.inclus) {
+                                inclus.value = d.inclus;
+                            }
+
+                            status.style.background = 'rgba(34,197,94,.2)';
+                            status.style.color = '#22c55e';
+                            status.textContent = '✅ Informations remplies avec succès ! Vérifiez et ajustez si besoin.';
+                        } else {
+                            status.style.background = 'rgba(220,38,38,.2)';
+                            status.style.color = '#ef4444';
+                            status.textContent = '❌ ' + (res.data || 'Aucune info trouvée. Essayez avec un nom plus précis.');
+                        }
+                    })
+                    .catch(function(err) {
+                        iaBtn.disabled = false;
+                        btnTxt.textContent = '🔍 Rechercher et remplir';
+                        status.style.background = 'rgba(220,38,38,.2)';
+                        status.style.color = '#ef4444';
+                        status.textContent = '❌ Erreur réseau : ' + err.message;
+                    });
+                });
+            }
+
             // Périodes fermées
             var pfvIdx = <?php echo max(count($pfv), 0); ?>;
             document.getElementById('vs08s-add-pfv').addEventListener('click', function(){
@@ -551,6 +666,10 @@ class VS08S_Meta {
         $m['hotel_nom']         = sanitize_text_field($raw['hotel_nom'] ?? '');
         $m['hotel_etoiles']     = min(5, max(1, intval($raw['hotel_etoiles'] ?? 5)));
         $m['hotel_code']        = sanitize_text_field($raw['hotel_code'] ?? '');
+        $m['hotel_adresse']     = sanitize_text_field($raw['hotel_adresse'] ?? '');
+        $m['hotel_map_url']     = esc_url_raw($raw['hotel_map_url'] ?? '');
+        $m['hotel_description'] = sanitize_textarea_field($raw['hotel_description'] ?? '');
+        $m['hotel_equipements'] = sanitize_textarea_field($raw['hotel_equipements'] ?? '');
         $m['pension']           = sanitize_text_field($raw['pension'] ?? 'ai');
         $m['iata_dest']         = strtoupper(sanitize_text_field($raw['iata_dest'] ?? ''));
         $m['ville_arrivee']     = sanitize_text_field($raw['ville_arrivee'] ?? '');
