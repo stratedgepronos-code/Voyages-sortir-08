@@ -12,7 +12,7 @@ add_action('phpmailer_init', function($phpmailer) {
     $phpmailer->Port       = 465;
     $phpmailer->SMTPSecure = 'ssl';
     $phpmailer->Username   = 'noreply@sortirmonde.fr';
-    $phpmailer->Password   = 'REMPLACER_PAR_LE_MOT_DE_PASSE'; // ← à changer !
+    $phpmailer->Password   = '51000Vs08-)';
     $phpmailer->From       = 'noreply@sortirmonde.fr';
     $phpmailer->FromName   = 'Voyages Sortir 08';
 });
