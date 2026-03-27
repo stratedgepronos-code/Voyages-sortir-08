@@ -440,10 +440,16 @@ class VS08V_Admin_Espace_Ajax {
             wp_raise_memory_limit('admin');
         }
 
+        // Supprimer les flags SANS $order->save() pour éviter de déclencher les hooks WC
+        // qui rappelleraient dispatch() en boucle
+        delete_post_meta($order_id, '_vs08v_emails_sent');
+        delete_post_meta($order_id, '_vs08c_emails_sent');
+        delete_post_meta($order_id, '_vs08s_emails_sent');
+        // Aussi nettoyer dans le format HPOS si activé
         $order->delete_meta_data('_vs08v_emails_sent');
         $order->delete_meta_data('_vs08c_emails_sent');
         $order->delete_meta_data('_vs08s_emails_sent');
-        $order->save();
+        // PAS de $order->save() ici — c'est dispatch() qui fera le save avec le flag
 
         $sent = false;
         $errors = [];

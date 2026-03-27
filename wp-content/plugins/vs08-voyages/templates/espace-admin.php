@@ -190,7 +190,6 @@ if (!is_array($messages_admin)) $messages_admin = [];
         <a href="<?php echo home_url('/espace-admin/messages/'); ?>" class="ea-nav-item <?php echo $admin_view === 'messages' ? 'active' : ''; ?>"><span class="ea-nav-icon">💬</span> Messages<?php if (count($messages_admin)): ?><span class="ea-nav-badge"><?php echo count($messages_admin); ?></span><?php endif; ?></a>
         <a href="<?php echo home_url('/espace-admin/produits/'); ?>" class="ea-nav-item <?php echo $admin_view === 'produits' ? 'active' : ''; ?>"><span class="ea-nav-icon">🗺️</span> Produits</a>
         <a href="<?php echo home_url('/espace-voyageur/'); ?>" class="ea-nav-item" target="_blank"><span class="ea-nav-icon">👁️</span> Vue client</a>
-        <a href="<?php echo admin_url(); ?>" class="ea-nav-item"><span class="ea-nav-icon">⚙️</span> WordPress</a>
     </nav>
     <div class="ea-sidebar-footer">
         <a href="<?php echo wp_logout_url(home_url('/')); ?>" class="ea-nav-item ea-nav-logout"><span class="ea-nav-icon">⏻</span> Déconnexion</a>

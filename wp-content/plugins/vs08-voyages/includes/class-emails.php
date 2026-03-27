@@ -21,63 +21,40 @@ class VS08V_Emails {
      * Ne s'exécute qu'une fois par commande (flag _vs08v_emails_sent).
      */
     public static function dispatch($order_id) {
-        // Verrou anti-réentrance : empêche la boucle infinie
-        // ($order->save() dans dispatch peut déclencher des hooks WC qui rappellent dispatch)
+        // Verrou anti-réentrance (même requête PHP)
         static $dispatching = [];
         if (isset($dispatching[$order_id])) return;
         $dispatching[$order_id] = true;
 
         $order = wc_get_order($order_id);
         if (!$order) { unset($dispatching[$order_id]); return; }
-
         if ($order->get_meta('_vs08v_emails_sent')) { unset($dispatching[$order_id]); return; }
 
-        $data = null;
-        $contract_html = '';
-
-        try {
-            $data = VS08V_Contract::get_booking_data($order_id);
-        } catch (\Throwable $e) {
-            error_log('[VS08 Emails] get_booking_data CRASH: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
-        }
-
-        if (!$data) {
-            // Fallback: lire depuis la meta de la commande
-            $data = $order->get_meta('_vs08v_booking_data');
-            if (empty($data) || !is_array($data)) {
-                error_log('[VS08 Emails] dispatch(' . $order_id . ') — pas de booking_data');
-                unset($dispatching[$order_id]);
-                return;
-            }
-        }
-
-        // NE PAS faire $order->save() ici — ça déclenchait une boucle infinie
-        // (les hooks WooCommerce rappelaient dispatch() avant que le flag soit posé)
-
-        try {
-            $contract_html = VS08V_Contract::generate($order_id);
-        } catch (\Throwable $e) {
-            error_log('[VS08 Emails] Contract generate CRASH: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
-            $contract_html = '';
-        }
-
-        try {
-            self::send_admin_notification($order_id, $order, $data, $contract_html ?: '');
-        } catch (\Throwable $e) {
-            error_log('[VS08 Emails] send_admin_notification CRASH: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
-        }
-        try {
-            self::send_client_confirmation($order_id, $order, $data, $contract_html ?: '');
-        } catch (\Throwable $e) {
-            error_log('[VS08 Emails] send_client_confirmation CRASH: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
-        }
-
-        // Flag + booking_data posés APRÈS l'envoi (un seul save)
-        $order->update_meta_data('_vs08v_booking_data', $data);
+        // ═══ POSER LE FLAG IMMÉDIATEMENT ═══
+        // Empêche TOUTE réentrance via hooks WooCommerce
+        // Si le contrat ou l'envoi crashe, le flag reste → on peut retenter manuellement
         $order->update_meta_data('_vs08v_emails_sent', current_time('mysql'));
         $order->save();
+        error_log('[VS08 Emails] dispatch(' . $order_id . ') — flag posé, début');
+
+        // Récupérer les données
+        $data = null;
+        try { $data = VS08V_Contract::get_booking_data($order_id); } catch (\Throwable $e) { error_log('[VS08 Emails] get_booking_data CRASH: ' . $e->getMessage()); }
+        if (!$data) {
+            $data = $order->get_meta('_vs08v_booking_data');
+            if (empty($data) || !is_array($data)) { error_log('[VS08 Emails] dispatch(' . $order_id . ') — pas de booking_data'); unset($dispatching[$order_id]); return; }
+        }
+
+        // Générer le contrat (opération coûteuse — en try/catch)
+        $contract_html = '';
+        try { $contract_html = VS08V_Contract::generate($order_id); } catch (\Throwable $e) { error_log('[VS08 Emails] Contract CRASH: ' . $e->getMessage()); }
+
+        // Envoyer les emails
+        try { self::send_admin_notification($order_id, $order, $data, $contract_html ?: ''); } catch (\Throwable $e) { error_log('[VS08 Emails] send_admin CRASH: ' . $e->getMessage()); }
+        try { self::send_client_confirmation($order_id, $order, $data, $contract_html ?: ''); } catch (\Throwable $e) { error_log('[VS08 Emails] send_client CRASH: ' . $e->getMessage()); }
+
+        error_log('[VS08 Emails] dispatch(' . $order_id . ') — terminé OK');
         unset($dispatching[$order_id]);
-        error_log('[VS08 Emails] dispatch(' . $order_id . ') — emails envoyés OK');
     }
 
     /**
