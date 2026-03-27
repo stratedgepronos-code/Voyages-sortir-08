@@ -1320,6 +1320,7 @@ add_action('init', function() {
 
 /* ============================================================
    MESSAGERIE ESPACE MEMBRE — envoi email aux admins + historique
+   Les messages sont TOUJOURS sauvegardés en base (même si l'email échoue)
 ============================================================ */
 add_action('wp_ajax_vs08v_member_contact', function() {
     check_ajax_referer('vs08v_member_contact', 'nonce');
@@ -1336,7 +1337,35 @@ add_action('wp_ajax_vs08v_member_contact', function() {
     $client_email = $user->user_email;
     $dossier = $order_id ? 'VS08-' . $order_id : 'Question générale';
 
-    $subject = sprintf('💬 Message client — %s — %s', $client_name, $sujet);
+    // ── 1. TOUJOURS sauvegarder en base (messages admin) ──
+    $msg_entry = [
+        'date'         => current_time('Y-m-d H:i:s'),
+        'date_fmt'     => current_time('d/m/Y H:i'),
+        'user_id'      => $user->ID,
+        'client_name'  => $client_name,
+        'client_email' => $client_email,
+        'order_id'     => $order_id,
+        'dossier'      => $dossier,
+        'sujet'        => $sujet,
+        'message'      => $message,
+        'email_sent'   => false,
+    ];
+
+    $all_messages = get_option('vs08_member_messages', []);
+    if (!is_array($all_messages)) $all_messages = [];
+    $all_messages[] = $msg_entry;
+    if (count($all_messages) > 500) $all_messages = array_slice($all_messages, -500);
+    update_option('vs08_member_messages', $all_messages, false);
+
+    // Historique user
+    $history = get_user_meta($user->ID, '_vs08_messages_sent', true);
+    if (!is_array($history)) $history = [];
+    $history[] = ['date' => $msg_entry['date_fmt'], 'sujet' => $sujet, 'message' => $message, 'order_id' => $order_id];
+    if (count($history) > 50) $history = array_slice($history, -50);
+    update_user_meta($user->ID, '_vs08_messages_sent', $history);
+
+    // ── 2. Tenter l'envoi email ──
+    $subject_mail = sprintf('Message client — %s — %s', $client_name, $sujet);
 
     $body = '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:20px">'
         . '<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">'
@@ -1354,30 +1383,85 @@ add_action('wp_ajax_vs08v_member_contact', function() {
         . '<p style="margin-top:16px;font-size:12px;color:#999">Répondez directement à ce mail pour contacter le client.</p>'
         . '</div></div></body></html>';
 
+    // Utiliser l'email admin WordPress comme From (plus fiable sur Hostinger)
+    $admin_email = get_option('admin_email', 'resa@voyagessortir08.com');
     $headers = [
         'Content-Type: text/html; charset=UTF-8',
-        'From: Voyages Sortir 08 <noreply@sortirmonde.fr>',
+        'From: Voyages Sortir 08 <' . $admin_email . '>',
         'Reply-To: ' . $client_name . ' <' . $client_email . '>',
     ];
+
+    // Envoyer séparément à chaque admin (évite les problèmes de destinataires multiples)
     $admins = ['sortir08.ag@wanadoo.fr', 'sortir08@wanadoo.fr'];
-    $sent = wp_mail($admins, $subject, $body, $headers);
-
-    if ($sent) {
-        // Sauvegarder dans l'historique du user
-        $history = get_user_meta($user->ID, '_vs08_messages_sent', true);
-        if (!is_array($history)) $history = [];
-        $history[] = [
-            'date'     => current_time('d/m/Y H:i'),
-            'sujet'    => $sujet,
-            'message'  => $message,
-            'order_id' => $order_id,
-        ];
-        // Garder les 50 derniers messages max
-        if (count($history) > 50) $history = array_slice($history, -50);
-        update_user_meta($user->ID, '_vs08_messages_sent', $history);
-
-        wp_send_json_success('Message envoyé.');
-    } else {
-        wp_send_json_error('Erreur d\'envoi. Contactez-nous au 03 26 65 28 63.');
+    $email_ok = false;
+    foreach ($admins as $admin) {
+        $result = wp_mail($admin, $subject_mail, $body, $headers);
+        if ($result) $email_ok = true;
+        error_log('[VS08 Contact] wp_mail to ' . $admin . ' => ' . ($result ? 'OK' : 'FAIL'));
     }
+
+    // Mettre à jour le statut email dans le message sauvegardé
+    if ($email_ok) {
+        $all_messages[count($all_messages) - 1]['email_sent'] = true;
+        update_option('vs08_member_messages', $all_messages, false);
+    }
+
+    // Toujours renvoyer succès car le message est sauvé en base
+    wp_send_json_success('Message envoyé ! Nous vous répondrons dans les meilleurs délais.');
 });
+
+/* ── Page admin pour voir les messages reçus ── */
+add_action('admin_menu', function() {
+    add_menu_page(
+        'Messages clients',
+        '💬 Messages',
+        'manage_options',
+        'vs08-messages',
+        'vs08_messages_admin_page',
+        'dashicons-format-chat',
+        29
+    );
+}, 6);
+
+function vs08_messages_admin_page() {
+    $messages = get_option('vs08_member_messages', []);
+    if (!is_array($messages)) $messages = [];
+
+    // Supprimer un message
+    if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['idx']) && current_user_can('manage_options')) {
+        check_admin_referer('vs08_msg_del_' . intval($_GET['idx']));
+        $idx = intval($_GET['idx']);
+        if (isset($messages[$idx])) { unset($messages[$idx]); $messages = array_values($messages); update_option('vs08_member_messages', $messages, false); }
+        echo '<div class="notice notice-success"><p>Message supprimé.</p></div>';
+    }
+
+    $messages = array_reverse($messages); // plus récent en premier
+    $base = admin_url('admin.php?page=vs08-messages');
+    ?>
+    <div class="wrap">
+        <h1>💬 Messages clients (espace membre)</h1>
+        <p>Messages envoyés par les clients depuis leur espace voyageur. Sauvegardés même si l'email échoue.</p>
+        <table class="wp-list-table widefat striped" style="margin-top:16px">
+            <thead><tr><th style="width:140px">Date</th><th>Client</th><th>Email</th><th>Dossier</th><th>Sujet</th><th>Message</th><th style="width:50px">Email</th><th style="width:30px"></th></tr></thead>
+            <tbody>
+            <?php if (empty($messages)): ?>
+                <tr><td colspan="8" style="text-align:center;padding:24px;color:#999">Aucun message pour le moment.</td></tr>
+            <?php else: foreach ($messages as $i => $m):
+                $real_idx = count(get_option('vs08_member_messages', [])) - 1 - $i;
+            ?>
+                <tr>
+                    <td style="font-size:12px;color:#666"><?php echo esc_html($m['date_fmt'] ?? $m['date'] ?? ''); ?></td>
+                    <td><strong><?php echo esc_html($m['client_name'] ?? ''); ?></strong></td>
+                    <td><a href="mailto:<?php echo esc_attr($m['client_email'] ?? ''); ?>"><?php echo esc_html($m['client_email'] ?? ''); ?></a></td>
+                    <td><?php echo esc_html($m['dossier'] ?? ''); ?></td>
+                    <td><strong><?php echo esc_html($m['sujet'] ?? ''); ?></strong></td>
+                    <td style="font-size:12px;color:#555;max-width:300px"><?php echo esc_html(mb_substr($m['message'] ?? '', 0, 100)); ?><?php echo mb_strlen($m['message'] ?? '') > 100 ? '…' : ''; ?></td>
+                    <td><?php echo !empty($m['email_sent']) ? '<span style="color:#059669">✓</span>' : '<span style="color:#dc2626">✗</span>'; ?></td>
+                    <td><a href="<?php echo esc_url(wp_nonce_url($base . '&action=delete&idx=' . $real_idx, 'vs08_msg_del_' . $real_idx)); ?>" onclick="return confirm('Supprimer ?')" style="color:#dc2626">✕</a></td>
+                </tr>
+            <?php endforeach; endif; ?>
+            </tbody>
+        </table>
+    </div>
+    <?php
+}
