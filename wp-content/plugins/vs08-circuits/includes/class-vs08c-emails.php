@@ -166,7 +166,9 @@ class VS08C_Emails {
     }
 
     private static function send($to, $subject, $html) {
-        $headers = ['Content-Type: text/html; charset=UTF-8', 'From: Voyages Sortir 08 <noreply@sortirmonde.fr>'];
+        $host = function_exists('home_url') ? (string) wp_parse_url(home_url(), PHP_URL_HOST) : 'localhost';
+        $host = preg_replace('/^www\./', '', $host) ?: 'localhost';
+        $headers = ['Content-Type: text/html; charset=UTF-8', 'From: Voyages Sortir 08 <noreply@' . $host . '>'];
         $result = wp_mail($to, $subject, $html, $headers);
         $dest = is_array($to) ? implode(', ', $to) : $to;
         error_log('[VS08C Emails] wp_mail to ' . $dest . ' => ' . ($result ? 'OK' : 'FAIL') . ' — ' . $subject);

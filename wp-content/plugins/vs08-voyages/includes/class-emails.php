@@ -197,7 +197,7 @@ class VS08V_Emails {
 
         $headers = [
             'Content-Type: text/html; charset=UTF-8',
-            'From: Voyages Sortir 08 <noreply@sortirmonde.fr>',
+            self::from_header(),
         ];
 
         // Envoyer séparément à chaque admin
@@ -237,7 +237,7 @@ class VS08V_Emails {
             . '<p style="font-size:16px;color:#555;margin:0 0 24px;">Votre réservation a bien été enregistrée. Vous trouverez ci-dessous votre contrat de vente.</p>'
             . '<table cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;background:#edf8f8;border-radius:8px;">'
             . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Voyage</td><td style="padding:12px 16px;">' . esc_html($titre) . '</td></tr>'
-            . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Date de départ</td><td style="padding:12px 16px;">' . esc_html($params['date_depart'] ? date('d/m/Y', strtotime($params['date_depart'])) : '') . '</td></tr>'
+            . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Date de départ</td><td style="padding:12px 16px;">' . esc_html(!empty($params['date_depart']) ? date('d/m/Y', strtotime($params['date_depart'])) : '') . '</td></tr>'
             . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">N° contrat</td><td style="padding:12px 16px;">VS08-' . $order_id . '</td></tr>'
             . '<tr style="font-weight:bold;font-size:16px;"><td style="padding:12px 16px;color:#1a3a3a;">Total</td><td style="padding:12px 16px;color:#e8724a;">' . $total . ' &euro;</td></tr>'
             . '</table>'
@@ -299,10 +299,16 @@ class VS08V_Emails {
     /**
      * Envoi effectif via wp_mail (HTML).
      */
+    private static function from_header() {
+        $host = function_exists('home_url') ? (string) wp_parse_url(home_url(), PHP_URL_HOST) : 'localhost';
+        $host = preg_replace('/^www\./', '', $host) ?: 'localhost';
+        return 'From: Voyages Sortir 08 <noreply@' . $host . '>';
+    }
+
     private static function send($recipients, $subject, $html_body) {
         $headers = [
             'Content-Type: text/html; charset=UTF-8',
-            'From: Voyages Sortir 08 <noreply@sortirmonde.fr>',
+            self::from_header(),
         ];
         $result = wp_mail($recipients, $subject, $html_body, $headers);
         $to = is_array($recipients) ? implode(', ', $recipients) : $recipients;
