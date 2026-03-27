@@ -60,27 +60,28 @@ jobs:
             sleep 10
           done
           [ "$ok" -eq 1 ] || echo "Circuits deploy failed (non-blocking)"
-         - name: Deploy plugin vs08-sejours (with retry)
+
+      - name: Deploy plugin vs08-sejours (with retry)
         run: |
           ok=0
           for attempt in 1 2 3; do
-            echo "=== Attempt $attempt/3 — Deploy Séjours ==="
+            echo "=== Attempt $attempt/3 — Deploy Sejours ==="
             if sshpass -p "${{ secrets.SSH_PASSWORD }}" rsync -avz --delete \
               --exclude='config.cfg' \
               -e "ssh ${{ env.SSH_OPTS }}" \
               wp-content/plugins/vs08-sejours/ \
               ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }}:${{ env.WEBROOT }}/wp-content/plugins/vs08-sejours/; then
-              echo "Plugin Séjours deployed OK" && ok=1 && break
+              echo "Plugin Sejours deployed OK" && ok=1 && break
             fi
             echo "Attempt $attempt failed, waiting 10s..."
             sleep 10
           done
-          [ "$ok" -eq 1 ] || echo "Séjours deploy failed (non-blocking)"
+          [ "$ok" -eq 1 ] || echo "Sejours deploy failed (non-blocking)"
 
-      # ⚠️ ATTENTION : PAS de --delete sur le thème !
+      # ATTENTION : PAS de --delete sur le theme !
       # Le repo ne contient que des fichiers de surcharge (footer.php, single-vs08_voyage.php).
-      # Le thème complet (style.css, header.php, functions.php, logo, assets…) vit UNIQUEMENT sur le serveur.
-      # Ajouter --delete ici DÉTRUIRAIT le site (déjà arrivé — ne JAMAIS refaire).
+      # Le theme complet (style.css, header.php, functions.php, logo, assets) vit UNIQUEMENT sur le serveur.
+      # Ajouter --delete ici DETRUIRAIT le site (deja arrive ne JAMAIS refaire).
       - name: Deploy theme vs08-theme (with retry)
         run: |
           ok=0
