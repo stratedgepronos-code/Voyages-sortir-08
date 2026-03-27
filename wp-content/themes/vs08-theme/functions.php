@@ -1384,10 +1384,9 @@ add_action('wp_ajax_vs08v_member_contact', function() {
         . '</div></div></body></html>';
 
     // Utiliser l'email admin WordPress comme From (plus fiable sur Hostinger)
-    $admin_email = get_option('admin_email', 'resa@voyagessortir08.com');
     $headers = [
         'Content-Type: text/html; charset=UTF-8',
-        'From: Voyages Sortir 08 <' . $admin_email . '>',
+        'From: Voyages Sortir 08 <noreply@sortirmonde.fr>',
         'Reply-To: ' . $client_name . ' <' . $client_email . '>',
     ];
 

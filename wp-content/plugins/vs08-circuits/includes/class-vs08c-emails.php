@@ -159,7 +159,7 @@ class VS08C_Emails {
     }
 
     private static function send($to, $subject, $html) {
-        $headers = ['Content-Type: text/html; charset=UTF-8', 'From: Voyages Sortir 08 <resa@voyagessortir08.com>'];
+        $headers = ['Content-Type: text/html; charset=UTF-8', 'From: Voyages Sortir 08 <noreply@sortirmonde.fr>'];
         wp_mail($to, $subject, $html, $headers);
     }
 }

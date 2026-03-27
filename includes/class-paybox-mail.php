@@ -273,10 +273,10 @@ class VS08V_Paybox_Mail {
             $body .= '<p style="color:#22c55e;font-weight:700;">Votre séjour est entièrement réglé. Merci !</p>';
         }
         $body .= '<p><a href="' . esc_url(VS08V_Traveler_Space::voyage_url($order->get_id())) . '" style="display:inline-block;padding:12px 24px;background:#2a7f7f;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">Voir mon dossier voyage</a></p>';
-        $body .= '<p style="color:#999;font-size:13px;">Voyages Sortir 08 — Charleville-Mézières</p>';
+        $body .= '<p style="color:#999;font-size:13px;">Voyages Sortir 08 — Châlons-en-Champagne</p>';
         $body .= '</div>';
 
-        $headers = ['Content-Type: text/html; charset=UTF-8'];
+        $headers = ['Content-Type: text/html; charset=UTF-8', 'From: Voyages Sortir 08 <noreply@sortirmonde.fr>'];
         wp_mail($email, $subject, $body, $headers);
 
         $admin_emails = ['sortir08.ag@wanadoo.fr', 'sortir08@wanadoo.fr'];
