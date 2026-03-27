@@ -426,19 +426,27 @@ class VS08V_Homepage_Editor {
         <div class="vs08-home-editor-overlay" id="vs08-home-editor-overlay" aria-hidden="true">
             <div class="vs08-home-editor">
                 <h3>✏️ Remplacer ce produit</h3>
-                <p style="margin:0 0 10px;color:#6b7280;font-size:13px">Méthode 1: tapez un nom. Méthode 2: choisissez une destination puis un produit.</p>
+                <p style="margin:0 0 10px;color:#6b7280;font-size:13px">Méthode 1 : recherche par nom (tous types). Méthode 2 : type de produit, destination, puis produit.</p>
                 <div class="field">
                     <label>1) Rechercher par nom</label>
                     <input type="text" id="vs08-home-search-input" placeholder="Ex: Kenzi, Algarve, Marbella...">
                 </div>
                 <div class="vs08-home-results" id="vs08-home-search-results"></div>
+                <div class="field" style="margin-top:10px">
+                    <label>2) Type de produit</label>
+                    <select id="vs08-home-type-select">
+                        <option value="">Tous (golf + circuits)</option>
+                        <option value="vs08_voyage">⛳ Séjour golf</option>
+                        <option value="vs08_circuit">🗺️ Circuit</option>
+                    </select>
+                </div>
                 <div class="row" style="margin-top:10px">
                     <div class="field">
-                        <label>2) Destination</label>
+                        <label>3) Destination</label>
                         <select id="vs08-home-dest-select"><option value="">Choisir...</option></select>
                     </div>
                     <div class="field">
-                        <label>Produit</label>
+                        <label>4) Produit</label>
                         <select id="vs08-home-product-select"><option value="">Choisir...</option></select>
                     </div>
                 </div>
@@ -455,6 +463,7 @@ class VS08V_Homepage_Editor {
             if (!overlay) return;
             var searchInput = document.getElementById('vs08-home-search-input');
             var searchResults = document.getElementById('vs08-home-search-results');
+            var typeSelect = document.getElementById('vs08-home-type-select');
             var destSelect = document.getElementById('vs08-home-dest-select');
             var productSelect = document.getElementById('vs08-home-product-select');
             var picked = document.getElementById('vs08-home-picked');
@@ -484,6 +493,8 @@ class VS08V_Homepage_Editor {
                 picked.style.display = 'none';
                 searchInput.value = '';
                 searchResults.innerHTML = '';
+                if (typeSelect) typeSelect.value = '';
+                destSelect.innerHTML = '<option value="">Choisir...</option>';
                 productSelect.innerHTML = '<option value="">Choisir...</option>';
                 overlay.style.display = 'flex';
                 overlay.setAttribute('aria-hidden', 'false');
@@ -514,8 +525,11 @@ class VS08V_Homepage_Editor {
                     return '<button type="button" data-id="'+it.id+'" data-label="'+txt.replace(/"/g,'&quot;')+'">'+txt+'</button>';
                 }).join('');
             }
+            function currentProductType() {
+                return typeSelect ? (typeSelect.value || '') : '';
+            }
             function loadDestinations() {
-                post('vs08v_home_editor_destinations', {}).then(function(res){
+                post('vs08v_home_editor_destinations', { post_type: currentProductType() }).then(function(res){
                     if (!res || !res.success || !res.data) return;
                     var opts = '<option value="">Choisir...</option>';
                     res.data.forEach(function(d){ opts += '<option value="'+d.value+'">'+d.label+'</option>'; });
@@ -527,7 +541,7 @@ class VS08V_Homepage_Editor {
                     productSelect.innerHTML = '<option value="">Choisir...</option>';
                     return;
                 }
-                post('vs08v_home_editor_products_by_destination', { destination: destination }).then(function(res){
+                post('vs08v_home_editor_products_by_destination', { destination: destination, post_type: currentProductType() }).then(function(res){
                     var opts = '<option value="">Choisir...</option>';
                     if (res && res.success && res.data) {
                         res.data.forEach(function(p){
@@ -594,6 +608,13 @@ class VS08V_Homepage_Editor {
                 if (!btn) return;
                 pick(btn.getAttribute('data-id'), btn.getAttribute('data-label'));
             });
+            if (typeSelect) {
+                typeSelect.addEventListener('change', function(){
+                    destSelect.innerHTML = '<option value="">Choisir...</option>';
+                    productSelect.innerHTML = '<option value="">Choisir...</option>';
+                    loadDestinations();
+                });
+            }
             destSelect.addEventListener('change', function(){
                 loadProductsByDestination(destSelect.value);
             });
@@ -665,28 +686,42 @@ class VS08V_Homepage_Editor {
         wp_send_json_success($out);
     }
 
+    /**
+     * Filtre optionnel : vs08_voyage | vs08_circuit | vide = les deux.
+     */
+    private static function parse_home_editor_post_type_filter() {
+        $raw = sanitize_text_field(wp_unslash($_POST['post_type'] ?? ''));
+        if ($raw === 'vs08_voyage' || $raw === 'vs08_circuit') {
+            return $raw;
+        }
+        return '';
+    }
+
     public static function ajax_destinations() {
         self::guard_ajax();
+        $filter = self::parse_home_editor_post_type_filter();
         $map = [];
 
-        // Golf destinations
-        $ids = get_posts(['post_type' => 'vs08_voyage', 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids']);
-        foreach ($ids as $id) {
-            $m = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($id) : [];
-            if (($m['statut'] ?? 'actif') === 'archive') continue;
-            $dest = trim((string) ($m['destination'] ?? ''));
-            if ($dest === '' || isset($map[$dest])) continue;
-            $flag = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : ($m['flag'] ?? '');
-            $map[$dest] = ['value' => $dest, 'label' => trim(($flag ? $flag . ' ' : '') . $dest)];
+        if ($filter === '' || $filter === 'vs08_voyage') {
+            $ids = get_posts(['post_type' => 'vs08_voyage', 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids']);
+            foreach ($ids as $id) {
+                $m = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($id) : [];
+                if (($m['statut'] ?? 'actif') === 'archive') continue;
+                $dest = trim((string) ($m['destination'] ?? ''));
+                if ($dest === '' || isset($map[$dest])) continue;
+                $flag = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : ($m['flag'] ?? '');
+                $map[$dest] = ['value' => $dest, 'label' => trim(($flag ? $flag . ' ' : '') . $dest)];
+            }
         }
 
-        // Circuit destinations
-        $cids = get_posts(['post_type' => 'vs08_circuit', 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids']);
-        foreach ($cids as $id) {
-            $m = class_exists('VS08C_Meta') ? VS08C_Meta::get($id) : [];
-            $dest = trim((string) ($m['destination'] ?? ''));
-            if ($dest === '' || isset($map[$dest])) continue;
-            $map[$dest] = ['value' => $dest, 'label' => trim(($m['flag'] ?? '') . ' ' . $dest)];
+        if ($filter === '' || $filter === 'vs08_circuit') {
+            $cids = get_posts(['post_type' => 'vs08_circuit', 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids']);
+            foreach ($cids as $id) {
+                $m = class_exists('VS08C_Meta') ? VS08C_Meta::get($id) : [];
+                $dest = trim((string) ($m['destination'] ?? ''));
+                if ($dest === '' || isset($map[$dest])) continue;
+                $map[$dest] = ['value' => $dest, 'label' => trim(($m['flag'] ?? '') . ' ' . $dest)];
+            }
         }
 
         usort($map, function($a, $b){ return strcmp($a['label'], $b['label']); });
@@ -697,23 +732,26 @@ class VS08V_Homepage_Editor {
         self::guard_ajax();
         $destination = trim(sanitize_text_field(wp_unslash($_POST['destination'] ?? '')));
         if ($destination === '') wp_send_json_success([]);
+        $filter = self::parse_home_editor_post_type_filter();
         $out = [];
 
-        // Golf
-        $ids = get_posts(['post_type' => 'vs08_voyage', 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids']);
-        foreach ($ids as $id) {
-            $m = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($id) : [];
-            if (($m['statut'] ?? 'actif') === 'archive') continue;
-            if (trim((string) ($m['destination'] ?? '')) !== $destination) continue;
-            $out[] = ['id' => $id, 'title' => '⛳ ' . get_the_title($id), 'flag' => class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : ($m['flag'] ?? '')];
+        if ($filter === '' || $filter === 'vs08_voyage') {
+            $ids = get_posts(['post_type' => 'vs08_voyage', 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids']);
+            foreach ($ids as $id) {
+                $m = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($id) : [];
+                if (($m['statut'] ?? 'actif') === 'archive') continue;
+                if (trim((string) ($m['destination'] ?? '')) !== $destination) continue;
+                $out[] = ['id' => $id, 'title' => '⛳ ' . get_the_title($id), 'flag' => class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : ($m['flag'] ?? '')];
+            }
         }
 
-        // Circuits
-        $cids = get_posts(['post_type' => 'vs08_circuit', 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids']);
-        foreach ($cids as $id) {
-            $m = class_exists('VS08C_Meta') ? VS08C_Meta::get($id) : [];
-            if (trim((string) ($m['destination'] ?? '')) !== $destination) continue;
-            $out[] = ['id' => $id, 'title' => '🗺️ ' . get_the_title($id), 'flag' => $m['flag'] ?? ''];
+        if ($filter === '' || $filter === 'vs08_circuit') {
+            $cids = get_posts(['post_type' => 'vs08_circuit', 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids']);
+            foreach ($cids as $id) {
+                $m = class_exists('VS08C_Meta') ? VS08C_Meta::get($id) : [];
+                if (trim((string) ($m['destination'] ?? '')) !== $destination) continue;
+                $out[] = ['id' => $id, 'title' => '🗺️ ' . get_the_title($id), 'flag' => $m['flag'] ?? ''];
+            }
         }
 
         wp_send_json_success($out);
