@@ -359,6 +359,7 @@ if (!$order) { echo '<p>Dossier introuvable.</p>'; } else {
         <?php if($si&&$si['solde_due']&&$si['solde']>0): ?>
         <button type="button" class="ea-btn ea-btn-outline" style="border-color:#e8724a;color:#e8724a" onclick="eaSendReminder(<?php echo $admin_order_id; ?>,this)">🔔 Envoyer rappel solde</button>
         <?php endif; ?>
+        <button type="button" class="ea-btn ea-btn-outline" onclick="eaResendEmails(<?php echo $admin_order_id; ?>,this)">📧 Re-envoyer emails résa</button>
     </div>
 </div>
 <div class="ea-detail-grid">
@@ -429,6 +430,16 @@ function eaSendReminder(oid,btn){
         btn.disabled=false;btn.textContent=res.success?'✅ Envoyé !':orig;
         if(res.success)setTimeout(function(){btn.textContent=orig},3000);
         else alert(res.data||'Erreur');
+    }).catch(function(){btn.disabled=false;btn.textContent=orig;alert('Erreur réseau')});
+}
+function eaResendEmails(oid,btn){
+    if(!confirm('Re-envoyer les emails de réservation (admin + client) ?'))return;
+    btn.disabled=true;var orig=btn.textContent;btn.textContent='Envoi…';
+    var fd=new FormData();fd.append('action','vs08_admin_resend_emails');fd.append('nonce',EA_NONCE_D);fd.append('order_id',oid);
+    fetch(EA_AJAX_D,{method:'POST',body:fd}).then(function(r){return r.json()}).then(function(res){
+        btn.disabled=false;btn.textContent=res.success?'✅ Emails envoyés !':orig;
+        if(!res.success)alert(res.data||'Erreur');
+        else setTimeout(function(){btn.textContent=orig},3000);
     }).catch(function(){btn.disabled=false;btn.textContent=orig;alert('Erreur réseau')});
 }
 </script>

@@ -19,18 +19,27 @@ class VS08V_Emails {
         if ($order->get_meta('_vs08v_emails_sent')) return;
 
         $data = VS08V_Contract::get_booking_data($order_id);
-        if (!$data) return;
+        if (!$data) {
+            error_log('[VS08 Emails] dispatch(' . $order_id . ') — pas de booking_data');
+            return;
+        }
 
         // Copier les booking_data sur la commande pour accès futur
         $order->update_meta_data('_vs08v_booking_data', $data);
-        $order->update_meta_data('_vs08v_emails_sent', current_time('mysql'));
         $order->save();
 
         $contract_html = VS08V_Contract::generate($order_id);
-        if (empty($contract_html)) return;
+        if (empty($contract_html)) {
+            error_log('[VS08 Emails] dispatch(' . $order_id . ') — contrat vide');
+        }
 
-        self::send_admin_notification($order_id, $order, $data, $contract_html);
-        self::send_client_confirmation($order_id, $order, $data, $contract_html);
+        self::send_admin_notification($order_id, $order, $data, $contract_html ?: '');
+        self::send_client_confirmation($order_id, $order, $data, $contract_html ?: '');
+
+        // Flag posé APRÈS l'envoi
+        $order->update_meta_data('_vs08v_emails_sent', current_time('mysql'));
+        $order->save();
+        error_log('[VS08 Emails] dispatch(' . $order_id . ') — emails envoyés OK');
     }
 
     /**
@@ -168,7 +177,9 @@ class VS08V_Emails {
             'Content-Type: text/html; charset=UTF-8',
             'From: Voyages Sortir 08 <noreply@sortirmonde.fr>',
         ];
-        wp_mail($recipients, $subject, $html_body, $headers);
+        $result = wp_mail($recipients, $subject, $html_body, $headers);
+        $to = is_array($recipients) ? implode(', ', $recipients) : $recipients;
+        error_log('[VS08 Emails] wp_mail to ' . $to . ' => ' . ($result ? 'OK' : 'FAIL') . ' — ' . $subject);
     }
 
     /**

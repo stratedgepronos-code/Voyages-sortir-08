@@ -1611,3 +1611,31 @@ add_action('wp_ajax_vs08_admin_export_csv', function() {
     fclose($out);
     exit;
 });
+
+// ── Re-envoyer les emails de réservation (admin) ──
+add_action('wp_ajax_vs08_admin_resend_emails', function() {
+    check_ajax_referer('vs08_admin_actions', 'nonce');
+    if (!current_user_can('manage_options')) wp_send_json_error('Non autorisé.');
+    $order_id = intval($_POST['order_id'] ?? 0);
+    $order = wc_get_order($order_id);
+    if (!$order) wp_send_json_error('Commande introuvable.');
+
+    // Supprimer les flags pour permettre le re-envoi
+    $order->delete_meta_data('_vs08v_emails_sent');
+    $order->delete_meta_data('_vs08c_emails_sent');
+    $order->save();
+
+    // Tenter golf puis circuit
+    if (class_exists('VS08V_Emails')) VS08V_Emails::dispatch($order_id);
+    if (class_exists('VS08C_Emails')) VS08C_Emails::dispatch($order_id);
+
+    // Vérifier si ça a marché
+    $order = wc_get_order($order_id); // reload
+    $sent_golf = $order->get_meta('_vs08v_emails_sent');
+    $sent_circuit = $order->get_meta('_vs08c_emails_sent');
+    if ($sent_golf || $sent_circuit) {
+        wp_send_json_success('Emails renvoyés avec succès !');
+    } else {
+        wp_send_json_error('Échec de l\'envoi. Vérifiez les logs.');
+    }
+});
