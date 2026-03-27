@@ -570,21 +570,34 @@ var BK_CIRCUIT = <?php echo json_encode([
     var submitting = false;
     var bkc_insurance_check = false;
 
+    // ═══ Recalcul unifié du total (delta vol + assurance) ═══
+    function bkcUpdateTotal() {
+        var base = parseFloat(BK.devis.total) || 0;
+        var addVol = bkc_vol_delta_total || 0;
+        var addIns = (bkc_insurance_check && (parseFloat(BK.insurance_total) || 0)) ? parseFloat(BK.insurance_total) : 0;
+        var newTotal = base + addVol + addIns;
+        var totalValEl = document.getElementById('bkc-recap-total-val');
+        if (totalValEl) totalValEl.textContent = bkcFmt(newTotal) + ' €';
+        // Acompte
+        var acompteEl = document.querySelector('.bkc-recap-acompte span:last-child');
+        if (acompteEl && BK.acompte_pct) {
+            var acompte = Math.ceil(newTotal * parseFloat(BK.acompte_pct) / 100);
+            acompteEl.textContent = bkcFmt(acompte) + ' €';
+        }
+    }
+
     window.bkcUpdateInsurance = function() {
         var chk = document.getElementById('bkc-assurance');
         bkc_insurance_check = chk && chk.checked;
         var row = document.getElementById('bkc-recap-row-insurance');
         var val = document.getElementById('bkc-recap-insurance-val');
-        var totalValEl = document.getElementById('bkc-recap-total-val');
         if (bkc_insurance_check && BK.insurance_total > 0) {
             if (row) row.style.display = 'flex';
             if (val) { val.textContent = '+' + bkcFmt(BK.insurance_total); val.style.color = '#e3147a'; }
         } else {
             if (row) row.style.display = 'none';
         }
-        var base = parseFloat(BK.devis.total) || 0;
-        var add = (bkc_insurance_check && (parseFloat(BK.insurance_total) || 0)) ? (parseFloat(BK.insurance_total) || 0) : 0;
-        if (totalValEl) totalValEl.textContent = bkcFmt(base + add);
+        bkcUpdateTotal();
     };
 
     /* ── VS08 Calendar pour dates de naissance ── */
@@ -1050,6 +1063,9 @@ var BK_CIRCUIT = <?php echo json_encode([
                 deltaLine.style.display = 'none';
             }
         }
+
+        // Mettre à jour le total (delta vol + assurance)
+        bkcUpdateTotal();
     }
     window.bkcSelectCombo = bkcSelectCombo;
 
