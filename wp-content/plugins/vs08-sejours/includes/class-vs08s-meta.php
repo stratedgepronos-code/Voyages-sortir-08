@@ -222,13 +222,41 @@ class VS08S_Meta {
 
         <!-- ═══ VOLS & AÉROPORTS ═══ -->
         <div class="vs08s-panel" id="panel-vols">
-            <div class="vs08s-field">
-                <label>Code IATA de destination</label>
-                <input type="text" name="vs08s[iata_dest]" value="<?php echo esc_attr($iata_dest); ?>" placeholder="Ex: DJE, HRG, AGP..." style="width:200px;text-transform:uppercase">
-                <p class="vs08s-hint">Code IATA de l'aéroport de destination (ex: DJE pour Djerba, HRG pour Hurghada)</p>
+
+            <div class="vs08s-row cols-3">
+                <div class="vs08s-field">
+                    <label>Code IATA destination</label>
+                    <input type="text" name="vs08s[iata_dest]" value="<?php echo esc_attr($iata_dest); ?>" placeholder="DJE, HRG, AGP..." style="text-transform:uppercase">
+                </div>
+                <div class="vs08s-field">
+                    <label>Ville arrivée</label>
+                    <input type="text" name="vs08s[ville_arrivee]" value="<?php echo esc_attr($m['ville_arrivee'] ?? ''); ?>" placeholder="Djerba, Hurghada...">
+                </div>
+                <div class="vs08s-field">
+                    <label>Type transport</label>
+                    <select name="vs08s[transport_type]">
+                        <option value="vol" <?php selected($m['transport_type'] ?? 'vol', 'vol'); ?>>✈️ Vol inclus</option>
+                        <option value="vol_option" <?php selected($m['transport_type'] ?? 'vol', 'vol_option'); ?>>✈️ Vol en option</option>
+                        <option value="sans_vol" <?php selected($m['transport_type'] ?? 'vol', 'sans_vol'); ?>>🏨 Séjour seul (sans vol)</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="vs08s-row">
+            <div class="vs08s-row" style="margin-top:8px;align-items:flex-end">
+                <div class="vs08s-field">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+                        <input type="checkbox" name="vs08s[vol_escales_autorisees]" value="1" <?php checked(!empty($m['vol_escales_autorisees'])); ?>>
+                        Autoriser escales avec attente limitée
+                    </label>
+                    <p class="vs08s-hint">Par défaut : vols directs uniquement. Si coché : max 1 escale par tronçon.</p>
+                </div>
+                <div class="vs08s-field" style="max-width:200px">
+                    <label>Attente max (h) entre vols</label>
+                    <input type="number" name="vs08s[vol_escale_max_heures]" value="<?php echo esc_attr($m['vol_escale_max_heures'] ?? 5); ?>" min="1" max="24" step="0.5">
+                </div>
+            </div>
+
+            <div class="vs08s-row" style="margin-top:12px">
                 <div class="vs08s-field">
                     <label>Prix bagage soute /pers (€)</label>
                     <input type="number" name="vs08s[prix_bagage_soute]" value="<?php echo esc_attr($prix_bagage_soute); ?>" step="0.01" min="0">
@@ -239,29 +267,105 @@ class VS08S_Meta {
                 </div>
             </div>
 
-            <h3>Aéroports de départ</h3>
-            <div id="vs08s-aeroports-list">
-            <?php if (!empty($aeroports)): foreach ($aeroports as $ai => $a): ?>
-                <div class="vs08s-aeroport-block">
+            <!-- PÉRIODES FERMÉES -->
+            <div class="vs08s-section" style="background:#fef2f2;border:1px solid #fecaca;margin-top:20px">
+                <h3 style="color:#991b1b">🚫 Dates non disponibles à la vente</h3>
+                <p class="vs08s-hint" style="color:#7f1d1d">Les dates comprises dans ces plages ne seront <strong>pas sélectionnables</strong> sur le calendrier (tous les aéroports).</p>
+                <div id="vs08s-periodes-fermees">
+                    <?php
+                    $pfv = $m['periodes_fermees_vente'] ?? [];
+                    if (is_array($pfv)):
+                    foreach ($pfv as $pi => $pf):
+                    ?>
+                    <div class="vs08s-pfv-row" style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+                        <span style="font-size:12px;color:#991b1b;font-weight:600">Du</span>
+                        <input type="date" name="vs08s[periodes_fermees_vente][<?php echo $pi; ?>][date_debut]" value="<?php echo esc_attr($pf['date_debut'] ?? ''); ?>" style="flex:1">
+                        <span style="font-size:12px;color:#991b1b;font-weight:600">au</span>
+                        <input type="date" name="vs08s[periodes_fermees_vente][<?php echo $pi; ?>][date_fin]" value="<?php echo esc_attr($pf['date_fin'] ?? ''); ?>" style="flex:1">
+                        <button type="button" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer" onclick="this.closest('.vs08s-pfv-row').remove()">✕</button>
+                    </div>
+                    <?php endforeach; endif; ?>
+                </div>
+                <button type="button" class="vs08s-btn" style="background:#dc2626;color:#fff;margin-top:8px" id="vs08s-add-pfv">+ Période non disponible</button>
+            </div>
+
+            <!-- AÉROPORTS DE DÉPART -->
+            <div class="vs08s-section" style="margin-top:20px">
+                <h3>✈️ Aéroports de départ</h3>
+                <p class="vs08s-hint" style="margin-bottom:12px">Chaque aéroport peut avoir plusieurs <strong>périodes de vol</strong> (dates d'ouverture). Chaque période a ses propres <strong>jours de départ</strong> (ex: lundi et jeudi). En dehors de ces périodes, le calendrier est fermé pour cet aéroport.</p>
+
+                <div id="vs08s-aeroports-list">
+                <?php
+                $jours_semaine = [1=>'Lun',2=>'Mar',3=>'Mer',4=>'Jeu',5=>'Ven',6=>'Sam',7=>'Dim'];
+                if (!empty($aeroports)):
+                foreach ($aeroports as $ai => $a):
+                    $periodes_vol = $a['periodes_vol'] ?? [];
+                    if (empty($periodes_vol)) $periodes_vol = [['date_debut'=>'','date_fin'=>'']];
+                    $jours_direct = $a['jours_direct'] ?? [1,2,3,4,5,6,7];
+                ?>
+                <div class="vs08s-aeroport-block" data-aero-idx="<?php echo $ai; ?>">
                     <button type="button" class="vs08s-aeroport-remove" onclick="this.parentElement.remove()">✕</button>
                     <div class="vs08s-row cols-3">
                         <div class="vs08s-field">
                             <label>Code IATA</label>
-                            <input type="text" name="vs08s[aeroports][<?php echo $ai; ?>][code]" value="<?php echo esc_attr($a['code'] ?? ''); ?>" style="text-transform:uppercase">
+                            <input type="text" name="vs08s[aeroports][<?php echo $ai; ?>][code]" value="<?php echo esc_attr(strtoupper($a['code'] ?? '')); ?>" style="text-transform:uppercase" placeholder="CDG">
                         </div>
                         <div class="vs08s-field">
                             <label>Ville</label>
-                            <input type="text" name="vs08s[aeroports][<?php echo $ai; ?>][ville]" value="<?php echo esc_attr($a['ville'] ?? ''); ?>">
+                            <input type="text" name="vs08s[aeroports][<?php echo $ai; ?>][ville]" value="<?php echo esc_attr($a['ville'] ?? ''); ?>" placeholder="Paris Charles de Gaulle">
                         </div>
                         <div class="vs08s-field">
                             <label>Supplément vol /pers (€)</label>
                             <input type="number" name="vs08s[aeroports][<?php echo $ai; ?>][supplement]" value="<?php echo esc_attr($a['supplement'] ?? 0); ?>" step="0.01">
                         </div>
                     </div>
+
+                    <!-- Périodes de vol -->
+                    <div style="margin-top:12px;padding-left:10px;border-left:3px solid #59b7b7">
+                        <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:8px">📅 Périodes de vol ouvertes — en dehors = fermé</div>
+                        <div class="vs08s-periodes-vol-list">
+                        <?php foreach ($periodes_vol as $pi => $pv):
+                            $pv_jours = $pv['jours_direct'] ?? [];
+                            if (empty($pv_jours)) $pv_jours = [1,2,3,4,5,6,7];
+                        ?>
+                            <div class="vs08s-periode-row" style="margin-bottom:10px;padding:10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px">
+                                <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+                                    <span style="font-size:12px;color:#6b7280">Du</span>
+                                    <input type="date" name="vs08s[aeroports][<?php echo $ai; ?>][periodes_vol][<?php echo $pi; ?>][date_debut]" value="<?php echo esc_attr($pv['date_debut'] ?? ''); ?>" style="flex:1">
+                                    <span style="font-size:12px;color:#6b7280">au</span>
+                                    <input type="date" name="vs08s[aeroports][<?php echo $ai; ?>][periodes_vol][<?php echo $pi; ?>][date_fin]" value="<?php echo esc_attr($pv['date_fin'] ?? ''); ?>" style="flex:1">
+                                    <button type="button" style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:6px;padding:4px 10px;cursor:pointer;color:#dc2626" onclick="this.closest('.vs08s-periode-row').remove()">✕</button>
+                                </div>
+                                <div style="font-size:11px;color:#6b7280;margin-bottom:4px">Jours avec vol direct :</div>
+                                <div style="display:flex;flex-wrap:wrap;gap:8px 14px">
+                                    <?php foreach ($jours_semaine as $jnum => $jlib): ?>
+                                    <label style="font-size:12px;display:inline-flex;align-items:center;gap:4px;cursor:pointer">
+                                        <input type="checkbox" name="vs08s[aeroports][<?php echo $ai; ?>][periodes_vol][<?php echo $pi; ?>][jours_direct][]" value="<?php echo $jnum; ?>" <?php checked(in_array($jnum, $pv_jours)); ?>>
+                                        <?php echo $jlib; ?>
+                                    </label>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                        </div>
+                        <button type="button" class="vs08s-btn vs08s-btn-add vs08s-add-periode" data-aero-idx="<?php echo $ai; ?>" style="font-size:11px;padding:5px 12px">+ Période de vol</button>
+
+                        <div style="font-size:11px;font-weight:700;color:#374151;margin:12px 0 6px">📆 Jours de départ par défaut (si aucune période spécifique)</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px 14px">
+                            <?php foreach ($jours_semaine as $jnum => $jlib): ?>
+                            <label style="font-size:12px;display:inline-flex;align-items:center;gap:4px;cursor:pointer">
+                                <input type="checkbox" name="vs08s[aeroports][<?php echo $ai; ?>][jours_direct][]" value="<?php echo $jnum; ?>" <?php checked(in_array($jnum, $jours_direct)); ?>>
+                                <?php echo $jlib; ?>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
                 </div>
-            <?php endforeach; endif; ?>
+                <?php endforeach; endif; ?>
+                </div>
+
+                <button type="button" class="vs08s-btn vs08s-btn-add" id="vs08s-add-aeroport" style="margin-top:10px">+ Ajouter un aéroport</button>
             </div>
-            <button type="button" class="vs08s-btn vs08s-btn-add" id="vs08s-add-aeroport">+ Ajouter un aéroport</button>
         </div>
 
         <!-- ═══ PRIX & MARGE ═══ -->
@@ -339,17 +443,77 @@ class VS08S_Meta {
                 });
             });
 
-            // Add aeroport
+            // Add aeroport (complet avec périodes + jours)
             var aeroIdx = <?php echo max(count($aeroports), 0); ?>;
+            var joursLabels = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+            function makeJoursCheckboxes(prefix, allChecked) {
+                var html = '';
+                for (var j = 1; j <= 7; j++) {
+                    html += '<label style="font-size:12px;display:inline-flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="' + prefix + '[]" value="' + j + '"' + (allChecked ? ' checked' : '') + '> ' + joursLabels[j-1] + '</label>';
+                }
+                return html;
+            }
+
+            function makePeriodeRow(aeroI, periodeI) {
+                return '<div class="vs08s-periode-row" style="margin-bottom:10px;padding:10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px">'
+                    + '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">'
+                    + '<span style="font-size:12px;color:#6b7280">Du</span>'
+                    + '<input type="date" name="vs08s[aeroports]['+aeroI+'][periodes_vol]['+periodeI+'][date_debut]" style="flex:1">'
+                    + '<span style="font-size:12px;color:#6b7280">au</span>'
+                    + '<input type="date" name="vs08s[aeroports]['+aeroI+'][periodes_vol]['+periodeI+'][date_fin]" style="flex:1">'
+                    + '<button type="button" style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:6px;padding:4px 10px;cursor:pointer;color:#dc2626" onclick="this.closest(\'.vs08s-periode-row\').remove()">✕</button>'
+                    + '</div>'
+                    + '<div style="font-size:11px;color:#6b7280;margin-bottom:4px">Jours avec vol direct :</div>'
+                    + '<div style="display:flex;flex-wrap:wrap;gap:8px 14px">' + makeJoursCheckboxes('vs08s[aeroports]['+aeroI+'][periodes_vol]['+periodeI+'][jours_direct]', true) + '</div>'
+                    + '</div>';
+            }
+
             document.getElementById('vs08s-add-aeroport').addEventListener('click', function(){
-                var html = '<div class="vs08s-aeroport-block"><button type="button" class="vs08s-aeroport-remove" onclick="this.parentElement.remove()">✕</button>'
+                var html = '<div class="vs08s-aeroport-block" data-aero-idx="'+aeroIdx+'">'
+                    + '<button type="button" class="vs08s-aeroport-remove" onclick="this.parentElement.remove()">✕</button>'
                     + '<div class="vs08s-row cols-3">'
-                    + '<div class="vs08s-field"><label>Code IATA</label><input type="text" name="vs08s[aeroports]['+aeroIdx+'][code]" style="text-transform:uppercase"></div>'
-                    + '<div class="vs08s-field"><label>Ville</label><input type="text" name="vs08s[aeroports]['+aeroIdx+'][ville]"></div>'
+                    + '<div class="vs08s-field"><label>Code IATA</label><input type="text" name="vs08s[aeroports]['+aeroIdx+'][code]" style="text-transform:uppercase" placeholder="CDG"></div>'
+                    + '<div class="vs08s-field"><label>Ville</label><input type="text" name="vs08s[aeroports]['+aeroIdx+'][ville]" placeholder="Paris CDG"></div>'
                     + '<div class="vs08s-field"><label>Supplément vol /pers (€)</label><input type="number" name="vs08s[aeroports]['+aeroIdx+'][supplement]" value="0" step="0.01"></div>'
+                    + '</div>'
+                    + '<div style="margin-top:12px;padding-left:10px;border-left:3px solid #59b7b7">'
+                    + '<div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:8px">📅 Périodes de vol ouvertes</div>'
+                    + '<div class="vs08s-periodes-vol-list">' + makePeriodeRow(aeroIdx, 0) + '</div>'
+                    + '<button type="button" class="vs08s-btn vs08s-btn-add vs08s-add-periode" data-aero-idx="'+aeroIdx+'" style="font-size:11px;padding:5px 12px">+ Période de vol</button>'
+                    + '<div style="font-size:11px;font-weight:700;color:#374151;margin:12px 0 6px">📆 Jours par défaut</div>'
+                    + '<div style="display:flex;flex-wrap:wrap;gap:8px 14px">' + makeJoursCheckboxes('vs08s[aeroports]['+aeroIdx+'][jours_direct]', true) + '</div>'
                     + '</div></div>';
                 document.getElementById('vs08s-aeroports-list').insertAdjacentHTML('beforeend', html);
                 aeroIdx++;
+            });
+
+            // Ajouter période de vol à un aéroport existant
+            document.getElementById('vs08s-aeroports-list').addEventListener('click', function(ev) {
+                var btn = ev.target && ev.target.closest && ev.target.closest('.vs08s-add-periode');
+                if (!btn) return;
+                ev.preventDefault();
+                var block = btn.closest('.vs08s-aeroport-block');
+                if (!block) return;
+                var idx = block.getAttribute('data-aero-idx');
+                var list = block.querySelector('.vs08s-periodes-vol-list');
+                if (!list) return;
+                var p = list.querySelectorAll('.vs08s-periode-row').length;
+                list.insertAdjacentHTML('beforeend', makePeriodeRow(idx, p));
+            });
+
+            // Périodes fermées
+            var pfvIdx = <?php echo max(count($pfv), 0); ?>;
+            document.getElementById('vs08s-add-pfv').addEventListener('click', function(){
+                var html = '<div class="vs08s-pfv-row" style="display:flex;gap:8px;align-items:center;margin-bottom:6px">'
+                    + '<span style="font-size:12px;color:#991b1b;font-weight:600">Du</span>'
+                    + '<input type="date" name="vs08s[periodes_fermees_vente]['+pfvIdx+'][date_debut]" style="flex:1">'
+                    + '<span style="font-size:12px;color:#991b1b;font-weight:600">au</span>'
+                    + '<input type="date" name="vs08s[periodes_fermees_vente]['+pfvIdx+'][date_fin]" style="flex:1">'
+                    + '<button type="button" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer" onclick="this.closest(\'.vs08s-pfv-row\').remove()">✕</button>'
+                    + '</div>';
+                document.getElementById('vs08s-periodes-fermees').insertAdjacentHTML('beforeend', html);
+                pfvIdx++;
             });
 
             // Add annulation
@@ -389,6 +553,11 @@ class VS08S_Meta {
         $m['hotel_code']        = sanitize_text_field($raw['hotel_code'] ?? '');
         $m['pension']           = sanitize_text_field($raw['pension'] ?? 'ai');
         $m['iata_dest']         = strtoupper(sanitize_text_field($raw['iata_dest'] ?? ''));
+        $m['ville_arrivee']     = sanitize_text_field($raw['ville_arrivee'] ?? '');
+        $m['transport_type']    = sanitize_text_field($raw['transport_type'] ?? 'vol');
+        $m['vol_escales_autorisees'] = !empty($raw['vol_escales_autorisees']) ? 1 : 0;
+        $h_esc = floatval($raw['vol_escale_max_heures'] ?? 5);
+        $m['vol_escale_max_heures'] = min(24, max(1, $h_esc ?: 5));
         $m['transfert_type']    = sanitize_text_field($raw['transfert_type'] ?? 'groupes');
         $m['transfert_prix']    = floatval($raw['transfert_prix'] ?? 0);
         $m['marge_type']        = sanitize_text_field($raw['marge_type'] ?? 'pourcentage');
@@ -412,17 +581,54 @@ class VS08S_Meta {
         $hotel_codes = $raw['hotel_codes'] ?? [];
         $m['hotel_codes'] = array_values(array_filter(array_map('sanitize_text_field', is_array($hotel_codes) ? $hotel_codes : [])));
 
-        // Aéroports
+        // Périodes fermées à la vente
+        $pfv = $raw['periodes_fermees_vente'] ?? [];
+        $m['periodes_fermees_vente'] = [];
+        if (is_array($pfv)) {
+            foreach ($pfv as $p) {
+                $deb = sanitize_text_field($p['date_debut'] ?? '');
+                $fin = sanitize_text_field($p['date_fin'] ?? '');
+                if ($deb || $fin) {
+                    $m['periodes_fermees_vente'][] = ['date_debut' => $deb, 'date_fin' => $fin];
+                }
+            }
+        }
+
+        // Aéroports (avec périodes de vol + jours directs)
         $aeroports = $raw['aeroports'] ?? [];
         $m['aeroports'] = [];
         if (is_array($aeroports)) {
             foreach ($aeroports as $a) {
                 $code = strtoupper(sanitize_text_field($a['code'] ?? ''));
                 if (empty($code)) continue;
+
+                // Périodes de vol par aéroport
+                $periodes_vol = [];
+                if (isset($a['periodes_vol']) && is_array($a['periodes_vol'])) {
+                    foreach ($a['periodes_vol'] as $pv) {
+                        $pd = sanitize_text_field($pv['date_debut'] ?? '');
+                        $pf = sanitize_text_field($pv['date_fin'] ?? '');
+                        if (!$pd && !$pf) continue;
+                        $jd = [];
+                        if (isset($pv['jours_direct']) && is_array($pv['jours_direct'])) {
+                            $jd = array_values(array_map('intval', array_filter($pv['jours_direct'])));
+                        }
+                        $periodes_vol[] = ['date_debut' => $pd, 'date_fin' => $pf, 'jours_direct' => $jd];
+                    }
+                }
+
+                // Jours directs par défaut
+                $jours_direct = [1,2,3,4,5,6,7];
+                if (isset($a['jours_direct']) && is_array($a['jours_direct'])) {
+                    $jours_direct = array_map('intval', array_values(array_filter($a['jours_direct'])));
+                }
+
                 $m['aeroports'][] = [
-                    'code'       => $code,
-                    'ville'      => sanitize_text_field($a['ville'] ?? ''),
-                    'supplement' => floatval($a['supplement'] ?? 0),
+                    'code'         => $code,
+                    'ville'        => sanitize_text_field($a['ville'] ?? ''),
+                    'supplement'   => floatval($a['supplement'] ?? 0),
+                    'periodes_vol' => $periodes_vol,
+                    'jours_direct' => $jours_direct,
                 ];
             }
         }
