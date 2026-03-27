@@ -219,9 +219,6 @@ $vs08s_payload = [
 .sv-sticky-bar-sub{font-size:11px;color:#6b7280;font-family:'Outfit',sans-serif}
 .sv-sticky-btn{background:#e8724a;color:#fff;border:none;padding:12px 28px;border-radius:100px;font-size:15px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer}
 .sv-sticky-btn:disabled{opacity:.5;cursor:not-allowed}
-/* Hotel result */
-.sv-hotel-result{display:none;background:#ecfdf5;border:1px solid rgba(89,183,183,.2);border-radius:12px;padding:14px;margin-bottom:14px}
-.sv-hotel-result.active{display:block}
 /* Print */
 .sv-print-logo{display:none}
 @media print{.sv-navbar,.sv-right-col,.sv-carousel-wrap,.sv-sticky-bar,.sv-actions-card,.sv-devis-card,.sv-lightbox{display:none!important}.sv-print-logo{display:block!important}.sv-page-inner{grid-template-columns:1fr!important}.sv-card{box-shadow:none!important;border:1px solid #e5e7eb}}
@@ -605,14 +602,10 @@ $vs08s_payload = [
 
         <div class="sv-calc-card">
             <p class="sv-calc-title">Calculez votre prix</p>
+            <?php if (!empty($aeroports)): ?>
+            <p class="sv-calc-sub">Choisissez d'abord votre aéroport → le calendrier s'affichera ensuite.</p>
+            <?php else: ?>
             <p class="sv-calc-sub"><?php echo esc_html($flag . ' ' . get_the_title()); ?> — <?php echo $duree_jours; ?>j/<?php echo $duree; ?>n</p>
-
-            <?php if ($prix_appel > 0): ?>
-            <div style="background:#edf8f8;border-radius:10px;padding:12px;margin-bottom:16px;text-align:center">
-                <div style="font-size:11px;color:#6b7280;font-family:'Outfit',sans-serif">À partir de</div>
-                <div style="font-size:28px;font-weight:800;color:#59b7b7;font-family:'Outfit',sans-serif"><?php echo number_format($prix_appel, 0, ',', ' '); ?> €</div>
-                <div style="font-size:11px;color:#6b7280;font-family:'Outfit',sans-serif">/personne · tout compris</div>
-            </div>
             <?php endif; ?>
 
             <?php if (!empty($aeroports)): ?>
@@ -638,38 +631,33 @@ $vs08s_payload = [
                 </div>
                 <input type="hidden" id="sv-date-depart" onchange="sjOnDateChange()">
             </div>
+
+            <!-- 3. VOYAGEURS + CHAMBRES (visibles dès la sélection aéroport, pas après date) -->
+            <div class="sv-field-row" id="sv-field-pax" style="display:none">
+                <div class="sv-field">
+                    <label>👤 Voyageurs</label>
+                    <select id="sv-nb-adultes" onchange="sjRecalculate()">
+                        <?php for ($i = 1; $i <= 8; $i++): ?>
+                        <option value="<?php echo $i; ?>" <?php selected($i, 2); ?>><?php echo $i; ?> ad.</option>
+                        <?php endfor; ?>
+                    </select>
+                </div>
+                <div class="sv-field">
+                    <label>🚪 Chambres</label>
+                    <select id="sv-nb-chambres" onchange="sjRecalculate()">
+                        <?php for ($i = 1; $i <= 4; $i++): ?>
+                        <option value="<?php echo $i; ?>"><?php echo $i; ?> ch.</option>
+                        <?php endfor; ?>
+                    </select>
+                </div>
+            </div>
             <?php endif; ?>
 
-            <!-- Suite après sélection date -->
+            <!-- Résultat recherche (après sélection date) -->
             <div id="sv-step2" style="display:none">
-                <div class="sv-field-row">
-                    <div class="sv-field">
-                        <label>👤 Voyageurs</label>
-                        <select id="sv-nb-adultes" onchange="sjRecalculate()">
-                            <?php for ($i = 1; $i <= 8; $i++): ?>
-                            <option value="<?php echo $i; ?>" <?php selected($i, 2); ?>><?php echo $i; ?> adulte<?php echo $i > 1 ? 's' : ''; ?></option>
-                            <?php endfor; ?>
-                        </select>
-                    </div>
-                    <div class="sv-field">
-                        <label>🚪 Chambres</label>
-                        <select id="sv-nb-chambres" onchange="sjRecalculate()">
-                            <?php for ($i = 1; $i <= 4; $i++): ?>
-                            <option value="<?php echo $i; ?>"><?php echo $i; ?> ch.</option>
-                            <?php endfor; ?>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Résultat hôtel -->
-                <div class="sv-hotel-result" id="sv-hotel-result">
-                    <div style="font-size:14px;font-weight:700;color:#0f2424;font-family:'Outfit',sans-serif" id="sv-hotel-result-name"></div>
-                    <div style="font-size:12px;color:#59b7b7;font-weight:600;font-family:'Outfit',sans-serif" id="sv-hotel-result-board"></div>
-                    <div style="font-size:16px;font-weight:800;color:#59b7b7;font-family:'Outfit',sans-serif;margin-top:4px" id="sv-hotel-result-price"></div>
-                </div>
-
-                <!-- Prix -->
+                <!-- Loading -->
                 <div class="sv-price-loading" id="sv-price-loading">⏳ Recherche vols + hôtel...</div>
+                <!-- Prix -->
                 <div class="sv-price-box" id="sv-price-box" style="display:none">
                     <p class="sv-price-from">Total estimé tout compris</p>
                     <div class="sv-price-main" id="sv-price-val">—</div>
@@ -684,9 +672,7 @@ $vs08s_payload = [
                 <div class="sv-reass"><span class="sv-reass-icon">🔒</span><span>Paiement 100% sécurisé</span></div>
                 <div class="sv-reass"><span class="sv-reass-icon">📞</span><div>
                     <strong style="color:#374151">Conseiller disponible</strong><br>
-                    03 26 65 28 63<br>
-                    Lun–Ven 09h–12h / 14h–18h30<br>
-                    Sam 09h–12h / 14h–18h
+                    03 26 65 28 63
                 </div></div>
             </div>
         </div>
@@ -778,8 +764,10 @@ function sjOnAeroportChange(){
     document.getElementById('sv-step2').style.display='none';
     document.getElementById('sv-price-box').style.display='none';
     var dateBlock=document.getElementById('sv-field-date-block');
-    if(sjState.aeroport&&dateBlock){
-        dateBlock.style.display='block';
+    var paxBlock=document.getElementById('sv-field-pax');
+    if(sjState.aeroport){
+        if(dateBlock) dateBlock.style.display='block';
+        if(paxBlock) paxBlock.style.display='grid';
         // Init calendar
         if(typeof VS08Calendar!=='undefined'&&!window.sjCalDate){
             var D=sjVs08Data();
@@ -870,8 +858,7 @@ function sjSearchHotel(){
             sjState.hotel_rate_key=data.best.rate_key||'';
             sjState.hotel_board=data.best.board_code||'AI';
             sjState.hotel_room_name=data.best.room_name||'';
-            var hr=document.getElementById('sv-hotel-result');
-            if(hr){hr.classList.add('active');document.getElementById('sv-hotel-result-name').textContent=data.hotel_name+' — '+(data.best.room_name||'');document.getElementById('sv-hotel-result-board').textContent=data.best.board_name||sjState.hotel_board;document.getElementById('sv-hotel-result-price').textContent=sjFmt(sjState.hotel_net)+'€ net'}
+            // Pas d'affichage du prix net hôtel — seul le total final est montré
         }
     }).catch(function(err){
         var loading=document.getElementById('sv-price-loading');
