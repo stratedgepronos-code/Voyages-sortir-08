@@ -765,7 +765,6 @@ get_header();
         var sidebar = document.getElementById('bks-filters-sidebar');
         if (!sidebar) return;
 
-        // Position sidebar to the left of .bks-container
         function posSidebar() {
             var container = document.querySelector('.bks-container');
             if (!container || !sidebar) return;
@@ -777,10 +776,25 @@ get_header();
                 sidebar.style.display = '';
             } else {
                 sidebar.style.display = 'none';
+                return;
+            }
+            // Stop above footer
+            var footer = document.querySelector('footer') || document.querySelector('.site-footer') || document.getElementById('footer');
+            if (footer) {
+                var fRect = footer.getBoundingClientRect();
+                var sH = sidebar.offsetHeight;
+                if (fRect.top < (160 + sH + 20)) {
+                    sidebar.style.opacity = '0';
+                    sidebar.style.pointerEvents = 'none';
+                } else {
+                    sidebar.style.opacity = '1';
+                    sidebar.style.pointerEvents = '';
+                }
             }
         }
         posSidebar();
         window.addEventListener('resize', posSidebar);
+        window.addEventListener('scroll', posSidebar);
 
         // Wire filter controls to bksApplyVisibility
         document.querySelectorAll('input[name="bksf_type"]').forEach(function(r) {

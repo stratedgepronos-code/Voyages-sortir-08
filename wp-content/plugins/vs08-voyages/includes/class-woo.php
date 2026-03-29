@@ -157,12 +157,16 @@ add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_
 add_action('woocommerce_checkout_update_order_meta', function($order_id) {
     try {
         $order = wc_get_order($order_id);
-        if (!$order || $order->get_meta('_vs08v_booking_data')) return;
+        if (!$order) return;
+        // Déjà copié ?
+        $existing = get_post_meta($order_id, '_vs08v_booking_data', true);
+        if (!empty($existing) && is_array($existing)) return;
         foreach ($order->get_items() as $item) {
-            $data = $item->get_meta('_vs08v_booking_data');
+            $pid = $item->get_product_id();
+            if (!$pid) continue;
+            $data = get_post_meta($pid, '_vs08v_booking_data', true);
             if (!empty($data) && is_array($data)) {
-                $order->update_meta_data('_vs08v_booking_data', $data);
-                $order->save();
+                update_post_meta($order_id, '_vs08v_booking_data', $data);
                 break;
             }
         }

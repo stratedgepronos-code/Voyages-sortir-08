@@ -67,7 +67,23 @@ if ( ! $checkout->is_registration_enabled() && $checkout->is_registration_requir
 				<!-- ── Header dark premium ── -->
 				<div class="vs08-order-card-header">
 					<h2 class="vs08-order-card-title">Votre <em>réservation</em></h2>
-					<span class="vs08-order-card-badge">⛳ Séjour Golf</span>
+					<?php
+					$vs08_badge = '⛳ Séjour Golf';
+					if (function_exists('WC') && WC()->cart) {
+						foreach (WC()->cart->get_cart() as $_item) {
+							$_pid = $_item['product_id'] ?? 0;
+							if (!$_pid) continue;
+							$_bd = get_post_meta($_pid, '_vs08v_booking_data', true);
+							if (is_array($_bd)) {
+								$_type = $_bd['type'] ?? 'golf';
+								if ($_type === 'sejour') $vs08_badge = '🏖️ All Inclusive';
+								elseif ($_type === 'circuit') $vs08_badge = '🗺️ Circuit';
+								break;
+							}
+						}
+					}
+					?>
+					<span class="vs08-order-card-badge"><?php echo esc_html($vs08_badge); ?></span>
 				</div>
 
 				<!-- ── Hooks WooCommerce (recap séjour injecté ici par le plugin) ── -->
