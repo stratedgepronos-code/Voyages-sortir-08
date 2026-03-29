@@ -420,15 +420,17 @@ function vs08v_get_target_order_id_for_espace($order) {
 
     // Réservation circuit sur la commande.
     if ($order->get_meta('_vs08c_booking_data')) return $order_id;
+    // Réservation séjour sur la commande.
+    if ($order->get_meta('_vs08s_booking_data')) return $order_id;
 
     // Réservation circuit/golf sur les lignes (fallback).
     foreach ($order->get_items() as $item) {
-        if ($item->get_meta('_vs08c_booking_data') || $item->get_meta('_vs08v_booking_data')) {
+        if ($item->get_meta('_vs08c_booking_data') || $item->get_meta('_vs08v_booking_data') || $item->get_meta('_vs08s_booking_data')) {
             return $order_id;
         }
         $pid = (int) $item->get_product_id();
         if ($pid > 0) {
-            if (get_post_meta($pid, '_vs08c_booking_data', true) || get_post_meta($pid, '_vs08v_booking_data', true)) {
+            if (get_post_meta($pid, '_vs08c_booking_data', true) || get_post_meta($pid, '_vs08v_booking_data', true) || get_post_meta($pid, '_vs08s_booking_data', true)) {
                 return $order_id;
             }
         }

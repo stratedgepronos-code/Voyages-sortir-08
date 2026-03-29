@@ -82,6 +82,22 @@ class VS08V_Traveler_Space {
             $data['type'] = 'sejour';
             return $data;
         }
+        // Fallback séjour depuis lignes/produit (si redirection immédiate avant copie thankyou)
+        foreach ($order->get_items() as $item) {
+            $data = $item->get_meta('_vs08s_booking_data');
+            if (!empty($data) && is_array($data)) {
+                $data['type'] = 'sejour';
+                return $data;
+            }
+            $pid = (int) $item->get_product_id();
+            if ($pid > 0) {
+                $data = get_post_meta($pid, '_vs08s_booking_data', true);
+                if (!empty($data) && is_array($data)) {
+                    $data['type'] = 'sejour';
+                    return $data;
+                }
+            }
+        }
         return null;
     }
 
