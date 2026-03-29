@@ -128,8 +128,7 @@ class VS08V_Checkout {
     }
 
     public static function output_vs08_recap_card() {
-        $data = self::get_booking_data();
-        if (!is_array($data)) return;
+        if (!function_exists('WC') || !WC()->cart) return;
         $product_id = null;
         foreach (WC()->cart->get_cart() as $item) {
             $id = $item['product_id'] ?? 0;
@@ -141,16 +140,17 @@ class VS08V_Checkout {
         }
         if (!$product_id) return;
 
-        // Pour les séjours : lire directement depuis booking_data (pas le cache WC)
+        // Lire les booking_data depuis le produit
         $booking = get_post_meta($product_id, '_vs08v_booking_data', true);
-        $type = is_array($booking) ? ($booking['type'] ?? 'golf') : 'golf';
+        $type = (is_array($booking) && !empty($booking['type'])) ? $booking['type'] : 'golf';
 
-        if ($type === 'sejour' && is_array($booking)) {
+        // Séjour : recap rendu en temps réel depuis VS08S_Meta
+        if ($type === 'sejour') {
             self::render_sejour_recap($booking);
             return;
         }
 
-        // Golf/Circuit : utiliser la description produit
+        // Golf / Circuit : utiliser la description produit
         $desc = get_post_field('post_content', $product_id);
         if (empty($desc) || strpos($desc, 'vs08v-woo-recap') === false) return;
         ?>
