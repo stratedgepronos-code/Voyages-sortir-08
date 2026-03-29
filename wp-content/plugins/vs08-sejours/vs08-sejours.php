@@ -25,6 +25,15 @@ if (file_exists($vs08s_config_file)) {
     define('VS08S_BEDS_SANDBOX',    true);
 }
 
+// ── Pendant wc-ajax=checkout, ce plugin ne fait RIEN ──
+// Tous les hooks checkout sont dans vs08-voyages (avec guards metadata_exists).
+// La copie _vs08s_booking_data → commande se fait sur woocommerce_thankyou (autre requête).
+// Les emails sont différés via cron.
+// Charger 10 classes + Bedsonline + Claude API est du gaspillage de RAM pur.
+if (!empty($_GET['wc-ajax']) && $_GET['wc-ajax'] === 'checkout') {
+    return; // ← Libère ~15-40 Mo de RAM pour WooCommerce HPOS
+}
+
 // ── Chargement des classes ──
 require_once VS08S_PATH . 'includes/class-vs08s-cpt.php';
 require_once VS08S_PATH . 'includes/class-vs08s-meta.php';

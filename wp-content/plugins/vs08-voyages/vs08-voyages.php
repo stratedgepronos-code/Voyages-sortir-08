@@ -21,7 +21,7 @@ define('VS08V_VER',  '2.0.0');
 // + Désactiver WC emails + WC Admin (trop de RAM)
 // ============================================================
 if (!empty($_GET['wc-ajax']) && $_GET['wc-ajax'] === 'checkout') {
-    @ini_set('memory_limit', '1024M');
+    @ini_set('memory_limit', '1536M');
 
     // Désactiver WooCommerce Admin (Analytics) — consomme 200Mo+
     add_filter('woocommerce_admin_disabled', '__return_true');
@@ -29,13 +29,23 @@ if (!empty($_GET['wc-ajax']) && $_GET['wc-ajax'] === 'checkout') {
     add_filter('action_scheduler_queue_runner_time_limit', function() { return 0; });
     add_filter('action_scheduler_queue_runner_batch_size', function() { return 0; });
 
+    // Diagnostic mémoire : loguer l'utilisation à la fin de la requête
     register_shutdown_function(function() {
+        $peak = memory_get_peak_usage(true);
+        $current = memory_get_usage(true);
+        $limit = ini_get('memory_limit');
+        error_log(sprintf(
+            '[VS08 CHECKOUT MEM] peak=%s current=%s limit=%s plugins=%s',
+            size_format($peak), size_format($current), $limit,
+            implode(',', array_map('basename', wp_get_active_and_valid_plugins()))
+        ));
         $e = error_get_last();
         if ($e && in_array($e['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE])) {
-            $msg = '[VS08 FATAL CHECKOUT] ' . $e['message'] . ' in ' . $e['file'] . ':' . $e['line'];
+            $msg = sprintf(
+                '[VS08 FATAL CHECKOUT] %s in %s:%d (peak_mem=%s)',
+                $e['message'], $e['file'], $e['line'], size_format($peak)
+            );
             error_log($msg);
-            $log_path = dirname(dirname(dirname(__FILE__))) . '/vs08-checkout-crash.log';
-            file_put_contents($log_path, date('Y-m-d H:i:s') . ' ' . $msg . "\n", FILE_APPEND);
         }
     });
 

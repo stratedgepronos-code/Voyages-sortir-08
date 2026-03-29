@@ -13,6 +13,16 @@ define('VS08C_PATH', plugin_dir_path(__FILE__));
 define('VS08C_URL',  plugin_dir_url(__FILE__));
 define('VS08C_VER',  '1.2.1');
 
+// ── Pendant wc-ajax=checkout : chargement minimal ──
+// Seul class-vs08c-woo.php est nécessaire (hooks create_order_line_item + update_order_meta).
+// Les 8 autres classes (CPT, Booking, Calculator, Emails, Contract, Ajax, Checkout, Marge)
+// consomment de la RAM inutilement. Meta est requis par woo.php pour build_description.
+if (!empty($_GET['wc-ajax']) && $_GET['wc-ajax'] === 'checkout') {
+    require_once VS08C_PATH . 'includes/class-vs08c-meta.php';
+    require_once VS08C_PATH . 'includes/class-vs08c-woo.php';
+    return;
+}
+
 /* ─── Load all modules ─── */
 require_once VS08C_PATH . 'includes/class-vs08c-cpt.php';
 require_once VS08C_PATH . 'includes/class-vs08c-meta.php';
