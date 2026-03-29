@@ -43,6 +43,10 @@ if (class_exists('VS08V_Insurance')) {
     try { $insurance_price = VS08V_Insurance::get_price(500); } catch (\Throwable $e) {}
 }
 
+$prix_bag_soute  = floatval($m['prix_bagage_soute'] ?? 0);
+$prix_bag_cabine = floatval($m['prix_bagage_cabine'] ?? 0);
+$has_bagages     = ($prix_bag_soute > 0 || $prix_bag_cabine > 0);
+
 $bk_saved_fact = [];
 $bk_saved_voy  = [];
 if (is_user_logged_in() && class_exists('VS08V_Traveler_Space')) {
@@ -79,6 +83,8 @@ get_header();
     'payer_tout'     => $payer_tout,
     'insurance_pp'   => $insurance_price,
     'insurance_total'=> $insurance_price * $nb_total,
+    'prix_bag_soute' => $prix_bag_soute,
+    'prix_bag_cabine'=> $prix_bag_cabine,
     'rest_url'       => rest_url('vs08s/v1/'),
     'nonce'          => wp_create_nonce('wp_rest'),
 ]); ?>;</script>
@@ -167,6 +173,20 @@ get_header();
 .bks-route-city{font-size:10px;color:rgba(255,255,255,.5);font-family:'Outfit',sans-serif;text-transform:uppercase;letter-spacing:1px}
 .bks-route-dates{font-size:11px;color:rgba(255,255,255,.45);font-family:'Outfit',sans-serif;margin-top:3px}
 /* Insurance — same as circuit */
+/* Baggage options */
+.bks-opt-row{display:flex;align-items:center;gap:14px;padding:16px;border:1.5px solid #e5e7eb;border-radius:14px;margin-bottom:10px;transition:all .2s}
+.bks-opt-row.checked{border-color:#59b7b7;background:#edf8f8}
+.bks-opt-icon{font-size:26px;flex-shrink:0}
+.bks-opt-body{flex:1}
+.bks-opt-name{font-size:15px;font-weight:700;color:#0f2424;font-family:'Outfit',sans-serif}
+.bks-opt-desc{font-size:13px;color:#6b7280;font-family:'Outfit',sans-serif;margin-top:2px}
+.bks-opt-price{font-size:14px;font-weight:700;color:#3d9a9a;font-family:'Outfit',sans-serif;margin-top:4px}
+.bks-opt-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.bks-opt-qty{display:flex;align-items:center;gap:8px}
+.bks-opt-qty button{width:32px;height:32px;border:1.5px solid #e5e7eb;background:#fff;border-radius:8px;font-size:18px;font-weight:700;cursor:pointer;color:#0f2424;transition:all .15s}
+.bks-opt-qty button:hover{border-color:#59b7b7;background:#edf8f8}
+.bks-opt-qty span{font-size:16px;font-weight:700;font-family:'Outfit',sans-serif;min-width:24px;text-align:center}
+/* Insurance */
 .bks-ins-wrap{background:linear-gradient(135deg,#f0f9fa 0%,#fdf2f8 100%);border:2px solid #59b7b7;border-radius:18px;padding:0;overflow:hidden}
 .bks-ins-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid rgba(89,183,183,.18)}
 .bks-ins-logo{height:32px;width:auto}
@@ -286,6 +306,50 @@ get_header();
             <input type="hidden" id="bks-selected-vol-price" value="0">
         </div>
 
+        <!-- ═══ OPTIONS BAGAGES ═══ -->
+        <?php if ($has_bagages): ?>
+        <div class="bks-section">
+            <h3 class="bks-section-title"><span class="bks-step-num">✈️</span> Options de vol</h3>
+            <p class="bks-section-sub">Personnalisez vos bagages — les quantités sont ajustables.</p>
+
+            <?php if ($prix_bag_soute > 0): ?>
+            <div class="bks-opt-row checked" id="bks-opt-soute">
+                <div class="bks-opt-icon">🧳</div>
+                <div class="bks-opt-body">
+                    <div class="bks-opt-name">Bagage en soute</div>
+                    <div class="bks-opt-desc">Selon compagnie entre 20 & 23 kg</div>
+                    <div class="bks-opt-price"><?php echo number_format($prix_bag_soute, 0, ',', ' '); ?> € / pers.</div>
+                </div>
+                <div class="bks-opt-right">
+                    <div class="bks-opt-qty">
+                        <button type="button" onclick="bksBagChange('soute',-1)">−</button>
+                        <span id="bks-bag-soute-qty"><?php echo $nb_total; ?></span>
+                        <button type="button" onclick="bksBagChange('soute',1)">+</button>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <?php if ($prix_bag_cabine > 0): ?>
+            <div class="bks-opt-row" id="bks-opt-cabine">
+                <div class="bks-opt-icon">🎒</div>
+                <div class="bks-opt-body">
+                    <div class="bks-opt-name">Bagage cabine supplémentaire</div>
+                    <div class="bks-opt-desc">Selon compagnie entre 8 & 12 kg</div>
+                    <div class="bks-opt-price"><?php echo number_format($prix_bag_cabine, 0, ',', ' '); ?> € / pers.</div>
+                </div>
+                <div class="bks-opt-right">
+                    <div class="bks-opt-qty">
+                        <button type="button" onclick="bksBagChange('cabine',-1)">−</button>
+                        <span id="bks-bag-cabine-qty">0</span>
+                        <button type="button" onclick="bksBagChange('cabine',1)">+</button>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
         <!-- Assurance -->
         <?php if ($insurance_price > 0): ?>
         <div class="bks-section">
@@ -389,6 +453,8 @@ get_header();
         <div class="bks-recap-line"><span>🍽️ Pension</span><span><?php echo esc_html($pension); ?></span></div>
         <div class="bks-recap-line"><span>👥 Voyageurs</span><span><?php echo $nb_total; ?> pers.</span></div>
         <div class="bks-recap-line" id="bks-recap-vol" style="display:none"><span>✈️ Vol sélectionné</span><span id="bks-recap-vol-val">—</span></div>
+        <div class="bks-recap-line" id="bks-recap-bag-soute" style="display:<?php echo $prix_bag_soute > 0 ? 'flex' : 'none'; ?>"><span>🧳 Bagage soute</span><span id="bks-recap-bag-soute-val"><?php echo $nb_total; ?> × <?php echo number_format($prix_bag_soute, 0); ?>€</span></div>
+        <div class="bks-recap-line" id="bks-recap-bag-cabine" style="display:none"><span>🎒 Bagage cabine</span><span id="bks-recap-bag-cabine-val">—</span></div>
         <div class="bks-recap-line" id="bks-recap-ins" style="display:none"><span>🛡️ Assurance</span><span id="bks-recap-ins-val">—</span></div>
         <div class="bks-recap-sep"></div>
         <div class="bks-recap-total"><span class="bks-recap-total-lbl">Total</span><span class="bks-recap-total-val" id="bks-recap-total">—</span></div>
@@ -634,6 +700,29 @@ get_header();
         });
     }
 
+    // ── Baggage ──
+    var bagSouteQty = BK.prix_bag_soute > 0 ? BK.nb_total : 0;
+    var bagCabineQty = 0;
+
+    window.bksBagChange = function(type, delta) {
+        if (type === 'soute') {
+            bagSouteQty = Math.max(0, Math.min(bagSouteQty + delta, BK.nb_total));
+            document.getElementById('bks-bag-soute-qty').textContent = bagSouteQty;
+            var row = document.getElementById('bks-opt-soute');
+            if (row) row.classList.toggle('checked', bagSouteQty > 0);
+            var recap = document.getElementById('bks-recap-bag-soute');
+            if (recap) { recap.style.display = bagSouteQty > 0 ? 'flex' : 'none'; document.getElementById('bks-recap-bag-soute-val').textContent = bagSouteQty + ' × ' + fmt(BK.prix_bag_soute) + '€'; }
+        } else {
+            bagCabineQty = Math.max(0, Math.min(bagCabineQty + delta, BK.nb_total));
+            document.getElementById('bks-bag-cabine-qty').textContent = bagCabineQty;
+            var row2 = document.getElementById('bks-opt-cabine');
+            if (row2) row2.classList.toggle('checked', bagCabineQty > 0);
+            var recap2 = document.getElementById('bks-recap-bag-cabine');
+            if (recap2) { recap2.style.display = bagCabineQty > 0 ? 'flex' : 'none'; document.getElementById('bks-recap-bag-cabine-val').textContent = bagCabineQty + ' × ' + fmt(BK.prix_bag_cabine) + '€'; }
+        }
+        bksUpdateTotal();
+    };
+
     window.bksSelectCombo=function(idx){
         var f=comboData[idx]; if(!f) return;
         selectedCombo=f;
@@ -662,7 +751,7 @@ get_header();
         else{var ri=document.getElementById('bks-recap-ins');if(ri)ri.style.display='none'}
         // Appeler le backend pour le vrai total (marge, transferts, bagages)
         fetch(BK.rest_url+'calculate',{method:'POST',headers:{'Content-Type':'application/json','X-WP-Nonce':BK.nonce},
-            body:JSON.stringify({sejour_id:BK.sejour_id,date_depart:BK.date_depart,aeroport:BK.aeroport,nb_adultes:BK.nb_total,nb_chambres:BK.nb_chambres,vol_price:volPricePax,hotel_net:BK.hotel_net,hotel_rate_key:BK.hotel_rate_key,hotel_board:BK.hotel_board,assurance:chk&&chk.checked?1:0})
+            body:JSON.stringify({sejour_id:BK.sejour_id,date_depart:BK.date_depart,aeroport:BK.aeroport,nb_adultes:BK.nb_total,nb_chambres:BK.nb_chambres,vol_price:volPricePax,hotel_net:BK.hotel_net,hotel_rate_key:BK.hotel_rate_key,hotel_board:BK.hotel_board,assurance:chk&&chk.checked?1:0,bagage_soute:bagSouteQty,bagage_cabine:bagCabineQty})
         }).then(function(r){return r.json()}).then(function(d){
             document.getElementById('bks-recap-total').textContent=fmt(d.total)+' €';
             document.getElementById('bks-recap-pp').textContent=fmt(d.prix_par_personne)+' €/pers.';
@@ -712,6 +801,8 @@ get_header();
             vol_retour_num:selectedCombo.retour_flight||'',
             vol_retour_depart:selectedCombo.retour_depart||'',
             vol_retour_arrivee:selectedCombo.retour_arrive||'',
+            bagage_soute:bagSouteQty,
+            bagage_cabine:bagCabineQty,
             assurance:(document.getElementById('bks-assurance')&&document.getElementById('bks-assurance').checked)?1:0,
             voyageurs:voy,facturation:{prenom:document.getElementById('bks-f-prenom').value,nom:document.getElementById('bks-f-nom').value,email:document.getElementById('bks-f-email').value,tel:document.getElementById('bks-f-tel').value,adresse:document.getElementById('bks-f-adresse').value,cp:document.getElementById('bks-f-cp').value,ville:document.getElementById('bks-f-ville').value}};
         fetch(BK.rest_url+'booking',{method:'POST',headers:{'Content-Type':'application/json','X-WP-Nonce':BK.nonce},body:JSON.stringify(body)})
