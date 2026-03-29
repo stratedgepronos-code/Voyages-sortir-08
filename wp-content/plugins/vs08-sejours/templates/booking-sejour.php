@@ -163,10 +163,57 @@ get_header();
 .bks-ins-wrap{background:#f0f9ff;border:2px solid #bae6fd;border-radius:14px;padding:20px;margin-top:20px}
 .bks-ins-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid #bae6fd}
 @media(max-width:900px){.bks-container{grid-template-columns:1fr}.bks-recap{position:static}}
-@media(max-width:600px){.bks-container{padding:16px}.bks-field-row{grid-template-columns:1fr}.bks-header{padding:16px}.bks-section{padding:20px}.bks-combo-legs{grid-template-columns:1fr}}
+@media(max-width:600px){.bks-container{padding:16px}.bks-field-row{grid-template-columns:1fr}.bks-header{padding:16px}.bks-section{padding:20px}}
+/* Filter sidebar */
+.bks-filters-sidebar{position:fixed;top:160px;width:200px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;font-family:'Outfit',sans-serif;box-shadow:0 2px 12px rgba(0,0,0,.06);z-index:50;transition:opacity .3s}
+.bksf-title{font-size:16px;font-weight:700;color:#0f2424;margin-bottom:14px}
+.bksf-section{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #e5e7eb}
+.bksf-section:last-of-type{border-bottom:none;margin-bottom:8px;padding-bottom:0}
+.bksf-label{font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.bksf-check{display:flex;align-items:center;gap:7px;font-size:13px;color:#4b5563;cursor:pointer;padding:4px 0;transition:color .15s}
+.bksf-check:hover{color:#0f2424}
+.bksf-check input[type=radio]{accent-color:#3d9a9a;margin:0}
+.bksf-n{font-size:11px;background:#e5e7eb;color:#6b7280;border-radius:8px;padding:1px 6px;font-weight:700;margin-left:auto}
+.bksf-range-row{display:flex;justify-content:space-between;margin-bottom:4px}
+.bksf-range-val{font-size:12px;font-weight:600;color:#3d9a9a}
+.bksf-range{width:100%;margin:3px 0;accent-color:#3d9a9a;cursor:pointer}
+.bksf-reset{width:100%;padding:7px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'Outfit',sans-serif}
+.bksf-reset:hover{border-color:#3d9a9a;color:#3d9a9a}
+@media(max-width:960px){.bks-filters-sidebar{display:none!important}}
 </style>
 
 <div class="bks-page">
+
+    <!-- SIDEBAR FILTRES -->
+    <aside class="bks-filters-sidebar" id="bks-filters-sidebar" style="display:none">
+        <div class="bksf-title">Filtres</div>
+        <div class="bksf-section">
+            <div class="bksf-label">Type de vol</div>
+            <label class="bksf-check"><input type="radio" name="bksf_type" value="all" checked> Tous <span class="bksf-n" id="bksf-n-all"></span></label>
+            <label class="bksf-check"><input type="radio" name="bksf_type" value="direct"> ✈ Vol direct <span class="bksf-n" id="bksf-n-direct"></span></label>
+            <label class="bksf-check"><input type="radio" name="bksf_type" value="escale"> ⇄ Avec escale <span class="bksf-n" id="bksf-n-escale"></span></label>
+        </div>
+        <div class="bksf-section">
+            <div class="bksf-label">Départ aller</div>
+            <div class="bksf-range-row">
+                <span class="bksf-range-val" id="bksf-dep-min-lbl">00:00</span>
+                <span class="bksf-range-val" id="bksf-dep-max-lbl">23:59</span>
+            </div>
+            <input type="range" class="bksf-range" id="bksf-dep-min" min="0" max="1439" value="0" step="30">
+            <input type="range" class="bksf-range" id="bksf-dep-max" min="0" max="1439" value="1439" step="30">
+        </div>
+        <div class="bksf-section">
+            <div class="bksf-label">Départ retour</div>
+            <div class="bksf-range-row">
+                <span class="bksf-range-val" id="bksf-ret-min-lbl">00:00</span>
+                <span class="bksf-range-val" id="bksf-ret-max-lbl">23:59</span>
+            </div>
+            <input type="range" class="bksf-range" id="bksf-ret-min" min="0" max="1439" value="0" step="30">
+            <input type="range" class="bksf-range" id="bksf-ret-max" min="0" max="1439" value="1439" step="30">
+        </div>
+        <button type="button" class="bksf-reset" id="bksf-reset">Réinitialiser</button>
+    </aside>
+
     <div class="bks-header"><div class="bks-header-inner">
         <a href="<?php echo get_permalink($sejour_id); ?>" style="color:rgba(255,255,255,.5);text-decoration:none;font-size:13px;font-family:'Outfit',sans-serif">← Retour</a>
         <div class="bks-header-info">
@@ -323,6 +370,7 @@ get_header();
             comboData=flights; // Déjà triés par prix par l'API Duffel
             renderCombos(flights);
             bksSelectCombo(0);
+            initSidebarFilters();
         }).catch(function(err){
             document.getElementById('bks-combo-loading').style.display='none';
             document.getElementById('bks-no-flights').style.display='block';
@@ -407,11 +455,24 @@ get_header();
             var card = document.createElement('div');
             card.className = 'bks-combo-card' + (idx === 0 ? ' selected' : '');
             card.id = 'bks-combo-' + idx;
+            card.setAttribute('data-conn', conn ? '1' : '0');
+            card.setAttribute('data-dep', timeToMin(f.depart_time));
+            card.setAttribute('data-ret', timeToMin(f.retour_depart));
             card.style.display = idx < SHOW_INITIAL ? '' : 'none';
             card.onclick = (function(i) { return function() { bksSelectCombo(i); }; })(idx);
             card.innerHTML = html;
             list.appendChild(card);
         });
+
+        // Counts for filters
+        var nbDirect = 0, nbEscale = 0;
+        flights.forEach(function(f) { if (f.has_connections) nbEscale++; else nbDirect++; });
+        var nAll = document.getElementById('bksf-n-all');
+        var nDir = document.getElementById('bksf-n-direct');
+        var nEsc = document.getElementById('bksf-n-escale');
+        if (nAll) nAll.textContent = flights.length;
+        if (nDir) nDir.textContent = nbDirect;
+        if (nEsc) nEsc.textContent = nbEscale;
 
         // Show more button
         if (flights.length > SHOW_INITIAL) {
@@ -428,6 +489,93 @@ get_header();
         var btn = document.getElementById('bks-show-more');
         if (btn) btn.style.display = 'none';
     };
+
+    // ── Time helpers ──
+    function timeToMin(t) {
+        if (!t || typeof t !== 'string') return 0;
+        var p = t.split(':');
+        return parseInt(p[0],10) * 60 + parseInt(p[1]||'0',10);
+    }
+    function minToTime(m) {
+        var h = Math.floor(m/60) % 24, mn = m % 60;
+        return String(h).padStart(2,'0') + ':' + String(mn).padStart(2,'0');
+    }
+
+    // ── Filter sidebar ──
+    function initSidebarFilters() {
+        var sidebar = document.getElementById('bks-filters-sidebar');
+        if (!sidebar) return;
+
+        // Position sidebar to the left of .bks-container
+        function posSidebar() {
+            var container = document.querySelector('.bks-container');
+            if (!container || !sidebar) return;
+            var rect = container.getBoundingClientRect();
+            var gap = 20, sidebarW = 200;
+            var spaceLeft = rect.left - gap - sidebarW;
+            if (spaceLeft >= 10) {
+                sidebar.style.left = (rect.left - gap - sidebarW) + 'px';
+                sidebar.style.display = '';
+            } else {
+                sidebar.style.display = 'none';
+            }
+        }
+        posSidebar();
+        window.addEventListener('resize', posSidebar);
+
+        var radios = document.querySelectorAll('input[name="bksf_type"]');
+        var depMinR = document.getElementById('bksf-dep-min');
+        var depMaxR = document.getElementById('bksf-dep-max');
+        var retMinR = document.getElementById('bksf-ret-min');
+        var retMaxR = document.getElementById('bksf-ret-max');
+        var resetBtn = document.getElementById('bksf-reset');
+
+        function applyFilters() {
+            var typeVal = 'all';
+            radios.forEach(function(r) { if (r.checked) typeVal = r.value; });
+            var dMin = parseInt(depMinR.value,10), dMax = parseInt(depMaxR.value,10);
+            var rMin = parseInt(retMinR.value,10), rMax = parseInt(retMaxR.value,10);
+            document.getElementById('bksf-dep-min-lbl').textContent = minToTime(dMin);
+            document.getElementById('bksf-dep-max-lbl').textContent = minToTime(dMax);
+            document.getElementById('bksf-ret-min-lbl').textContent = minToTime(rMin);
+            document.getElementById('bksf-ret-max-lbl').textContent = minToTime(rMax);
+
+            var cards = document.querySelectorAll('.bks-combo-card');
+            var visible = 0;
+            cards.forEach(function(card) {
+                var show = true;
+                var conn = card.getAttribute('data-conn');
+                if (typeVal === 'direct' && conn === '1') show = false;
+                if (typeVal === 'escale' && conn === '0') show = false;
+                if (show) {
+                    var dep = parseInt(card.getAttribute('data-dep'),10);
+                    if (dep < dMin || dep > dMax) show = false;
+                }
+                if (show) {
+                    var ret = parseInt(card.getAttribute('data-ret'),10);
+                    if (ret < rMin || ret > rMax) show = false;
+                }
+                card.style.display = show ? '' : 'none';
+                card.classList.remove('bks-combo-hidden');
+                if (show) visible++;
+            });
+
+            // Show more re-apply
+            var showMoreBtn = document.getElementById('bks-show-more');
+            if (showMoreBtn) showMoreBtn.style.display = 'none';
+        }
+
+        radios.forEach(function(r) { r.addEventListener('change', applyFilters); });
+        [depMinR, depMaxR, retMinR, retMaxR].forEach(function(el) {
+            if (el) el.addEventListener('input', applyFilters);
+        });
+        if (resetBtn) resetBtn.addEventListener('click', function() {
+            radios.forEach(function(r) { r.checked = r.value === 'all'; });
+            depMinR.value = 0; depMaxR.value = 1439;
+            retMinR.value = 0; retMaxR.value = 1439;
+            applyFilters();
+        });
+    }
 
     window.bksSelectCombo=function(idx){
         var f=comboData[idx]; if(!f) return;
@@ -464,7 +612,14 @@ get_header();
     window.bksUpdateTotal=bksUpdateTotal;
 
     // ── Navigation ──
-    function showStep(n){document.querySelectorAll('.bks-step-page').forEach(function(p){p.classList.remove('bks-step-active')});var el=document.getElementById('bks-step-'+n);if(el)el.classList.add('bks-step-active');window.scrollTo({top:0,behavior:'smooth'})}
+    function showStep(n){
+        document.querySelectorAll('.bks-step-page').forEach(function(p){p.classList.remove('bks-step-active')});
+        var el=document.getElementById('bks-step-'+n);if(el)el.classList.add('bks-step-active');
+        // Hide/show filter sidebar
+        var sidebar=document.getElementById('bks-filters-sidebar');
+        if(sidebar) sidebar.style.display = n===1 ? '' : 'none';
+        window.scrollTo({top:0,behavior:'smooth'});
+    }
     window.bksShow=showStep;
     window.bksGoToStep2=function(){if(!selectedCombo){alert('Sélectionnez un vol.');return}showStep(2)};
 
