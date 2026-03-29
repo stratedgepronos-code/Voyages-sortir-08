@@ -59,8 +59,15 @@ class VS08V_Checkout {
         foreach (WC()->cart->get_cart() as $item) {
             $id = $item['product_id'] ?? 0;
             if (!$id) continue;
+            // Séjour
+            $sdata = get_post_meta($id, '_vs08s_booking_data', true);
+            if (!empty($sdata) && is_array($sdata)) {
+                self::$booking_data = $sdata;
+                return self::$booking_data;
+            }
+            // Golf / Circuit
             $data = get_post_meta($id, '_vs08v_booking_data', true);
-            if (!empty($data) && !empty($data['facturation'])) {
+            if (!empty($data) && is_array($data)) {
                 self::$booking_data = $data;
                 return self::$booking_data;
             }
