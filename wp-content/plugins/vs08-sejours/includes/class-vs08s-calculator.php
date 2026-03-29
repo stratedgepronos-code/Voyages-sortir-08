@@ -14,7 +14,6 @@ class VS08S_Calculator {
      *   - nb_chambres (int)
      *   - vol_price (float) — prix vol aller-retour par personne (de Duffel)
      *   - hotel_net (float) — prix net hôtel total (de Bedsonline)
-     *   - hotel_rate_key (string) — clé tarif Bedsonline
      *   - hotel_board (string) — code board (AI, HB, etc.)
      *   - hotel_room_name (string)
      *   - bagage_soute (int) — nombre de bagages soute

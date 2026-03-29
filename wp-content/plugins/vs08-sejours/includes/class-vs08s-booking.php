@@ -15,6 +15,8 @@ class VS08S_Booking {
         }
 
         $m     = VS08S_Meta::get($sejour_id);
+        // Tarifs uniquement (Hotelbeds): ne jamais véhiculer de clé de réservation.
+        unset($params['hotel_rate_key']);
         $titre = get_the_title($sejour_id);
         $devis = VS08S_Calculator::compute($sejour_id, $params);
 

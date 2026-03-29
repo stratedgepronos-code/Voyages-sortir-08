@@ -16,7 +16,6 @@
         vol_price: 0,
         vol_offer_id: '',
         hotel_net: 0,
-        hotel_rate_key: '',
         hotel_board: 'AI',
         hotel_room_name: '',
     };
@@ -182,7 +181,6 @@
                 return null;
             }
             state.hotel_net = parseFloat(data.best.net_price || 0);
-            state.hotel_rate_key = data.best.rate_key || '';
             state.hotel_board = data.best.board_code || 'AI';
             state.hotel_room_name = data.best.room_name || '';
 
@@ -218,7 +216,6 @@
                 nb_chambres: state.rooms,
                 vol_price: state.vol_price,
                 hotel_net: state.hotel_net,
-                hotel_rate_key: state.hotel_rate_key,
                 hotel_board: state.hotel_board,
                 hotel_room_name: state.hotel_room_name,
             })
@@ -253,7 +250,6 @@
             vol_price: state.vol_price,
             vol_offer_id: state.vol_offer_id,
             hotel_net: state.hotel_net,
-            hotel_rate_key: state.hotel_rate_key,
             hotel_board: state.hotel_board,
         });
         // Rediriger vers la page de réservation

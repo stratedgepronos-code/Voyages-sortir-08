@@ -40,7 +40,6 @@ $params = [
     'nb_adultes'    => max(1, intval($_GET['nb_adultes'] ?? 2)),
     'nb_chambres'   => max(1, intval($_GET['nb_chambres'] ?? 1)),
     'hotel_net'     => floatval($_GET['hotel_net'] ?? 0),
-    'hotel_rate_key' => sanitize_text_field($_GET['hotel_rate_key'] ?? ''),
     'hotel_board'   => sanitize_text_field($_GET['hotel_board'] ?? 'AI'),
 ];
 $nb_total    = $params['nb_adultes'];
@@ -103,7 +102,6 @@ get_header();
     'iata_dest'      => $iata_dest,
     'duree'          => $duree,
     'hotel_net'      => $params['hotel_net'],
-    'hotel_rate_key' => $params['hotel_rate_key'],
     'hotel_board'    => $params['hotel_board'],
     'hotel_nom'      => $hotel_nom,
     'pension'        => $pension,
@@ -874,7 +872,7 @@ get_header();
         else{var ri=document.getElementById('bks-recap-ins');if(ri)ri.style.display='none'}
         // Appeler le backend pour le vrai total (marge, transferts, bagages)
         fetch(BK.rest_url+'calculate',{method:'POST',headers:{'Content-Type':'application/json','X-WP-Nonce':BK.nonce},
-            body:JSON.stringify({sejour_id:BK.sejour_id,date_depart:BK.date_depart,aeroport:BK.aeroport,nb_adultes:BK.nb_total,nb_chambres:BK.nb_chambres,vol_price:volPricePax,hotel_net:BK.hotel_net,hotel_rate_key:BK.hotel_rate_key,hotel_board:BK.hotel_board,assurance:chk&&chk.checked?1:0,bagage_soute:bagSouteQty,bagage_cabine:bagCabineQty})
+            body:JSON.stringify({sejour_id:BK.sejour_id,date_depart:BK.date_depart,aeroport:BK.aeroport,nb_adultes:BK.nb_total,nb_chambres:BK.nb_chambres,vol_price:volPricePax,hotel_net:BK.hotel_net,hotel_board:BK.hotel_board,assurance:chk&&chk.checked?1:0,bagage_soute:bagSouteQty,bagage_cabine:bagCabineQty})
         }).then(function(r){return r.json()}).then(function(d){
             document.getElementById('bks-recap-total').textContent=fmt(d.total)+' €';
             document.getElementById('bks-recap-pp').textContent=fmt(d.prix_par_personne)+' €/pers.';
@@ -950,7 +948,7 @@ get_header();
         document.getElementById('bks-loading').style.display='block';
         var voy=[];for(var i=0;i<BK.nb_total;i++){voy.push({prenom:val('voyageurs['+i+'][prenom]'),nom:val('voyageurs['+i+'][nom]'),ddn:val('voyageurs['+i+'][ddn]'),passeport:val('voyageurs['+i+'][passeport]')})}
         var body={sejour_id:BK.sejour_id,date_depart:BK.date_depart,aeroport:BK.aeroport,nb_adultes:BK.nb_total,nb_chambres:BK.nb_chambres,
-            vol_price:volPricePax,hotel_net:BK.hotel_net,hotel_rate_key:BK.hotel_rate_key,hotel_board:BK.hotel_board,
+            vol_price:volPricePax,hotel_net:BK.hotel_net,hotel_board:BK.hotel_board,
             vol_aller_num:selectedCombo.flight_number||'',
             vol_aller_cie:selectedCombo.airline_name||'',
             vol_aller_depart:selectedCombo.depart_time||'',

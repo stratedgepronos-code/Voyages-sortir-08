@@ -744,7 +744,7 @@ function svScrollTo(id){var el=document.getElementById(id);if(!el)return;var nav
 })();
 
 // ── CALCULATEUR ──
-var sjState={aeroport:'',date:'',adults:2,rooms:1,vol_price:0,vol_offer_id:'',hotel_net:0,hotel_rate_key:'',hotel_board:'AI',hotel_room_name:''};
+var sjState={aeroport:'',date:'',adults:2,rooms:1,vol_price:0,vol_offer_id:'',hotel_net:0,hotel_board:'AI',hotel_room_name:''};
 
 /** Fusionne VS08S_DATA avec l’ID fiable (data-vs08-sejour-id) si le JSON inline était tronqué / id à 0 */
 function sjVs08Data(){
@@ -851,7 +851,6 @@ function sjSearchHotel(){
     }).then(sjParseRest).then(function(data){
         if(data&&data.best){
             sjState.hotel_net=parseFloat(data.best.net_price||0);
-            sjState.hotel_rate_key=data.best.rate_key||'';
             sjState.hotel_board=data.best.board_code||'AI';
             sjState.hotel_room_name=data.best.room_name||'';
             // Pas d'affichage du prix net hôtel — seul le total final est montré
@@ -865,7 +864,7 @@ function sjSearchHotel(){
 function sjCalculateTotal(){
     var D=sjVs08Data();
     fetch(D.rest_url+'calculate',{method:'POST',headers:{'Content-Type':'application/json','X-WP-Nonce':D.nonce},
-        body:JSON.stringify({sejour_id:D.id,date_depart:sjState.date,aeroport:sjState.aeroport,nb_adultes:sjState.adults,nb_chambres:sjState.rooms,vol_price:sjState.vol_price,hotel_net:sjState.hotel_net,hotel_rate_key:sjState.hotel_rate_key,hotel_board:sjState.hotel_board,hotel_room_name:sjState.hotel_room_name})
+        body:JSON.stringify({sejour_id:D.id,date_depart:sjState.date,aeroport:sjState.aeroport,nb_adultes:sjState.adults,nb_chambres:sjState.rooms,vol_price:sjState.vol_price,hotel_net:sjState.hotel_net,hotel_board:sjState.hotel_board,hotel_room_name:sjState.hotel_room_name})
     }).then(function(r){return r.json()}).then(function(devis){
         var box=document.getElementById('sv-price-box');box.style.display='block';
         document.getElementById('sv-price-val').textContent=sjFmt(devis.total)+' €';
@@ -883,7 +882,7 @@ function sjCalculateTotal(){
 
 function sjGoReserver(){
     var D=sjVs08Data();
-    var params=new URLSearchParams({sejour_id:D.id,aeroport:sjState.aeroport,date_depart:sjState.date,nb_adultes:sjState.adults,nb_chambres:sjState.rooms,vol_price:sjState.vol_price,vol_offer_id:sjState.vol_offer_id,hotel_net:sjState.hotel_net,hotel_rate_key:sjState.hotel_rate_key,hotel_board:sjState.hotel_board});
+    var params=new URLSearchParams({sejour_id:D.id,aeroport:sjState.aeroport,date_depart:sjState.date,nb_adultes:sjState.adults,nb_chambres:sjState.rooms,vol_price:sjState.vol_price,vol_offer_id:sjState.vol_offer_id,hotel_net:sjState.hotel_net,hotel_board:sjState.hotel_board});
     window.location.href=D.booking_url+'?'+params.toString();
 }
 

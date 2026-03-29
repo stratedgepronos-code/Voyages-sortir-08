@@ -123,7 +123,7 @@ class VS08S_Rest {
         $alternatives = [];
         foreach ($pension_map as $k => $b) {
             $alt = VS08S_Bedsonline::best_rate($results, $b);
-            if ($alt) $alternatives[$k] = ['board_code'=>$b, 'board_name'=>VS08S_Bedsonline::board_label($b), 'net_price'=>$alt['net_price'], 'room_name'=>$alt['room_name'], 'rate_key'=>$alt['rate_key']];
+            if ($alt) $alternatives[$k] = ['board_code'=>$b, 'board_name'=>VS08S_Bedsonline::board_label($b), 'net_price'=>$alt['net_price'], 'room_name'=>$alt['room_name']];
         }
 
         return rest_ensure_response([

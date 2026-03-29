@@ -99,8 +99,6 @@ class VS08S_Bedsonline {
             ],
         ];
 
-        error_log('[VS08S Bedsonline] Recherche: hotels=' . implode(',', $hotel_codes) . ' in=' . $check_in . ' out=' . $check_out . ' adults=' . $adults . ' rooms=' . $rooms . ' (per_room=' . $adults_per_room . ')');
-
         // Cache : éviter de rappeler l'API pour la même requête
         $cache_key = 'vs08s_beds_' . md5(json_encode($body));
         $cached = get_transient($cache_key);
@@ -135,13 +133,6 @@ class VS08S_Bedsonline {
         // Extraire les résultats pertinents
         $results = self::parse_availability($data);
 
-        // Debug: log les prix retournés
-        foreach ($results as $h) {
-            foreach ($h['rooms'] as $r) {
-                error_log('[VS08S Bedsonline] Hotel=' . $h['code'] . ' Room=' . $r['room_name'] . ' Board=' . $r['board_code'] . ' Net=' . $r['net_price'] . '€ RateType=' . $r['rate_type']);
-            }
-        }
-
         // Cacher 2 minutes (phase test — repasser à 600 en production)
         set_transient($cache_key, $results, 120);
 
@@ -168,7 +159,6 @@ class VS08S_Bedsonline {
                     $board_code = $rate['boardCode'] ?? '';
                     $board_name = $rate['boardName'] ?? self::board_label($board_code);
                     $net_price  = floatval($rate['net'] ?? 0);
-                    $rate_key   = $rate['rateKey'] ?? '';
                     $cancellation = $rate['cancellationPolicies'] ?? [];
                     $rate_type  = $rate['rateType'] ?? '';
                     $packaging  = !empty($rate['packaging']);
@@ -179,7 +169,7 @@ class VS08S_Bedsonline {
                         'board_code'   => $board_code,
                         'board_name'   => $board_name,
                         'net_price'    => $net_price,
-                        'rate_key'     => $rate_key,
+                        // Tarifs uniquement: on ne stocke pas de clé de réservation Hotelbeds.
                         'rate_type'    => $rate_type,
                         'packaging'    => $packaging,
                         'cancellation' => $cancellation,
