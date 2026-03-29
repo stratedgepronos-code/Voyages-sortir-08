@@ -708,9 +708,65 @@ add_action('vs08_checkout_recap', function() {
     $vid    = $booking_data['voyage_id'] ?? 0;
     $booking_type = $booking_data['type'] ?? 'golf';
 
-    // Les séjours sont déjà rendus par le récap natif plugin (VS08V_Checkout::render_sejour_recap).
-    // Évite le double rendu et les lectures meta coûteuses dans ce hook thème.
+    // Séjour: récap léger (évite les scans meta coûteux qui peuvent saturer la RAM).
     if ($booking_type === 'sejour') {
+        $sm = $vid ? get_post_meta($vid, '_vs08s_meta', true) : [];
+        if (!is_array($sm)) $sm = [];
+
+        $date_dep = (string)($params['date_depart'] ?? '');
+        $duree    = max(1, intval($sm['duree'] ?? 7));
+        $duree_j  = max(1, intval($sm['duree_jours'] ?? ($duree + 1)));
+        $date_ret = $date_dep ? date('Y-m-d', strtotime($date_dep . ' +' . $duree . ' days')) : '';
+        $fmt = function($d) {
+            return $d ? date_i18n('j F Y', strtotime($d)) : '';
+        };
+
+        $ap_names = [
+            'CDG'=>'Paris CDG','ORY'=>'Paris Orly','LYS'=>'Lyon','MRS'=>'Marseille',
+            'NCE'=>'Nice','TLS'=>'Toulouse','BOD'=>'Bordeaux','NTE'=>'Nantes',
+            'SXB'=>'Strasbourg','LIL'=>'Lille',
+        ];
+        $ap_code = strtoupper((string)($params['aeroport'] ?? ''));
+        $ap_dep  = $ap_names[$ap_code] ?? $ap_code;
+        $dest_ap = strtoupper((string)($sm['iata_dest'] ?? 'Destination'));
+
+        $hotel_nom = (string)($sm['hotel_nom'] ?? '');
+        $hotel_etoiles = intval($sm['hotel_etoiles'] ?? 0);
+        $pension_map = ['ai'=>'All Inclusive','pc'=>'Pension complète','dp'=>'Demi-pension','bb'=>'Petit-déjeuner','lo'=>'Logement seul'];
+        $pension = $pension_map[$sm['pension'] ?? 'ai'] ?? 'All Inclusive';
+        $transfert_map = ['groupes'=>'Transferts groupés','prives'=>'Transferts privés','inclus'=>'Inclus dans l\'hôtel','aucun'=>'Non inclus'];
+        $transfert = $transfert_map[$sm['transfert_type'] ?? 'groupes'] ?? 'Transferts groupés';
+        $nb = max(1, intval($params['nb_adultes'] ?? 2));
+
+        echo '<div class="vs08v-checkout-recap-wrapper">';
+        echo '<div class="vs08v-checkout-recap-card">';
+        echo '<div class="vs08v-woo-recap">';
+        echo '<h3>' . esc_html($titre) . '</h3>';
+        echo '<h4>D&eacute;tails du s&eacute;jour</h4>';
+        echo '<table>';
+        echo '<tr><td>&#x1F4C5; Dates</td><td>' . esc_html($fmt($date_dep)) . ' &rarr; ' . esc_html($fmt($date_ret)) . '</td></tr>';
+        echo '<tr><td>&#x1F319; Dur&eacute;e</td><td>' . $duree_j . ' jours / ' . $duree . ' nuits</td></tr>';
+        echo '<tr><td>&#x2708;&#xFE0F; Vols</td><td>' . esc_html($ap_dep) . ' &rarr; ' . esc_html($dest_ap) . '</td></tr>';
+        if (!empty($params['vol_aller_num'])) {
+            $vol_aller_txt = (string)$params['vol_aller_num'];
+            if (!empty($params['vol_aller_cie'])) $vol_aller_txt .= ' (' . $params['vol_aller_cie'] . ')';
+            if (!empty($params['vol_aller_depart']) && !empty($params['vol_aller_arrivee'])) $vol_aller_txt .= ' · ' . $params['vol_aller_depart'] . ' → ' . $params['vol_aller_arrivee'];
+            echo '<tr><td style="padding-left:24px">&#x1F6EB; Aller</td><td>' . esc_html($vol_aller_txt) . '</td></tr>';
+        }
+        if (!empty($params['vol_retour_num'])) {
+            $vol_retour_txt = (string)$params['vol_retour_num'];
+            if (!empty($params['vol_retour_depart']) && !empty($params['vol_retour_arrivee'])) $vol_retour_txt .= ' · ' . $params['vol_retour_depart'] . ' → ' . $params['vol_retour_arrivee'];
+            echo '<tr><td style="padding-left:24px">&#x1F6EC; Retour</td><td>' . esc_html($vol_retour_txt) . '</td></tr>';
+        }
+        if ($hotel_nom) {
+            $hotel_txt = $hotel_nom . ($hotel_etoiles ? ' ' . str_repeat('★', $hotel_etoiles) : '');
+            echo '<tr><td>&#x1F3E8; H&ocirc;tel</td><td>' . esc_html($hotel_txt) . '</td></tr>';
+        }
+        echo '<tr><td>&#x1F37D;&#xFE0F; Formule</td><td>' . esc_html($pension) . '</td></tr>';
+        echo '<tr><td>&#x1F690; Transferts</td><td>' . esc_html($transfert) . '</td></tr>';
+        echo '<tr><td>&#x1F465; Voyageurs</td><td>' . $nb . ' adulte' . ($nb > 1 ? 's' : '') . '</td></tr>';
+        echo '</table>';
+        echo '</div></div></div>';
         return;
     }
 
