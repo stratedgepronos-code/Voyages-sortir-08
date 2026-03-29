@@ -1,11 +1,9 @@
 <?php
 /**
- * VS08 — Optimisations mémoire pour le checkout WooCommerce.
+ * VS08 — Optimisations mémoire checkout WooCommerce.
  *
- * 1. Désactive HPOS (Custom Order Tables) pendant le checkout AJAX
- *    → force le data store legacy (wp_posts) qui consomme ~400 Mo de moins.
- * 2. Désactive les plugins lourds non essentiels.
- * 3. Monte la limite mémoire.
+ * Force le data store legacy (CPT/postmeta) pendant wc-ajax=checkout
+ * en interceptant les options WooCommerce HPOS au niveau WordPress.
  *
  * Fichier: wp-content/mu-plugins/vs08-disable-yoast-checkout.php
  */
@@ -19,43 +17,43 @@ $_vs08_is_checkout = (
 if ($_vs08_is_checkout) {
     @ini_set('memory_limit', '2048M');
 
-    // ── Désactiver HPOS pendant le checkout ──
-    // OrdersTableDataStore consomme ~600 Mo de plus que le legacy data store.
-    // On force le retour au stockage posts/postmeta pour la création de commande.
+    // ── Forcer le data store legacy en interceptant get_option() ──
+    // WooCommerce lit ces options pour décider d'utiliser HPOS ou CPT.
+    // En retournant 'no' AVANT que Woo ne charge, on force le stockage CPT.
+    add_filter('pre_option_woocommerce_custom_orders_table_enabled', function() {
+        return 'no';
+    }, 0);
+    add_filter('pre_option_woocommerce_custom_orders_table_data_sync_enabled', function() {
+        return 'no';
+    }, 0);
+
+    // Filtre Woo direct (belt & suspenders)
     add_filter('woocommerce_custom_orders_table_enabled', '__return_false', 0);
     add_filter('woocommerce_orders_table_datastore_class', function() {
         return 'WC_Order_Data_Store_CPT';
     }, 0);
 
-    // ── Désactiver WooCommerce Admin / Analytics (200+ Mo) ──
+    // ── Désactiver WooCommerce Admin / Analytics ──
     add_filter('woocommerce_admin_disabled', '__return_true', 0);
-
-    // ── Désactiver Action Scheduler inline ──
     add_filter('action_scheduler_queue_runner_time_limit', '__return_zero', 0);
     add_filter('action_scheduler_queue_runner_batch_size', '__return_zero', 0);
-
-    // ── Bloquer les plugins non essentiels ──
-    add_filter('option_active_plugins', function($plugins) {
-        if (!is_array($plugins)) return $plugins;
-        $allow = ['woocommerce', 'paybox', 'vs08-voyages', 'vs08-sejours', 'vs08-circuits'];
-        return array_values(array_filter($plugins, function($p) use ($allow) {
-            foreach ($allow as $a) {
-                if (stripos($p, $a) !== false) return true;
-            }
-            return false;
-        }));
-    }, 0);
 }
 
+// ── Plugins lourds : bloquer sur toute requête AJAX/REST ──
 $_vs08_is_wc_ajax = !empty($_GET['wc-ajax']) || !empty($_REQUEST['wc-ajax']);
 $_vs08_is_rest = (strpos($_SERVER['REQUEST_URI'] ?? '', '/wp-json/vs08') !== false);
 
-if (($_vs08_is_wc_ajax || $_vs08_is_rest) && !$_vs08_is_checkout) {
-    @ini_set('memory_limit', '1024M');
-
+if ($_vs08_is_wc_ajax || $_vs08_is_rest) {
+    if (!$_vs08_is_checkout) {
+        @ini_set('memory_limit', '1024M');
+    }
     add_filter('option_active_plugins', function($plugins) {
         if (!is_array($plugins)) return $plugins;
-        $block = ['wordpress-seo', 'yoast', 'elementor', 'jetpack', 'wordfence', 'updraftplus', 'all-in-one-seo', 'rank-math', 'titan-seo'];
+        $block = [
+            'wordpress-seo', 'yoast', 'elementor', 'jetpack', 'wordfence',
+            'updraftplus', 'all-in-one-seo', 'rank-math', 'titan-seo',
+            'wp-cache', 'wps-hide-login', 'litespeed',
+        ];
         return array_values(array_filter($plugins, function($p) use ($block) {
             foreach ($block as $b) {
                 if (stripos($p, $b) !== false) return false;
