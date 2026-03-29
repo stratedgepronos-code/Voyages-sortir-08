@@ -151,7 +151,10 @@ class VS08S_Booking {
         $duree = intval($m['duree'] ?? 7);
         $duree_j = intval($m['duree_jours'] ?? ($duree + 1));
         $transfert_map = ['groupes'=>'Transferts groupés','prives'=>'Transferts privés','inclus'=>'Inclus dans l\'hôtel','aucun'=>'Non inclus'];
-        $transfert = $transfert_map[$m['transfert_type'] ?? 'groupes'] ?? '';
+        $transfert_type = $m['transfert_type'] ?? '';
+        if (empty($transfert_type)) $transfert_type = 'groupes';
+        $transfert = $transfert_map[$transfert_type] ?? 'Transferts groupés';
+        error_log('[VS08S Desc] transfert_type=' . var_export($m['transfert_type'] ?? 'NULL', true) . ' → ' . $transfert);
         $iata_dest = strtoupper($m['iata_dest'] ?? '');
         $aeroport = strtoupper($params['aeroport'] ?? '');
         $date_depart = $params['date_depart'] ?? '';
@@ -177,9 +180,7 @@ class VS08S_Booking {
                 <tr><td><strong>🏨 Hôtel</strong></td><td><?php echo esc_html($hotel_nom); ?><?php if ($hotel_etoiles): ?> <?php echo str_repeat('★', $hotel_etoiles); ?><?php endif; ?></td></tr>
                 <?php endif; ?>
                 <tr><td><strong>🍽️ Formule</strong></td><td><?php echo esc_html($pension); ?></td></tr>
-                <?php if ($transfert): ?>
                 <tr><td><strong>🚐 Transferts</strong></td><td><?php echo esc_html($transfert); ?></td></tr>
-                <?php endif; ?>
                 <tr><td><strong>👥 Voyageurs</strong></td><td><?php echo intval($params['nb_adultes'] ?? 2); ?> adulte(s)</td></tr>
             </table>
             <h4>💰 Détail du prix</h4>

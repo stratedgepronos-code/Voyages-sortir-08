@@ -29,9 +29,10 @@ $pension = $pension_map[$m['pension'] ?? 'ai'] ?? 'All Inclusive';
 $hotel_nom = $m['hotel_nom'] ?? '';
 $hotel_etoiles = intval($m['hotel_etoiles'] ?? 5);
 $iata_dest = strtoupper($m['iata_dest'] ?? '');
-$transfert_type = $m['transfert_type'] ?? 'groupes';
+$transfert_type = $m['transfert_type'] ?? '';
+if (empty($transfert_type)) $transfert_type = 'groupes';
 $transfert_labels = ['groupes'=>'🚌 Transferts groupés','prives'=>'🚐 Transferts privés','inclus'=>'✅ Inclus dans l\'hôtel','aucun'=>'❌ Non inclus'];
-$transfert_label = $transfert_labels[$transfert_type] ?? '';
+$transfert_label = $transfert_labels[$transfert_type] ?? '🚌 Transferts groupés';
 
 $params = [
     'date_depart'   => sanitize_text_field($_GET['date_depart'] ?? ''),
@@ -549,9 +550,7 @@ get_header();
 
         <div class="bks-recap-line"><span>🏨 Hôtel</span><span><?php echo esc_html($hotel_nom); ?></span></div>
         <div class="bks-recap-line"><span>🍽️ Pension</span><span><?php echo esc_html($pension); ?></span></div>
-        <?php if ($transfert_label && $transfert_type !== 'aucun'): ?>
         <div class="bks-recap-line"><span>🚐 Transferts</span><span><?php echo esc_html($transfert_label); ?></span></div>
-        <?php endif; ?>
         <div class="bks-recap-line"><span>👥 Voyageurs</span><span><?php echo $nb_total; ?> pers.</span></div>
 
         <div class="bks-recap-line" id="bks-recap-bag-soute" style="display:none"><span>🧳 Bagage soute</span><span id="bks-recap-bag-soute-val">—</span></div>
