@@ -940,8 +940,12 @@ get_header();
             voyageurs:voy,facturation:{prenom:document.getElementById('bks-f-prenom').value,nom:document.getElementById('bks-f-nom').value,email:document.getElementById('bks-f-email').value,tel:document.getElementById('bks-f-tel').value,adresse:document.getElementById('bks-f-adresse').value,cp:document.getElementById('bks-f-cp').value,ville:document.getElementById('bks-f-ville').value}};
         fetch(BK.rest_url+'booking',{method:'POST',headers:{'Content-Type':'application/json','X-WP-Nonce':BK.nonce},body:JSON.stringify(body)})
         .then(function(r){return r.json()}).then(function(res){
-            if(res&&(res.checkout_url||(res.data&&res.data.checkout_url))){window.location.href=res.checkout_url||res.data.checkout_url}
-            else{showError((res&&res.message)||'Erreur. Contactez le 03 26 65 28 63.');submitting=false;btn.disabled=false;btn.textContent='🔒 Procéder au paiement →';document.getElementById('bks-loading').style.display='none'}
+            var url=res.checkout_url||(res.data&&res.data.checkout_url)||'';
+            if(url){window.location.href=url}
+            else{
+                var msg=(res&&res.message)||(res&&res.data&&typeof res.data==='string'&&res.data)||(res&&res.code)||'Erreur inconnue. Contactez le 03 26 65 28 63.';
+                showError(msg);submitting=false;btn.disabled=false;btn.textContent='🔒 Procéder au paiement →';document.getElementById('bks-loading').style.display='none';
+            }
         }).catch(function(e){showError('Erreur réseau: '+e.message);submitting=false;btn.disabled=false;btn.textContent='🔒 Procéder au paiement →';document.getElementById('bks-loading').style.display='none'});
     };
 

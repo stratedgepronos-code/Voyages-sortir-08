@@ -143,8 +143,14 @@ class VS08S_Rest {
         $p = self::all_params($req);
         $sejour_id = intval(self::p($p, 'sejour_id', 0));
         if (!$sejour_id) return new \WP_Error('no_sejour', 'Séjour manquant.', ['status' => 400]);
-        $result = VS08S_Booking::create_order($sejour_id, $p);
-        if (is_wp_error($result)) return $result;
-        return rest_ensure_response($result);
+
+        try {
+            $result = VS08S_Booking::create_order($sejour_id, $p);
+            if (is_wp_error($result)) return $result;
+            return rest_ensure_response($result);
+        } catch (\Throwable $e) {
+            error_log('[VS08S Booking CRASH] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+            return new \WP_Error('booking_error', 'Erreur de réservation: ' . $e->getMessage(), ['status' => 500]);
+        }
     }
 }

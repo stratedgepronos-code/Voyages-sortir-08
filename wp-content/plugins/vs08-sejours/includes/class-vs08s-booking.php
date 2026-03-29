@@ -11,6 +11,10 @@ class VS08S_Booking {
      * Crée une commande WooCommerce pour un séjour.
      */
     public static function create_order($sejour_id, $params) {
+        if (!function_exists('wc_create_order')) {
+            return new \WP_Error('no_wc', 'WooCommerce non disponible.', ['status' => 500]);
+        }
+
         $m = VS08S_Meta::get($sejour_id);
         $titre = get_the_title($sejour_id);
 
@@ -22,7 +26,11 @@ class VS08S_Booking {
 
         // Facturation
         $fact = $params['facturation'] ?? [];
+        if (!is_array($fact)) $fact = [];
         $voyageurs = $params['voyageurs'] ?? [];
+        if (!is_array($voyageurs)) $voyageurs = [];
+
+        error_log('[VS08S Booking] Création commande séjour ' . $sejour_id . ' — total=' . $total . ' acompte=' . $acompte . ' client=' . ($fact['prenom'] ?? '') . ' ' . ($fact['nom'] ?? ''));
 
         // Créer le produit WooCommerce temporaire
         $product = new \WC_Product_Simple();
@@ -31,6 +39,7 @@ class VS08S_Booking {
         $product->set_catalog_visibility('hidden');
         $product->set_virtual(true);
         $product->save();
+        $product_id = $product->get_id();
 
         // Créer la commande
         $order = wc_create_order();
@@ -57,7 +66,7 @@ class VS08S_Booking {
             'type'           => 'sejour',
             'sejour_id'      => $sejour_id,
             'sejour_titre'   => $titre,
-            'voyage_titre'   => $titre, // compatibilité espace admin
+            'voyage_titre'   => $titre,
             'params'         => $params,
             'devis'          => $devis,
             'facturation'    => $fact,
@@ -70,18 +79,24 @@ class VS08S_Booking {
         ];
 
         $order->update_meta_data('_vs08s_booking_data', $booking_data);
-        $order->update_meta_data('_vs08v_booking_data', $booking_data); // compatibilité espace admin
+        $order->update_meta_data('_vs08v_booking_data', $booking_data);
         $order->set_status('pending');
         $order->save();
 
+        $order_id = $order->get_id();
+        error_log('[VS08S Booking] Commande VS08-' . $order_id . ' créée OK');
+
         // Nettoyer le produit temporaire
-        $product->delete(true);
+        wp_delete_post($product_id, true);
+
+        // Checkout URL
+        $checkout_url = $order->get_checkout_payment_url();
 
         return [
-            'order_id'    => $order->get_id(),
-            'checkout_url' => $order->get_checkout_payment_url(),
-            'total'       => $total,
-            'acompte'     => $acompte,
+            'order_id'     => $order_id,
+            'checkout_url' => $checkout_url,
+            'total'        => $total,
+            'acompte'      => $acompte,
         ];
     }
 }
