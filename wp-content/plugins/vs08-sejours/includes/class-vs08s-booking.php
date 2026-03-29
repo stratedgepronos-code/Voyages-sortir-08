@@ -35,8 +35,6 @@ class VS08S_Booking {
             intval($params['nb_adultes'] ?? 2)
         );
 
-        error_log('[VS08S Booking] Début: ' . $product_name . ' total=' . $total . ' acompte=' . $acompte);
-
         // Booking data (sauvé sur le produit, copié sur la commande au checkout)
         $booking_data = [
             'type'           => 'sejour',
@@ -107,8 +105,6 @@ class VS08S_Booking {
         clean_post_cache($product_id);
         wc_delete_product_transients($product_id);
 
-        error_log('[VS08S Booking] Produit #' . $product_id . ' — type=sejour — booking_data mis à jour');
-
         // Payment mode (card ou agency)
         $payment_mode = ($params['vs08_payment_mode'] ?? 'card') === 'agency' ? 'agency' : 'card';
         $reglement_agence = ($payment_mode === 'agency');
@@ -153,8 +149,6 @@ class VS08S_Booking {
         if (strpos($checkout_url, '?') !== false) $checkout_url .= '&vs08_cart=' . $cart_token;
         else $checkout_url .= '?vs08_cart=' . $cart_token;
 
-        error_log('[VS08S Booking] OK → redirect ' . $checkout_url);
-
         return [
             'order_id'     => 0,
             'checkout_url' => $checkout_url,
@@ -174,7 +168,6 @@ class VS08S_Booking {
         $transfert_type = $m['transfert_type'] ?? '';
         if (empty($transfert_type)) $transfert_type = 'groupes';
         $transfert = $transfert_map[$transfert_type] ?? 'Transferts groupés';
-        error_log('[VS08S Desc] transfert_type=' . var_export($m['transfert_type'] ?? 'NULL', true) . ' → ' . $transfert);
         $iata_dest = strtoupper($m['iata_dest'] ?? '');
         $aeroport = strtoupper($params['aeroport'] ?? '');
         $date_depart = $params['date_depart'] ?? '';
