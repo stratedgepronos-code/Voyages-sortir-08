@@ -112,18 +112,6 @@ jobs:
             fi
           " || echo "Patch skipped (non-blocking)"
 
-      - name: Deploy .user.ini (memory limit)
-        run: |
-          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ env.SSH_OPTS }} \
-            ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} "
-            cat > ${{ env.WEBROOT }}/.user.ini << 'INIEOF'
-; VS08 — mémoire PHP pour checkout WooCommerce + Yoast
-memory_limit = 768M
-max_execution_time = 120
-INIEOF
-            echo '.user.ini deployed'
-          " || echo ".user.ini deploy skipped (non-blocking)"
-
       - name: Purge caches
         run: |
           ok=0
