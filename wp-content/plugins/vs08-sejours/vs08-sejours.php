@@ -210,9 +210,11 @@ add_filter('single_template', function($template) {
 
 // ── Hooks WooCommerce ──
 add_action('woocommerce_payment_complete', function($order_id) {
+    if (!empty($_GET['wc-ajax'])) return; // différé via cron (vs08-voyages.php)
     VS08S_Emails::dispatch($order_id);
 });
 add_action('woocommerce_order_status_changed', function($order_id, $old_status, $new_status) {
+    if (!empty($_GET['wc-ajax'])) return; // différé via cron
     if (in_array($new_status, ['processing', 'completed'])) {
         VS08S_Emails::dispatch($order_id);
     }

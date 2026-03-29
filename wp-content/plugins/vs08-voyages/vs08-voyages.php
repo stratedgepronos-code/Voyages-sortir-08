@@ -18,6 +18,7 @@ define('VS08V_VER',  '2.0.0');
 
 // ============================================================
 // LOG ERREURS FATALES PENDANT LE CHECKOUT (pour debug 500)
+// + Désactiver les emails WC par défaut (trop de RAM)
 // ============================================================
 if (!empty($_GET['wc-ajax']) && $_GET['wc-ajax'] === 'checkout') {
     @ini_set('memory_limit', '768M');
@@ -26,11 +27,24 @@ if (!empty($_GET['wc-ajax']) && $_GET['wc-ajax'] === 'checkout') {
         if ($e && in_array($e['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE])) {
             $msg = '[VS08 FATAL CHECKOUT] ' . $e['message'] . ' in ' . $e['file'] . ':' . $e['line'];
             error_log($msg);
-            // Aussi écrire dans un fichier accessible
             $log_path = dirname(dirname(dirname(__FILE__))) . '/vs08-checkout-crash.log';
             file_put_contents($log_path, date('Y-m-d H:i:s') . ' ' . $msg . "\n", FILE_APPEND);
         }
     });
+    // Désactiver TOUS les emails WooCommerce pendant le checkout
+    // Nos propres emails (VS08V/VS08S_Emails) s'envoient via dispatch()
+    add_filter('woocommerce_email_enabled_new_order', '__return_false');
+    add_filter('woocommerce_email_enabled_customer_processing_order', '__return_false');
+    add_filter('woocommerce_email_enabled_customer_on_hold_order', '__return_false');
+    add_filter('woocommerce_email_enabled_customer_completed_order', '__return_false');
+    // Différer notre propre dispatch APRÈS la réponse au navigateur
+    add_action('woocommerce_payment_complete', function($order_id) {
+        // Marquer pour dispatch via wp_cron immédiat
+        wp_schedule_single_event(time(), 'vs08_deferred_email_dispatch', [$order_id]);
+    }, 1);
+    add_action('woocommerce_order_status_changed', function($order_id) {
+        wp_schedule_single_event(time(), 'vs08_deferred_email_dispatch', [$order_id]);
+    }, 1);
 }
 
 // ============================================================
@@ -361,17 +375,28 @@ add_action('template_redirect', function() {
 // EMAILS POST-PAIEMENT (contrat de vente admin + client)
 // ============================================================
 // Hook principal : déclenché par WooCommerce quand le paiement est confirmé
+// Pendant le checkout AJAX, les emails sont différés via cron (voir plus haut)
 add_action('woocommerce_payment_complete', function($order_id) {
+    if (!empty($_GET['wc-ajax'])) return; // différé via cron
     VS08V_Emails::dispatch($order_id);
 });
 
 // Fallback : certains moyens de paiement (virement, chèque) ne déclenchent
 // pas woocommerce_payment_complete mais changent le statut en « processing »
 add_action('woocommerce_order_status_changed', function($order_id, $old_status, $new_status) {
+    if (!empty($_GET['wc-ajax'])) return; // différé via cron
     if (in_array($new_status, ['processing', 'completed'])) {
         VS08V_Emails::dispatch($order_id);
     }
 }, 10, 3);
+
+// Dispatch différé via cron (planifié pendant le checkout AJAX)
+add_action('vs08_deferred_email_dispatch', function($order_id) {
+    error_log('[VS08] Deferred email dispatch for order ' . $order_id);
+    if (class_exists('VS08V_Emails')) VS08V_Emails::dispatch($order_id);
+    if (class_exists('VS08S_Emails')) VS08S_Emails::dispatch($order_id);
+    if (class_exists('VS08C_Emails')) VS08C_Emails::dispatch($order_id);
+});
 
 // Helper : retourne l'ID de dossier espace membre cible (commande principale ou parent solde), sinon 0.
 function vs08v_get_target_order_id_for_espace($order) {

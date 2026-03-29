@@ -47,6 +47,13 @@ class VS08V_Emails {
             if (empty($data) || !is_array($data)) { error_log('[VS08 Emails] dispatch(' . $order_id . ') — pas de booking_data'); unset($dispatching[$order_id]); return; }
         }
 
+        // Séjour → laisser VS08S_Emails gérer (pas ce dispatcher golf)
+        if (($data['type'] ?? '') === 'sejour') {
+            error_log('[VS08 Emails] dispatch(' . $order_id . ') — type=sejour, skip (géré par VS08S_Emails)');
+            unset($dispatching[$order_id]);
+            return;
+        }
+
         // Générer le contrat
         $contract_html = '';
         try { $contract_html = VS08V_Contract::generate($order_id); } catch (\Throwable $e) { error_log('[VS08 Emails] Contract: ' . $e->getMessage()); }
