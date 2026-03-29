@@ -140,14 +140,84 @@ class VS08V_Checkout {
             }
         }
         if (!$product_id) return;
-        $product = wc_get_product($product_id);
-        if (!$product) return;
-        $desc = $product->get_description();
-        if (strpos($desc, 'vs08v-woo-recap') === false) return;
+
+        // Pour les séjours : lire directement depuis booking_data (pas le cache WC)
+        $booking = get_post_meta($product_id, '_vs08v_booking_data', true);
+        $type = is_array($booking) ? ($booking['type'] ?? 'golf') : 'golf';
+
+        if ($type === 'sejour' && is_array($booking)) {
+            self::render_sejour_recap($booking);
+            return;
+        }
+
+        // Golf/Circuit : utiliser la description produit
+        $desc = get_post_field('post_content', $product_id);
+        if (empty($desc) || strpos($desc, 'vs08v-woo-recap') === false) return;
         ?>
         <div class="vs08v-checkout-recap-wrapper">
             <div class="vs08v-checkout-recap-card">
                 <?php echo wp_kses_post($desc); ?>
+            </div>
+        </div>
+        <?php
+    }
+
+    private static function render_sejour_recap($booking) {
+        $params = $booking['params'] ?? [];
+        $devis  = $booking['devis'] ?? [];
+        $sejour_id = $booking['sejour_id'] ?? 0;
+        $m = class_exists('VS08S_Meta') ? VS08S_Meta::get($sejour_id) : [];
+
+        $pension_map = ['ai'=>'All Inclusive','pc'=>'Pension complète','dp'=>'Demi-pension','bb'=>'Petit-déjeuner','lo'=>'Logement seul'];
+        $pension = $pension_map[$m['pension'] ?? 'ai'] ?? 'All Inclusive';
+        $hotel_nom = $m['hotel_nom'] ?? '';
+        $hotel_etoiles = intval($m['hotel_etoiles'] ?? 0);
+        $duree = intval($m['duree'] ?? 7);
+        $duree_j = intval($m['duree_jours'] ?? ($duree + 1));
+        $transfert_map = ['groupes'=>'Transferts groupés','prives'=>'Transferts privés','inclus'=>'Inclus dans l\'hôtel','aucun'=>'Non inclus'];
+        $tt = $m['transfert_type'] ?? '';
+        if (empty($tt)) $tt = 'groupes';
+        $transfert = $transfert_map[$tt] ?? 'Transferts groupés';
+        $iata_dest = strtoupper($m['iata_dest'] ?? '');
+        $aeroport = strtoupper($params['aeroport'] ?? '');
+        $date_depart = $params['date_depart'] ?? '';
+        $date_retour = $date_depart ? date('d/m/Y', strtotime($date_depart . ' +' . $duree . ' days')) : '';
+        $date_fmt = $date_depart ? date('d/m/Y', strtotime($date_depart)) : '';
+        $total = floatval($booking['total'] ?? 0);
+        $acompte = floatval($booking['acompte'] ?? 0);
+        $acompte_pct = floatval($m['acompte_pct'] ?? 30);
+        $payer_tout = $booking['payer_tout'] ?? false;
+        ?>
+        <div class="vs08v-checkout-recap-wrapper">
+            <div class="vs08v-checkout-recap-card">
+                <div class="vs08v-woo-recap">
+                    <h3><?php echo esc_html($booking['sejour_titre'] ?? ''); ?></h3>
+                    <table>
+                        <tr><td><strong>🗓️ Dates</strong></td><td><?php echo esc_html($date_fmt . ' → ' . $date_retour); ?></td></tr>
+                        <tr><td><strong>🌙 Durée</strong></td><td><?php echo $duree_j; ?> jours / <?php echo $duree; ?> nuits</td></tr>
+                        <tr><td><strong>✈️ Vols</strong></td><td><?php echo esc_html($aeroport . ' → ' . $iata_dest); ?></td></tr>
+                        <?php if (!empty($params['vol_aller_num'])): ?>
+                        <tr><td><strong>🛫 Aller</strong></td><td><?php echo esc_html($params['vol_aller_num']); ?> (<?php echo esc_html($params['vol_aller_cie'] ?? ''); ?>) · <?php echo esc_html($params['vol_aller_depart'] ?? ''); ?> → <?php echo esc_html($params['vol_aller_arrivee'] ?? ''); ?></td></tr>
+                        <?php endif; ?>
+                        <?php if (!empty($params['vol_retour_num'])): ?>
+                        <tr><td><strong>🛬 Retour</strong></td><td><?php echo esc_html($params['vol_retour_num']); ?> · <?php echo esc_html($params['vol_retour_depart'] ?? ''); ?> → <?php echo esc_html($params['vol_retour_arrivee'] ?? ''); ?></td></tr>
+                        <?php endif; ?>
+                        <?php if ($hotel_nom): ?>
+                        <tr><td><strong>🏨 Hôtel</strong></td><td><?php echo esc_html($hotel_nom); ?><?php if ($hotel_etoiles): ?> <?php echo str_repeat('★', $hotel_etoiles); ?><?php endif; ?></td></tr>
+                        <?php endif; ?>
+                        <tr><td><strong>🍽️ Formule</strong></td><td><?php echo esc_html($pension); ?></td></tr>
+                        <tr><td><strong>🚐 Transferts</strong></td><td><?php echo esc_html($transfert); ?></td></tr>
+                        <tr><td><strong>👥 Voyageurs</strong></td><td><?php echo intval($params['nb_adultes'] ?? 2); ?> adulte(s)</td></tr>
+                    </table>
+                    <h4>💰 Détail du prix</h4>
+                    <table>
+                        <tr style="font-weight:bold;border-top:2px solid #333"><td>TOTAL VOYAGE</td><td><?php echo number_format($total, 2, ',', ' '); ?> €</td></tr>
+                    <?php if (!$payer_tout): ?>
+                        <tr style="color:#e8724a"><td>Acompte à régler (<?php echo $acompte_pct; ?>%)</td><td><?php echo number_format($acompte, 2, ',', ' '); ?> €</td></tr>
+                        <tr><td>Solde à régler <?php echo intval($m['delai_solde'] ?? 30); ?>j avant le départ</td><td><?php echo number_format($total - $acompte, 2, ',', ' '); ?> €</td></tr>
+                    <?php endif; ?>
+                    </table>
+                </div>
             </div>
         </div>
         <?php
