@@ -84,11 +84,19 @@ class VS08S_Booking {
 
         error_log('[VS08S Booking] Produit #' . $product_id . ' créé');
 
+        // Payment mode (card ou agency)
+        $payment_mode = ($params['vs08_payment_mode'] ?? 'card') === 'agency' ? 'agency' : 'card';
+        $reglement_agence = ($payment_mode === 'agency');
+
+        // Stocker le mode de paiement sur le produit
+        update_post_meta($product_id, '_vs08v_payment_mode', $payment_mode);
+        update_post_meta($product_id, '_vs08v_reglement_agence', $reglement_agence ? 1 : 0);
+
         // Cart token (même mécanisme que golf)
         $cart_token = wp_generate_password(32, false);
         set_transient('vs08_cart_' . $cart_token, [
             'product_id'   => $product_id,
-            'payment_mode' => 'card',
+            'payment_mode' => $payment_mode,
         ], 900);
 
         // Tenter l'ajout au panier WooCommerce

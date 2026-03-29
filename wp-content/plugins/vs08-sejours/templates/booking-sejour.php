@@ -482,12 +482,18 @@ get_header();
                 <div style="font-size:13px;font-weight:700;color:#0f2424;margin-bottom:10px">💳 Mode de règlement</div>
                 <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start;margin-bottom:12px">
                     <input type="radio" name="bks-payment-mode" value="card" checked style="margin-top:4px;flex-shrink:0">
-                    <span style="font-size:13px;color:#374151;line-height:1.5"><strong>Payer par carte bancaire</strong> (Paybox sécurisé)</span>
+                    <span style="font-size:13px;color:#374151;line-height:1.5"><strong>Payer par carte bancaire</strong> (Paybox sécurisé) — encaissement de l'acompte ou du montant dû en ligne.</span>
                 </label>
                 <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start">
-                    <input type="radio" name="bks-payment-mode" value="agency" style="margin-top:4px;flex-shrink:0">
+                    <input type="radio" name="bks-payment-mode" value="agency" id="bks-payment-agency" style="margin-top:4px;flex-shrink:0">
                     <span style="font-size:13px;color:#374151;line-height:1.5"><strong>Paiement en agence</strong> (pré-réservation)</span>
                 </label>
+                <div id="bks-agence-confirm-wrap" style="display:none;margin:12px 0 0 28px">
+                    <label style="display:flex;gap:8px;cursor:pointer;align-items:flex-start">
+                        <input type="checkbox" id="bks-agence-confirm" style="margin-top:2px;flex-shrink:0">
+                        <span style="font-size:11px;color:#6b7280;line-height:1.45">Je comprends qu'il s'agit d'une <strong>pré-réservation</strong> : le <strong>prix n'est pas définitivement bloqué</strong> tant que le règlement n'a pas été effectué en agence.</span>
+                    </label>
+                </div>
             </div>
 
             <div style="background:#fff8f0;border:1.5px solid #f0dcc0;border-radius:12px;padding:16px;margin-bottom:16px">
@@ -919,8 +925,13 @@ get_header();
     };
 
     window.bksSubmit=function(){
-        if(!document.getElementById('bks-confirm-info').checked){alert('Certifiez les informations.');return}
-        if(!document.getElementById('bks-cgu').checked){alert('Acceptez les CGV.');return}
+        var payMode = (document.querySelector('input[name="bks-payment-mode"]:checked')||{}).value || 'card';
+        if (payMode === 'agency') {
+            var ac = document.getElementById('bks-agence-confirm');
+            if (!ac || !ac.checked) { alert('Cochez la case relative au paiement en agence (prix non bloqué).'); return; }
+        }
+        if(!document.getElementById('bks-confirm-info').checked){alert('Certifiez les informations voyageurs.');return}
+        if(!document.getElementById('bks-cgu').checked){alert('Acceptez les conditions générales de vente.');return}
         if(submitting)return;submitting=true;
         var btn=document.getElementById('bks-btn-submit');btn.disabled=true;btn.textContent='⏳ En cours…';
         document.getElementById('bks-loading').style.display='block';
@@ -936,6 +947,8 @@ get_header();
             vol_retour_arrivee:selectedCombo.retour_arrive||'',
             bagage_soute:bagSouteQty,
             bagage_cabine:bagCabineQty,
+            vs08_payment_mode:payMode,
+            vs08_agence_confirm:(payMode==='agency'&&document.getElementById('bks-agence-confirm')&&document.getElementById('bks-agence-confirm').checked)?'1':'',
             assurance:(document.getElementById('bks-assurance')&&document.getElementById('bks-assurance').checked)?1:0,
             voyageurs:voy,facturation:{prenom:document.getElementById('bks-f-prenom').value,nom:document.getElementById('bks-f-nom').value,email:document.getElementById('bks-f-email').value,tel:document.getElementById('bks-f-tel').value,adresse:document.getElementById('bks-f-adresse').value,cp:document.getElementById('bks-f-cp').value,ville:document.getElementById('bks-f-ville').value}};
         fetch(BK.rest_url+'booking',{method:'POST',headers:{'Content-Type':'application/json','X-WP-Nonce':BK.nonce},body:JSON.stringify(body)})
@@ -953,6 +966,18 @@ get_header();
     function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
     function fmt(n){return Number(n||0).toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:0})}
     function showError(m){var e=document.getElementById('bks-error');e.textContent=m;e.style.display='block';window.scrollTo({top:0,behavior:'smooth'})}
+
+    // ── Payment mode toggle (agence checkbox) ──
+    (function(){
+        var agency = document.getElementById('bks-payment-agency');
+        var w = document.getElementById('bks-agence-confirm-wrap');
+        if (w && agency) {
+            function toggle(){ w.style.display = agency.checked ? 'block' : 'none'; }
+            document.querySelectorAll('input[name="bks-payment-mode"]').forEach(function(r) {
+                r.addEventListener('change', toggle);
+            });
+        }
+    })();
 
     // ── DDN Calendars (VS08Calendar) ──
     function initDDNCalendars() {
