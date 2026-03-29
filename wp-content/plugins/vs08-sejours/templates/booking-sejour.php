@@ -97,7 +97,7 @@ get_header();
 .bks-header-info p{margin:4px 0 0;font-size:13px;color:rgba(255,255,255,.7);font-family:'Outfit',sans-serif}
 .bks-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .bks-chip{background:rgba(89,183,183,.25);border:1px solid rgba(89,183,183,.4);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;font-family:'Outfit',sans-serif;color:#b0e0e0}
-.bks-container{max-width:1200px;margin:0 auto;padding:24px 32px;display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start}
+.bks-container{max-width:1200px;margin:0 auto;padding:24px 32px;display:grid;grid-template-columns:1fr 400px;gap:24px;align-items:start}
 .bks-section{background:#fff;border-radius:18px;padding:28px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
 .bks-section-title{font-family:'Playfair Display',serif;font-size:18px;color:#0f2424;margin:0 0 6px;display:flex;align-items:center;gap:10px}
 .bks-section-sub{font-size:13px;color:#6b7280;font-family:'Outfit',sans-serif;margin:0 0 18px}
@@ -155,13 +155,13 @@ get_header();
 .bks-btn-next:hover{background:#d4603c}
 .bks-btn-next:disabled{opacity:.5;cursor:not-allowed}
 /* Recap sidebar */
-.bks-recap{position:sticky;top:100px;background:#fff;border-radius:18px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.08)}
-.bks-recap-title{font-family:'Playfair Display',serif;font-size:16px;color:#0f2424;margin:0 0 14px}
-.bks-recap-line{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;font-family:'Outfit',sans-serif;color:#374151;border-bottom:1px solid #f0ece4}
+.bks-recap{position:sticky;top:100px;background:#fff;border-radius:18px;padding:28px;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+.bks-recap-title{font-family:'Playfair Display',serif;font-size:18px;color:#0f2424;margin:0 0 16px}
+.bks-recap-line{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;font-family:'Outfit',sans-serif;color:#374151;border-bottom:1px solid #f0ece4}
 .bks-recap-sep{height:1px;background:#59b7b7;margin:10px 0}
 .bks-recap-total{display:flex;justify-content:space-between;align-items:center;padding:10px 0}
 .bks-recap-total-lbl{font-size:14px;font-weight:700;color:#0f2424;font-family:'Outfit',sans-serif}
-.bks-recap-total-val{font-size:24px;font-weight:800;color:#59b7b7;font-family:'Outfit',sans-serif}
+.bks-recap-total-val{font-size:28px;font-weight:800;color:#59b7b7;font-family:'Outfit',sans-serif}
 .bks-recap-acompte{display:flex;justify-content:space-between;background:#edf8f8;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:#59b7b7;font-family:'Outfit',sans-serif;margin-top:8px}
 .bks-error{display:none;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:12px;border-radius:10px;font-size:13px;font-family:'Outfit',sans-serif;margin-bottom:14px}
 .bks-loading{display:none;text-align:center;padding:20px}
@@ -446,15 +446,26 @@ get_header();
     <div class="bks-recap">
         <h3 class="bks-recap-title">📋 Récapitulatif</h3>
         <div class="bks-recap-line" style="font-weight:600;color:#0f2424"><span>🏖️ <?php echo esc_html($titre); ?></span></div>
-        <div class="bks-recap-line"><span>📅 Aller</span><span><?php echo $date_fmt; ?></span></div>
-        <div class="bks-recap-line"><span>📅 Retour</span><span><?php echo $date_retour_fmt; ?></span></div>
-        <div class="bks-recap-line"><span>✈️ Route</span><span><?php echo $params['aeroport'].' ↔ '.$iata_dest; ?></span></div>
         <div class="bks-recap-line"><span>🏨 Hôtel</span><span><?php echo esc_html($hotel_nom); ?></span></div>
         <div class="bks-recap-line"><span>🍽️ Pension</span><span><?php echo esc_html($pension); ?></span></div>
         <div class="bks-recap-line"><span>👥 Voyageurs</span><span><?php echo $nb_total; ?> pers.</span></div>
-        <div class="bks-recap-line" id="bks-recap-vol" style="display:none"><span>✈️ Vol</span><span id="bks-recap-vol-val">—</span></div>
-        <div class="bks-recap-line" id="bks-recap-vol-aller" style="display:none"><span style="padding-left:12px;font-size:11px">↗ Aller</span><span id="bks-recap-vol-aller-val" style="font-size:11px">—</span></div>
-        <div class="bks-recap-line" id="bks-recap-vol-retour" style="display:none"><span style="padding-left:12px;font-size:11px">↙ Retour</span><span id="bks-recap-vol-retour-val" style="font-size:11px">—</span></div>
+
+        <!-- Aller : date + vol (mis à jour par JS) -->
+        <div style="border-bottom:1px solid #f0ece4;padding:8px 0">
+            <div class="bks-recap-line" style="border:none;padding-bottom:2px"><span>✈️ Aller</span><span><?php echo $date_fmt; ?></span></div>
+            <div id="bks-recap-aller-vol" style="display:none;font-size:11px;color:#6b7280;font-family:'Outfit',sans-serif;padding-left:24px">
+                <span id="bks-recap-aller-detail">—</span>
+            </div>
+        </div>
+
+        <!-- Retour : date + vol (mis à jour par JS) -->
+        <div style="border-bottom:1px solid #f0ece4;padding:8px 0">
+            <div class="bks-recap-line" style="border:none;padding-bottom:2px"><span>✈️ Retour</span><span><?php echo $date_retour_fmt; ?></span></div>
+            <div id="bks-recap-retour-vol" style="display:none;font-size:11px;color:#6b7280;font-family:'Outfit',sans-serif;padding-left:24px">
+                <span id="bks-recap-retour-detail">—</span>
+            </div>
+        </div>
+
         <div class="bks-recap-line" id="bks-recap-bag-soute" style="display:none"><span>🧳 Bagage soute</span><span id="bks-recap-bag-soute-val">—</span></div>
         <div class="bks-recap-line" id="bks-recap-bag-cabine" style="display:none"><span>🎒 Bagage cabine</span><span id="bks-recap-bag-cabine-val">—</span></div>
         <div class="bks-recap-line" id="bks-recap-ins" style="display:none"><span>🛡️ Assurance</span><span id="bks-recap-ins-val">—</span></div>
@@ -738,13 +749,18 @@ get_header();
         var card=document.getElementById('bks-combo-'+idx);
         if(card) card.classList.add('selected');
         document.getElementById('bks-btn-step1').disabled=false;
-        // Update recap
-        var volRow=document.getElementById('bks-recap-vol');
-        if(volRow){volRow.style.display='flex';document.getElementById('bks-recap-vol-val').textContent=(f.airline_name||'Vol')+' · '+(f.flight_number||'')}
-        var allerRow=document.getElementById('bks-recap-vol-aller');
-        if(allerRow){allerRow.style.display='flex';document.getElementById('bks-recap-vol-aller-val').textContent=(f.depart_time||'—')+' → '+(f.arrive_time||'—')}
-        var retourRow=document.getElementById('bks-recap-vol-retour');
-        if(retourRow&&f.retour_depart){retourRow.style.display='flex';document.getElementById('bks-recap-vol-retour-val').textContent=(f.retour_depart||'—')+' → '+(f.retour_arrive||'—')}
+        // Update recap — aller details
+        var allerVol=document.getElementById('bks-recap-aller-vol');
+        if(allerVol&&f.depart_time){
+            allerVol.style.display='block';
+            document.getElementById('bks-recap-aller-detail').textContent=(f.airline_name||'')+' · '+(f.flight_number||'')+' · '+(f.depart_time||'—')+' → '+(f.arrive_time||'—');
+        }
+        // Update recap — retour details
+        var retourVol=document.getElementById('bks-recap-retour-vol');
+        if(retourVol&&f.retour_depart){
+            retourVol.style.display='block';
+            document.getElementById('bks-recap-retour-detail').textContent=(f.airline_name||'')+' · '+(f.retour_flight||'')+' · '+(f.retour_depart||'—')+' → '+(f.retour_arrive||'—');
+        }
         bksUpdateTotal();
     };
 
