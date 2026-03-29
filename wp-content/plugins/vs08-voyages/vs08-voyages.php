@@ -17,6 +17,41 @@ define('VS08V_URL',  plugin_dir_url(__FILE__));
 define('VS08V_VER',  '2.0.0');
 
 // ============================================================
+// DÉSACTIVER YOAST SEO PENDANT LE CHECKOUT / AJAX / REST
+// Yoast hook sur save_post → cascade mémoire → 2 Go → crash 500
+// ============================================================
+add_action('plugins_loaded', function() {
+    $is_wc_ajax = (defined('DOING_AJAX') && DOING_AJAX) || !empty($_GET['wc-ajax']);
+    $is_rest    = (defined('REST_REQUEST') && REST_REQUEST) || (strpos($_SERVER['REQUEST_URI'] ?? '', '/wp-json/') !== false);
+    if ($is_wc_ajax || $is_rest) {
+        // Augmenter la mémoire pour les opérations WC
+        @ini_set('memory_limit', '512M');
+        // Désactiver les hooks Yoast qui écrasent la RAM sur save_post
+        add_action('init', function() {
+            remove_all_actions('wpseo_saved_postdata');
+            // Retirer les hooks Yoast sur save_post / wp_insert_post
+            global $wp_filter;
+            foreach (['save_post', 'wp_insert_post'] as $tag) {
+                if (empty($wp_filter[$tag])) continue;
+                foreach ($wp_filter[$tag]->callbacks as $priority => $hooks) {
+                    foreach ($hooks as $key => $hook) {
+                        if (is_string($key) && (stripos($key, 'wpseo') !== false || stripos($key, 'yoast') !== false)) {
+                            unset($wp_filter[$tag]->callbacks[$priority][$key]);
+                        }
+                        if (is_array($hook['function'] ?? null)) {
+                            $class = is_object($hook['function'][0]) ? get_class($hook['function'][0]) : (is_string($hook['function'][0]) ? $hook['function'][0] : '');
+                            if (stripos($class, 'WPSEO') !== false || stripos($class, 'Yoast') !== false) {
+                                unset($wp_filter[$tag]->callbacks[$priority][$key]);
+                            }
+                        }
+                    }
+                }
+            }
+        }, 99);
+    }
+}, 1);
+
+// ============================================================
 // CHARGEMENT SÉCURISÉ DE LA CLÉ DUFFEL DEPUIS config.cfg
 // Le fichier config.cfg doit être à la racine du plugin :
 //   public_html/wp-content/plugins/vs08-voyages/config.cfg
