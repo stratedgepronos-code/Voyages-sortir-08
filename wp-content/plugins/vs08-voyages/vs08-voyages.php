@@ -17,6 +17,23 @@ define('VS08V_URL',  plugin_dir_url(__FILE__));
 define('VS08V_VER',  '2.0.0');
 
 // ============================================================
+// LOG ERREURS FATALES PENDANT LE CHECKOUT (pour debug 500)
+// ============================================================
+if (!empty($_GET['wc-ajax']) && $_GET['wc-ajax'] === 'checkout') {
+    @ini_set('memory_limit', '768M');
+    register_shutdown_function(function() {
+        $e = error_get_last();
+        if ($e && in_array($e['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE])) {
+            $msg = '[VS08 FATAL CHECKOUT] ' . $e['message'] . ' in ' . $e['file'] . ':' . $e['line'];
+            error_log($msg);
+            // Aussi écrire dans un fichier accessible
+            $log_path = dirname(dirname(dirname(__FILE__))) . '/vs08-checkout-crash.log';
+            file_put_contents($log_path, date('Y-m-d H:i:s') . ' ' . $msg . "\n", FILE_APPEND);
+        }
+    });
+}
+
+// ============================================================
 // DÉSACTIVER YOAST SEO PENDANT LE CHECKOUT / AJAX / REST
 // Yoast hook sur save_post → cascade mémoire → 2 Go → crash 500
 // ============================================================
