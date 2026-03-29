@@ -34,43 +34,9 @@ if (!empty($_GET['wc-ajax']) && $_GET['wc-ajax'] === 'checkout') {
 }
 
 // ============================================================
-// DÉSACTIVER YOAST SEO PENDANT LE CHECKOUT / AJAX / REST
-// Yoast hook sur save_post → cascade mémoire → 2 Go → crash 500
+// NOTE: Yoast SEO est désactivé pendant le checkout via
+// le mu-plugin wp-content/mu-plugins/vs08-disable-yoast-checkout.php
 // ============================================================
-add_action('plugins_loaded', function() {
-    $is_wc_ajax = !empty($_GET['wc-ajax']);
-    $is_rest    = (strpos($_SERVER['REQUEST_URI'] ?? '', '/wp-json/') !== false);
-    $is_ajax    = defined('DOING_AJAX') && DOING_AJAX;
-    if ($is_wc_ajax || $is_rest || $is_ajax) {
-        @ini_set('memory_limit', '512M');
-    }
-}, 1);
-
-// Retirer TOUS les hooks non-WC sur save_post AVANT que le checkout crée la commande
-add_action('woocommerce_before_checkout_process', function() {
-    @ini_set('memory_limit', '768M');
-    global $wp_filter;
-    foreach (['save_post', 'wp_insert_post', 'save_post_shop_order'] as $tag) {
-        if (empty($wp_filter[$tag])) continue;
-        foreach ($wp_filter[$tag]->callbacks as $priority => &$hooks) {
-            foreach ($hooks as $key => $hook) {
-                $fn = $hook['function'] ?? null;
-                // Garder uniquement les hooks WooCommerce
-                $keep = false;
-                if (is_string($fn) && (stripos($fn, 'wc_') === 0 || stripos($fn, 'woocommerce') === 0)) $keep = true;
-                if (is_array($fn) && isset($fn[0])) {
-                    $cls = is_object($fn[0]) ? get_class($fn[0]) : (is_string($fn[0]) ? $fn[0] : '');
-                    if (stripos($cls, 'WC_') === 0 || stripos($cls, 'Woo') === 0 || stripos($cls, 'Automattic\\WooCommerce') === 0) $keep = true;
-                }
-                if (is_object($fn) && ($fn instanceof \Closure)) $keep = false;
-                if (!$keep) {
-                    unset($hooks[$key]);
-                }
-            }
-        }
-    }
-    error_log('[VS08] Yoast/save_post hooks retirés avant checkout');
-}, 1);
 
 // ============================================================
 // CHARGEMENT SÉCURISÉ DE LA CLÉ DUFFEL DEPUIS config.cfg
