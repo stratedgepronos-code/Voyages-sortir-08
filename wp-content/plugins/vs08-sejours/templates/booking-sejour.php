@@ -452,7 +452,9 @@ get_header();
         <div class="bks-recap-line"><span>🏨 Hôtel</span><span><?php echo esc_html($hotel_nom); ?></span></div>
         <div class="bks-recap-line"><span>🍽️ Pension</span><span><?php echo esc_html($pension); ?></span></div>
         <div class="bks-recap-line"><span>👥 Voyageurs</span><span><?php echo $nb_total; ?> pers.</span></div>
-        <div class="bks-recap-line" id="bks-recap-vol" style="display:none"><span>✈️ Vol sélectionné</span><span id="bks-recap-vol-val">—</span></div>
+        <div class="bks-recap-line" id="bks-recap-vol" style="display:none"><span>✈️ Vol</span><span id="bks-recap-vol-val">—</span></div>
+        <div class="bks-recap-line" id="bks-recap-vol-aller" style="display:none"><span style="padding-left:12px;font-size:11px">↗ Aller</span><span id="bks-recap-vol-aller-val" style="font-size:11px">—</span></div>
+        <div class="bks-recap-line" id="bks-recap-vol-retour" style="display:none"><span style="padding-left:12px;font-size:11px">↙ Retour</span><span id="bks-recap-vol-retour-val" style="font-size:11px">—</span></div>
         <div class="bks-recap-line" id="bks-recap-bag-soute" style="display:none"><span>🧳 Bagage soute</span><span id="bks-recap-bag-soute-val">—</span></div>
         <div class="bks-recap-line" id="bks-recap-bag-cabine" style="display:none"><span>🎒 Bagage cabine</span><span id="bks-recap-bag-cabine-val">—</span></div>
         <div class="bks-recap-line" id="bks-recap-ins" style="display:none"><span>🛡️ Assurance</span><span id="bks-recap-ins-val">—</span></div>
@@ -738,7 +740,11 @@ get_header();
         document.getElementById('bks-btn-step1').disabled=false;
         // Update recap
         var volRow=document.getElementById('bks-recap-vol');
-        if(volRow){volRow.style.display='flex';document.getElementById('bks-recap-vol-val').textContent=(f.airline_name||'Vol')+' · '+fmt(volPricePax)+'€/p'}
+        if(volRow){volRow.style.display='flex';document.getElementById('bks-recap-vol-val').textContent=(f.airline_name||'Vol')+' · '+(f.flight_number||'')}
+        var allerRow=document.getElementById('bks-recap-vol-aller');
+        if(allerRow){allerRow.style.display='flex';document.getElementById('bks-recap-vol-aller-val').textContent=(f.depart_time||'—')+' → '+(f.arrive_time||'—')}
+        var retourRow=document.getElementById('bks-recap-vol-retour');
+        if(retourRow&&f.retour_depart){retourRow.style.display='flex';document.getElementById('bks-recap-vol-retour-val').textContent=(f.retour_depart||'—')+' → '+(f.retour_arrive||'—')}
         bksUpdateTotal();
     };
 
