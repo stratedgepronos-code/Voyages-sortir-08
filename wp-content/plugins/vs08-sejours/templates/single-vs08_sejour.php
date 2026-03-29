@@ -181,7 +181,6 @@ $vs08s_payload = [
 .sv-field select,.sv-field input{width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:13px;font-family:'Outfit',sans-serif;color:#0f2424;background:#fafafa}
 .sv-field select:focus,.sv-field input:focus{border-color:#59b7b7;outline:none}
 .sv-field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.sv-vol-st{margin-top:6px;font-size:12px;font-family:'Outfit',sans-serif}
 .sv-price-loading{display:none;text-align:center;padding:16px;font-size:13px;color:#6b7280;font-family:'Outfit',sans-serif}
 .sv-price-box{background:#f9f6f0;border-radius:14px;padding:18px;text-align:center}
 .sv-price-from{font-size:11px;color:#6b7280;margin:0 0 4px;font-family:'Outfit',sans-serif}
@@ -615,10 +614,9 @@ $vs08s_payload = [
                 <select id="sv-aeroport" onchange="sjOnAeroportChange()">
                     <option value="">— Choisir un aéroport —</option>
                     <?php foreach ($aeroports as $a): $code = strtoupper(trim($a['code'] ?? '')); ?>
-                    <option value="<?php echo esc_attr($code); ?>"><?php echo esc_html($code . ' — ' . ($a['ville'] ?? '')); ?><?php if (floatval($a['supplement'] ?? 0) > 0): ?> (+<?php echo number_format($a['supplement'], 0); ?>€/pers)<?php endif; ?></option>
+                    <option value="<?php echo esc_attr($code); ?>"><?php echo esc_html($code . ' — ' . ($a['ville'] ?? '')); ?></option>
                     <?php endforeach; ?>
                 </select>
-                <div class="sv-vol-st" id="sv-vol-st"></div>
             </div>
 
             <!-- 2. DATE (après aéroport) -->
@@ -840,12 +838,7 @@ function sjSearchFlights(){
             sjState.vol_price=parseFloat(offers[0].price_per_pax||((offers[0].total_amount||0)/sjState.adults)||0);
             sjState.vol_offer_id=offers[0].offer_id||offers[0].id||'';
         }
-        var st=document.getElementById('sv-vol-st');
-        if(st){st.textContent=sjState.vol_price>0?'✅ Vols trouvés — '+sjFmt(sjState.vol_price)+'€/pers':'❌ Aucun vol disponible';st.style.color=sjState.vol_price>0?'#059669':'#dc2626'}
-    }).catch(function(err){
-        var st=document.getElementById('sv-vol-st');
-        if(st){st.textContent='❌ '+(err&&err.message?err.message:'Erreur vols');st.style.color='#dc2626'}
-    });
+    }).catch(function(err){});
 }
 
 function sjSearchHotel(){

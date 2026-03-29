@@ -313,7 +313,7 @@ get_header();
             <p class="bks-section-sub">Personnalisez vos bagages — les quantités sont ajustables.</p>
 
             <?php if ($prix_bag_soute > 0): ?>
-            <div class="bks-opt-row checked" id="bks-opt-soute">
+            <div class="bks-opt-row" id="bks-opt-soute">
                 <div class="bks-opt-icon">🧳</div>
                 <div class="bks-opt-body">
                     <div class="bks-opt-name">Bagage en soute</div>
@@ -323,7 +323,7 @@ get_header();
                 <div class="bks-opt-right">
                     <div class="bks-opt-qty">
                         <button type="button" onclick="bksBagChange('soute',-1)">−</button>
-                        <span id="bks-bag-soute-qty"><?php echo $nb_total; ?></span>
+                        <span id="bks-bag-soute-qty">0</span>
                         <button type="button" onclick="bksBagChange('soute',1)">+</button>
                     </div>
                 </div>
@@ -453,7 +453,7 @@ get_header();
         <div class="bks-recap-line"><span>🍽️ Pension</span><span><?php echo esc_html($pension); ?></span></div>
         <div class="bks-recap-line"><span>👥 Voyageurs</span><span><?php echo $nb_total; ?> pers.</span></div>
         <div class="bks-recap-line" id="bks-recap-vol" style="display:none"><span>✈️ Vol sélectionné</span><span id="bks-recap-vol-val">—</span></div>
-        <div class="bks-recap-line" id="bks-recap-bag-soute" style="display:<?php echo $prix_bag_soute > 0 ? 'flex' : 'none'; ?>"><span>🧳 Bagage soute</span><span id="bks-recap-bag-soute-val"><?php echo $nb_total; ?> × <?php echo number_format($prix_bag_soute, 0); ?>€</span></div>
+        <div class="bks-recap-line" id="bks-recap-bag-soute" style="display:none"><span>🧳 Bagage soute</span><span id="bks-recap-bag-soute-val">—</span></div>
         <div class="bks-recap-line" id="bks-recap-bag-cabine" style="display:none"><span>🎒 Bagage cabine</span><span id="bks-recap-bag-cabine-val">—</span></div>
         <div class="bks-recap-line" id="bks-recap-ins" style="display:none"><span>🛡️ Assurance</span><span id="bks-recap-ins-val">—</span></div>
         <div class="bks-recap-sep"></div>
@@ -701,7 +701,7 @@ get_header();
     }
 
     // ── Baggage ──
-    var bagSouteQty = BK.prix_bag_soute > 0 ? BK.nb_total : 0;
+    var bagSouteQty = 0;
     var bagCabineQty = 0;
 
     window.bksBagChange = function(type, delta) {
