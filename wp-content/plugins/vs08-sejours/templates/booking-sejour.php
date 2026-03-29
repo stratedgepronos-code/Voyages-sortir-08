@@ -152,6 +152,8 @@ get_header();
 .bks-field input,.bks-field select{width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:13px;font-family:'Outfit',sans-serif;box-sizing:border-box;transition:border-color .2s}
 .bks-field input:focus{border-color:#59b7b7;outline:none}
 .bks-field input.bks-err{border-color:#dc2626}
+.bks-ddn-trigger{padding:10px 14px;border:1.5px solid #e5e7eb;border-radius:10px;cursor:pointer;font-size:13px;font-family:'Outfit',sans-serif;color:#9ca3af;background:#fafafa;transition:border-color .2s}
+.bks-ddn-trigger:hover{border-color:#b7dfdf}
 .bks-nav{display:flex;gap:12px;justify-content:flex-end;margin-top:20px}
 .bks-btn-prev{background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif}
 .bks-btn-next{background:#e8724a;color:#fff;border:none;border-radius:12px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s}
@@ -399,7 +401,15 @@ get_header();
                     <div class="bks-field-row">
                         <div class="bks-field"><label>Prénom *</label><input type="text" name="voyageurs[<?php echo $vi; ?>][prenom]" class="bks-required" placeholder="Jean" value="<?php echo esc_attr($saved['prenom']??''); ?>"></div>
                         <div class="bks-field"><label>Nom *</label><input type="text" name="voyageurs[<?php echo $vi; ?>][nom]" class="bks-required" placeholder="Dupont" value="<?php echo esc_attr($saved['nom']??''); ?>"></div>
-                        <div class="bks-field"><label>Date de naissance *</label><input type="date" name="voyageurs[<?php echo $vi; ?>][ddn]" class="bks-required" value="<?php echo esc_attr($saved['ddn']??''); ?>"></div>
+                        <div class="bks-field"><label>Date de naissance *</label>
+                            <div id="bks-ddn-wrap-<?php echo $vi; ?>" style="position:relative">
+                                <div class="bks-ddn-trigger" id="bks-ddn-trigger-<?php echo $vi; ?>"
+                                     onclick="window.bksCalDDN_<?php echo $vi; ?> && window.bksCalDDN_<?php echo $vi; ?>.toggle()">
+                                    🎂 Date de naissance
+                                </div>
+                            </div>
+                            <input type="hidden" name="voyageurs[<?php echo $vi; ?>][ddn]" id="bks-ddn-<?php echo $vi; ?>" class="bks-required">
+                        </div>
                     </div>
                     <div class="bks-field-row" style="grid-template-columns:1fr 1fr">
                         <div class="bks-field"><label>N° Passeport <span style="color:#9ca3af;font-style:italic">(facultatif)</span></label><input type="text" name="voyageurs[<?php echo $vi; ?>][passeport]" placeholder="XX000000" value="<?php echo esc_attr($saved['passeport']??''); ?>"></div>
@@ -852,6 +862,42 @@ get_header();
     function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
     function fmt(n){return Number(n||0).toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:0})}
     function showError(m){var e=document.getElementById('bks-error');e.textContent=m;e.style.display='block';window.scrollTo({top:0,behavior:'smooth'})}
+
+    // ── DDN Calendars (VS08Calendar) ──
+    function initDDNCalendars() {
+        if (typeof VS08Calendar === 'undefined') return;
+        for (var i = 0; i < BK.nb_total; i++) {
+            (function(idx) {
+                var wrapId    = '#bks-ddn-wrap-' + idx;
+                var inputId   = '#bks-ddn-' + idx;
+                var triggerId = '#bks-ddn-trigger-' + idx;
+                if (!document.querySelector(wrapId)) return;
+                var cal = new VS08Calendar({
+                    el:        wrapId,
+                    mode:      'date',
+                    inline:    false,
+                    input:     inputId,
+                    title:     '🎂 Date de naissance',
+                    subtitle:  'Voyageur ' + (idx + 1),
+                    yearRange: [1920, new Date().getFullYear()],
+                    maxDate:   new Date(),
+                    onConfirm: function(dt) {
+                        var trigger = document.querySelector(triggerId);
+                        if (trigger && dt) {
+                            var d = new Date(dt);
+                            trigger.textContent = '🎂 ' + d.toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'});
+                            trigger.style.color = '#0f2424';
+                            trigger.style.fontWeight = '600';
+                            trigger.style.borderColor = '#3d9a9a';
+                        }
+                    }
+                });
+                window['bksCalDDN_' + idx] = cal;
+            })(i);
+        }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initDDNCalendars);
+    else initDDNCalendars();
 
     // ── Init ──
     searchFlights();
