@@ -100,19 +100,36 @@ get_header();
 .bks-combo-loading{text-align:center;padding:30px;font-family:'Outfit',sans-serif;font-size:14px;color:#6b7280}
 .bks-combo-spinner{width:28px;height:28px;border:3px solid #e5e7eb;border-top-color:#59b7b7;border-radius:50%;animation:bks-spin .7s linear infinite;margin:0 auto 10px}
 @keyframes bks-spin{to{transform:rotate(360deg)}}
-.bks-combo-card{border:2px solid #e5e7eb;border-radius:14px;padding:16px;margin-bottom:10px;cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif}
-.bks-combo-card:hover{border-color:#59b7b7;background:#fafffe}
-.bks-combo-card.selected{border-color:#59b7b7;background:#edf8f8;box-shadow:0 0 0 3px rgba(89,183,183,.15)}
-.bks-combo-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.bks-combo-airline{font-weight:700;font-size:14px;color:#0f2424}
-.bks-combo-delta{font-weight:700;font-size:13px;color:#b85c1a}
-.bks-combo-delta.ref{color:#2d8a5a;background:#e8f8f0;padding:3px 10px;border-radius:100px;font-size:11px}
-.bks-combo-legs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.bks-combo-leg{font-size:12px;color:#4a5568}
-.bks-combo-leg strong{color:#0f2424;font-size:13px}
-.bks-combo-badge{display:inline-block;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;margin-left:6px}
-.bks-combo-badge.direct{background:#e8f8f0;color:#2d8a5a}
-.bks-combo-badge.escale{background:#fef3c7;color:#92400e}
+.bks-combo-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:14px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:all .25s}
+.bks-combo-card:hover{border-color:#b7dfdf;box-shadow:0 2px 12px rgba(89,183,183,.08)}
+.bks-combo-card.selected{border-color:#59b7b7;background:#f0fafa;box-shadow:0 2px 16px rgba(89,183,183,.15)}
+.bks-combo-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.bks-combo-airline{display:flex;align-items:center;gap:10px}
+.bks-combo-airline img{width:28px;height:28px;border-radius:6px;object-fit:contain;background:#f5f5f5;padding:2px}
+.bks-combo-airline-name{font-size:14px;font-weight:700;color:#0f2424;font-family:'Outfit',sans-serif}
+.bks-combo-airline-sub{font-size:10px;color:#9ca3af;font-family:'Outfit',sans-serif}
+.bks-combo-price-delta{font-size:13px;font-weight:700;color:#b85c1a;font-family:'Outfit',sans-serif}
+.bks-combo-price-delta.ref{color:#2d8a5a;background:#e8f8f0;padding:3px 10px;border-radius:100px;font-size:11px}
+.bks-combo-price-sub{font-size:9px;color:#9ca3af;font-family:'Outfit',sans-serif;text-align:right}
+.bks-combo-check{width:22px;height:22px;border-radius:50%;background:#59b7b7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;opacity:0;transition:opacity .2s}
+.bks-combo-card.selected .bks-combo-check{opacity:1}
+.bks-combo-leg{display:flex;align-items:center;gap:10px;padding:6px 0;font-family:'Outfit',sans-serif;font-size:12px;color:#4a5568;flex-wrap:wrap}
+.bks-combo-leg-badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 8px;border-radius:6px;flex-shrink:0}
+.bks-combo-leg-badge.aller{background:#edf8f8;color:#3d9a9a}
+.bks-combo-leg-badge.retour{background:#fff3e8;color:#b85c1a}
+.bks-combo-leg-times{display:flex;align-items:center;gap:6px;flex:1}
+.bks-combo-leg-line{flex:1;display:flex;align-items:center;gap:4px}
+.bks-combo-leg-dash{flex:1;height:1px;background:#ddd}
+.bks-combo-leg-plane{font-size:12px;color:#59b7b7}
+.bks-combo-leg-meta{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
+.bks-combo-leg-dur{font-size:10px;color:#9ca3af;white-space:nowrap}
+.bks-combo-leg-num{font-size:10px;color:#bbb;white-space:nowrap}
+.bks-combo-conn{display:inline-block;padding:2px 8px;border-radius:100px;font-size:9px;font-weight:700}
+.bks-combo-conn.direct{background:#e8f8f0;color:#2d8a5a}
+.bks-combo-conn.escale{background:#fef3c7;color:#92400e}
+.bks-show-more{text-align:center;margin-top:8px}
+.bks-show-more button{background:none;border:1.5px solid #59b7b7;color:#59b7b7;border-radius:10px;padding:8px 20px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s}
+.bks-show-more button:hover{background:#59b7b7;color:#fff}
 .bks-no-flights{padding:20px;text-align:center;color:#dc2626;font-family:'Outfit',sans-serif}
 /* Voyageurs */
 .bks-chambre{background:#f9f6f0;border:1px solid #ede9e0;border-radius:14px;padding:20px;margin-bottom:16px}
@@ -313,38 +330,104 @@ get_header();
         });
     }
 
-    function renderCombos(flights){
-        var list=document.getElementById('bks-combo-list');
-        var shown=flights.slice(0,6);
-        var html='';
-        shown.forEach(function(f,idx){
-            var airline = f.airline_name || '';
-            var isRef = f.is_reference || idx===0;
-            var delta = parseFloat(f.delta_per_pax || 0);
+    var SHOW_INITIAL = 4;
 
-            // Aller : depart_time, arrive_time, flight_number
-            var allerDep = f.depart_time || '';
-            var allerArr = f.arrive_time || '';
-            var allerFlight = f.flight_number || '';
-
-            // Retour : retour_depart, retour_arrive, retour_flight
-            var retourDep = f.retour_depart || '';
-            var retourArr = f.retour_arrive || '';
-            var retourFlight = f.retour_flight || '';
-
-            var connBadge = f.has_connections ? '<span class="bks-combo-badge escale">1 escale</span>' : '<span class="bks-combo-badge direct">Direct</span>';
-            var priceHtml = isRef ? '<span class="bks-combo-delta ref">Meilleur prix</span>' : '<span class="bks-combo-delta">+' + fmt(delta) + ' €/pers</span>';
-
-            html += '<div class="bks-combo-card' + (idx===0?' selected':'') + '" id="bks-combo-' + idx + '" onclick="bksSelectCombo(' + idx + ')">'
-                + '<div class="bks-combo-top"><span class="bks-combo-airline">' + (airline||'Vol') + (allerFlight ? ' · '+allerFlight : '') + ' ' + connBadge + '</span>' + priceHtml + '</div>'
-                + '<div class="bks-combo-legs">'
-                + '<div class="bks-combo-leg">Aller: <strong>' + (allerDep||'—') + ' → ' + (allerArr||'—') + '</strong></div>'
-                + '<div class="bks-combo-leg">Retour: <strong>' + (retourDep||'—') + ' → ' + (retourArr||'—') + '</strong>' + (retourFlight ? ' · '+retourFlight : '') + '</div>'
-                + '</div></div>';
-        });
-        if(flights.length > 6) html += '<div style="text-align:center;font-size:12px;color:#6b7280;font-family:Outfit,sans-serif;padding:8px">+' + (flights.length-6) + ' autres vols disponibles</div>';
-        list.innerHTML = html;
+    function fmtDuration(min) {
+        if (!min) return '';
+        var h = Math.floor(min/60), m = min%60;
+        return h > 0 ? h+'h'+String(m).padStart(2,'0') : m+'min';
     }
+
+    function renderCombos(flights) {
+        var list = document.getElementById('bks-combo-list');
+        list.innerHTML = '';
+
+        flights.forEach(function(f, idx) {
+            var airline = f.airline_name || '';
+            var iata = f.airline_iata || '';
+            var isRef = f.is_reference || idx === 0;
+            var delta = parseFloat(f.delta_per_pax || 0);
+            var conn = f.has_connections;
+
+            // Price badge
+            var priceHtml = isRef
+                ? '<div class="bks-combo-price-delta ref">Meilleur prix</div>'
+                : '<div class="bks-combo-price-delta">+' + fmt(delta) + ' €</div><div class="bks-combo-price-sub">/pers. aller-retour</div>';
+
+            // Connection badge
+            var connHtml = conn
+                ? '<span class="bks-combo-conn escale">1 escale</span>'
+                : '<span class="bks-combo-conn direct">Direct</span>';
+
+            var html = '<div class="bks-combo-header">'
+                + '<div class="bks-combo-airline">'
+                + '<img src="https://images.kiwi.com/airlines/64/' + (iata||'XX') + '.png" alt="" onerror="this.style.display=\'none\'">'
+                + '<div><div class="bks-combo-airline-name">' + (airline||'Vol') + '</div>'
+                + '<div class="bks-combo-airline-sub">' + iata + '</div></div>'
+                + '</div>'
+                + '<div style="display:flex;align-items:center;gap:8px">'
+                + '<div>' + priceHtml + '</div>'
+                + '<div class="bks-combo-check">✓</div>'
+                + '</div></div>';
+
+            // ── LEG ALLER ──
+            html += '<div class="bks-combo-leg">'
+                + '<div class="bks-combo-leg-badge aller">ALLER</div>'
+                + '<div class="bks-combo-leg-times">'
+                + '<div>' + (f.depart_time||'—') + '</div>'
+                + '<div class="bks-combo-leg-line"><div class="bks-combo-leg-dash"></div><div class="bks-combo-leg-plane">✈</div><div class="bks-combo-leg-dash"></div></div>'
+                + '<div>' + (f.arrive_time||'—') + '</div>'
+                + '</div>'
+                + '<div class="bks-combo-leg-meta">'
+                + connHtml
+                + '<span class="bks-combo-leg-dur">' + fmtDuration(f.duration_min) + '</span>'
+                + '<span class="bks-combo-leg-num">' + (f.flight_number||'') + '</span>'
+                + '</div></div>';
+
+            // ── LEG RETOUR ──
+            if (f.retour_depart) {
+                var retConn = f.has_connections
+                    ? '<span class="bks-combo-conn escale">1 escale</span>'
+                    : '<span class="bks-combo-conn direct">Direct</span>';
+
+                html += '<div class="bks-combo-leg">'
+                    + '<div class="bks-combo-leg-badge retour">RETOUR</div>'
+                    + '<div class="bks-combo-leg-times">'
+                    + '<div>' + (f.retour_depart||'—') + '</div>'
+                    + '<div class="bks-combo-leg-line"><div class="bks-combo-leg-dash"></div><div class="bks-combo-leg-plane">✈</div><div class="bks-combo-leg-dash"></div></div>'
+                    + '<div>' + (f.retour_arrive||'—') + '</div>'
+                    + '</div>'
+                    + '<div class="bks-combo-leg-meta">'
+                    + retConn
+                    + '<span class="bks-combo-leg-dur">' + fmtDuration(f.retour_duration) + '</span>'
+                    + '<span class="bks-combo-leg-num">' + (f.retour_flight||'') + '</span>'
+                    + '</div></div>';
+            }
+
+            var card = document.createElement('div');
+            card.className = 'bks-combo-card' + (idx === 0 ? ' selected' : '');
+            card.id = 'bks-combo-' + idx;
+            card.style.display = idx < SHOW_INITIAL ? '' : 'none';
+            card.onclick = (function(i) { return function() { bksSelectCombo(i); }; })(idx);
+            card.innerHTML = html;
+            list.appendChild(card);
+        });
+
+        // Show more button
+        if (flights.length > SHOW_INITIAL) {
+            var wrap = document.createElement('div');
+            wrap.className = 'bks-show-more';
+            wrap.id = 'bks-show-more';
+            wrap.innerHTML = '<button onclick="bksShowAllCombos()">Voir les ' + (flights.length - SHOW_INITIAL) + ' autres vols ↓</button>';
+            list.appendChild(wrap);
+        }
+    }
+
+    window.bksShowAllCombos = function() {
+        document.querySelectorAll('.bks-combo-card').forEach(function(c) { c.style.display = ''; });
+        var btn = document.getElementById('bks-show-more');
+        if (btn) btn.style.display = 'none';
+    };
 
     window.bksSelectCombo=function(idx){
         var f=comboData[idx]; if(!f) return;
