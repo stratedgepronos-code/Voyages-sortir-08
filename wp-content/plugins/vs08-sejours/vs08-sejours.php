@@ -219,10 +219,6 @@ add_action('woocommerce_order_status_changed', function($order_id, $old_status, 
         VS08S_Emails::dispatch($order_id);
     }
 }, 10, 3);
-add_action('woocommerce_thankyou', function($order_id) {
-    if (!$order_id) return;
-    VS08S_Emails::dispatch($order_id);
-}, 1);
 
 // ── Intégrer dans la recherche globale ──
 add_filter('vs08v_search_post_types', function($types) {
@@ -241,24 +237,25 @@ add_filter('vs08v_dossier_extra_order_ids', function($ids) {
     return array_unique(array_merge($ids, $sejour_orders));
 });
 
-// ── Copier _vs08s_booking_data du produit vers la commande au checkout ──
-add_action('woocommerce_checkout_update_order_meta', function($order_id) {
-    try {
-        $order = wc_get_order($order_id);
-        if (!$order) return;
-        if ($order->get_meta('_vs08s_booking_data')) return; // déjà copié
-        foreach ($order->get_items() as $item) {
-            $pid = $item->get_product_id();
-            if (!$pid) continue;
-            $data = get_post_meta($pid, '_vs08s_booking_data', true);
-            if (!empty($data) && is_array($data)) {
-                update_post_meta($order_id, '_vs08s_booking_data', $data);
-                update_post_meta($order_id, '_vs08v_booking_data', $data);
-                error_log('[VS08S] Booking data copié sur commande VS08-' . $order_id);
-                break;
-            }
+// ── Copier _vs08s_booking_data — PAS pendant le checkout (crash mémoire) ──
+// Le hook golf (class-woo.php) copie déjà _vs08v_booking_data pendant le checkout.
+// On copie _vs08s_booking_data uniquement sur la page merci ou via cron.
+add_action('woocommerce_thankyou', function($order_id) {
+    if (!$order_id) return;
+    $existing = get_post_meta($order_id, '_vs08s_booking_data', true);
+    if (!empty($existing)) return;
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+    foreach ($order->get_items() as $item) {
+        $pid = $item->get_product_id();
+        if (!$pid) continue;
+        $data = get_post_meta($pid, '_vs08s_booking_data', true);
+        if (!empty($data) && is_array($data)) {
+            update_post_meta($order_id, '_vs08s_booking_data', $data);
+            error_log('[VS08S] Booking data copié sur commande VS08-' . $order_id . ' (thankyou)');
+            break;
         }
-    } catch (\Throwable $e) {
-        error_log('[VS08S] checkout_update_order_meta error: ' . $e->getMessage());
     }
-}, 20);
+    // Dispatch emails séjour maintenant (page merci, pas checkout AJAX)
+    VS08S_Emails::dispatch($order_id);
+}, 5);
