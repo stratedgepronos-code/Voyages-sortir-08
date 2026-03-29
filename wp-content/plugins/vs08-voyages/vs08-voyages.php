@@ -34,18 +34,22 @@ if (!empty($_GET['wc-ajax']) && $_GET['wc-ajax'] === 'checkout') {
         $peak = memory_get_peak_usage(true);
         $current = memory_get_usage(true);
         $limit = ini_get('memory_limit');
+        $hpos = 'unknown';
+        if (function_exists('wc_get_container')) {
+            try {
+                $hpos = get_option('woocommerce_custom_orders_table_enabled', 'no');
+            } catch (\Throwable $ex) { $hpos = 'err'; }
+        }
         error_log(sprintf(
-            '[VS08 CHECKOUT MEM] peak=%s current=%s limit=%s plugins=%s',
-            size_format($peak), size_format($current), $limit,
-            implode(',', array_map('basename', wp_get_active_and_valid_plugins()))
+            '[VS08 CHECKOUT MEM] peak=%s current=%s limit=%s hpos=%s',
+            size_format($peak), size_format($current), $limit, $hpos
         ));
         $e = error_get_last();
         if ($e && in_array($e['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE])) {
-            $msg = sprintf(
-                '[VS08 FATAL CHECKOUT] %s in %s:%d (peak_mem=%s)',
+            error_log(sprintf(
+                '[VS08 FATAL CHECKOUT] %s in %s:%d (peak=%s)',
                 $e['message'], $e['file'], $e['line'], size_format($peak)
-            );
-            error_log($msg);
+            ));
         }
     });
 
