@@ -3,70 +3,47 @@ if (!defined('ABSPATH')) exit;
 
 class VS08S_Booking {
 
-    public static function register() {
-        // Le booking est géré via REST API (vs08s/v1/booking)
-    }
+    public static function register() {}
 
     /**
-     * Crée une commande WooCommerce pour un séjour.
+     * Crée un produit WooCommerce temporaire + cart token (même flow que golf/circuits).
+     * PAS de $order->save() → évite le crash Yoast SEO 2 Go.
      */
     public static function create_order($sejour_id, $params) {
-        if (!function_exists('wc_create_order')) {
+        if (!class_exists('WC_Product_Simple')) {
             return new \WP_Error('no_wc', 'WooCommerce non disponible.', ['status' => 500]);
         }
 
-        $m = VS08S_Meta::get($sejour_id);
+        $m     = VS08S_Meta::get($sejour_id);
         $titre = get_the_title($sejour_id);
-
-        // Recalculer le devis côté serveur
         $devis = VS08S_Calculator::compute($sejour_id, $params);
 
-        $total = $devis['total'];
-        $acompte = $devis['payer_tout'] ? $total : $devis['acompte'];
+        $total   = floatval($devis['total']);
+        $acompte = $devis['payer_tout'] ? $total : floatval($devis['acompte']);
 
-        // Facturation
-        $fact = $params['facturation'] ?? [];
-        if (!is_array($fact)) $fact = [];
-        $voyageurs = $params['voyageurs'] ?? [];
-        if (!is_array($voyageurs)) $voyageurs = [];
+        $fact      = is_array($params['facturation'] ?? null) ? $params['facturation'] : [];
+        $voyageurs = is_array($params['voyageurs'] ?? null)   ? $params['voyageurs']   : [];
 
-        error_log('[VS08S Booking] Création commande séjour ' . $sejour_id . ' — total=' . $total . ' acompte=' . $acompte . ' client=' . ($fact['prenom'] ?? '') . ' ' . ($fact['nom'] ?? ''));
+        $acompte_pct = floatval($m['acompte_pct'] ?? 30);
+        $label_type  = $devis['payer_tout'] ? 'Paiement intégral' : 'Acompte ' . $acompte_pct . '%';
 
-        // Créer le produit WooCommerce temporaire
-        $product = new \WC_Product_Simple();
-        $product->set_name('Séjour ' . $titre);
-        $product->set_regular_price($acompte);
-        $product->set_catalog_visibility('hidden');
-        $product->set_virtual(true);
-        $product->save();
-        $product_id = $product->get_id();
+        $product_name = sprintf(
+            'Réservation — %s — %s (%s — %d pers.)',
+            $titre,
+            date('d/m/Y', strtotime($params['date_depart'] ?? 'now')),
+            $label_type,
+            intval($params['nb_adultes'] ?? 2)
+        );
 
-        // Créer la commande
-        $order = wc_create_order();
-        $order->add_product($product, 1);
+        error_log('[VS08S Booking] Début: ' . $product_name . ' total=' . $total . ' acompte=' . $acompte);
 
-        // Billing
-        $order->set_billing_first_name(sanitize_text_field($fact['prenom'] ?? ''));
-        $order->set_billing_last_name(sanitize_text_field($fact['nom'] ?? ''));
-        $order->set_billing_email(sanitize_email($fact['email'] ?? ''));
-        $order->set_billing_phone(sanitize_text_field($fact['tel'] ?? ''));
-        $order->set_billing_address_1(sanitize_text_field($fact['adresse'] ?? ''));
-        $order->set_billing_postcode(sanitize_text_field($fact['cp'] ?? ''));
-        $order->set_billing_city(sanitize_text_field($fact['ville'] ?? ''));
-        $order->set_billing_country('FR');
-
-        if (is_user_logged_in()) {
-            $order->set_customer_id(get_current_user_id());
-        }
-
-        $order->set_total($acompte);
-
-        // Sauvegarder les données de réservation
+        // Booking data (sauvé sur le produit, copié sur la commande au checkout)
         $booking_data = [
             'type'           => 'sejour',
             'sejour_id'      => $sejour_id,
             'sejour_titre'   => $titre,
             'voyage_titre'   => $titre,
+            'voyage_id'      => $sejour_id,
             'params'         => $params,
             'devis'          => $devis,
             'facturation'    => $fact,
@@ -74,26 +51,79 @@ class VS08S_Booking {
             'total'          => $total,
             'acompte'        => $acompte,
             'payer_tout'     => $devis['payer_tout'],
-            'assurance'      => $devis['assurance'],
+            'assurance'      => $devis['assurance'] ?? 0,
             'options'        => [],
         ];
 
-        $order->update_meta_data('_vs08s_booking_data', $booking_data);
-        $order->update_meta_data('_vs08v_booking_data', $booking_data);
-        $order->set_status('pending');
-        $order->save();
+        // Éviter les doublons
+        $hash = md5(serialize($booking_data));
+        $existing = get_posts(['post_type' => 'product', 'meta_key' => '_vs08v_booking_hash', 'meta_value' => $hash, 'posts_per_page' => 1]);
+        if ($existing) {
+            $product_id = $existing[0]->ID;
+        } else {
+            // Créer le produit WooCommerce temporaire
+            $product = new \WC_Product_Simple();
+            $product->set_name($product_name);
+            $product->set_price($acompte);
+            $product->set_regular_price($acompte);
+            $product->set_status('private');
+            $product->set_virtual(true);
+            $product->set_sold_individually(true);
+            $product->set_catalog_visibility('hidden');
+            $product_id = $product->save();
 
-        $order_id = $order->get_id();
-        error_log('[VS08S Booking] Commande VS08-' . $order_id . ' créée OK');
+            // Stocker les données sur le produit (pas sur l'order — pas encore créée)
+            update_post_meta($product_id, '_vs08v_booking_data', $booking_data);
+            update_post_meta($product_id, '_vs08s_booking_data', $booking_data);
+            update_post_meta($product_id, '_vs08v_booking_hash', $hash);
+            update_post_meta($product_id, '_vs08v_voyage_id', $sejour_id);
+            update_post_meta($product_id, '_vs08v_total_voyage', $total);
+            update_post_meta($product_id, '_vs08v_acompte', $acompte);
+            update_post_meta($product_id, '_vs08v_payer_tout', $devis['payer_tout']);
+        }
 
-        // Nettoyer le produit temporaire
-        wp_delete_post($product_id, true);
+        error_log('[VS08S Booking] Produit #' . $product_id . ' créé');
 
-        // Checkout URL
-        $checkout_url = $order->get_checkout_payment_url();
+        // Cart token (même mécanisme que golf)
+        $cart_token = wp_generate_password(32, false);
+        set_transient('vs08_cart_' . $cart_token, [
+            'product_id'   => $product_id,
+            'payment_mode' => 'card',
+        ], 900);
+
+        // Tenter l'ajout au panier WooCommerce
+        try {
+            if (function_exists('WC') && WC()) {
+                if (is_null(WC()->session) && method_exists(WC(), 'initialize_session')) WC()->initialize_session();
+                if (is_null(WC()->cart)) {
+                    if (function_exists('wc_load_cart')) wc_load_cart();
+                    elseif (method_exists(WC(), 'initialize_cart')) WC()->initialize_cart();
+                }
+                if (WC()->cart) {
+                    WC()->cart->empty_cart();
+                    WC()->cart->add_to_cart($product_id, 1);
+                    if (WC()->session) {
+                        if (!WC()->session->has_session()) WC()->session->set_customer_session_cookie(true);
+                        WC()->cart->calculate_totals();
+                        WC()->cart->set_session();
+                        WC()->cart->maybe_set_cart_cookies();
+                        if (method_exists(WC()->session, 'save_data')) WC()->session->save_data();
+                        do_action('woocommerce_set_cart_cookies', true);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            error_log('[VS08S Booking] Cart add fallback: ' . $e->getMessage());
+        }
+
+        $checkout_url = wc_get_checkout_url();
+        if (strpos($checkout_url, '?') !== false) $checkout_url .= '&vs08_cart=' . $cart_token;
+        else $checkout_url .= '?vs08_cart=' . $cart_token;
+
+        error_log('[VS08S Booking] OK → redirect ' . $checkout_url);
 
         return [
-            'order_id'     => $order_id,
+            'order_id'     => 0,
             'checkout_url' => $checkout_url,
             'total'        => $total,
             'acompte'      => $acompte,

@@ -238,3 +238,25 @@ add_filter('vs08v_dossier_extra_order_ids', function($ids) {
     ]);
     return array_unique(array_merge($ids, $sejour_orders));
 });
+
+// ── Copier _vs08s_booking_data du produit vers la commande au checkout ──
+add_action('woocommerce_checkout_update_order_meta', function($order_id) {
+    try {
+        $order = wc_get_order($order_id);
+        if (!$order) return;
+        if ($order->get_meta('_vs08s_booking_data')) return; // déjà copié
+        foreach ($order->get_items() as $item) {
+            $pid = $item->get_product_id();
+            if (!$pid) continue;
+            $data = get_post_meta($pid, '_vs08s_booking_data', true);
+            if (!empty($data) && is_array($data)) {
+                update_post_meta($order_id, '_vs08s_booking_data', $data);
+                update_post_meta($order_id, '_vs08v_booking_data', $data);
+                error_log('[VS08S] Booking data copié sur commande VS08-' . $order_id);
+                break;
+            }
+        }
+    } catch (\Throwable $e) {
+        error_log('[VS08S] checkout_update_order_meta error: ' . $e->getMessage());
+    }
+}, 20);
