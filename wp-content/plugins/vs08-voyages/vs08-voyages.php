@@ -18,10 +18,17 @@ define('VS08V_VER',  '2.0.0');
 
 // ============================================================
 // LOG ERREURS FATALES PENDANT LE CHECKOUT (pour debug 500)
-// + Désactiver les emails WC par défaut (trop de RAM)
+// + Désactiver WC emails + WC Admin (trop de RAM)
 // ============================================================
 if (!empty($_GET['wc-ajax']) && $_GET['wc-ajax'] === 'checkout') {
     @ini_set('memory_limit', '768M');
+
+    // Désactiver WooCommerce Admin (Analytics) — consomme 200Mo+
+    add_filter('woocommerce_admin_disabled', '__return_true');
+    // Désactiver l'Action Scheduler inline pendant le checkout
+    add_filter('action_scheduler_queue_runner_time_limit', function() { return 0; });
+    add_filter('action_scheduler_queue_runner_batch_size', function() { return 0; });
+
     register_shutdown_function(function() {
         $e = error_get_last();
         if ($e && in_array($e['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE])) {
@@ -31,15 +38,15 @@ if (!empty($_GET['wc-ajax']) && $_GET['wc-ajax'] === 'checkout') {
             file_put_contents($log_path, date('Y-m-d H:i:s') . ' ' . $msg . "\n", FILE_APPEND);
         }
     });
+
     // Désactiver TOUS les emails WooCommerce pendant le checkout
-    // Nos propres emails (VS08V/VS08S_Emails) s'envoient via dispatch()
     add_filter('woocommerce_email_enabled_new_order', '__return_false');
     add_filter('woocommerce_email_enabled_customer_processing_order', '__return_false');
     add_filter('woocommerce_email_enabled_customer_on_hold_order', '__return_false');
     add_filter('woocommerce_email_enabled_customer_completed_order', '__return_false');
-    // Différer notre propre dispatch APRÈS la réponse au navigateur
+
+    // Différer nos propres emails via cron (pas pendant checkout)
     add_action('woocommerce_payment_complete', function($order_id) {
-        // Marquer pour dispatch via wp_cron immédiat
         wp_schedule_single_event(time(), 'vs08_deferred_email_dispatch', [$order_id]);
     }, 1);
     add_action('woocommerce_order_status_changed', function($order_id) {
