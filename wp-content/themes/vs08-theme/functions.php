@@ -40,7 +40,10 @@ add_action('after_setup_theme', function() {
    STYLES & SCRIPTS
 ============================================================ */
 add_action('wp_enqueue_scripts', function() {
-    wp_enqueue_style('vs08-fonts', 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700&display=swap', [], null);
+    // Évite les erreurs réseau récurrentes sur fonts.gstatic (ERR_CONNECTION_CLOSED).
+    // On garde le handle pour les dépendances CSS existantes, sans appel externe.
+    wp_register_style('vs08-fonts', false, [], '1.0');
+    wp_enqueue_style('vs08-fonts');
     wp_enqueue_style('vs08-main', get_template_directory_uri() . '/assets/css/main.css', ['vs08-fonts'], '1.3');
     wp_enqueue_style('vs08-header-mega', get_template_directory_uri() . '/assets/css/header-mega.css', ['vs08-main'], '1.3');
     wp_enqueue_style('vs08-footer-terminal', get_template_directory_uri() . '/assets/css/footer-terminal.css', ['vs08-main'], '1.0');
