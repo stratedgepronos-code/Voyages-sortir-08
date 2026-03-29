@@ -143,12 +143,16 @@ class VS08V_Checkout {
         // Lire les booking_data depuis le produit
         $booking = get_post_meta($product_id, '_vs08v_booking_data', true);
         $type = (is_array($booking) && !empty($booking['type'])) ? $booking['type'] : 'golf';
+        error_log('[VS08 Checkout] product_id=' . $product_id . ' type=' . $type . ' booking_keys=' . (is_array($booking) ? implode(',', array_keys($booking)) : 'NOT_ARRAY'));
 
         // Séjour : recap rendu en temps réel depuis VS08S_Meta
         if ($type === 'sejour') {
+            error_log('[VS08 Checkout] → render_sejour_recap()');
             self::render_sejour_recap($booking);
             return;
         }
+
+        error_log('[VS08 Checkout] → golf/circuit path, desc from post_content');
 
         // Golf / Circuit : utiliser la description produit
         $desc = get_post_field('post_content', $product_id);

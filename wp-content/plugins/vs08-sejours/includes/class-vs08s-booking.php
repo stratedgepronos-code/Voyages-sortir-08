@@ -72,22 +72,24 @@ class VS08S_Booking {
             $product->set_catalog_visibility('hidden');
             $product->set_short_description($product_name);
             $product_id = $product->save();
-
-            // Stocker les données sur le produit
-            update_post_meta($product_id, '_vs08v_booking_data', $booking_data);
-            update_post_meta($product_id, '_vs08s_booking_data', $booking_data);
             update_post_meta($product_id, '_vs08v_booking_hash', $hash);
-            update_post_meta($product_id, '_vs08v_voyage_id', $sejour_id);
-            update_post_meta($product_id, '_vs08v_total_voyage', $total);
-            update_post_meta($product_id, '_vs08v_acompte', $acompte);
-            update_post_meta($product_id, '_vs08v_payer_tout', $devis['payer_tout']);
         }
 
-        // Toujours mettre à jour la description (séjour, pas golf)
+        // TOUJOURS mettre à jour les données + description (neuf OU existant)
+        update_post_meta($product_id, '_vs08v_booking_data', $booking_data);
+        update_post_meta($product_id, '_vs08s_booking_data', $booking_data);
+        update_post_meta($product_id, '_vs08v_voyage_id', $sejour_id);
+        update_post_meta($product_id, '_vs08v_total_voyage', $total);
+        update_post_meta($product_id, '_vs08v_acompte', $acompte);
+        update_post_meta($product_id, '_vs08v_payer_tout', $devis['payer_tout']);
+
         $desc = self::build_description($sejour_id, $params, $devis, $m, $titre, $total, $acompte, $acompte_pct);
         wp_update_post(['ID' => $product_id, 'post_content' => $desc]);
+        // Vider le cache WC produit
+        clean_post_cache($product_id);
+        wc_delete_product_transients($product_id);
 
-        error_log('[VS08S Booking] Produit #' . $product_id . ' créé');
+        error_log('[VS08S Booking] Produit #' . $product_id . ' — type=sejour — booking_data mis à jour');
 
         // Payment mode (card ou agency)
         $payment_mode = ($params['vs08_payment_mode'] ?? 'card') === 'agency' ? 'agency' : 'card';
