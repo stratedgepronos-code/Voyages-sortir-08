@@ -37,7 +37,7 @@ class VS08S_Booking {
             intval($params['nb_adultes'] ?? 2)
         );
 
-        // Booking data (sauvé sur le produit, copié sur la commande au checkout)
+        // Booking data complet (conservé hors checkout pour éviter l'explosion mémoire HPOS).
         $booking_data = [
             'type'           => 'sejour',
             'sejour_id'      => $sejour_id,
@@ -53,6 +53,42 @@ class VS08S_Booking {
             'payer_tout'     => $devis['payer_tout'],
             'assurance'      => $devis['assurance'] ?? 0,
             'options'        => [],
+        ];
+
+        // Payload léger utilisé pendant le checkout Woo (récap + totaux uniquement).
+        $booking_data_light = [
+            'type'         => 'sejour',
+            'sejour_id'    => $sejour_id,
+            'sejour_titre' => $titre,
+            'voyage_titre' => $titre,
+            'voyage_id'    => $sejour_id,
+            'params'       => [
+                'date_depart'      => (string) ($params['date_depart'] ?? ''),
+                'aeroport'         => strtoupper((string) ($params['aeroport'] ?? '')),
+                'nb_adultes'       => intval($params['nb_adultes'] ?? 0),
+                'nb_chambres'      => intval($params['nb_chambres'] ?? 0),
+                'vol_aller_num'    => (string) ($params['vol_aller_num'] ?? ''),
+                'vol_aller_cie'    => (string) ($params['vol_aller_cie'] ?? ''),
+                'vol_aller_depart' => (string) ($params['vol_aller_depart'] ?? ''),
+                'vol_aller_arrivee'=> (string) ($params['vol_aller_arrivee'] ?? ''),
+                'vol_retour_num'   => (string) ($params['vol_retour_num'] ?? ''),
+                'vol_retour_depart'=> (string) ($params['vol_retour_depart'] ?? ''),
+                'vol_retour_arrivee'=> (string) ($params['vol_retour_arrivee'] ?? ''),
+                'hotel_board'      => (string) ($params['hotel_board'] ?? 'AI'),
+            ],
+            'devis'        => [
+                'total'            => $total,
+                'acompte'          => $acompte,
+                'payer_tout'       => !empty($devis['payer_tout']),
+                'prix_par_personne'=> floatval($devis['prix_par_personne'] ?? 0),
+                'nb_total'         => intval($devis['nb_total'] ?? 0),
+                'nb_chambres'      => intval($devis['nb_chambres'] ?? 0),
+            ],
+            'total'        => $total,
+            'acompte'      => $acompte,
+            'payer_tout'   => !empty($devis['payer_tout']),
+            'assurance'    => floatval($devis['assurance'] ?? 0),
+            'options'      => [],
         ];
 
         // Éviter les doublons
@@ -94,8 +130,13 @@ class VS08S_Booking {
         ];
 
         // TOUJOURS mettre à jour les données + description (neuf OU existant)
+        // Conserver le dossier complet en transient (hors parcours checkout HPOS).
+        $booking_token = wp_generate_password(24, false);
+        set_transient('vs08s_booking_full_' . $booking_token, $booking_data, DAY_IN_SECONDS);
+
         update_post_meta($product_id, '_vs08v_booking_data', $booking_data_legacy);
-        update_post_meta($product_id, '_vs08s_booking_data', $booking_data);
+        update_post_meta($product_id, '_vs08s_booking_data', $booking_data_light);
+        update_post_meta($product_id, '_vs08s_booking_token', $booking_token);
         update_post_meta($product_id, '_vs08v_voyage_id', $sejour_id);
         update_post_meta($product_id, '_vs08v_total_voyage', $total);
         update_post_meta($product_id, '_vs08v_acompte', $acompte);

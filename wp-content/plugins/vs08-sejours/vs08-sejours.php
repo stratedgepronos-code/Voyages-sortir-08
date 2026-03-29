@@ -249,7 +249,17 @@ add_action('woocommerce_thankyou', function($order_id) {
     foreach ($order->get_items() as $item) {
         $pid = $item->get_product_id();
         if (!$pid) continue;
-        $data = get_post_meta($pid, '_vs08s_booking_data', true);
+        $data = [];
+        $token = get_post_meta($pid, '_vs08s_booking_token', true);
+        if (!empty($token)) {
+            $full = get_transient('vs08s_booking_full_' . $token);
+            if (!empty($full) && is_array($full)) {
+                $data = $full;
+            }
+        }
+        if (empty($data) || !is_array($data)) {
+            $data = get_post_meta($pid, '_vs08s_booking_data', true);
+        }
         if (!empty($data) && is_array($data)) {
             update_post_meta($order_id, '_vs08s_booking_data', $data);
             error_log('[VS08S] Booking data copié sur commande VS08-' . $order_id . ' (thankyou)');
