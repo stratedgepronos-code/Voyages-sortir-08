@@ -728,7 +728,13 @@ add_action('vs08_checkout_recap', function() {
 
     /* ── Nombre de nuits ── */
     $nights = 0;
-    if ($vid) $nights = (int) get_post_meta($vid, '_vs08v_nights', true);
+    if ($vid) {
+        $nights = (int) get_post_meta($vid, '_vs08v_nights', true);
+        if (!$nights) {
+            $sm_nights = get_post_meta($vid, '_vs08s_meta', true);
+            if (is_array($sm_nights)) $nights = intval($sm_nights['duree'] ?? 0);
+        }
+    }
     if (!$nights && !empty($devis['lines'])) {
         foreach ($devis['lines'] as $l) {
             if (preg_match('/(\d+)\s*nuits/', $l['detail'] ?? '', $m)) { $nights = (int)$m[1]; break; }
@@ -795,6 +801,7 @@ add_action('vs08_checkout_recap', function() {
     /* ── Type de réservation (golf/sejour/circuit) ── */
     $booking_type = $booking_data['type'] ?? 'golf';
     $is_sejour = ($booking_type === 'sejour');
+    error_log('[VS08 Theme Recap] product_id=' . $product_id . ' type=' . $booking_type . ' is_sejour=' . ($is_sejour ? 'TRUE' : 'FALSE') . ' vid=' . $vid);
 
     /* ── Green fees (golf uniquement) ── */
     $gf = 0;
@@ -807,11 +814,14 @@ add_action('vs08_checkout_recap', function() {
     /* ── Transferts (séjour uniquement) ── */
     $transfert_label = '';
     if ($is_sejour && $vid) {
-        $sm = get_post_meta($vid, 'vs08s_data', true);
+        $sm = get_post_meta($vid, '_vs08s_meta', true);
         if (is_array($sm)) {
             $tt = $sm['transfert_type'] ?? '';
-            $transfert_map = ['groupes'=>'Transferts groupés','prives'=>'Transferts privés','inclus'=>'Inclus dans l\'hôtel'];
-            $transfert_label = $transfert_map[$tt] ?? '';
+            if (empty($tt)) $tt = 'groupes';
+            $transfert_map = ['groupes'=>'Transferts groupés','prives'=>'Transferts privés','inclus'=>'Inclus dans l\'hôtel','aucun'=>'Non inclus'];
+            $transfert_label = $transfert_map[$tt] ?? 'Transferts groupés';
+        } else {
+            $transfert_label = 'Transferts groupés';
         }
     }
 
@@ -865,10 +875,10 @@ add_action('vs08_checkout_recap', function() {
     $hotel_nom = '';
     $hotel_etoiles = '';
     if ($vid) {
-        // Essayer vs08v_data (golf) puis vs08s_data (séjour)
+        // Essayer vs08v_data (golf) puis _vs08s_meta (séjour)
         $vm = get_post_meta($vid, 'vs08v_data', true);
         if (!is_array($vm) || empty($vm['hotel_nom'])) {
-            $vm = get_post_meta($vid, 'vs08s_data', true);
+            $vm = get_post_meta($vid, '_vs08s_meta', true);
         }
         if (is_array($vm)) {
             $hotel_nom     = $vm['hotel_nom'] ?? ($vm['hotel']['nom'] ?? '');
