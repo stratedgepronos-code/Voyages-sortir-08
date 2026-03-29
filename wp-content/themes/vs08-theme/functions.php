@@ -2,28 +2,9 @@
 if (!defined('ABSPATH')) exit;
 
 /* ============================================================
-   YOAST SEO — Désactiver pendant le checkout WooCommerce
-   Yoast accroche save_post et cascading → 2 Go RAM → 500.
+  Checkout: ne pas manipuler $wp_filter ici.
+  Les plugins lourds sont déjà gérés par les mu-plugins dédiés.
 ============================================================ */
-add_action('init', function() {
-    if (!empty($_GET['wc-ajax']) || (defined('DOING_AJAX') && DOING_AJAX && !empty($_POST['woocommerce-process-checkout-nonce']))) {
-        // Désactiver les hooks Yoast SEO sur save_post pendant le checkout
-        add_action('woocommerce_checkout_order_created', function() {
-            global $wp_filter;
-            foreach (['save_post', 'wp_insert_post'] as $hook) {
-                if (isset($wp_filter[$hook])) {
-                    foreach ($wp_filter[$hook]->callbacks as $priority => $callbacks) {
-                        foreach ($callbacks as $key => $cb) {
-                            if (is_string($key) && (strpos($key, 'wpseo') !== false || strpos($key, 'Yoast') !== false || strpos($key, 'WPSEO') !== false)) {
-                                unset($wp_filter[$hook]->callbacks[$priority][$key]);
-                            }
-                        }
-                    }
-                }
-            }
-        }, 1);
-    }
-}, 1);
 
 /* ============================================================
    SMTP — Envoi d'emails via Hostinger (obligatoire)

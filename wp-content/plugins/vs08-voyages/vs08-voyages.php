@@ -21,7 +21,7 @@ define('VS08V_VER',  '2.0.0');
 // + Désactiver WC emails + WC Admin (trop de RAM)
 // ============================================================
 if (!empty($_GET['wc-ajax']) && $_GET['wc-ajax'] === 'checkout') {
-    @ini_set('memory_limit', '768M');
+    @ini_set('memory_limit', '1024M');
 
     // Désactiver WooCommerce Admin (Analytics) — consomme 200Mo+
     add_filter('woocommerce_admin_disabled', '__return_true');
