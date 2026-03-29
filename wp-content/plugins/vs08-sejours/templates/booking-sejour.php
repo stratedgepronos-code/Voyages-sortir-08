@@ -303,12 +303,9 @@ get_header();
             document.getElementById('bks-combo-loading').style.display='none';
             var flights=res.data||res.combos||[];
             if(!flights.length){document.getElementById('bks-no-flights').style.display='block';return}
-            // Trier par prix
-            flights.sort(function(a,b){return(parseFloat(a.total_amount||a.price||999999))-(parseFloat(b.total_amount||b.price||999999))});
-            comboData=flights;
-            var refPrice=parseFloat(flights[0].total_amount||flights[0].price||0)/BK.nb_total;
-            renderCombos(flights,refPrice);
-            selectCombo(0);
+            comboData=flights; // Déjà triés par prix par l'API Duffel
+            renderCombos(flights);
+            bksSelectCombo(0);
         }).catch(function(err){
             document.getElementById('bks-combo-loading').style.display='none';
             document.getElementById('bks-no-flights').style.display='block';
@@ -316,46 +313,43 @@ get_header();
         });
     }
 
-    function renderCombos(flights,refPrice){
+    function renderCombos(flights){
         var list=document.getElementById('bks-combo-list');
-        // Show max 6
         var shown=flights.slice(0,6);
         var html='';
         shown.forEach(function(f,idx){
-            var pricePax=parseFloat(f.total_amount||f.price||0)/BK.nb_total;
-            var delta=pricePax-refPrice;
-            var airline=f.airline_name||f.owner_name||'';
-            var isRef=idx===0;
+            var airline = f.airline_name || '';
+            var isRef = f.is_reference || idx===0;
+            var delta = parseFloat(f.delta_per_pax || 0);
 
-            // Aller info
-            var allerDep=f.aller_depart||f.departure_time||'';
-            var allerArr=f.aller_arrive||f.arrival_time||'';
-            var allerFlight=f.aller_flight||f.flight_number||'';
-            var allerConn=f.has_connections||f.aller_has_connections||false;
+            // Aller : depart_time, arrive_time, flight_number
+            var allerDep = f.depart_time || '';
+            var allerArr = f.arrive_time || '';
+            var allerFlight = f.flight_number || '';
 
-            // Retour info
-            var retourDep=f.retour_depart||'';
-            var retourArr=f.retour_arrive||'';
-            var retourFlight=f.retour_flight||'';
+            // Retour : retour_depart, retour_arrive, retour_flight
+            var retourDep = f.retour_depart || '';
+            var retourArr = f.retour_arrive || '';
+            var retourFlight = f.retour_flight || '';
 
-            var priceHtml=isRef?'<span class="bks-combo-delta ref">Meilleur prix</span>':'<span class="bks-combo-delta">+'+fmt(delta)+' €/pers</span>';
-            var connBadge=allerConn?'<span class="bks-combo-badge escale">1 escale</span>':'<span class="bks-combo-badge direct">Direct</span>';
+            var connBadge = f.has_connections ? '<span class="bks-combo-badge escale">1 escale</span>' : '<span class="bks-combo-badge direct">Direct</span>';
+            var priceHtml = isRef ? '<span class="bks-combo-delta ref">Meilleur prix</span>' : '<span class="bks-combo-delta">+' + fmt(delta) + ' €/pers</span>';
 
-            html+='<div class="bks-combo-card'+(idx===0?' selected':'')+'" id="bks-combo-'+idx+'" onclick="bksSelectCombo('+idx+')">'
-                +'<div class="bks-combo-top"><span class="bks-combo-airline">'+(airline||'Vol')+(allerFlight?' · '+allerFlight:'')+' '+connBadge+'</span>'+priceHtml+'</div>'
-                +'<div class="bks-combo-legs">'
-                +'<div class="bks-combo-leg">Aller: <strong>'+(allerDep||'—')+' → '+(allerArr||'—')+'</strong></div>'
-                +'<div class="bks-combo-leg">Retour: <strong>'+(retourDep||'—')+' → '+(retourArr||'—')+'</strong></div>'
-                +'</div></div>';
+            html += '<div class="bks-combo-card' + (idx===0?' selected':'') + '" id="bks-combo-' + idx + '" onclick="bksSelectCombo(' + idx + ')">'
+                + '<div class="bks-combo-top"><span class="bks-combo-airline">' + (airline||'Vol') + (allerFlight ? ' · '+allerFlight : '') + ' ' + connBadge + '</span>' + priceHtml + '</div>'
+                + '<div class="bks-combo-legs">'
+                + '<div class="bks-combo-leg">Aller: <strong>' + (allerDep||'—') + ' → ' + (allerArr||'—') + '</strong></div>'
+                + '<div class="bks-combo-leg">Retour: <strong>' + (retourDep||'—') + ' → ' + (retourArr||'—') + '</strong>' + (retourFlight ? ' · '+retourFlight : '') + '</div>'
+                + '</div></div>';
         });
-        if(flights.length>6) html+='<div style="text-align:center;font-size:12px;color:#6b7280;font-family:Outfit,sans-serif;padding:8px">+'+(flights.length-6)+' autres vols disponibles</div>';
-        list.innerHTML=html;
+        if(flights.length > 6) html += '<div style="text-align:center;font-size:12px;color:#6b7280;font-family:Outfit,sans-serif;padding:8px">+' + (flights.length-6) + ' autres vols disponibles</div>';
+        list.innerHTML = html;
     }
 
     window.bksSelectCombo=function(idx){
         var f=comboData[idx]; if(!f) return;
         selectedCombo=f;
-        volPricePax=parseFloat(f.total_amount||f.price||0)/BK.nb_total;
+        volPricePax=parseFloat(f.price_per_pax || 0);
         document.getElementById('bks-selected-vol-price').value=volPricePax;
         document.querySelectorAll('.bks-combo-card').forEach(function(c){c.classList.remove('selected')});
         var card=document.getElementById('bks-combo-'+idx);
@@ -412,10 +406,10 @@ get_header();
         var voy=[];for(var i=0;i<BK.nb_total;i++){voy.push({prenom:val('voyageurs['+i+'][prenom]'),nom:val('voyageurs['+i+'][nom]'),ddn:val('voyageurs['+i+'][ddn]'),passeport:val('voyageurs['+i+'][passeport]')})}
         var body={sejour_id:BK.sejour_id,date_depart:BK.date_depart,aeroport:BK.aeroport,nb_adultes:BK.nb_total,nb_chambres:BK.nb_chambres,
             vol_price:volPricePax,hotel_net:BK.hotel_net,hotel_rate_key:BK.hotel_rate_key,hotel_board:BK.hotel_board,
-            vol_aller_num:selectedCombo.aller_flight||selectedCombo.flight_number||'',
+            vol_aller_num:selectedCombo.flight_number||'',
             vol_aller_cie:selectedCombo.airline_name||'',
-            vol_aller_depart:selectedCombo.aller_depart||selectedCombo.departure_time||'',
-            vol_aller_arrivee:selectedCombo.aller_arrive||selectedCombo.arrival_time||'',
+            vol_aller_depart:selectedCombo.depart_time||'',
+            vol_aller_arrivee:selectedCombo.arrive_time||'',
             vol_retour_num:selectedCombo.retour_flight||'',
             vol_retour_depart:selectedCombo.retour_depart||'',
             vol_retour_arrivee:selectedCombo.retour_arrive||'',
