@@ -706,6 +706,13 @@ add_action('vs08_checkout_recap', function() {
     $devis  = $booking_data['devis'] ?? [];
     $titre  = $booking_data['voyage_titre'] ?? '';
     $vid    = $booking_data['voyage_id'] ?? 0;
+    $booking_type = $booking_data['type'] ?? 'golf';
+
+    // Les séjours sont déjà rendus par le récap natif plugin (VS08V_Checkout::render_sejour_recap).
+    // Évite le double rendu et les lectures meta coûteuses dans ce hook thème.
+    if ($booking_type === 'sejour') {
+        return;
+    }
 
     /* ── Date de depart ── */
     $date_dep = $params['date_depart'] ?? '';
@@ -783,9 +790,7 @@ add_action('vs08_checkout_recap', function() {
     }
 
     /* ── Type de réservation (golf/sejour/circuit) ── */
-    $booking_type = $booking_data['type'] ?? 'golf';
     $is_sejour = ($booking_type === 'sejour');
-    error_log('[VS08 Theme Recap] product_id=' . $product_id . ' type=' . $booking_type . ' is_sejour=' . ($is_sejour ? 'TRUE' : 'FALSE') . ' vid=' . $vid);
 
     /* ── Green fees (golf uniquement) ── */
     $gf = 0;
