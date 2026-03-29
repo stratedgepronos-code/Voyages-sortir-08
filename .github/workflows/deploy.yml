@@ -96,21 +96,11 @@ jobs:
 
       - name: Disable WooCommerce HPOS in database
         run: |
+          ENCODED=$(printf '%s' '<?php define("SHORTINIT",true); require_once dirname(__FILE__)."/wp-load.php"; global $wpdb; $wpdb->update($wpdb->options,["option_value"=>"no"],["option_name"=>"woocommerce_custom_orders_table_enabled"]); $wpdb->update($wpdb->options,["option_value"=>"no"],["option_name"=>"woocommerce_custom_orders_table_data_sync_enabled"]); echo "HPOS disabled";' | base64 -w0)
           sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ env.SSH_OPTS }} \
-            ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} "
-            WEBROOT=${{ env.WEBROOT }}
-            cat > \$WEBROOT/_vs08_disable_hpos.php << 'PHPEOF'
-<?php
-define('SHORTINIT', true);
-require_once dirname(__FILE__) . '/wp-load.php';
-global \$wpdb;
-\$wpdb->update(\$wpdb->options, ['option_value'=>'no'], ['option_name'=>'woocommerce_custom_orders_table_enabled']);
-\$wpdb->update(\$wpdb->options, ['option_value'=>'no'], ['option_name'=>'woocommerce_custom_orders_table_data_sync_enabled']);
-echo 'HPOS disabled';
-PHPEOF
-            php \$WEBROOT/_vs08_disable_hpos.php && rm -f \$WEBROOT/_vs08_disable_hpos.php
-            echo 'HPOS disable done'
-          " || echo "HPOS disable skipped (non-blocking)"
+            ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} \
+            "echo $ENCODED | base64 -d > ${{ env.WEBROOT }}/_vs08_disable_hpos.php && php ${{ env.WEBROOT }}/_vs08_disable_hpos.php && rm -f ${{ env.WEBROOT }}/_vs08_disable_hpos.php && echo 'HPOS disable done'" \
+          || echo "HPOS disable skipped (non-blocking)"
 
       # ATTENTION : PAS de --delete sur le theme !
       # Le repo ne contient que des fichiers de surcharge (footer.php, single-vs08_voyage.php).
