@@ -94,13 +94,13 @@ jobs:
           done
           [ "$ok" -eq 1 ] || echo "mu-plugins deploy failed (non-blocking)"
 
-      - name: Restore WooCommerce HPOS in database (fix critical error)
+      - name: Fix HPOS in database (restore to yes)
         run: |
-          ENCODED=$(printf '%s' '<?php define("SHORTINIT",true); require_once dirname(__FILE__)."/wp-load.php"; global $wpdb; $wpdb->update($wpdb->options,["option_value"=>"yes"],["option_name"=>"woocommerce_custom_orders_table_enabled"]); echo "HPOS restored";' | base64 -w0)
+          ENCODED=$(printf '%s' '<?php $c=file_get_contents(dirname(__FILE__)."/wp-config.php"); preg_match("/define.*DB_NAME.*\x27(.+?)\x27/", $c, $m); $db=$m[1]; preg_match("/define.*DB_USER.*\x27(.+?)\x27/", $c, $m); $u=$m[1]; preg_match("/define.*DB_PASSWORD.*\x27(.+?)\x27/", $c, $m); $p=$m[1]; preg_match("/define.*DB_HOST.*\x27(.+?)\x27/", $c, $m); $h=$m[1]; preg_match("/table_prefix.*\x27(.+?)\x27/", $c, $m); $pfx=$m[1]; $pdo=new PDO("mysql:host=$h;dbname=$db;charset=utf8mb4",$u,$p); $pdo->exec("UPDATE {$pfx}options SET option_value=\"yes\" WHERE option_name=\"woocommerce_custom_orders_table_enabled\""); $pdo->exec("UPDATE {$pfx}options SET option_value=\"yes\" WHERE option_name=\"woocommerce_custom_orders_table_data_sync_enabled\""); echo "HPOS fixed";' | base64 -w0)
           sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ env.SSH_OPTS }} \
             ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} \
-            "echo $ENCODED | base64 -d > ${{ env.WEBROOT }}/_vs08_fix.php && php ${{ env.WEBROOT }}/_vs08_fix.php && rm -f ${{ env.WEBROOT }}/_vs08_fix.php && echo 'HPOS restore done'" \
-          || echo "HPOS restore skipped (non-blocking)"
+            "echo $ENCODED | base64 -d > ${{ env.WEBROOT }}/_vs08_fix.php && php ${{ env.WEBROOT }}/_vs08_fix.php && rm -f ${{ env.WEBROOT }}/_vs08_fix.php && echo 'HPOS fix done'" \
+          || echo "HPOS fix skipped (non-blocking)"
 
       # ATTENTION : PAS de --delete sur le theme !
       # Le repo ne contient que des fichiers de surcharge (footer.php, single-vs08_voyage.php).
@@ -156,3 +156,21 @@ jobs:
             sleep 10
           done
           [ "$ok" -eq 1 ] || exit 1
+
+      - name: Health check — disable mu-plugins if site is down
+        run: |
+          sleep 5
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 https://sortirmonde.fr/ || echo "000")
+          echo "Site status: HTTP $STATUS"
+          if [ "$STATUS" != "200" ] && [ "$STATUS" != "301" ] && [ "$STATUS" != "302" ]; then
+            echo "Site is DOWN — disabling custom mu-plugins..."
+            sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ env.SSH_OPTS }} \
+              ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} \
+              "cd ${{ env.WEBROOT }}/wp-content/mu-plugins && for f in vs08-*.php; do [ -f \"\$f\" ] && mv \"\$f\" \"\$f.disabled\" && echo \"Disabled: \$f\"; done" \
+            || true
+            sleep 3
+            STATUS2=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 https://sortirmonde.fr/ || echo "000")
+            echo "After disabling mu-plugins: HTTP $STATUS2"
+          else
+            echo "Site is UP — mu-plugins OK"
+          fi
