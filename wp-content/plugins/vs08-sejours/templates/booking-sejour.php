@@ -22,6 +22,9 @@ $pension = $pension_map[$m['pension'] ?? 'ai'] ?? 'All Inclusive';
 $hotel_nom = $m['hotel_nom'] ?? '';
 $hotel_etoiles = intval($m['hotel_etoiles'] ?? 5);
 $iata_dest = strtoupper($m['iata_dest'] ?? '');
+$transfert_type = $m['transfert_type'] ?? 'groupes';
+$transfert_labels = ['groupes'=>'🚌 Transferts groupés','prives'=>'🚐 Transferts privés','inclus'=>'✅ Inclus dans l\'hôtel','aucun'=>'❌ Non inclus'];
+$transfert_label = $transfert_labels[$transfert_type] ?? '';
 
 $params = [
     'date_depart'   => sanitize_text_field($_GET['date_depart'] ?? ''),
@@ -79,6 +82,7 @@ get_header();
     'hotel_board'    => $params['hotel_board'],
     'hotel_nom'      => $hotel_nom,
     'pension'        => $pension,
+    'transfert_type' => $m['transfert_type'] ?? 'groupes',
     'acompte_pct'    => $acompte_pct,
     'payer_tout'     => $payer_tout,
     'insurance_pp'   => $insurance_price,
@@ -446,11 +450,8 @@ get_header();
     <div class="bks-recap">
         <h3 class="bks-recap-title">📋 Récapitulatif</h3>
         <div class="bks-recap-line" style="font-weight:600;color:#0f2424"><span>🏖️ <?php echo esc_html($titre); ?></span></div>
-        <div class="bks-recap-line"><span>🏨 Hôtel</span><span><?php echo esc_html($hotel_nom); ?></span></div>
-        <div class="bks-recap-line"><span>🍽️ Pension</span><span><?php echo esc_html($pension); ?></span></div>
-        <div class="bks-recap-line"><span>👥 Voyageurs</span><span><?php echo $nb_total; ?> pers.</span></div>
 
-        <!-- Aller : date + vol (mis à jour par JS) -->
+        <!-- Aller : date + vol -->
         <div style="border-bottom:1px solid #f0ece4;padding:8px 0">
             <div class="bks-recap-line" style="border:none;padding-bottom:2px"><span>✈️ Aller</span><span><?php echo $date_fmt; ?></span></div>
             <div id="bks-recap-aller-vol" style="display:none;font-size:11px;color:#6b7280;font-family:'Outfit',sans-serif;padding-left:24px">
@@ -458,13 +459,20 @@ get_header();
             </div>
         </div>
 
-        <!-- Retour : date + vol (mis à jour par JS) -->
+        <!-- Retour : date + vol -->
         <div style="border-bottom:1px solid #f0ece4;padding:8px 0">
             <div class="bks-recap-line" style="border:none;padding-bottom:2px"><span>✈️ Retour</span><span><?php echo $date_retour_fmt; ?></span></div>
             <div id="bks-recap-retour-vol" style="display:none;font-size:11px;color:#6b7280;font-family:'Outfit',sans-serif;padding-left:24px">
                 <span id="bks-recap-retour-detail">—</span>
             </div>
         </div>
+
+        <div class="bks-recap-line"><span>🏨 Hôtel</span><span><?php echo esc_html($hotel_nom); ?></span></div>
+        <div class="bks-recap-line"><span>🍽️ Pension</span><span><?php echo esc_html($pension); ?></span></div>
+        <?php if ($transfert_label && $transfert_type !== 'aucun'): ?>
+        <div class="bks-recap-line"><span>🚐 Transferts</span><span><?php echo esc_html($transfert_label); ?></span></div>
+        <?php endif; ?>
+        <div class="bks-recap-line"><span>👥 Voyageurs</span><span><?php echo $nb_total; ?> pers.</span></div>
 
         <div class="bks-recap-line" id="bks-recap-bag-soute" style="display:none"><span>🧳 Bagage soute</span><span id="bks-recap-bag-soute-val">—</span></div>
         <div class="bks-recap-line" id="bks-recap-bag-cabine" style="display:none"><span>🎒 Bagage cabine</span><span id="bks-recap-bag-cabine-val">—</span></div>
