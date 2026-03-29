@@ -14,7 +14,14 @@ if (!$sejour_id || get_post_type($sejour_id) !== 'vs08_sejour') { wp_redirect(ho
 $m       = VS08S_Meta::get($sejour_id);
 $titre   = get_the_title($sejour_id);
 $flag    = $m['flag'] ?? '';
-if (!$flag && class_exists('VS08V_MetaBoxes')) $flag = VS08V_MetaBoxes::get_flag_emoji($m['pays'] ?? $m['destination'] ?? '');
+// Convert 2-letter ISO code to flag emoji if needed
+if ($flag && strlen($flag) === 2 && preg_match('/^[a-zA-Z]{2}$/', $flag)) {
+    $code = strtoupper($flag);
+    $flag = mb_chr(0x1F1E6 + ord($code[0]) - 65, 'UTF-8') . mb_chr(0x1F1E6 + ord($code[1]) - 65, 'UTF-8');
+}
+if (!$flag && class_exists('VS08V_MetaBoxes')) {
+    $flag = VS08V_MetaBoxes::get_flag_emoji($m['pays'] ?? $m['destination'] ?? '');
+}
 $duree   = intval($m['duree'] ?? 7);
 $duree_j = intval($m['duree_jours'] ?? ($duree + 1));
 $pension_map = ['ai'=>'All Inclusive','pc'=>'Pension complète','dp'=>'Demi-pension','bb'=>'Petit-déjeuner','lo'=>'Logement seul'];
@@ -449,12 +456,46 @@ get_header();
         <!-- ═══ ÉTAPE 3 : Confirmation ═══ -->
         <div id="bks-step-3" class="bks-step-page">
         <div class="bks-section">
-            <h3 class="bks-section-title"><span class="bks-step-num">3</span> Confirmation</h3>
-            <div id="bks-recap-final" style="margin-bottom:20px"></div>
-            <div style="background:#fff8f0;border:1.5px solid #f0dcc0;border-radius:12px;padding:16px;margin-bottom:16px">
-                <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start"><input type="checkbox" id="bks-confirm-info" style="margin-top:3px"><span style="font-size:12px;color:#6b5630;font-family:'Outfit',sans-serif;line-height:1.5">Je certifie que les <strong>noms, prénoms, dates de naissance et passeports</strong> sont exacts.</span></label>
+            <h3 class="bks-section-title"><span class="bks-step-num">3</span> Confirmation de votre réservation</h3>
+            <p class="bks-section-sub">Vérifiez scrupuleusement toutes les informations avant de procéder au paiement.</p>
+
+            <div id="bks-recap-final" style="border-radius:14px;margin-bottom:20px"></div>
+
+            <div style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px;font-family:'Outfit',sans-serif">
+                <div style="font-size:13px;font-weight:700;color:#0f2424;margin-bottom:10px">💳 Mode de règlement</div>
+                <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start;margin-bottom:12px">
+                    <input type="radio" name="bks-payment-mode" value="card" checked style="margin-top:4px;flex-shrink:0">
+                    <span style="font-size:13px;color:#374151;line-height:1.5"><strong>Payer par carte bancaire</strong> (Paybox sécurisé)</span>
+                </label>
+                <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start">
+                    <input type="radio" name="bks-payment-mode" value="agency" style="margin-top:4px;flex-shrink:0">
+                    <span style="font-size:13px;color:#374151;line-height:1.5"><strong>Paiement en agence</strong> (pré-réservation)</span>
+                </label>
             </div>
-            <label style="display:flex;gap:10px;align-items:flex-start;font-size:12px;font-family:'Outfit',sans-serif;color:#1a3a3a;cursor:pointer;line-height:1.5"><input type="checkbox" id="bks-cgu" style="margin-top:3px"><span>J'accepte les <a href="<?php echo home_url('/conditions/'); ?>" target="_blank" style="color:#59b7b7">CGV</a> et la <a href="<?php echo home_url('/rgpd'); ?>" target="_blank" style="color:#59b7b7">politique de confidentialité</a>.</span></label>
+
+            <div style="background:#fff8f0;border:1.5px solid #f0dcc0;border-radius:12px;padding:16px;margin-bottom:16px">
+                <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start">
+                    <input type="checkbox" id="bks-confirm-info" style="margin-top:3px;flex-shrink:0">
+                    <span style="font-size:12px;color:#6b5630;font-family:'Outfit',sans-serif;line-height:1.5">
+                        Je certifie que <strong>les noms, prénoms, dates de naissance et informations de passeport</strong> renseignés sont exacts et
+                        correspondent aux pièces d'identité officielles de chaque voyageur.
+                        Je suis informé(e) que toute erreur pourra entraîner un refus d'embarquement
+                        et que les frais de modification de billet seront à ma charge.
+                    </span>
+                </label>
+            </div>
+
+            <label style="display:flex;gap:10px;align-items:flex-start;font-size:12px;font-family:'Outfit',sans-serif;color:#1a3a3a;cursor:pointer;line-height:1.5">
+                <input type="checkbox" id="bks-cgu" style="margin-top:3px;flex-shrink:0">
+                <span>
+                    J'accepte les <a href="<?php echo home_url('/conditions/'); ?>" target="_blank" style="color:#3d9a9a">conditions générales de vente</a>
+                    et la <a href="<?php echo home_url('/rgpd'); ?>" target="_blank" style="color:#3d9a9a">politique de confidentialité</a>.
+                    Je reconnais avoir pris connaissance du <strong>formulaire d'information standard</strong> prévu par la
+                    <a href="https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32015L2302" target="_blank" rel="noopener" style="color:#3d9a9a">Directive (UE) 2015/2302</a>
+                    relative aux voyages à forfait, ainsi que des conditions d'annulation du séjour.
+                </span>
+            </label>
+
             <div class="bks-nav" style="margin-top:24px">
                 <button type="button" class="bks-btn-prev" onclick="bksShow(2)">← Retour</button>
                 <button type="button" class="bks-btn-next" id="bks-btn-submit" onclick="bksSubmit()">🔒 Procéder au paiement →</button>
@@ -823,10 +864,39 @@ get_header();
         var ok=true;
         document.querySelectorAll('#bks-step-2 .bks-required').forEach(function(i){i.classList.remove('bks-err');if(!i.value.trim()){i.classList.add('bks-err');ok=false}});
         if(!ok){showError('Remplissez tous les champs obligatoires.');return}
-        var html='<div style="font-family:Outfit,sans-serif;font-size:13px">';
-        for(var i=0;i<BK.nb_total;i++){html+='<div style="padding:4px 0;border-bottom:1px solid #f0ece4">Voyageur '+(i+1)+': <strong>'+esc(val('voyageurs['+i+'][prenom]'))+' '+esc(val('voyageurs['+i+'][nom]'))+'</strong> — '+esc(val('voyageurs['+i+'][ddn]'))+'</div>'}
-        html+='<div style="margin-top:10px;font-weight:600;color:#0f2424">Facturation: '+esc(document.getElementById('bks-f-prenom').value)+' '+esc(document.getElementById('bks-f-nom').value)+'</div>';
-        html+='<div>'+esc(document.getElementById('bks-f-email').value)+' · '+esc(document.getElementById('bks-f-tel').value)+'</div></div>';
+
+        var S='font-family:Outfit,sans-serif;';
+        var section='font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#59b7b7;margin:18px 0 8px;padding-top:14px;border-top:1px solid #e8e4dc;'+S;
+        var rowS='display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:#4a5568;'+S;
+        var html='<div style="'+S+'font-size:13px">';
+
+        // Voyage
+        html+='<div style="background:#f0fafa;border-radius:12px;padding:14px;margin-bottom:4px">';
+        html+='<div style="font-family:Playfair Display,serif;font-weight:700;font-size:17px;color:#0f2424;margin-bottom:4px">🏖️ '+esc(BK.titre)+'</div>';
+        html+='<div style="font-size:12px;color:#4a5568">'+BK.nb_total+' voyageur(s) · '+BK.nb_chambres+' chambre(s)</div>';
+        html+='</div>';
+
+        // Vol
+        if(selectedCombo){
+            html+='<div style="'+section+'">✈️ Vols sélectionnés</div>';
+            html+='<div style="'+rowS+'"><span>Aller</span><span>'+(selectedCombo.airline_name||'')+' · '+(selectedCombo.flight_number||'')+' · '+(selectedCombo.depart_time||'—')+' → '+(selectedCombo.arrive_time||'—')+'</span></div>';
+            if(selectedCombo.retour_depart) html+='<div style="'+rowS+'"><span>Retour</span><span>'+(selectedCombo.airline_name||'')+' · '+(selectedCombo.retour_flight||'')+' · '+(selectedCombo.retour_depart||'—')+' → '+(selectedCombo.retour_arrive||'—')+'</span></div>';
+        }
+
+        // Voyageurs
+        html+='<div style="'+section+'">👥 Voyageurs</div>';
+        for(var i=0;i<BK.nb_total;i++){
+            var p=val('voyageurs['+i+'][prenom]'),n=val('voyageurs['+i+'][nom]'),d=val('voyageurs['+i+'][ddn]'),pp=val('voyageurs['+i+'][passeport]');
+            html+='<div style="'+rowS+'"><span>'+esc(p)+' <strong>'+esc(n).toUpperCase()+'</strong></span><span>'+esc(d)+(pp?' · 🛂 '+esc(pp):'')+'</span></div>';
+        }
+
+        // Facturation
+        html+='<div style="'+section+'">📄 Facturation</div>';
+        html+='<div style="'+rowS+'"><span>'+esc(document.getElementById('bks-f-prenom').value)+' <strong>'+esc(document.getElementById('bks-f-nom').value).toUpperCase()+'</strong></span></div>';
+        html+='<div style="'+rowS+'"><span>'+esc(document.getElementById('bks-f-email').value)+' · '+esc(document.getElementById('bks-f-tel').value)+'</span></div>';
+        html+='<div style="'+rowS+'"><span>'+esc(document.getElementById('bks-f-adresse').value)+', '+esc(document.getElementById('bks-f-cp').value)+' '+esc(document.getElementById('bks-f-ville').value)+'</span></div>';
+
+        html+='</div>';
         document.getElementById('bks-recap-final').innerHTML=html;
         showStep(3);
     };

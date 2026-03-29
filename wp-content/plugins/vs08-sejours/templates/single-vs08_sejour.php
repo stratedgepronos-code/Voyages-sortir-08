@@ -14,6 +14,9 @@ $m            = VS08S_Meta::get($id);
 $destination  = $m['destination'] ?? '';
 $pays         = $m['pays'] ?? '';
 $flag         = $m['flag'] ?? '';
+if ($flag && strlen($flag) === 2 && preg_match('/^[a-zA-Z]{2}$/', $flag)) {
+    $code = strtoupper($flag); $flag = mb_chr(0x1F1E6 + ord($code[0]) - 65, 'UTF-8') . mb_chr(0x1F1E6 + ord($code[1]) - 65, 'UTF-8');
+}
 if (!$flag && class_exists('VS08V_MetaBoxes')) $flag = VS08V_MetaBoxes::get_flag_emoji($pays ?: $destination);
 $duree        = intval($m['duree'] ?? 7);
 $duree_jours  = intval($m['duree_jours'] ?? ($duree + 1));
