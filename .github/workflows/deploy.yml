@@ -94,14 +94,6 @@ jobs:
           done
           [ "$ok" -eq 1 ] || echo "mu-plugins deploy failed (non-blocking)"
 
-      - name: Fix HPOS in database (restore to yes)
-        run: |
-          ENCODED=$(printf '%s' '<?php $c=file_get_contents(dirname(__FILE__)."/wp-config.php"); preg_match("/define.*DB_NAME.*\x27(.+?)\x27/", $c, $m); $db=$m[1]; preg_match("/define.*DB_USER.*\x27(.+?)\x27/", $c, $m); $u=$m[1]; preg_match("/define.*DB_PASSWORD.*\x27(.+?)\x27/", $c, $m); $p=$m[1]; preg_match("/define.*DB_HOST.*\x27(.+?)\x27/", $c, $m); $h=$m[1]; preg_match("/table_prefix.*\x27(.+?)\x27/", $c, $m); $pfx=$m[1]; $pdo=new PDO("mysql:host=$h;dbname=$db;charset=utf8mb4",$u,$p); $pdo->exec("UPDATE {$pfx}options SET option_value=\"yes\" WHERE option_name=\"woocommerce_custom_orders_table_enabled\""); $pdo->exec("UPDATE {$pfx}options SET option_value=\"yes\" WHERE option_name=\"woocommerce_custom_orders_table_data_sync_enabled\""); echo "HPOS fixed";' | base64 -w0)
-          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ env.SSH_OPTS }} \
-            ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} \
-            "echo $ENCODED | base64 -d > ${{ env.WEBROOT }}/_vs08_fix.php && php ${{ env.WEBROOT }}/_vs08_fix.php && rm -f ${{ env.WEBROOT }}/_vs08_fix.php && echo 'HPOS fix done'" \
-          || echo "HPOS fix skipped (non-blocking)"
-
       # ATTENTION : PAS de --delete sur le theme !
       # Le repo ne contient que des fichiers de surcharge (footer.php, single-vs08_voyage.php).
       # Le theme complet (style.css, header.php, functions.php, logo, assets) vit UNIQUEMENT sur le serveur.
