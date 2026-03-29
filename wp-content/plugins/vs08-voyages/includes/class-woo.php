@@ -142,6 +142,11 @@ add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_
         $product_id = $item->get_product_id();
         if (!$product_id) return;
         $booking_data = get_post_meta($product_id, '_vs08v_booking_data', true);
+        // Séjours all inclusive: ne pas dupliquer les gros blobs _vs08v_ sur les items.
+        // Le flux séjour utilise _vs08s_booking_data (copie différée sur la commande).
+        if (is_array($booking_data) && (($booking_data['type'] ?? '') === 'sejour')) {
+            return;
+        }
         if (!empty($booking_data) && is_array($booking_data)) {
             $item->add_meta_data('_vs08v_booking_data', $booking_data, true);
             $item->add_meta_data('_vs08v_voyage_id', $booking_data['voyage_id'] ?? 0, true);
@@ -165,6 +170,9 @@ add_action('woocommerce_checkout_update_order_meta', function($order_id) {
             $pid = $item->get_product_id();
             if (!$pid) continue;
             $data = get_post_meta($pid, '_vs08v_booking_data', true);
+            if (is_array($data) && (($data['type'] ?? '') === 'sejour')) {
+                continue;
+            }
             if (!empty($data) && is_array($data)) {
                 update_post_meta($order_id, '_vs08v_booking_data', $data);
                 break;

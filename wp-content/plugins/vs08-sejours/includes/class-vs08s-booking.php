@@ -75,8 +75,26 @@ class VS08S_Booking {
             update_post_meta($product_id, '_vs08v_booking_hash', $hash);
         }
 
+        // Legacy _vs08v_: garder un payload minimal (évite l’explosion mémoire au checkout).
+        $booking_data_legacy = [
+            'type'         => 'sejour',
+            'sejour_id'    => $sejour_id,
+            'voyage_id'    => $sejour_id,
+            'sejour_titre' => $titre,
+            'voyage_titre' => $titre,
+            'total'        => $total,
+            'acompte'      => $acompte,
+            'payer_tout'   => !empty($devis['payer_tout']),
+            'params'       => [
+                'date_depart' => (string) ($params['date_depart'] ?? ''),
+                'aeroport'    => strtoupper((string) ($params['aeroport'] ?? '')),
+                'nb_adultes'  => intval($params['nb_adultes'] ?? 0),
+                'nb_chambres' => intval($params['nb_chambres'] ?? 0),
+            ],
+        ];
+
         // TOUJOURS mettre à jour les données + description (neuf OU existant)
-        update_post_meta($product_id, '_vs08v_booking_data', $booking_data);
+        update_post_meta($product_id, '_vs08v_booking_data', $booking_data_legacy);
         update_post_meta($product_id, '_vs08s_booking_data', $booking_data);
         update_post_meta($product_id, '_vs08v_voyage_id', $sejour_id);
         update_post_meta($product_id, '_vs08v_total_voyage', $total);
