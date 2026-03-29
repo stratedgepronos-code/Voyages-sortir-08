@@ -122,20 +122,6 @@ jobs:
           done
           [ "$ok" -eq 1 ] || echo "Theme deploy failed (non-blocking)"
 
-      - name: Fix paybox-polyfill show_message conflict
-        run: |
-          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ env.SSH_OPTS }} \
-            ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} "
-            FILE=${{ env.WEBROOT }}/wp-content/mu-plugins/paybox-polyfill.php
-            if [ -f \"\$FILE\" ] && grep -q 'function show_message' \"\$FILE\" && ! grep -q 'function_exists.*show_message' \"\$FILE\"; then
-              sed -i 's/function show_message/if (!function_exists(\"show_message\")) { function show_message/' \"\$FILE\"
-              echo '}' >> \"\$FILE\"
-              echo 'paybox-polyfill.php patched'
-            else
-              echo 'paybox-polyfill.php already OK or not found'
-            fi
-          " || echo "Patch skipped (non-blocking)"
-
       - name: Purge caches
         run: |
           ok=0
