@@ -95,13 +95,12 @@ get_header();
 
 <style>
 .bks-page{background:#f9f6f0;min-height:100vh;padding:140px 0 60px}
-.bks-header{background:linear-gradient(135deg,#0f2424 0%,#1a4a3a 100%);padding:24px 32px;color:#fff}
-.bks-header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-.bks-header-info h2{margin:0;font-size:20px;font-family:'Playfair Display',serif}
-.bks-header-info p{margin:4px 0 0;font-size:13px;color:rgba(255,255,255,.7);font-family:'Outfit',sans-serif}
-.bks-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.bks-header{background:linear-gradient(135deg,#0f2424,#1a4a4a);border-radius:18px;padding:24px 28px;margin-bottom:28px;display:flex;align-items:center;gap:20px;color:#fff;grid-column:span 2}
+.bks-header-info h2{font-family:'Playfair Display',serif;font-size:22px;margin:0 0 4px;color:#fff}
+.bks-header-info p{font-size:13px;color:rgba(255,255,255,.55);font-family:'Outfit',sans-serif;margin:0}
+.bks-chips{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 .bks-chip{background:rgba(89,183,183,.25);border:1px solid rgba(89,183,183,.4);padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;font-family:'Outfit',sans-serif;color:#b0e0e0}
-.bks-container{max-width:1200px;margin:0 auto;padding:24px 32px;display:grid;grid-template-columns:1fr 400px;gap:24px;align-items:start}
+.bks-container{max-width:1200px;margin:0 auto;padding:0 32px;display:grid;grid-template-columns:1fr 400px;gap:24px;align-items:start}
 .bks-section{background:#fff;border-radius:18px;padding:28px;margin-bottom:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
 .bks-section-title{font-family:'Playfair Display',serif;font-size:18px;color:#0f2424;margin:0 0 6px;display:flex;align-items:center;gap:10px}
 .bks-section-sub{font-size:13px;color:#6b7280;font-family:'Outfit',sans-serif;margin:0 0 18px}
@@ -147,10 +146,10 @@ get_header();
 .bks-voyageur{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e5e7eb}
 .bks-voyageur:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
 .bks-voyageur-label{font-size:12px;font-weight:700;color:#59b7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-family:'Outfit',sans-serif}
-.bks-field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bks-field-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .bks-field{margin-bottom:10px}
 .bks-field label{display:block;font-size:11px;font-weight:600;color:#374151;margin-bottom:4px;font-family:'Outfit',sans-serif}
-.bks-field input,.bks-field select{width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:13px;font-family:'Outfit',sans-serif;box-sizing:border-box}
+.bks-field input,.bks-field select{width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:13px;font-family:'Outfit',sans-serif;box-sizing:border-box;transition:border-color .2s}
 .bks-field input:focus{border-color:#59b7b7;outline:none}
 .bks-field input.bks-err{border-color:#dc2626}
 .bks-nav{display:flex;gap:12px;justify-content:flex-end;margin-top:20px}
@@ -209,8 +208,8 @@ get_header();
 .bks-ins-price{text-align:right;flex-shrink:0}
 .bks-ins-price-main{font-family:'Outfit',sans-serif;font-size:20px;font-weight:800;color:#e3147a}
 .bks-ins-price-detail{font-family:'Outfit',sans-serif;font-size:11px;color:#6b7280}
-@media(max-width:900px){.bks-container{grid-template-columns:1fr}.bks-recap{position:static}}
-@media(max-width:600px){.bks-container{padding:16px}.bks-field-row{grid-template-columns:1fr}.bks-header{padding:16px}.bks-section{padding:20px}.bks-route-header{padding:10px 14px;gap:10px}.bks-route-iata{font-size:20px}.bks-ins-footer{flex-direction:column;gap:12px;align-items:stretch}.bks-ins-price{text-align:left}}
+@media(max-width:900px){.bks-container{grid-template-columns:1fr}.bks-recap{position:static}.bks-header{grid-column:span 1}}
+@media(max-width:600px){.bks-container{padding:0 16px}.bks-field-row{grid-template-columns:1fr}.bks-header{padding:16px;flex-direction:column;text-align:center}.bks-chips{justify-content:center}.bks-section{padding:20px}.bks-route-header{padding:10px 14px;gap:10px}.bks-route-iata{font-size:20px}.bks-ins-footer{flex-direction:column;gap:12px;align-items:stretch}.bks-ins-price{text-align:left}}
 /* Filter sidebar */
 .bks-filters-sidebar{position:fixed;top:160px;width:200px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;font-family:'Outfit',sans-serif;box-shadow:0 2px 12px rgba(0,0,0,.06);z-index:50;transition:opacity .3s}
 .bksf-title{font-size:16px;font-weight:700;color:#0f2424;margin-bottom:14px}
@@ -242,26 +241,23 @@ get_header();
         </div>
         <div class="bksf-section">
             <div class="bksf-label">Départ aller</div>
-            <div class="bksf-range-row">
-                <span class="bksf-range-val" id="bksf-dep-min-lbl">00:00</span>
-                <span class="bksf-range-val" id="bksf-dep-max-lbl">23:59</span>
-            </div>
+            <div class="bksf-range-row"><span class="bksf-range-val" id="bksf-dep-min-lbl">00:00</span><span class="bksf-range-val" id="bksf-dep-max-lbl">23:59</span></div>
             <input type="range" class="bksf-range" id="bksf-dep-min" min="0" max="1439" value="0" step="30">
             <input type="range" class="bksf-range" id="bksf-dep-max" min="0" max="1439" value="1439" step="30">
         </div>
         <div class="bksf-section">
             <div class="bksf-label">Départ retour</div>
-            <div class="bksf-range-row">
-                <span class="bksf-range-val" id="bksf-ret-min-lbl">00:00</span>
-                <span class="bksf-range-val" id="bksf-ret-max-lbl">23:59</span>
-            </div>
+            <div class="bksf-range-row"><span class="bksf-range-val" id="bksf-ret-min-lbl">00:00</span><span class="bksf-range-val" id="bksf-ret-max-lbl">23:59</span></div>
             <input type="range" class="bksf-range" id="bksf-ret-min" min="0" max="1439" value="0" step="30">
             <input type="range" class="bksf-range" id="bksf-ret-max" min="0" max="1439" value="1439" step="30">
         </div>
         <button type="button" class="bksf-reset" id="bksf-reset">Réinitialiser</button>
     </aside>
 
-    <div class="bks-header"><div class="bks-header-inner">
+    <div class="bks-container">
+
+    <!-- HEADER (inside grid, span 2 columns) -->
+    <div class="bks-header">
         <a href="<?php echo get_permalink($sejour_id); ?>" style="color:rgba(255,255,255,.5);text-decoration:none;font-size:13px;font-family:'Outfit',sans-serif">← Retour</a>
         <div class="bks-header-info">
             <h2><?php echo esc_html($flag . ' ' . $titre); ?></h2>
@@ -270,11 +266,12 @@ get_header();
                 <?php if($date_fmt):?><span class="bks-chip">📅 <?php echo $date_fmt; ?></span><?php endif; ?>
                 <?php if($params['aeroport']):?><span class="bks-chip">✈️ <?php echo $params['aeroport']; ?></span><?php endif; ?>
                 <span class="bks-chip">👥 <?php echo $nb_total; ?> pax</span>
+                <span class="bks-chip">🛏️ <?php echo $nb_chambres; ?> ch.</span>
             </div>
         </div>
-    </div></div>
+    </div>
 
-    <div class="bks-container">
+    <!-- MAIN -->
     <div>
         <div class="bks-error" id="bks-error"></div>
 
@@ -392,43 +389,52 @@ get_header();
         <!-- ═══ ÉTAPE 2 : Voyageurs + Facturation ═══ -->
         <div id="bks-step-2" class="bks-step-page">
         <div class="bks-section">
-            <h3 class="bks-section-title"><span class="bks-step-num">2</span> Informations voyageurs & facturation</h3>
-            <p class="bks-section-sub"><?php echo $nb_total; ?> voyageur(s) — <?php echo $nb_chambres; ?> chambre(s)</p>
+            <h3 class="bks-section-title"><span class="bks-step-num">2</span> Bulletin d'inscription — Informations voyageurs et coordonnées de facturation</h3>
+            <p class="bks-section-sub"><?php echo $nb_total; ?> voyageur(s) — <?php echo $nb_chambres; ?> chambre(s) — Départ le <?php echo esc_html($date_fmt); ?></p>
             <?php for ($chambre = 1; $chambre <= $nb_chambres; $chambre++): ?>
             <div class="bks-chambre"><div class="bks-chambre-title">🏨 Chambre <?php echo $chambre; ?></div>
                 <?php foreach ($voy_par_chambre[$chambre] ?? [] as $vi): $saved = $bk_saved_voy[$vi] ?? []; ?>
-                <div class="bks-voyageur"><div class="bks-voyageur-label">Voyageur <?php echo $vi+1; ?></div>
+                <div class="bks-voyageur">
+                    <div class="bks-voyageur-label">Voyageur <?php echo $vi+1; ?></div>
                     <div class="bks-field-row">
-                        <div class="bks-field"><label>Prénom *</label><input type="text" name="voyageurs[<?php echo $vi; ?>][prenom]" class="bks-required" value="<?php echo esc_attr($saved['prenom']??''); ?>"></div>
-                        <div class="bks-field"><label>Nom *</label><input type="text" name="voyageurs[<?php echo $vi; ?>][nom]" class="bks-required" value="<?php echo esc_attr($saved['nom']??''); ?>"></div>
+                        <div class="bks-field"><label>Prénom *</label><input type="text" name="voyageurs[<?php echo $vi; ?>][prenom]" class="bks-required" placeholder="Jean" value="<?php echo esc_attr($saved['prenom']??''); ?>"></div>
+                        <div class="bks-field"><label>Nom *</label><input type="text" name="voyageurs[<?php echo $vi; ?>][nom]" class="bks-required" placeholder="Dupont" value="<?php echo esc_attr($saved['nom']??''); ?>"></div>
+                        <div class="bks-field"><label>Date de naissance *</label><input type="date" name="voyageurs[<?php echo $vi; ?>][ddn]" class="bks-required" value="<?php echo esc_attr($saved['ddn']??''); ?>"></div>
                     </div>
-                    <div class="bks-field-row">
-                        <div class="bks-field"><label>Date naissance *</label><input type="date" name="voyageurs[<?php echo $vi; ?>][ddn]" class="bks-required" value="<?php echo esc_attr($saved['ddn']??''); ?>"></div>
-                        <div class="bks-field"><label>N° Passeport</label><input type="text" name="voyageurs[<?php echo $vi; ?>][passeport]" value="<?php echo esc_attr($saved['passeport']??''); ?>"></div>
+                    <div class="bks-field-row" style="grid-template-columns:1fr 1fr">
+                        <div class="bks-field"><label>N° Passeport <span style="color:#9ca3af;font-style:italic">(facultatif)</span></label><input type="text" name="voyageurs[<?php echo $vi; ?>][passeport]" placeholder="XX000000" value="<?php echo esc_attr($saved['passeport']??''); ?>"></div>
+                        <div class="bks-field"><label>Nationalité</label><input type="text" name="voyageurs[<?php echo $vi; ?>][nationalite]" placeholder="Française" value="Française"></div>
                     </div>
+                    <input type="hidden" name="voyageurs[<?php echo $vi; ?>][chambre]" value="<?php echo $chambre; ?>">
                 </div>
                 <?php endforeach; ?>
             </div>
             <?php endfor; ?>
-            <h3 class="bks-section-title" style="margin-top:24px"><span class="bks-step-num">📄</span> Facturation</h3>
-            <div class="bks-field-row">
-                <div class="bks-field"><label>Prénom *</label><input type="text" id="bks-f-prenom" class="bks-required" value="<?php echo esc_attr($bk_saved_fact['prenom']??''); ?>"></div>
-                <div class="bks-field"><label>Nom *</label><input type="text" id="bks-f-nom" class="bks-required" value="<?php echo esc_attr($bk_saved_fact['nom']??''); ?>"></div>
+        </div>
+
+        <div class="bks-section">
+            <h4 class="bks-section-title" style="font-size:16px"><span class="bks-step-num" style="width:24px;height:24px;font-size:12px">📄</span> Coordonnées de facturation</h4>
+            <p class="bks-section-sub">Ces informations figureront sur votre facture et permettront à votre conseiller de vous contacter.</p>
+            <div class="bks-field-row" style="grid-template-columns:1fr 1fr">
+                <div class="bks-field"><label>Prénom *</label><input type="text" id="bks-f-prenom" class="bks-required" placeholder="Jean" value="<?php echo esc_attr($bk_saved_fact['prenom']??''); ?>"></div>
+                <div class="bks-field"><label>Nom *</label><input type="text" id="bks-f-nom" class="bks-required" placeholder="Dupont" value="<?php echo esc_attr($bk_saved_fact['nom']??''); ?>"></div>
             </div>
-            <div class="bks-field-row">
-                <div class="bks-field"><label>Email *</label><input type="email" id="bks-f-email" class="bks-required" value="<?php echo esc_attr($bk_saved_fact['email']??''); ?>"></div>
-                <div class="bks-field"><label>Téléphone *</label><input type="tel" id="bks-f-tel" class="bks-required" value="<?php echo esc_attr($bk_saved_fact['tel']??''); ?>"></div>
+            <div class="bks-field-row" style="grid-template-columns:1fr 1fr">
+                <div class="bks-field"><label>Email *</label><input type="email" id="bks-f-email" class="bks-required" placeholder="jean@email.com" value="<?php echo esc_attr($bk_saved_fact['email']??''); ?>"></div>
+                <div class="bks-field"><label>Téléphone *</label><input type="tel" id="bks-f-tel" class="bks-required" placeholder="06 XX XX XX XX" value="<?php echo esc_attr($bk_saved_fact['tel']??''); ?>"></div>
             </div>
-            <div class="bks-field"><label>Adresse *</label><input type="text" id="bks-f-adresse" class="bks-required" value="<?php echo esc_attr($bk_saved_fact['adresse']??''); ?>"></div>
-            <div class="bks-field-row">
-                <div class="bks-field"><label>Code postal *</label><input type="text" id="bks-f-cp" class="bks-required" value="<?php echo esc_attr($bk_saved_fact['cp']??''); ?>"></div>
-                <div class="bks-field"><label>Ville *</label><input type="text" id="bks-f-ville" class="bks-required" value="<?php echo esc_attr($bk_saved_fact['ville']??''); ?>"></div>
+            <div class="bks-field"><label>Adresse *</label><input type="text" id="bks-f-adresse" class="bks-required" placeholder="12 rue des Fleurs" value="<?php echo esc_attr($bk_saved_fact['adresse']??''); ?>"></div>
+            <div class="bks-field-row" style="grid-template-columns:1fr 1fr">
+                <div class="bks-field"><label>Code postal *</label><input type="text" id="bks-f-cp" class="bks-required" placeholder="51000" value="<?php echo esc_attr($bk_saved_fact['cp']??''); ?>"></div>
+                <div class="bks-field"><label>Ville *</label><input type="text" id="bks-f-ville" class="bks-required" placeholder="Châlons-en-Champagne" value="<?php echo esc_attr($bk_saved_fact['ville']??''); ?>"></div>
             </div>
-            <div class="bks-nav">
-                <button type="button" class="bks-btn-prev" onclick="bksShow(1)">← Retour</button>
-                <button type="button" class="bks-btn-next" onclick="bksGoToConfirm()">Confirmer →</button>
-            </div>
-        </div></div>
+        </div>
+
+        <div class="bks-nav">
+            <button type="button" class="bks-btn-prev" onclick="bksShow(1)">← Retour</button>
+            <button type="button" class="bks-btn-next" onclick="bksGoToConfirm()">Vérifier et confirmer →</button>
+        </div>
+        </div>
 
         <!-- ═══ ÉTAPE 3 : Confirmation ═══ -->
         <div id="bks-step-3" class="bks-step-page">
