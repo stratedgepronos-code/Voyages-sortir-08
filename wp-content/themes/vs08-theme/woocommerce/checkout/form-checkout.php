@@ -76,7 +76,7 @@ if ( ! $checkout->is_registration_enabled() && $checkout->is_registration_requir
 							$_bd = get_post_meta($_pid, '_vs08v_booking_data', true);
 							if (is_array($_bd)) {
 								$_type = $_bd['type'] ?? 'golf';
-								if ($_type === 'sejour') $vs08_badge = '🏖️ All Inclusive';
+								if ($_type === 'sejour') $vs08_badge = '🏖️ Séjour';
 								elseif ($_type === 'circuit') $vs08_badge = '🗺️ Circuit';
 								break;
 							}

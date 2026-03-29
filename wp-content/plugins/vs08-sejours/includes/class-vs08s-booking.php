@@ -70,15 +70,10 @@ class VS08S_Booking {
             $product->set_virtual(true);
             $product->set_sold_individually(true);
             $product->set_catalog_visibility('hidden');
-
-            // Description séjour (affichée sur la page checkout)
-            $desc = self::build_description($sejour_id, $params, $devis, $m, $titre, $total, $acompte, $acompte_pct);
-            $product->set_description($desc);
             $product->set_short_description($product_name);
-
             $product_id = $product->save();
 
-            // Stocker les données sur le produit (pas sur l'order — pas encore créée)
+            // Stocker les données sur le produit
             update_post_meta($product_id, '_vs08v_booking_data', $booking_data);
             update_post_meta($product_id, '_vs08s_booking_data', $booking_data);
             update_post_meta($product_id, '_vs08v_booking_hash', $hash);
@@ -87,6 +82,10 @@ class VS08S_Booking {
             update_post_meta($product_id, '_vs08v_acompte', $acompte);
             update_post_meta($product_id, '_vs08v_payer_tout', $devis['payer_tout']);
         }
+
+        // Toujours mettre à jour la description (séjour, pas golf)
+        $desc = self::build_description($sejour_id, $params, $devis, $m, $titre, $total, $acompte, $acompte_pct);
+        wp_update_post(['ID' => $product_id, 'post_content' => $desc]);
 
         error_log('[VS08S Booking] Produit #' . $product_id . ' créé');
 

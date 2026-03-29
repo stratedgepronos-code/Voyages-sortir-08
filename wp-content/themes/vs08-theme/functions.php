@@ -2,6 +2,30 @@
 if (!defined('ABSPATH')) exit;
 
 /* ============================================================
+   YOAST SEO — Désactiver pendant le checkout WooCommerce
+   Yoast accroche save_post et cascading → 2 Go RAM → 500.
+============================================================ */
+add_action('init', function() {
+    if (!empty($_GET['wc-ajax']) || (defined('DOING_AJAX') && DOING_AJAX && !empty($_POST['woocommerce-process-checkout-nonce']))) {
+        // Désactiver les hooks Yoast SEO sur save_post pendant le checkout
+        add_action('woocommerce_checkout_order_created', function() {
+            global $wp_filter;
+            foreach (['save_post', 'wp_insert_post'] as $hook) {
+                if (isset($wp_filter[$hook])) {
+                    foreach ($wp_filter[$hook]->callbacks as $priority => $callbacks) {
+                        foreach ($callbacks as $key => $cb) {
+                            if (is_string($key) && (strpos($key, 'wpseo') !== false || strpos($key, 'Yoast') !== false || strpos($key, 'WPSEO') !== false)) {
+                                unset($wp_filter[$hook]->callbacks[$priority][$key]);
+                            }
+                        }
+                    }
+                }
+            }
+        }, 1);
+    }
+}, 1);
+
+/* ============================================================
    SMTP — Envoi d'emails via Hostinger (obligatoire)
    Sans ça, wp_mail() utilise mail() de PHP qui est bloqué.
 ============================================================ */
@@ -768,12 +792,27 @@ add_action('vs08_checkout_recap', function() {
         }
     }
 
-    /* ── Green fees ── */
+    /* ── Type de réservation (golf/sejour/circuit) ── */
+    $booking_type = $booking_data['type'] ?? 'golf';
+    $is_sejour = ($booking_type === 'sejour');
+
+    /* ── Green fees (golf uniquement) ── */
     $gf = 0;
-    if ($vid) {
+    if (!$is_sejour && $vid) {
         $gf = (int) get_post_meta($vid, '_vs08v_green_fees', true);
         if (!$gf) $gf = (int) get_post_meta($vid, '_vs08v_nb_parcours', true);
         if (!$gf) $gf = (int) get_post_meta($vid, 'green_fees', true);
+    }
+
+    /* ── Transferts (séjour uniquement) ── */
+    $transfert_label = '';
+    if ($is_sejour && $vid) {
+        $sm = get_post_meta($vid, 'vs08s_data', true);
+        if (is_array($sm)) {
+            $tt = $sm['transfert_type'] ?? '';
+            $transfert_map = ['groupes'=>'Transferts groupés','prives'=>'Transferts privés','inclus'=>'Inclus dans l\'hôtel'];
+            $transfert_label = $transfert_map[$tt] ?? '';
+        }
     }
 
     /* ── Pension / Formule ── */
@@ -819,13 +858,18 @@ add_action('vs08_checkout_recap', function() {
     $nb_g  = (int)($params['nb_golfeurs'] ?? 0);
     $nb_ng = (int)($params['nb_nongolfeurs'] ?? 0);
     $nb    = $nb_g + $nb_ng;
+    if (!$nb) $nb = (int)($params['nb_adultes'] ?? 0);
     if (!$nb) $nb = (int)($devis['nb_total'] ?? 2);
 
     /* ── Hôtel (depuis les métadonnées du voyage) ── */
     $hotel_nom = '';
     $hotel_etoiles = '';
     if ($vid) {
+        // Essayer vs08v_data (golf) puis vs08s_data (séjour)
         $vm = get_post_meta($vid, 'vs08v_data', true);
+        if (!is_array($vm) || empty($vm['hotel_nom'])) {
+            $vm = get_post_meta($vid, 'vs08s_data', true);
+        }
         if (is_array($vm)) {
             $hotel_nom     = $vm['hotel_nom'] ?? ($vm['hotel']['nom'] ?? '');
             $hotel_etoiles = $vm['hotel_etoiles'] ?? ($vm['hotel']['etoiles'] ?? '');
@@ -882,13 +926,18 @@ add_action('vs08_checkout_recap', function() {
     if ($type_chambre) {
         echo '<tr><td>&#x1F6CF;&#xFE0F; Chambre</td><td>' . esc_html($chambre_label) . ' (' . intval($params['nb_chambres'] ?? 1) . ')</td></tr>';
     }
-    if ($gf > 0) {
-        echo '<tr><td>&#x26F3; Parcours</td><td>' . $gf . ' green fees inclus</td></tr>';
-    } else {
-        echo '<tr><td>&#x26F3; Parcours</td><td>Green fees inclus</td></tr>';
+    if (!$is_sejour) {
+        if ($gf > 0) {
+            echo '<tr><td>&#x26F3; Parcours</td><td>' . $gf . ' green fees inclus</td></tr>';
+        } else {
+            echo '<tr><td>&#x26F3; Parcours</td><td>Green fees inclus</td></tr>';
+        }
+    }
+    if ($is_sejour && $transfert_label) {
+        echo '<tr><td>&#x1F690; Transferts</td><td>' . esc_html($transfert_label) . '</td></tr>';
     }
     echo '<tr><td>&#x1F465; Voyageurs</td><td>' . $nb . ' adulte' . ($nb > 1 ? 's' : '');
-    if ($nb_g > 0 && $nb_ng > 0) {
+    if (!$is_sejour && $nb_g > 0 && $nb_ng > 0) {
         echo ' (' . $nb_g . ' golfeur' . ($nb_g > 1 ? 's' : '') . ', ' . $nb_ng . ' accompagnant' . ($nb_ng > 1 ? 's' : '') . ')';
     }
     echo '</td></tr>';
