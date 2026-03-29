@@ -38,7 +38,7 @@ class VS08S_Rest {
             'methods' => 'POST', 'callback' => [__CLASS__, 'calculate'], 'permission_callback' => '__return_true',
         ]);
         register_rest_route(self::NS, '/booking', [
-            'methods' => 'POST', 'callback' => [__CLASS__, 'booking'], 'permission_callback' => function() { return is_user_logged_in(); },
+            'methods' => 'POST', 'callback' => [__CLASS__, 'booking'], 'permission_callback' => '__return_true',
         ]);
     }
 

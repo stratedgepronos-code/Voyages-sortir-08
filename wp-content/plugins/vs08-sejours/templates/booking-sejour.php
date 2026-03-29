@@ -59,8 +59,25 @@ $has_bagages     = ($prix_bag_soute > 0 || $prix_bag_cabine > 0);
 
 $bk_saved_fact = [];
 $bk_saved_voy  = [];
-if (is_user_logged_in() && class_exists('VS08V_Traveler_Space')) {
-    try { $bk_saved_fact = VS08V_Traveler_Space::get_saved_facturation(); $bk_saved_voy = VS08V_Traveler_Space::get_saved_voyageurs(); } catch (\Throwable $e) {}
+if (is_user_logged_in()) {
+    $uid = get_current_user_id();
+    // Try VS08 saved facturation first
+    if (class_exists('VS08V_Traveler_Space')) {
+        try { $bk_saved_fact = VS08V_Traveler_Space::get_saved_facturation(); $bk_saved_voy = VS08V_Traveler_Space::get_saved_voyageurs(); } catch (\Throwable $e) {}
+    }
+    // Fallback: WooCommerce billing data
+    if (empty($bk_saved_fact['prenom'])) {
+        $user = wp_get_current_user();
+        $bk_saved_fact = array_merge([
+            'prenom'  => get_user_meta($uid, 'billing_first_name', true) ?: $user->first_name,
+            'nom'     => get_user_meta($uid, 'billing_last_name', true) ?: $user->last_name,
+            'email'   => get_user_meta($uid, 'billing_email', true) ?: $user->user_email,
+            'tel'     => get_user_meta($uid, 'billing_phone', true),
+            'adresse' => get_user_meta($uid, 'billing_address_1', true),
+            'cp'      => get_user_meta($uid, 'billing_postcode', true),
+            'ville'   => get_user_meta($uid, 'billing_city', true),
+        ], array_filter($bk_saved_fact));
+    }
 }
 
 $acompte_pct = floatval($m['acompte_pct'] ?? 30);
@@ -879,8 +896,8 @@ get_header();
         // Vol
         if(selectedCombo){
             html+='<div style="'+section+'">✈️ Vols sélectionnés</div>';
-            html+='<div style="'+rowS+'"><span>Aller</span><span>'+(selectedCombo.airline_name||'')+' · '+(selectedCombo.flight_number||'')+' · '+(selectedCombo.depart_time||'—')+' → '+(selectedCombo.arrive_time||'—')+'</span></div>';
-            if(selectedCombo.retour_depart) html+='<div style="'+rowS+'"><span>Retour</span><span>'+(selectedCombo.airline_name||'')+' · '+(selectedCombo.retour_flight||'')+' · '+(selectedCombo.retour_depart||'—')+' → '+(selectedCombo.retour_arrive||'—')+'</span></div>';
+            html+='<div style="'+rowS+'"><span>Aller · '+esc(BK.date_depart?new Date(BK.date_depart).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'')+'</span><span>'+(selectedCombo.airline_name||'')+' · '+(selectedCombo.flight_number||'')+' · '+(selectedCombo.depart_time||'—')+' → '+(selectedCombo.arrive_time||'—')+'</span></div>';
+            if(selectedCombo.retour_depart) html+='<div style="'+rowS+'"><span>Retour · '+esc(BK.date_retour?new Date(BK.date_retour).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'')+'</span><span>'+(selectedCombo.airline_name||'')+' · '+(selectedCombo.retour_flight||'')+' · '+(selectedCombo.retour_depart||'—')+' → '+(selectedCombo.retour_arrive||'—')+'</span></div>';
         }
 
         // Voyageurs
