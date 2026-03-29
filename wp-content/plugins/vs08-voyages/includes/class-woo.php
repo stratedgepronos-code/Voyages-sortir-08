@@ -141,6 +141,9 @@ add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_
     try {
         $product_id = $item->get_product_id();
         if (!$product_id) return;
+        if (metadata_exists('post', $product_id, '_vs08s_booking_data') || metadata_exists('post', $product_id, '_vs08s_booking_token')) {
+            return;
+        }
         $booking_data = get_post_meta($product_id, '_vs08v_booking_data', true);
         // Séjours all inclusive: ne pas dupliquer les gros blobs _vs08v_ sur les items.
         // Le flux séjour utilise _vs08s_booking_data (copie différée sur la commande).
@@ -169,6 +172,9 @@ add_action('woocommerce_checkout_update_order_meta', function($order_id) {
         foreach ($order->get_items() as $item) {
             $pid = $item->get_product_id();
             if (!$pid) continue;
+            if (metadata_exists('post', $pid, '_vs08s_booking_data') || metadata_exists('post', $pid, '_vs08s_booking_token')) {
+                continue;
+            }
             $data = get_post_meta($pid, '_vs08v_booking_data', true);
             if (is_array($data) && (($data['type'] ?? '') === 'sejour')) {
                 continue;

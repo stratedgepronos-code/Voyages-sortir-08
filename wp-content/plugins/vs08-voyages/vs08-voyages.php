@@ -430,7 +430,12 @@ function vs08v_get_target_order_id_for_espace($order) {
         }
         $pid = (int) $item->get_product_id();
         if ($pid > 0) {
-            if (get_post_meta($pid, '_vs08c_booking_data', true) || get_post_meta($pid, '_vs08v_booking_data', true) || get_post_meta($pid, '_vs08s_booking_data', true)) {
+            if (
+                metadata_exists('post', $pid, '_vs08s_booking_data') ||
+                metadata_exists('post', $pid, '_vs08s_booking_token') ||
+                metadata_exists('post', $pid, '_vs08c_booking_data') ||
+                metadata_exists('post', $pid, '_vs08v_booking_data')
+            ) {
                 return $order_id;
             }
         }

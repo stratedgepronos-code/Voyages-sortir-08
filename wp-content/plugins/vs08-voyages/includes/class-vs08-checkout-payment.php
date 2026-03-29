@@ -73,7 +73,12 @@ class VS08_Checkout_Payment {
             if (!$pid) {
                 continue;
             }
-            if (get_post_meta($pid, '_vs08v_booking_data', true) || get_post_meta($pid, '_vs08c_booking_data', true) || get_post_meta($pid, '_vs08s_booking_data', true)) {
+            if (
+                metadata_exists('post', $pid, '_vs08s_booking_data') ||
+                metadata_exists('post', $pid, '_vs08s_booking_token') ||
+                metadata_exists('post', $pid, '_vs08c_booking_data') ||
+                metadata_exists('post', $pid, '_vs08v_booking_data')
+            ) {
                 $has_vs08 = true;
                 break;
             }

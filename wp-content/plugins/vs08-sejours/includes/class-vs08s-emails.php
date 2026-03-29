@@ -17,12 +17,13 @@ class VS08S_Emails {
         if (isset($dispatching[$order_id])) return;
         $dispatching[$order_id] = true;
 
-        $already = get_post_meta($order_id, '_vs08s_emails_sent', true);
-        if ($already) { unset($dispatching[$order_id]); return; }
-        update_post_meta($order_id, '_vs08s_emails_sent', current_time('mysql'));
-
         $order = wc_get_order($order_id);
         if (!$order) { unset($dispatching[$order_id]); return; }
+
+        $already = $order->get_meta('_vs08s_emails_sent');
+        if ($already) { unset($dispatching[$order_id]); return; }
+        $order->update_meta_data('_vs08s_emails_sent', current_time('mysql'));
+        $order->save();
 
         $data = $order->get_meta('_vs08s_booking_data');
         if (empty($data) || !is_array($data)) { unset($dispatching[$order_id]); return; }

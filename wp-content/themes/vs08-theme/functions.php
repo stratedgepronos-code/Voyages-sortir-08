@@ -692,6 +692,12 @@ add_action('vs08_checkout_recap', function() {
     foreach (WC()->cart->get_cart() as $item) {
         $id = $item['product_id'] ?? 0;
         if (!$id) continue;
+        $sdata = get_post_meta($id, '_vs08s_booking_data', true);
+        if (!empty($sdata) && is_array($sdata) && ($sdata['type'] ?? '') === 'sejour') {
+            $product_id = $id;
+            $booking_data = $sdata;
+            break;
+        }
         $data = get_post_meta($id, '_vs08v_booking_data', true);
         if (!empty($data)) {
             $product_id = $id;
@@ -1049,7 +1055,12 @@ add_action('vs08_checkout_recap', function() {
 add_action('woocommerce_checkout_process', function() {
     if (!WC()->cart) return;
     foreach (WC()->cart->get_cart() as $item) {
-        $data = get_post_meta($item['product_id'] ?? 0, '_vs08v_booking_data', true);
+        $pid = (int) ($item['product_id'] ?? 0);
+        if (!$pid) continue;
+        if (metadata_exists('post', $pid, '_vs08s_booking_data') || metadata_exists('post', $pid, '_vs08s_booking_token')) {
+            continue;
+        }
+        $data = get_post_meta($pid, '_vs08v_booking_data', true);
         if (!empty($data) && !empty($data['voyageurs'])) {
             if (empty($_POST['vs08v_voyageurs_confirm'])) {
                 wc_add_notice(__('Veuillez certifier que les informations des voyageurs sont exactes (case à cocher).', 'woocommerce'), 'error');

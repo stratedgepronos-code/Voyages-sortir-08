@@ -28,6 +28,8 @@ class VS08S_Booking {
 
         $acompte_pct = floatval($m['acompte_pct'] ?? 30);
         $label_type  = $devis['payer_tout'] ? 'Paiement intégral' : 'Acompte ' . $acompte_pct . '%';
+        $payment_mode = ($params['vs08_payment_mode'] ?? 'card') === 'agency' ? 'agency' : 'card';
+        $reglement_agence = ($payment_mode === 'agency');
 
         $product_name = sprintf(
             'Réservation — %s — %s (%s — %d pers.)',
@@ -80,14 +82,26 @@ class VS08S_Booking {
                 'total'            => $total,
                 'acompte'          => $acompte,
                 'payer_tout'       => !empty($devis['payer_tout']),
+                'acompte_pct'      => $acompte_pct,
                 'prix_par_personne'=> floatval($devis['prix_par_personne'] ?? 0),
                 'nb_total'         => intval($devis['nb_total'] ?? 0),
                 'nb_chambres'      => intval($devis['nb_chambres'] ?? 0),
+                'lines'            => array_values(array_map(function($line) {
+                    return [
+                        'label'   => (string) ($line['label'] ?? ''),
+                        'detail'  => (string) ($line['detail'] ?? ''),
+                        'montant' => floatval($line['montant'] ?? 0),
+                    ];
+                }, is_array($devis['lines'] ?? null) ? $devis['lines'] : [])),
             ],
             'total'        => $total,
             'acompte'      => $acompte,
             'payer_tout'   => !empty($devis['payer_tout']),
             'assurance'    => floatval($devis['assurance'] ?? 0),
+            'facturation'  => $fact,
+            'voyageurs'    => $voyageurs,
+            'payment_mode' => $payment_mode,
+            'reglement_agence' => $reglement_agence,
             'options'      => [],
         ];
 
@@ -147,10 +161,6 @@ class VS08S_Booking {
         // Vider le cache WC produit
         clean_post_cache($product_id);
         wc_delete_product_transients($product_id);
-
-        // Payment mode (card ou agency)
-        $payment_mode = ($params['vs08_payment_mode'] ?? 'card') === 'agency' ? 'agency' : 'card';
-        $reglement_agence = ($payment_mode === 'agency');
 
         // Stocker le mode de paiement sur le produit
         update_post_meta($product_id, '_vs08v_payment_mode', $payment_mode);
