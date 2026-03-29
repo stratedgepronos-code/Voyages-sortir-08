@@ -78,6 +78,40 @@ jobs:
           done
           [ "$ok" -eq 1 ] || echo "Sejours deploy failed (non-blocking)"
 
+      - name: Deploy mu-plugins (with retry)
+        run: |
+          ok=0
+          for attempt in 1 2 3; do
+            echo "=== Attempt $attempt/3 — Deploy mu-plugins ==="
+            if sshpass -p "${{ secrets.SSH_PASSWORD }}" rsync -avz \
+              -e "ssh ${{ env.SSH_OPTS }}" \
+              wp-content/mu-plugins/ \
+              ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }}:${{ env.WEBROOT }}/wp-content/mu-plugins/; then
+              echo "mu-plugins deployed OK" && ok=1 && break
+            fi
+            echo "Attempt $attempt failed, waiting 10s..."
+            sleep 10
+          done
+          [ "$ok" -eq 1 ] || echo "mu-plugins deploy failed (non-blocking)"
+
+      - name: Disable WooCommerce HPOS in database
+        run: |
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ env.SSH_OPTS }} \
+            ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} "
+            WEBROOT=${{ env.WEBROOT }}
+            cat > \$WEBROOT/_vs08_disable_hpos.php << 'PHPEOF'
+<?php
+define('SHORTINIT', true);
+require_once dirname(__FILE__) . '/wp-load.php';
+global \$wpdb;
+\$wpdb->update(\$wpdb->options, ['option_value'=>'no'], ['option_name'=>'woocommerce_custom_orders_table_enabled']);
+\$wpdb->update(\$wpdb->options, ['option_value'=>'no'], ['option_name'=>'woocommerce_custom_orders_table_data_sync_enabled']);
+echo 'HPOS disabled';
+PHPEOF
+            php \$WEBROOT/_vs08_disable_hpos.php && rm -f \$WEBROOT/_vs08_disable_hpos.php
+            echo 'HPOS disable done'
+          " || echo "HPOS disable skipped (non-blocking)"
+
       # ATTENTION : PAS de --delete sur le theme !
       # Le repo ne contient que des fichiers de surcharge (footer.php, single-vs08_voyage.php).
       # Le theme complet (style.css, header.php, functions.php, logo, assets) vit UNIQUEMENT sur le serveur.
