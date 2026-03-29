@@ -160,10 +160,33 @@ get_header();
 .bks-error{display:none;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:12px;border-radius:10px;font-size:13px;font-family:'Outfit',sans-serif;margin-bottom:14px}
 .bks-loading{display:none;text-align:center;padding:20px}
 .bks-step-page{display:none!important}.bks-step-active{display:block!important}
-.bks-ins-wrap{background:#f0f9ff;border:2px solid #bae6fd;border-radius:14px;padding:20px;margin-top:20px}
-.bks-ins-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid #bae6fd}
+/* Route header */
+.bks-route-header{display:flex;align-items:center;justify-content:center;gap:14px;background:#0f2424;border-radius:14px;padding:14px 20px;margin-bottom:20px}
+.bks-route-iata{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase}
+.bks-route-arrow{font-size:22px;color:#59b7b7}
+.bks-route-city{font-size:10px;color:rgba(255,255,255,.5);font-family:'Outfit',sans-serif;text-transform:uppercase;letter-spacing:1px}
+.bks-route-dates{font-size:11px;color:rgba(255,255,255,.45);font-family:'Outfit',sans-serif;margin-top:3px}
+/* Insurance — same as circuit */
+.bks-ins-wrap{background:linear-gradient(135deg,#f0f9fa 0%,#fdf2f8 100%);border:2px solid #59b7b7;border-radius:18px;padding:0;overflow:hidden}
+.bks-ins-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid rgba(89,183,183,.18)}
+.bks-ins-logo{height:32px;width:auto}
+.bks-ins-badge{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;background:linear-gradient(135deg,#e3147a,#c30d66);color:#fff;padding:4px 12px;border-radius:20px;letter-spacing:.5px}
+.bks-ins-body{padding:14px 20px 16px}
+.bks-ins-hook{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:#0f2424;line-height:1.35;margin:0 0 6px}
+.bks-ins-sub{font-family:'Outfit',sans-serif;font-size:12.5px;color:#4b5563;line-height:1.5;margin:0 0 14px}
+.bks-ins-docs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.bks-ins-doc{font-family:'Outfit',sans-serif;font-size:11px;color:#0083a3;text-decoration:none;display:flex;align-items:center;gap:4px;padding:5px 10px;background:rgba(255,255,255,.8);border:1px solid rgba(0,131,163,.2);border-radius:8px;transition:all .2s}
+.bks-ins-doc:hover{background:#e3147a;color:#fff;border-color:#e3147a}
+.bks-ins-footer{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:rgba(255,255,255,.6);border-top:1px solid rgba(89,183,183,.15)}
+.bks-ins-check-label{display:flex;align-items:center;gap:12px;cursor:pointer;flex:1}
+.bks-ins-check-label input[type=checkbox]{width:20px;height:20px;accent-color:#e3147a;flex-shrink:0}
+.bks-ins-check-text{font-family:'Outfit',sans-serif;font-size:13.5px;font-weight:700;color:#0f2424}
+.bks-ins-check-text small{font-weight:400;color:#6b7280;font-size:12px}
+.bks-ins-price{text-align:right;flex-shrink:0}
+.bks-ins-price-main{font-family:'Outfit',sans-serif;font-size:20px;font-weight:800;color:#e3147a}
+.bks-ins-price-detail{font-family:'Outfit',sans-serif;font-size:11px;color:#6b7280}
 @media(max-width:900px){.bks-container{grid-template-columns:1fr}.bks-recap{position:static}}
-@media(max-width:600px){.bks-container{padding:16px}.bks-field-row{grid-template-columns:1fr}.bks-header{padding:16px}.bks-section{padding:20px}}
+@media(max-width:600px){.bks-container{padding:16px}.bks-field-row{grid-template-columns:1fr}.bks-header{padding:16px}.bks-section{padding:20px}.bks-route-header{padding:10px 14px;gap:10px}.bks-route-iata{font-size:20px}.bks-ins-footer{flex-direction:column;gap:12px;align-items:stretch}.bks-ins-price{text-align:left}}
 /* Filter sidebar */
 .bks-filters-sidebar{position:fixed;top:160px;width:200px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;font-family:'Outfit',sans-serif;box-shadow:0 2px 12px rgba(0,0,0,.06);z-index:50;transition:opacity .3s}
 .bksf-title{font-size:16px;font-weight:700;color:#0f2424;margin-bottom:14px}
@@ -237,18 +260,29 @@ get_header();
             <h3 class="bks-section-title"><span class="bks-step-num">1</span> Sélection de votre vol</h3>
             <p class="bks-section-sub">Choisissez votre combinaison aller-retour parmi les vols disponibles.</p>
 
-            <div style="display:flex;justify-content:space-around;align-items:center;background:#f9f6f0;border-radius:12px;padding:14px;margin-bottom:16px;font-family:'Outfit',sans-serif">
-                <div style="text-align:center"><div style="font-size:18px;font-weight:800;color:#0f2424"><?php echo esc_html($params['aeroport']); ?></div><div style="font-size:11px;color:#6b7280">Départ</div></div>
-                <div style="font-size:20px;color:#59b7b7">✈️ ⟷</div>
-                <div style="text-align:center"><div style="font-size:18px;font-weight:800;color:#0f2424"><?php echo esc_html($iata_dest); ?></div><div style="font-size:11px;color:#6b7280">Arrivée</div></div>
+            <div class="bks-route-header">
+                <div style="text-align:center">
+                    <div class="bks-route-iata"><?php echo esc_html($params['aeroport'] ?: '—'); ?></div>
+                    <div class="bks-route-city">Départ</div>
+                </div>
+                <div style="text-align:center">
+                    <div class="bks-route-arrow">✈️ ⟷</div>
+                    <div class="bks-route-dates"><?php echo esc_html($date_fmt . ' → ' . $date_retour_fmt . ' · ' . $nb_total . ' pax'); ?></div>
+                </div>
+                <div style="text-align:center">
+                    <div class="bks-route-iata"><?php echo esc_html($iata_dest ?: '—'); ?></div>
+                    <div class="bks-route-city">Arrivée</div>
+                </div>
             </div>
-            <div style="text-align:center;font-size:12px;color:#6b7280;font-family:'Outfit',sans-serif;margin-bottom:16px"><?php echo $date_fmt; ?> → <?php echo $date_retour_fmt; ?> · <?php echo $nb_total; ?> passager<?php echo $nb_total>1?'s':''; ?></div>
 
             <div id="bks-combo-wrap">
-                <div class="bks-combo-loading" id="bks-combo-loading"><div class="bks-combo-spinner"></div>Recherche des vols aller-retour…</div>
+                <div class="bks-combo-loading" id="bks-combo-loading"><div class="bks-combo-spinner"></div>Recherche des vols aller et retour…</div>
                 <div id="bks-combo-list"></div>
+                <div id="bks-combo-no-match" class="bks-no-flights" style="display:none">Aucun vol ne correspond à vos filtres.</div>
                 <div id="bks-no-flights" class="bks-no-flights" style="display:none">❌ Aucun vol trouvé pour ces dates. Essayez une autre date.</div>
             </div>
+            <input type="hidden" id="bks-selected-offer-id" name="selected_offer_id" value="">
+            <input type="hidden" id="bks-selected-vol-delta" name="vol_delta_pax" value="0">
             <input type="hidden" id="bks-selected-vol-price" value="0">
         </div>
 
@@ -256,16 +290,28 @@ get_header();
         <?php if ($insurance_price > 0): ?>
         <div class="bks-section">
             <div class="bks-ins-wrap">
-                <div style="font-weight:700;color:#0369a1;font-size:14px;font-family:'Outfit',sans-serif;margin-bottom:8px">🛡️ Assurance Multirisque GALAXY · Assurever</div>
-                <p style="font-size:13px;color:#374151;font-family:'Outfit',sans-serif;line-height:1.6;margin:0">Annulation, rapatriement 24h/24, frais médicaux, bagages.</p>
+                <div class="bks-ins-header">
+                    <img src="<?php echo defined('VS08V_URL') ? VS08V_URL : ''; ?>assets/img/assurever-logo.png" alt="Assurever" class="bks-ins-logo" onerror="this.style.display='none'">
+                    <span class="bks-ins-badge">GALAXY MULTIRISQUE</span>
+                </div>
+                <div class="bks-ins-body">
+                    <div class="bks-ins-hook">Voyagez l'esprit libre, on s'occupe du reste.</div>
+                    <p class="bks-ins-sub">Annulation selon cause prévue dans le contrat, rapatriement 24h/24, frais médicaux à l'étranger, bagages… Une couverture complète pour partir sereinement.</p>
+                    <?php if (defined('VS08V_URL')): ?>
+                    <div class="bks-ins-docs">
+                        <a href="<?php echo VS08V_URL; ?>assets/docs/assurever-ipid-galaxy.pdf" target="_blank" class="bks-ins-doc">📄 Fiche produit (IPID)</a>
+                        <a href="<?php echo VS08V_URL; ?>assets/docs/assurever-conditions-galaxy.pdf" target="_blank" class="bks-ins-doc">📄 Conditions générales</a>
+                    </div>
+                    <?php endif; ?>
+                </div>
                 <div class="bks-ins-footer">
-                    <label style="display:flex;gap:8px;cursor:pointer;align-items:center">
+                    <label class="bks-ins-check-label">
                         <input type="checkbox" id="bks-assurance" onchange="bksUpdateTotal()">
-                        <span style="font-size:13px;font-family:'Outfit',sans-serif;color:#0369a1;font-weight:600">Oui, je souhaite être protégé(e)</span>
+                        <div class="bks-ins-check-text">Oui, je souhaite être protégé(e)<br><small>Assurance Multirisque GALAXY · Assurever / Mutuaide</small></div>
                     </label>
-                    <div style="text-align:right;font-family:'Outfit',sans-serif">
-                        <div style="font-size:16px;font-weight:800;color:#0369a1"><?php echo number_format($insurance_price * $nb_total, 2, ',', ' '); ?> €</div>
-                        <div style="font-size:11px;color:#6b7280"><?php echo number_format($insurance_price, 2, ',', ' '); ?> €/pers</div>
+                    <div class="bks-ins-price">
+                        <div class="bks-ins-price-main"><?php echo number_format($insurance_price * $nb_total, 2, ',', ' '); ?> €</div>
+                        <div class="bks-ins-price-detail"><?php echo number_format($insurance_price, 2, ',', ' '); ?> € /pers. × <?php echo $nb_total; ?></div>
                     </div>
                 </div>
             </div>
@@ -593,6 +639,10 @@ get_header();
         selectedCombo=f;
         volPricePax=parseFloat(f.price_per_pax || 0);
         document.getElementById('bks-selected-vol-price').value=volPricePax;
+        var offerInput=document.getElementById('bks-selected-offer-id');
+        if(offerInput) offerInput.value=f.offer_id||'';
+        var deltaInput=document.getElementById('bks-selected-vol-delta');
+        if(deltaInput) deltaInput.value=f.delta_per_pax||0;
         document.querySelectorAll('.bks-combo-card').forEach(function(c){c.classList.remove('selected')});
         var card=document.getElementById('bks-combo-'+idx);
         if(card) card.classList.add('selected');
