@@ -444,25 +444,40 @@ function vs08v_get_espace_url_for_order($order) {
 }
 
 // Redirection checkout côté serveur : URL de retour = espace membre (golf + circuit + solde).
-add_filter('woocommerce_get_checkout_order_received_url', function($url, $order) {
-    $target = vs08v_get_espace_url_for_order($order);
-    return $target ?: $url;
+add_filter('woocommerce_get_checkout_order_received_url', function($url, $order = null) {
+    try {
+        $target = vs08v_get_espace_url_for_order($order);
+        return $target ?: $url;
+    } catch (\Throwable $e) {
+        error_log('[VS08 Checkout Redirect] order_received_url error: ' . $e->getMessage());
+        return $url;
+    }
 }, 10, 2);
 
 // Même logique pour les paiements "sans page de paiement" (bacs/cheque/cod...).
-add_filter('woocommerce_checkout_no_payment_needed_redirect', function($url, $order) {
-    $target = vs08v_get_espace_url_for_order($order);
-    return $target ?: $url;
+add_filter('woocommerce_checkout_no_payment_needed_redirect', function($url, $order = null) {
+    try {
+        $target = vs08v_get_espace_url_for_order($order);
+        return $target ?: $url;
+    } catch (\Throwable $e) {
+        error_log('[VS08 Checkout Redirect] no_payment_needed error: ' . $e->getMessage());
+        return $url;
+    }
 }, 10, 2);
 
 // Surcharge du résultat checkout AJAX (point critique pour certains gateways / thèmes).
-add_filter('woocommerce_payment_successful_result', function($result, $order_id) {
-    $order = wc_get_order($order_id);
-    $target = vs08v_get_espace_url_for_order($order);
-    if ($target) {
-        $result['redirect'] = $target;
+add_filter('woocommerce_payment_successful_result', function($result, $order_id = 0) {
+    try {
+        $order = $order_id ? wc_get_order($order_id) : null;
+        $target = vs08v_get_espace_url_for_order($order);
+        if ($target) {
+            $result['redirect'] = $target;
+        }
+        return $result;
+    } catch (\Throwable $e) {
+        error_log('[VS08 Checkout Redirect] payment_successful_result error: ' . $e->getMessage());
+        return $result;
     }
-    return $result;
 }, 10, 2);
 
 // Si on arrive quand même sur order-received : redirection immédiate vers l'espace membre.
