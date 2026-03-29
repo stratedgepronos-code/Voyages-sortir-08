@@ -94,7 +94,7 @@ get_header();
 ]); ?>;</script>
 
 <style>
-.bks-page{background:#f9f6f0;min-height:100vh;padding:0 0 60px}
+.bks-page{background:#f9f6f0;min-height:100vh;padding:140px 0 60px}
 .bks-header{background:linear-gradient(135deg,#0f2424 0%,#1a4a3a 100%);padding:24px 32px;color:#fff}
 .bks-header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
 .bks-header-info h2{margin:0;font-size:20px;font-family:'Playfair Display',serif}
