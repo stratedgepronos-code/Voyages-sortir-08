@@ -378,7 +378,7 @@ get_header();
         });
     }
 
-    var SHOW_INITIAL = 4;
+    var SHOW_INITIAL = 3;
 
     function fmtDuration(min) {
         if (!min) return '';
@@ -458,7 +458,6 @@ get_header();
             card.setAttribute('data-conn', conn ? '1' : '0');
             card.setAttribute('data-dep', timeToMin(f.depart_time));
             card.setAttribute('data-ret', timeToMin(f.retour_depart));
-            card.style.display = idx < SHOW_INITIAL ? '' : 'none';
             card.onclick = (function(i) { return function() { bksSelectCombo(i); }; })(idx);
             card.innerHTML = html;
             list.appendChild(card);
@@ -474,21 +473,68 @@ get_header();
         if (nDir) nDir.textContent = nbDirect;
         if (nEsc) nEsc.textContent = nbEscale;
 
-        // Show more button
-        if (flights.length > SHOW_INITIAL) {
-            var wrap = document.createElement('div');
-            wrap.className = 'bks-show-more';
-            wrap.id = 'bks-show-more';
-            wrap.innerHTML = '<button onclick="bksShowAllCombos()">Voir les ' + (flights.length - SHOW_INITIAL) + ' autres vols ↓</button>';
-            list.appendChild(wrap);
-        }
+        // Apply visibility (show first 3 + show more)
+        bksShowAll = false;
+        bksApplyVisibility();
     }
 
     window.bksShowAllCombos = function() {
-        document.querySelectorAll('.bks-combo-card').forEach(function(c) { c.style.display = ''; });
-        var btn = document.getElementById('bks-show-more');
-        if (btn) btn.style.display = 'none';
+        bksShowAll = true;
+        bksApplyVisibility();
     };
+
+    var bksShowAll = false;
+
+    // Central visibility: handles both filters + show more
+    function bksApplyVisibility() {
+        var typeVal = 'all';
+        document.querySelectorAll('input[name="bksf_type"]').forEach(function(r) { if (r.checked) typeVal = r.value; });
+        var depMinR = document.getElementById('bksf-dep-min');
+        var depMaxR = document.getElementById('bksf-dep-max');
+        var retMinR = document.getElementById('bksf-ret-min');
+        var retMaxR = document.getElementById('bksf-ret-max');
+        var dMin = depMinR ? parseInt(depMinR.value,10) : 0;
+        var dMax = depMaxR ? parseInt(depMaxR.value,10) : 1439;
+        var rMin = retMinR ? parseInt(retMinR.value,10) : 0;
+        var rMax = retMaxR ? parseInt(retMaxR.value,10) : 1439;
+
+        // Update labels
+        var el;
+        el = document.getElementById('bksf-dep-min-lbl'); if (el) el.textContent = minToTime(dMin);
+        el = document.getElementById('bksf-dep-max-lbl'); if (el) el.textContent = minToTime(dMax);
+        el = document.getElementById('bksf-ret-min-lbl'); if (el) el.textContent = minToTime(rMin);
+        el = document.getElementById('bksf-ret-max-lbl'); if (el) el.textContent = minToTime(rMax);
+
+        var cards = document.querySelectorAll('.bks-combo-card');
+        var matchCount = 0;
+        cards.forEach(function(card) {
+            var match = true;
+            var conn = card.getAttribute('data-conn');
+            if (typeVal === 'direct' && conn === '1') match = false;
+            if (typeVal === 'escale' && conn === '0') match = false;
+            if (match) { var dep = parseInt(card.getAttribute('data-dep'),10); if (dep < dMin || dep > dMax) match = false; }
+            if (match) { var ret = parseInt(card.getAttribute('data-ret'),10); if (ret < rMin || ret > rMax) match = false; }
+
+            if (!match) {
+                card.style.display = 'none';
+            } else {
+                matchCount++;
+                card.style.display = (!bksShowAll && matchCount > SHOW_INITIAL) ? 'none' : '';
+            }
+        });
+
+        // Show more button
+        var oldBtn = document.getElementById('bks-show-more');
+        if (oldBtn) oldBtn.remove();
+        if (!bksShowAll && matchCount > SHOW_INITIAL) {
+            var wrap = document.createElement('div');
+            wrap.className = 'bks-show-more';
+            wrap.id = 'bks-show-more';
+            var hidden = matchCount - SHOW_INITIAL;
+            wrap.innerHTML = '<button onclick="bksShowAllCombos()">Voir ' + hidden + ' autre' + (hidden > 1 ? 's' : '') + ' vol' + (hidden > 1 ? 's' : '') + ' ↓</button>';
+            document.getElementById('bks-combo-list').appendChild(wrap);
+        }
+    }
 
     // ── Time helpers ──
     function timeToMin(t) {
@@ -523,57 +569,22 @@ get_header();
         posSidebar();
         window.addEventListener('resize', posSidebar);
 
-        var radios = document.querySelectorAll('input[name="bksf_type"]');
-        var depMinR = document.getElementById('bksf-dep-min');
-        var depMaxR = document.getElementById('bksf-dep-max');
-        var retMinR = document.getElementById('bksf-ret-min');
-        var retMaxR = document.getElementById('bksf-ret-max');
-        var resetBtn = document.getElementById('bksf-reset');
-
-        function applyFilters() {
-            var typeVal = 'all';
-            radios.forEach(function(r) { if (r.checked) typeVal = r.value; });
-            var dMin = parseInt(depMinR.value,10), dMax = parseInt(depMaxR.value,10);
-            var rMin = parseInt(retMinR.value,10), rMax = parseInt(retMaxR.value,10);
-            document.getElementById('bksf-dep-min-lbl').textContent = minToTime(dMin);
-            document.getElementById('bksf-dep-max-lbl').textContent = minToTime(dMax);
-            document.getElementById('bksf-ret-min-lbl').textContent = minToTime(rMin);
-            document.getElementById('bksf-ret-max-lbl').textContent = minToTime(rMax);
-
-            var cards = document.querySelectorAll('.bks-combo-card');
-            var visible = 0;
-            cards.forEach(function(card) {
-                var show = true;
-                var conn = card.getAttribute('data-conn');
-                if (typeVal === 'direct' && conn === '1') show = false;
-                if (typeVal === 'escale' && conn === '0') show = false;
-                if (show) {
-                    var dep = parseInt(card.getAttribute('data-dep'),10);
-                    if (dep < dMin || dep > dMax) show = false;
-                }
-                if (show) {
-                    var ret = parseInt(card.getAttribute('data-ret'),10);
-                    if (ret < rMin || ret > rMax) show = false;
-                }
-                card.style.display = show ? '' : 'none';
-                card.classList.remove('bks-combo-hidden');
-                if (show) visible++;
-            });
-
-            // Show more re-apply
-            var showMoreBtn = document.getElementById('bks-show-more');
-            if (showMoreBtn) showMoreBtn.style.display = 'none';
-        }
-
-        radios.forEach(function(r) { r.addEventListener('change', applyFilters); });
-        [depMinR, depMaxR, retMinR, retMaxR].forEach(function(el) {
-            if (el) el.addEventListener('input', applyFilters);
+        // Wire filter controls to bksApplyVisibility
+        document.querySelectorAll('input[name="bksf_type"]').forEach(function(r) {
+            r.addEventListener('change', function() { bksShowAll = false; bksApplyVisibility(); });
         });
+        ['bksf-dep-min','bksf-dep-max','bksf-ret-min','bksf-ret-max'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('input', function() { bksShowAll = false; bksApplyVisibility(); });
+        });
+        var resetBtn = document.getElementById('bksf-reset');
         if (resetBtn) resetBtn.addEventListener('click', function() {
-            radios.forEach(function(r) { r.checked = r.value === 'all'; });
-            depMinR.value = 0; depMaxR.value = 1439;
-            retMinR.value = 0; retMaxR.value = 1439;
-            applyFilters();
+            document.querySelectorAll('input[name="bksf_type"]').forEach(function(r) { r.checked = r.value === 'all'; });
+            var ids = ['bksf-dep-min','bksf-dep-max','bksf-ret-min','bksf-ret-max'];
+            var vals = [0, 1439, 0, 1439];
+            ids.forEach(function(id, i) { var el = document.getElementById(id); if (el) el.value = vals[i]; });
+            bksShowAll = false;
+            bksApplyVisibility();
         });
     }
 
