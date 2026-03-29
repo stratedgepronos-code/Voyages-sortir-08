@@ -161,61 +161,6 @@ if (!empty($_GET['wc-ajax']) && $_GET['wc-ajax'] === 'checkout') {
         VS08_Checkout_Payment::register();
     });
 
-    function vs08v_get_target_order_id_for_espace($order) {
-        if (!$order || !is_object($order)) return 0;
-        $order_id = (int) $order->get_id();
-        if (!$order_id) return 0;
-        $parent_id = (int) $order->get_meta('_vs08v_order_solde_parent');
-        if ($parent_id > 0) return $parent_id;
-        if ($order->get_meta('_vs08v_booking_data')) return $order_id;
-        if ($order->get_meta('_vs08c_booking_data')) return $order_id;
-        if ($order->get_meta('_vs08s_booking_data')) return $order_id;
-        foreach ($order->get_items() as $item) {
-            if ($item->get_meta('_vs08c_booking_data') || $item->get_meta('_vs08v_booking_data') || $item->get_meta('_vs08s_booking_data')) {
-                return $order_id;
-            }
-            $pid = (int) $item->get_product_id();
-            if ($pid > 0 && (
-                metadata_exists('post', $pid, '_vs08s_booking_data') ||
-                metadata_exists('post', $pid, '_vs08s_booking_token') ||
-                metadata_exists('post', $pid, '_vs08c_booking_data') ||
-                metadata_exists('post', $pid, '_vs08v_booking_data')
-            )) {
-                return $order_id;
-            }
-        }
-        return 0;
-    }
-
-    function vs08v_get_espace_url_for_order($order) {
-        $target_order_id = vs08v_get_target_order_id_for_espace($order);
-        if ($target_order_id <= 0) return '';
-        return VS08V_Traveler_Space::voyage_url($target_order_id);
-    }
-
-    add_filter('woocommerce_get_checkout_order_received_url', function($url, $order = null) {
-        try { $t = vs08v_get_espace_url_for_order($order); return $t ?: $url; }
-        catch (\Throwable $e) { return $url; }
-    }, 10, 2);
-    add_filter('woocommerce_checkout_no_payment_needed_redirect', function($url, $order = null) {
-        try { $t = vs08v_get_espace_url_for_order($order); return $t ?: $url; }
-        catch (\Throwable $e) { return $url; }
-    }, 10, 2);
-    add_filter('woocommerce_payment_successful_result', function($result, $order_id = 0) {
-        try {
-            $order = $order_id ? wc_get_order($order_id) : null;
-            $t = vs08v_get_espace_url_for_order($order);
-            if ($t) $result['redirect'] = $t;
-            return $result;
-        } catch (\Throwable $e) { return $result; }
-    }, 10, 2);
-
-    add_action('vs08_deferred_email_dispatch', function($order_id) {
-        if (class_exists('VS08V_Emails')) VS08V_Emails::dispatch($order_id);
-        if (class_exists('VS08S_Emails')) VS08S_Emails::dispatch($order_id);
-        if (class_exists('VS08C_Emails')) VS08C_Emails::dispatch($order_id);
-    });
-
     return;
 }
 
