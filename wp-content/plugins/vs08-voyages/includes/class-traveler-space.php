@@ -52,49 +52,78 @@ class VS08V_Traveler_Space {
         if (!$order) {
             return null;
         }
+        // Golf — order meta
         $data = $order->get_meta('_vs08v_booking_data');
         if (!empty($data) && is_array($data)) {
             return $data;
         }
+        // Golf — fallback wp_postmeta (HPOS compat)
+        $order_id = $order->get_id();
+        $data = get_post_meta($order_id, '_vs08v_booking_data', true);
+        if (!empty($data) && is_array($data)) {
+            return $data;
+        }
+        // Golf — fallback produit
         foreach ($order->get_items() as $item) {
-            $data = $item->get_meta('_vs08v_booking_data');
-            if (!empty($data) && is_array($data)) {
-                return $data;
+            $pid = (int) $item->get_product_id();
+            if ($pid > 0) {
+                $data = get_post_meta($pid, '_vs08v_booking_data', true);
+                if (!empty($data) && is_array($data) && ($data['type'] ?? '') !== 'sejour') {
+                    return $data;
+                }
             }
         }
+        // Circuit
         if ($include_circuit && class_exists('VS08C_Contract')) {
             $data = $order->get_meta('_vs08c_booking_data');
             if (!empty($data) && is_array($data)) {
                 $data['type'] = 'circuit';
                 return $data;
             }
+            $data = get_post_meta($order_id, '_vs08c_booking_data', true);
+            if (!empty($data) && is_array($data)) {
+                $data['type'] = 'circuit';
+                return $data;
+            }
             foreach ($order->get_items() as $item) {
-                $data = $item->get_meta('_vs08c_booking_data');
-                if (!empty($data) && is_array($data)) {
-                    $data['type'] = 'circuit';
-                    return $data;
+                $pid = (int) $item->get_product_id();
+                if ($pid > 0) {
+                    $data = get_post_meta($pid, '_vs08c_booking_data', true);
+                    if (!empty($data) && is_array($data)) {
+                        $data['type'] = 'circuit';
+                        return $data;
+                    }
                 }
             }
         }
-        // Séjours all inclusive
+        // Séjour — order meta
         $data = $order->get_meta('_vs08s_booking_data');
         if (!empty($data) && is_array($data)) {
             $data['type'] = 'sejour';
             return $data;
         }
-        // Fallback séjour depuis lignes/produit (si redirection immédiate avant copie thankyou)
+        $data = get_post_meta($order_id, '_vs08s_booking_data', true);
+        if (!empty($data) && is_array($data)) {
+            $data['type'] = 'sejour';
+            return $data;
+        }
+        // Séjour — fallback produit
         foreach ($order->get_items() as $item) {
-            $data = $item->get_meta('_vs08s_booking_data');
-            if (!empty($data) && is_array($data)) {
-                $data['type'] = 'sejour';
-                return $data;
-            }
             $pid = (int) $item->get_product_id();
             if ($pid > 0) {
                 $data = get_post_meta($pid, '_vs08s_booking_data', true);
                 if (!empty($data) && is_array($data)) {
                     $data['type'] = 'sejour';
                     return $data;
+                }
+                // Séjour token → transient
+                $token = get_post_meta($pid, '_vs08s_booking_token', true);
+                if ($token) {
+                    $data = get_transient('vs08s_booking_full_' . $token);
+                    if (!empty($data) && is_array($data)) {
+                        $data['type'] = 'sejour';
+                        return $data;
+                    }
                 }
             }
         }
