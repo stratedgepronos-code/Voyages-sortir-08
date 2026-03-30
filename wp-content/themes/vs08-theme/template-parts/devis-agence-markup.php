@@ -142,13 +142,16 @@ $extra_field = $c['extra_field'] ?? ''; // 'city' | 'road' | 'circuit' | ''
                 </div>
                 <script>
                 document.addEventListener('DOMContentLoaded', function(){
-                    if (typeof VS08Calendar === 'undefined') return;
+                    if (typeof VS08Calendar === 'undefined') { console.warn('VS08Calendar not loaded'); return; }
                     var minD = new Date(); minD.setDate(minD.getDate() + 7);
-                    new VS08Calendar({ el:'#da-cal-d1', input:'#da-d1', mode:'date', inline:false, title:'Date de départ', minDate:minD,
-                        onSelect: function(d){ document.getElementById('da-d1').value = d.toISOString().slice(0,10); }
+                    var yr = new Date().getFullYear();
+                    new VS08Calendar({ el:'#da-cal-d1', input:'#da-d1', mode:'date', inline:true, title:'Date de départ souhaitée',
+                        yearRange:[yr, yr+2], minDate:minD,
+                        onSelect: function(d){ if(d){ var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); document.getElementById('da-d1').value=ds; } }
                     });
-                    new VS08Calendar({ el:'#da-cal-d2', input:'#da-d2', mode:'date', inline:false, title:'Date de retour', minDate:minD,
-                        onSelect: function(d){ document.getElementById('da-d2').value = d.toISOString().slice(0,10); }
+                    new VS08Calendar({ el:'#da-cal-d2', input:'#da-d2', mode:'date', inline:true, title:'Date de retour souhaitée',
+                        yearRange:[yr, yr+2], minDate:minD,
+                        onSelect: function(d){ if(d){ var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); document.getElementById('da-d2').value=ds; } }
                     });
                 });
                 </script>

@@ -182,13 +182,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
                 </div>
                 <script>
                 document.addEventListener('DOMContentLoaded', function(){
-                    if (typeof VS08Calendar === 'undefined') return;
+                    if (typeof VS08Calendar === 'undefined') { console.warn('VS08Calendar not loaded'); return; }
                     var minD = new Date(); minD.setDate(minD.getDate() + 7);
-                    new VS08Calendar({ el:'#devis-cal-debut', input:'#devis-date-debut', mode:'date', inline:false, title:'Date de départ', minDate:minD,
-                        onSelect: function(d){ document.getElementById('devis-date-debut').value = d.toISOString().slice(0,10); }
+                    var yr = new Date().getFullYear();
+                    new VS08Calendar({ el:'#devis-cal-debut', input:'#devis-date-debut', mode:'date', inline:true, title:'Date de départ souhaitée',
+                        yearRange:[yr, yr+2], minDate:minD,
+                        onSelect: function(d){ if(d){ var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); document.getElementById('devis-date-debut').value=ds; } }
                     });
-                    new VS08Calendar({ el:'#devis-cal-fin', input:'#devis-date-fin', mode:'date', inline:false, title:'Date de retour', minDate:minD,
-                        onSelect: function(d){ document.getElementById('devis-date-fin').value = d.toISOString().slice(0,10); }
+                    new VS08Calendar({ el:'#devis-cal-fin', input:'#devis-date-fin', mode:'date', inline:true, title:'Date de retour souhaitée',
+                        yearRange:[yr, yr+2], minDate:minD,
+                        onSelect: function(d){ if(d){ var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); document.getElementById('devis-date-fin').value=ds; } }
                     });
                 });
                 </script>
