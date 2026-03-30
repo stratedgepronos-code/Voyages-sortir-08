@@ -62,20 +62,38 @@ add_action('save_post', function($post_id, $post) {
     }
 }, 0, 2);
 
-// ─── 4. FIX MySQL "Commands out of sync" pendant shutdown ──────────
-// WooCommerce Action Scheduler fait des requêtes pendant le hook shutdown.
-// Si une requête précédente (HPOS sync, emails) a laissé des résultats
-// non lus dans la connexion MySQL, toutes les requêtes suivantes échouent
-// avec "Commands out of sync". On vide la connexion avant le shutdown.
-add_action('shutdown', function() {
+// ─── 4. FIX MySQL "Commands out of sync" ────────────────────────────
+// WooCommerce HPOS peut laisser des résultats non lus sur la connexion
+// MySQL. Quand Action Scheduler fait ses requêtes au shutdown, il crashe
+// avec "Commands out of sync". On vide la connexion à 2 moments :
+// - Juste après la création de la commande (pendant la requête)
+// - Au tout début du shutdown (avant Action Scheduler)
+
+function vs08_flush_mysql_connection() {
     global $wpdb;
-    if (!$wpdb || !$wpdb->dbh || !($wpdb->dbh instanceof mysqli)) return;
-    // Vider tous les résultats non lus de la connexion MySQL
-    while ($wpdb->dbh->more_results()) {
-        $wpdb->dbh->next_result();
-        $res = $wpdb->dbh->store_result();
-        if ($res instanceof mysqli_result) {
-            $res->free();
+    if (!$wpdb || empty($wpdb->dbh)) return;
+
+    // Méthode 1 : flush WordPress (vide les résultats internes)
+    $wpdb->flush();
+
+    // Méthode 2 : flush mysqli natif (vide les résultats non lus)
+    if ($wpdb->dbh instanceof mysqli) {
+        while (@$wpdb->dbh->more_results()) {
+            @$wpdb->dbh->next_result();
+            $res = @$wpdb->dbh->store_result();
+            if ($res instanceof mysqli_result) {
+                $res->free();
+            }
         }
     }
-}, 0); // priorité 0 = avant tout le monde dans shutdown
+}
+
+// Flush après création de la commande WC (le moment où HPOS sync laisse des résultats)
+add_action('woocommerce_checkout_order_processed', function() {
+    vs08_flush_mysql_connection();
+}, 9999);
+
+// Flush juste avant la fin de la requête PHP (avant Action Scheduler / cron)
+register_shutdown_function(function() {
+    vs08_flush_mysql_connection();
+});
