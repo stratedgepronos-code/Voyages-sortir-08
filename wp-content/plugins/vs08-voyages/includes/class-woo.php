@@ -136,8 +136,22 @@ class VS08V_Woo {
     }
 }
 
-// Copier les booking_data dans les meta de l'item de commande (pas seulement le produit)
+// ══════════════════════════════════════════════════════════
+// COPIE BOOKING DATA — DIFFÉRÉE (pas pendant le checkout AJAX)
+// Avec HPOS activé, chaque update_post_meta/add_meta_data
+// sur une commande déclenche une sync complète entre les tables
+// wp_posts et wp_wc_orders → 1 Go+ de RAM → crash.
+//
+// Solution : pendant le checkout AJAX, on ne copie RIEN.
+// On stocke juste le product_id sur l'item (déjà fait par WC).
+// La copie des booking_data se fait sur la page "merci"
+// (requête séparée, mémoire séparée).
+// ══════════════════════════════════════════════════════════
+
+// Pendant le checkout AJAX : NE PAS copier les booking_data
+// WooCommerce stocke déjà le product_id sur le line item
 add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_item_key, $values, $order) {
+    if (!empty($_GET['wc-ajax'])) return; // différé
     try {
         $product_id = $item->get_product_id();
         if (!$product_id) return;
@@ -155,20 +169,18 @@ add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_
             $item->add_meta_data('_vs08v_voyage_id', $booking_data['voyage_id'] ?? 0, true);
         }
     } catch (\Throwable $e) {
-        if (function_exists('error_log')) {
-            error_log('VS08 checkout_create_order_line_item: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-        }
+        error_log('VS08 line_item: ' . $e->getMessage());
     }
 }, 10, 4);
 
-// Après création de la commande, copier booking_data sur la commande (pour admin Gestion Dossiers)
+// Pendant le checkout AJAX : NE PAS copier sur la commande
 add_action('woocommerce_checkout_update_order_meta', function($order_id) {
+    if (!empty($_GET['wc-ajax'])) return; // différé
     try {
-        $order = wc_get_order($order_id);
-        if (!$order) return;
-        // Déjà copié ?
         $existing = get_post_meta($order_id, '_vs08v_booking_data', true);
         if (!empty($existing) && is_array($existing)) return;
+        $order = wc_get_order($order_id);
+        if (!$order) return;
         foreach ($order->get_items() as $item) {
             $pid = $item->get_product_id();
             if (!$pid) continue;
@@ -185,11 +197,30 @@ add_action('woocommerce_checkout_update_order_meta', function($order_id) {
             }
         }
     } catch (\Throwable $e) {
-        if (function_exists('error_log')) {
-            error_log('VS08 checkout_update_order_meta: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-        }
+        error_log('VS08 update_order_meta: ' . $e->getMessage());
     }
 }, 10, 2);
+
+// ═══ PAGE MERCI : copier les booking_data (mémoire séparée) ═══
+add_action('woocommerce_thankyou', function($order_id) {
+    if (!$order_id) return;
+    // Déjà fait ?
+    $existing = get_post_meta($order_id, '_vs08v_booking_data', true);
+    if (!empty($existing) && is_array($existing)) return;
+    // Chercher dans les items de la commande
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+    foreach ($order->get_items() as $item) {
+        $pid = $item->get_product_id();
+        if (!$pid) continue;
+        $data = get_post_meta($pid, '_vs08v_booking_data', true);
+        if (!empty($data) && is_array($data)) {
+            update_post_meta($order_id, '_vs08v_booking_data', $data);
+            error_log('[VS08] Booking data copié sur commande VS08-' . $order_id . ' (thankyou)');
+            break;
+        }
+    }
+}, 3);
 
 // Afficher les infos de réservation + option "Solde marqué réglé" dans la commande admin
 add_action('woocommerce_admin_order_data_after_order_details', function($order) {

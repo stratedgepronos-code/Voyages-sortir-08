@@ -186,8 +186,9 @@ class VS08C_Woo {
     }
 }
 
-// Copier booking_data dans les items de commande ET sur la commande tout de suite (pour espace membre + redirection)
+// Copier booking_data — DIFFÉRÉ pendant checkout AJAX (crash mémoire HPOS)
 add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_item_key, $values, $order) {
+    if (!empty($_GET['wc-ajax'])) return; // différé à thankyou
     try {
         $pid = $item->get_product_id();
         if (!$pid) return;
@@ -195,32 +196,52 @@ add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_
         if (!empty($bd) && is_array($bd)) {
             $item->add_meta_data('_vs08c_booking_data', $bd, true);
             $item->add_meta_data('_vs08c_circuit_id', $bd['circuit_id'] ?? 0, true);
-            if ($order && is_object($order)) {
-                $order->update_meta_data('_vs08c_booking_data', $bd);
-            }
         }
     } catch (Throwable $e) {
-        error_log('VS08C checkout_create_order_line_item: ' . $e->getMessage());
+        error_log('VS08C line_item: ' . $e->getMessage());
     }
 }, 10, 4);
 
-// Copier sur la commande
+// Copier sur la commande — DIFFÉRÉ pendant checkout AJAX
 add_action('woocommerce_checkout_update_order_meta', function($order_id) {
+    if (!empty($_GET['wc-ajax'])) return; // différé à thankyou
     try {
+        $existing = get_post_meta($order_id, '_vs08c_booking_data', true);
+        if (!empty($existing) && is_array($existing)) return;
         $order = wc_get_order($order_id);
-        if (!$order || $order->get_meta('_vs08c_booking_data')) return;
+        if (!$order) return;
         foreach ($order->get_items() as $item) {
-            $data = $item->get_meta('_vs08c_booking_data');
+            $pid = $item->get_product_id();
+            if (!$pid) continue;
+            $data = get_post_meta($pid, '_vs08c_booking_data', true);
             if (!empty($data) && is_array($data)) {
-                $order->update_meta_data('_vs08c_booking_data', $data);
-                $order->save();
+                update_post_meta($order_id, '_vs08c_booking_data', $data);
                 break;
             }
         }
     } catch (Throwable $e) {
-        error_log('VS08C checkout_update_order_meta: ' . $e->getMessage());
+        error_log('VS08C update_order_meta: ' . $e->getMessage());
     }
 }, 10, 2);
+
+// Page merci : copier les booking_data circuit
+add_action('woocommerce_thankyou', function($order_id) {
+    if (!$order_id) return;
+    $existing = get_post_meta($order_id, '_vs08c_booking_data', true);
+    if (!empty($existing) && is_array($existing)) return;
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+    foreach ($order->get_items() as $item) {
+        $pid = $item->get_product_id();
+        if (!$pid) continue;
+        $data = get_post_meta($pid, '_vs08c_booking_data', true);
+        if (!empty($data) && is_array($data)) {
+            update_post_meta($order_id, '_vs08c_booking_data', $data);
+            error_log('[VS08C] Booking data copié sur commande VS08-' . $order_id . ' (thankyou)');
+            break;
+        }
+    }
+}, 4);
 
 // Masquer les produits circuit du catalogue
 add_filter('woocommerce_product_query_meta_query', function($meta_query) {
