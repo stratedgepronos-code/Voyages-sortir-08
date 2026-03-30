@@ -1,0 +1,265 @@
+/* ============================================================
+   VS08 MOBILE FIXES — Audit responsive 30/03/2026
+   Corrige les problèmes mobiles sur tout le site
+   ============================================================ */
+
+/* ═══ 1. ANTI-OVERFLOW GLOBAL ═══
+   Empêche tout scroll horizontal parasite */
+html, body {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ═══ 2. HEADER — espacement sous le header fixe ═══ */
+@media (max-width: 768px) {
+    /* Le header fixe fait ~56px + annonce ~40px → padding-top suffisant */
+    body { padding-top: 0; }
+    .header .announce { font-size: 11px; padding: 8px 14px; }
+    .nav-bar { height: 50px; padding: 10px 16px; }
+    .nav-bar .logo-wrap img,
+    .nav-bar .logo-wrap .custom-logo,
+    .header-logo-img { height: 24px !important; max-height: 24px !important; }
+    /* Bouton search mobile plus gros (touch target 44px) */
+    .nav-search-toggle { padding: 10px; min-width: 44px; min-height: 44px; }
+}
+
+/* ═══ 3. HERO HOMEPAGE — hauteurs adaptées ═══ */
+@media (max-width: 768px) {
+    .hc-wrap { height: 60vh; min-height: 400px; max-height: 560px; }
+    .hc-title { font-size: clamp(24px, 6vw, 36px) !important; line-height: 1.2; }
+    .hc-sub { font-size: 14px; }
+    .hc-cta-wrap { flex-direction: column; gap: 10px; }
+    .hc-cta-wrap a { width: 100%; text-align: center; }
+}
+@media (max-width: 480px) {
+    .hc-wrap { height: 55vh; min-height: 350px; }
+    .hc-title { font-size: clamp(20px, 5.5vw, 28px) !important; }
+    .hc-conf { display: none; }
+}
+/* Paysage téléphone */
+@media (max-height: 500px) and (orientation: landscape) {
+    .hc-wrap { height: auto; min-height: 300px; }
+    .hc-content { padding-bottom: 24px !important; }
+}
+
+/* ═══ 4. BARRE DE RECHERCHE HOMEPAGE ═══ */
+@media (max-width: 768px) {
+    .fp-search { padding: 16px !important; }
+    .fp-search-card { border-radius: 16px; padding: 20px 16px; }
+    .fp-search-field { min-height: 48px; }
+    .fp-search-field label { font-size: 9px; margin-bottom: 6px; }
+    .fp-search-field select,
+    .fp-search-field input { font-size: 14px; height: 44px; /* touch target */ }
+    .fp-search-date-trigger { height: 44px; font-size: 13px; }
+    .fp-btn-search { padding: 16px; font-size: 15px; border-radius: 12px; }
+}
+@media (max-width: 480px) {
+    .fp-search-card { padding: 16px 12px; }
+}
+
+/* ═══ 5. SINGLE VOYAGE — Fiche produit ═══ */
+@media (max-width: 768px) {
+    .sv-hero { height: 50vh; min-height: 360px; }
+    .sv-hero-content h1 { font-size: clamp(22px, 5vw, 32px); }
+    .sv-meta-chip { font-size: 11px; padding: 5px 10px; }
+}
+@media (max-width: 480px) {
+    .sv-hero { height: 45vh; min-height: 300px; }
+    .sv-inner { padding: 0 12px; }
+    .sv-hero-content { padding: 0 14px 28px; }
+    /* Calc card */
+    .sv-calc-card { padding: 20px 16px; border-radius: 16px; }
+    .sv-calc-title { font-size: 18px; }
+    .sv-field label { font-size: 12px; }
+    .sv-field select, .sv-field input { font-size: 15px; padding: 12px; min-height: 48px; }
+    .sv-btn-reserver { font-size: 15px; padding: 16px; border-radius: 12px; min-height: 52px; }
+    .sv-price-total-val { font-size: 28px !important; }
+    .sv-price-acompte { font-size: 12px; }
+    /* Programme & infos */
+    .sv-section { padding: 20px 16px; border-radius: 14px; margin-bottom: 16px; }
+    .sv-section-title { font-size: 16px; }
+    /* Gallery */
+    .sv-gallery { gap: 8px; }
+    .sv-gal-item:nth-child(n+3) { display: none; }
+}
+
+/* ═══ 6. TUNNEL DE RÉSERVATION (booking-steps) ═══ */
+@media (max-width: 768px) {
+    .bk-wrap { padding-top: 100px; }
+    .bk-inner { padding: 0 14px; }
+}
+@media (max-width: 480px) {
+    .bk-inner { padding: 0 10px; }
+    /* Step indicator */
+    .bk-step-pin { transform: scale(0.85); }
+    .bk-step-label { font-size: 8px; letter-spacing: 0.5px; }
+    /* Formulaire voyageurs */
+    .bk-voyageur-row { padding: 16px 12px; }
+    .bk-field-row { gap: 10px; }
+    .bk-field label { font-size: 11px; }
+    .bk-field input, .bk-field select { font-size: 15px; padding: 12px 10px; min-height: 48px; }
+    /* Recap card */
+    .bk-recap-card { padding: 16px; border-radius: 14px; }
+    .bk-recap-total-val { font-size: 24px; }
+    .bk-recap-acompte { padding: 8px; font-size: 13px; }
+    /* Navigation */
+    .bk-nav { padding: 16px 0; }
+    .bk-btn-next, .bk-btn-prev { min-height: 52px; font-size: 15px; border-radius: 12px; }
+}
+
+/* ═══ 7. COMBO CARDS (sélection vol) ═══ */
+@media (max-width: 480px) {
+    .combo-card { border-radius: 14px; }
+    .combo-card.selected { border-width: 2px; }
+    .combo-leg { padding: 10px 12px; flex-wrap: wrap; }
+    .combo-time { font-size: 15px; }
+    .combo-iata { font-size: 12px; }
+    .combo-arrow { font-size: 12px; }
+    .combo-leg-dur, .combo-leg-num { font-size: 11px; }
+    .combo-price { padding: 10px 12px; }
+    .combo-price-main { font-size: 18px; }
+    .combo-price-delta { font-size: 16px; }
+    .combo-price-sub { font-size: 10px; }
+    .combo-airline { padding: 6px 12px; }
+    .combo-airline img { width: 24px; height: 24px; }
+    .combo-airline-name { font-size: 12px; }
+}
+@media (max-width: 360px) {
+    .combo-leg { padding: 8px 10px; }
+    .combo-time { font-size: 14px; }
+    .combo-price-main { font-size: 16px; }
+}
+
+/* ═══ 8. VS08 CALENDAR POPUP ═══ */
+@media (max-width: 480px) {
+    .vs-cal { 
+        max-width: calc(100vw - 24px) !important; 
+        left: 50% !important; 
+        transform: translateX(-50%); 
+        border-radius: 16px !important;
+    }
+    .vs-cal-grid { gap: 2px; }
+    .vs-cal-day { width: 38px; height: 38px; font-size: 13px; /* touch target */ }
+    .vs-cal-header { font-size: 14px; }
+    .vs-cal-nav-btn { min-width: 44px; min-height: 44px; }
+    .vs-cal-confirm { min-height: 48px; font-size: 14px; border-radius: 10px; }
+}
+
+/* ═══ 9. PAGES DE DEVIS ═══ */
+@media (max-width: 640px) {
+    .vs08-devis-hero, .vs08-da-hero { min-height: 28vh; }
+    .vs08-devis-hero h1, .vs08-da-hero-in h1 { font-size: clamp(22px, 5vw, 32px); }
+    .vs08-devis-card, .vs08-da-card { padding: 24px 16px; border-radius: 16px; }
+    .vs08-devis-field input,
+    .vs08-devis-field select,
+    .vs08-devis-field textarea,
+    .vs08-da-field input,
+    .vs08-da-field select,
+    .vs08-da-field textarea { font-size: 16px; /* empêche le zoom iOS */ min-height: 48px; }
+    .vs08-devis-submit, .vs08-da-submit { min-height: 52px; font-size: 16px; }
+    .vs08-devis-date-trigger, .vs08-da-date-trigger { min-height: 48px; font-size: 14px; }
+}
+
+/* ═══ 10. CHECKOUT WOOCOMMERCE ═══ */
+@media (max-width: 480px) {
+    .vs08-checkout-page { padding: 8px 8px 24px; }
+    .vs08-checkout-order-card { border-radius: 16px; }
+    .vs08-order-card-header { padding: 12px 14px; }
+    .vs08-order-card-title { font-size: 17px; }
+    .vs08-order-card-badge { font-size: 8px; padding: 4px 10px; }
+    .vs08-reassurance-bar { font-size: 8px; padding: 6px 10px; gap: 3px; }
+    .vs08-dot { margin: 0 3px; }
+}
+
+/* ═══ 11. FOOTER ═══ */
+@media (max-width: 480px) {
+    .ft-main { padding: 32px 14px 24px; }
+    .ft-grid { gap: 20px; }
+    .ft-col h4 { font-size: 13px; }
+    .ft-col a { font-size: 13px; padding: 3px 0; min-height: 40px; display: flex; align-items: center; }
+    .fbot-in { padding: 14px; }
+}
+
+/* ═══ 12. ESPACE VOYAGEUR (myaccount) ═══ */
+@media (max-width: 768px) {
+    .vs08v-traveler-wrap { padding: 0 14px; }
+    .vs08v-traveler-sidebar { display: none; }
+    .vs08v-traveler-content { width: 100%; }
+}
+
+/* ═══ 13. OVERLAY RECHERCHE MOBILE ═══ */
+@media (max-width: 480px) {
+    .vs08-search-input { font-size: 16px; /* empêche zoom iOS */ }
+    .vs08-search-card-img { height: 120px; }
+    .vs08-search-card-title { font-size: 14px; }
+    .vs08-search-card-price { font-size: 18px; }
+}
+
+/* ═══ 14. TOUCH TARGETS — minimum 44px sur mobile ═══ */
+@media (max-width: 768px) {
+    a, button, select, input[type="checkbox"], input[type="radio"] {
+        min-height: 44px;
+    }
+    /* Exception pour les liens inline dans les paragraphes */
+    p a, span a, li a, td a { min-height: auto; }
+}
+
+/* ═══ 15. IMAGES — empêcher le débordement ═══ */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ═══ 16. TABLES — scroll horizontal sur mobile ═══ */
+@media (max-width: 640px) {
+    table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    /* Exception pour les tables de layout (recap, etc.) */
+    .bk-recap-row, .bkc-recap-line { display: flex; overflow: visible; }
+}
+
+/* ═══ 17. SINGLE VOYAGE — CTA STICKY MOBILE ═══
+   Bouton "Réserver" fixe en bas sur mobile */
+@media (max-width: 768px) {
+    .sv-calc-col {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 9990;
+        padding: 0;
+    }
+    .sv-calc-card {
+        border-radius: 20px 20px 0 0 !important;
+        box-shadow: 0 -8px 40px rgba(0,0,0,.15) !important;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    /* Espace en bas du contenu pour que le CTA ne couvre rien */
+    .sv-content-col { padding-bottom: 200px; }
+    /* Reassurance visible directement */
+    .sv-reassurance { display: none; }
+}
+
+/* ═══ 18. SAFE AREAS iOS (encoche, barre home) ═══ */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .sv-calc-col { padding-bottom: env(safe-area-inset-bottom); }
+    .bk-nav { padding-bottom: env(safe-area-inset-bottom); }
+    .ft-main { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+}
+
+/* ═══ 19. SCROLL SMOOTH DISABLED SUR MOBILE ═══
+   Évite les bugs de scroll sur iOS Safari */
+@media (max-width: 768px) {
+    html { scroll-behavior: auto; }
+}
+
+/* ═══ 20. TEXT SELECTION & TAP HIGHLIGHT ═══ */
+@media (max-width: 768px) {
+    button, a, .combo-card, .sv-btn-reserver, .bk-btn-next, .bk-btn-prev {
+        -webkit-tap-highlight-color: rgba(89, 183, 183, 0.15);
+    }
+}
