@@ -931,6 +931,7 @@ var BK_DATA = <?php echo json_encode([
     'prix_greenfees'   => floatval($m['prix_greenfees'] ?? 0),
     'prix_bagage_soute' => $prix_bag_soute,
     'prix_bagage_golf'  => $prix_bag_golf,
+    'is_admin'          => current_user_can('manage_options'),
 ]); ?>;
 var bk_options_total     = 0;
 var bk_options_data      = {};
@@ -1536,9 +1537,13 @@ function bkUpdateTotal() {
     // Assurance recap
     var insLine = document.getElementById('bk-recap-insurance-line');
     if (insLine) {
-        insLine.innerHTML = (bk_insurance_check && insurance > 0)
-            ? '<div class="bk-recap-row"><span class="bk-recap-lbl">🛡️ Assurance Multirisques</span><span class="bk-recap-val" style="display:block">+' + bkFmt(insurance) + '</span></div>'
-            : '';
+        if (bk_insurance_check && insurance > 0) {
+            var insVal = BK_DATA.is_admin ? '+' + bkFmt(insurance) : '✓';
+            var insColor = BK_DATA.is_admin ? 'color:#e3147a' : 'color:#2d8a5a;font-size:12px';
+            insLine.innerHTML = '<div class="bk-recap-row"><span class="bk-recap-lbl">🛡️ Assurance Multirisques</span><span class="bk-recap-val" style="display:block;' + insColor + '">' + insVal + '</span></div>';
+        } else {
+            insLine.innerHTML = '';
+        }
     }
 
     // Afficher toutes les valeurs recap qui ont du contenu
@@ -1613,11 +1618,13 @@ function bkUpdateBagRecap() {
         var qty        = valEl ? parseInt(valEl.textContent) : defaultQty;
         var detailEl   = document.getElementById(t.detailId);
         var valRecapEl = document.getElementById(t.valId);
-        if (detailEl) detailEl.textContent = qty + ' × ' + Math.round(prix) + '€';
+        if (detailEl) detailEl.textContent = BK_DATA.is_admin ? (qty + ' × ' + Math.round(prix) + '€') : (qty + ' bagage' + (qty > 1 ? 's' : ''));
         if (valRecapEl) {
-            var montant = qty * prix;
-            valRecapEl.textContent = montant > 0 ? (Math.round(montant).toLocaleString('fr-FR') + ' €') : '—';
-            valRecapEl.style.color = qty < defaultQty ? '#dc2626' : '#0f2424';
+            if (BK_DATA.is_admin) {
+                var montant = qty * prix;
+                valRecapEl.textContent = montant > 0 ? (Math.round(montant).toLocaleString('fr-FR') + ' €') : '—';
+                valRecapEl.style.color = qty < defaultQty ? '#dc2626' : '#0f2424';
+            }
         }
         recapRow.style.display = qty > 0 ? 'flex' : 'none';
     });
