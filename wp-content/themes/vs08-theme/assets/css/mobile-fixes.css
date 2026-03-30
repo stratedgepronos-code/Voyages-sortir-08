@@ -134,9 +134,10 @@ img { max-width: 100%; height: auto; }
     .vc-calc-card { padding: 20px 16px !important; border-radius: 16px !important; }
     .vc-cta-btn { font-size: 15px !important; min-height: 50px; }
 
-    /* ── BOOKING TUNNEL ── */
+    /* ── BOOKING TUNNEL GOLF — recap EN BAS (après l'assurance) ── */
     .bk-inner { padding: 0 12px !important; }
-    .bk-recap-col { position: static !important; }
+    .bk-main { order: 0 !important; } /* contenu principal + assurance en premier */
+    .bk-recap-col { position: static !important; order: 1 !important; margin-top: 14px; } /* recap EN BAS */
     .bk-recap-card { padding: 16px !important; border-radius: 14px !important; }
     .bk-recap-total-val { font-size: 24px !important; }
     .bk-field-row { grid-template-columns: 1fr !important; }
@@ -145,16 +146,17 @@ img { max-width: 100%; height: auto; }
     .bk-btn-next, .bk-btn-prev { width: 100% !important; text-align: center; min-height: 50px; font-size: 15px; }
 
     /* ── BOOKING CIRCUIT — recap en haut ── */
+    /* ── BOOKING CIRCUIT — recap EN BAS (après l'assurance, pas en haut) ── */
     .bkc-inner {
         display: flex !important;
         flex-direction: column !important;
         padding: 0 12px !important;
     }
     .bkc-recap {
-        order: -1 !important;
+        order: 1 !important; /* EN BAS : après le contenu principal + assurance */
         position: static !important;
         width: 100% !important;
-        margin-bottom: 14px;
+        margin-top: 14px;
     }
 
     /* ── COMBO CARDS (vols) ── */
