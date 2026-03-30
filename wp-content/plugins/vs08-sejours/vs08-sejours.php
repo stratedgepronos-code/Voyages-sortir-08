@@ -251,30 +251,30 @@ add_filter('vs08v_dossier_extra_order_ids', function($ids) {
 // On copie _vs08s_booking_data uniquement sur la page merci ou via cron.
 add_action('woocommerce_thankyou', function($order_id) {
     if (!$order_id) return;
+    // Déjà copié ?
+    $existing = get_post_meta($order_id, '_vs08s_booking_data', true);
+    if (!empty($existing) && is_array($existing)) {
+        VS08S_Emails::dispatch($order_id);
+        return;
+    }
     $order = wc_get_order($order_id);
     if (!$order) return;
-    $existing = $order->get_meta('_vs08s_booking_data');
-    if (!empty($existing) && is_array($existing)) return;
     foreach ($order->get_items() as $item) {
         $pid = $item->get_product_id();
         if (!$pid) continue;
-        $data = get_post_meta($pid, '_vs08s_booking_data', true);
-        if ((!is_array($data) || empty($data['facturation']) || !array_key_exists('voyageurs', $data))) {
-            $token = get_post_meta($pid, '_vs08s_booking_token', true);
-            if (!empty($token)) {
-                $full = get_transient('vs08s_booking_full_' . $token);
-                if (!empty($full) && is_array($full)) {
-                    $data = $full;
-                }
-            }
-        }
+        // Lire le token depuis le produit
+        $token = get_post_meta($pid, '_vs08s_booking_token', true);
+        if (empty($token)) continue;
+        // Récupérer les données complètes depuis le transient
+        $data = get_transient('vs08s_booking_full_' . $token);
         if (!empty($data) && is_array($data)) {
-            $order->update_meta_data('_vs08s_booking_data', $data);
-            $order->save();
-            error_log('[VS08S] Booking data copié sur commande VS08-' . $order_id . ' (thankyou)');
+            // Écrire directement en base (PAS $order->save())
+            update_post_meta($order_id, '_vs08s_booking_data', $data);
+            update_post_meta($order_id, '_vs08v_booking_data', $data);
+            error_log('[VS08S] Booking data copié sur commande VS08-' . $order_id . ' (thankyou, token=' . $token . ')');
             break;
         }
     }
-    // Dispatch emails séjour maintenant (page merci, pas checkout AJAX)
+    // Dispatch emails séjour
     VS08S_Emails::dispatch($order_id);
 }, 5);

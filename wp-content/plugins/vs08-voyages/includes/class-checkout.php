@@ -59,11 +59,13 @@ class VS08V_Checkout {
         foreach (WC()->cart->get_cart() as $item) {
             $id = $item['product_id'] ?? 0;
             if (!$id) continue;
-            // Séjour
-            $sdata = get_post_meta($id, '_vs08s_booking_data', true);
-            if (!empty($sdata) && is_array($sdata)) {
-                self::$booking_data = $sdata;
-                return self::$booking_data;
+            // Séjour (détecté via token)
+            if (get_post_meta($id, '_vs08s_booking_token', true)) {
+                $data = get_post_meta($id, '_vs08v_booking_data', true);
+                if (!empty($data) && is_array($data)) {
+                    self::$booking_data = $data;
+                    return self::$booking_data;
+                }
             }
             // Golf / Circuit
             $data = get_post_meta($id, '_vs08v_booking_data', true);
@@ -141,15 +143,13 @@ class VS08V_Checkout {
         foreach (WC()->cart->get_cart() as $item) {
             $id = $item['product_id'] ?? 0;
             if (!$id) continue;
-            // Priorité : vérifier si c'est un séjour (meta spécifique _vs08s_)
-            $sd = get_post_meta($id, '_vs08s_booking_data', true);
-            if (!empty($sd) && is_array($sd)) {
+            // Séjour : détecté via le token (booking_data n'est plus sur le produit)
+            if (get_post_meta($id, '_vs08s_booking_token', true)) {
                 $product_id = $id;
                 $is_sejour = true;
-                error_log('[VS08 Checkout] SEJOUR détecté via _vs08s_booking_data — product #' . $id);
                 break;
             }
-            // Sinon golf/circuit
+            // Golf/circuit
             if (get_post_meta($id, '_vs08v_booking_data', true)) {
                 $product_id = $id;
                 break;
@@ -157,10 +157,10 @@ class VS08V_Checkout {
         }
         if (!$product_id) return;
 
-        // Séjour : recap depuis VS08S_Meta (JAMAIS la description produit)
+        // Séjour : recap depuis VS08S_Meta (données live du back-office)
         if ($is_sejour) {
-            $booking = get_post_meta($product_id, '_vs08s_booking_data', true);
-            self::render_sejour_recap(is_array($booking) ? $booking : []);
+            $bd = get_post_meta($product_id, '_vs08v_booking_data', true);
+            self::render_sejour_recap(is_array($bd) ? $bd : []);
             return;
         }
 

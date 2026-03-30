@@ -6,8 +6,9 @@ class VS08S_Booking {
     public static function register() {}
 
     /**
-     * Crée un produit WooCommerce temporaire + cart token (même flow que golf/circuits).
-     * PAS de $order->save() → évite le crash Yoast SEO 2 Go.
+     * Crée un produit WooCommerce ULTRA-LÉGER + cart token.
+     * ZÉRO booking_data sur le produit → HPOS ne sync rien de lourd.
+     * Toutes les données sont dans un transient récupéré au thankyou.
      */
     public static function create_order($sejour_id, $params) {
         if (!class_exists('WC_Product_Simple')) {
@@ -15,8 +16,6 @@ class VS08S_Booking {
         }
 
         $m     = VS08S_Meta::get($sejour_id);
-        // Tarifs uniquement (Hotelbeds): ne jamais véhiculer de clé de réservation.
-        unset($params['hotel_rate_key']);
         $titre = get_the_title($sejour_id);
         $devis = VS08S_Calculator::compute($sejour_id, $params);
 
@@ -25,21 +24,12 @@ class VS08S_Booking {
 
         $fact      = is_array($params['facturation'] ?? null) ? $params['facturation'] : [];
         $voyageurs = is_array($params['voyageurs'] ?? null)   ? $params['voyageurs']   : [];
+        $payment_mode = ($params['vs08_payment_mode'] ?? 'card') === 'agency' ? 'agency' : 'card';
 
         $acompte_pct = floatval($m['acompte_pct'] ?? 30);
-        $label_type  = $devis['payer_tout'] ? 'Paiement intégral' : 'Acompte ' . $acompte_pct . '%';
-        $payment_mode = ($params['vs08_payment_mode'] ?? 'card') === 'agency' ? 'agency' : 'card';
-        $reglement_agence = ($payment_mode === 'agency');
+        $product_name = 'Réservation — ' . $titre . ' — ' . date('d/m/Y', strtotime($params['date_depart'] ?? 'now'));
 
-        $product_name = sprintf(
-            'Réservation — %s — %s (%s — %d pers.)',
-            $titre,
-            date('d/m/Y', strtotime($params['date_depart'] ?? 'now')),
-            $label_type,
-            intval($params['nb_adultes'] ?? 2)
-        );
-
-        // Booking data complet (conservé hors checkout pour éviter l'explosion mémoire HPOS).
+        // ── Données complètes → transient (PAS sur le produit) ──
         $booking_data = [
             'type'           => 'sejour',
             'sejour_id'      => $sejour_id,
@@ -57,123 +47,55 @@ class VS08S_Booking {
             'options'        => [],
         ];
 
-        // Payload léger utilisé pendant le checkout Woo (récap + totaux uniquement).
-        $booking_data_light = [
-            'type'         => 'sejour',
-            'sejour_id'    => $sejour_id,
-            'sejour_titre' => $titre,
-            'voyage_titre' => $titre,
-            'voyage_id'    => $sejour_id,
-            'params'       => [
-                'date_depart'      => (string) ($params['date_depart'] ?? ''),
-                'aeroport'         => strtoupper((string) ($params['aeroport'] ?? '')),
-                'nb_adultes'       => intval($params['nb_adultes'] ?? 0),
-                'nb_chambres'      => intval($params['nb_chambres'] ?? 0),
-                'vol_aller_num'    => (string) ($params['vol_aller_num'] ?? ''),
-                'vol_aller_cie'    => (string) ($params['vol_aller_cie'] ?? ''),
-                'vol_aller_depart' => (string) ($params['vol_aller_depart'] ?? ''),
-                'vol_aller_arrivee'=> (string) ($params['vol_aller_arrivee'] ?? ''),
-                'vol_retour_num'   => (string) ($params['vol_retour_num'] ?? ''),
-                'vol_retour_depart'=> (string) ($params['vol_retour_depart'] ?? ''),
-                'vol_retour_arrivee'=> (string) ($params['vol_retour_arrivee'] ?? ''),
-                'hotel_board'      => (string) ($params['hotel_board'] ?? 'AI'),
-            ],
-            'devis'        => [
-                'total'            => $total,
-                'acompte'          => $acompte,
-                'payer_tout'       => !empty($devis['payer_tout']),
-                'acompte_pct'      => $acompte_pct,
-                'prix_par_personne'=> floatval($devis['prix_par_personne'] ?? 0),
-                'nb_total'         => intval($devis['nb_total'] ?? 0),
-                'nb_chambres'      => intval($devis['nb_chambres'] ?? 0),
-                'lines'            => array_values(array_map(function($line) {
-                    return [
-                        'label'   => (string) ($line['label'] ?? ''),
-                        'detail'  => (string) ($line['detail'] ?? ''),
-                        'montant' => floatval($line['montant'] ?? 0),
-                    ];
-                }, is_array($devis['lines'] ?? null) ? $devis['lines'] : [])),
-            ],
-            'total'        => $total,
-            'acompte'      => $acompte,
-            'payer_tout'   => !empty($devis['payer_tout']),
-            'assurance'    => floatval($devis['assurance'] ?? 0),
-            'facturation'  => $fact,
-            'voyageurs'    => $voyageurs,
-            'payment_mode' => $payment_mode,
-            'reglement_agence' => $reglement_agence,
-            'options'      => [],
-        ];
-
-        // Éviter les doublons
-        $hash = md5(serialize($booking_data));
-        $existing = get_posts(['post_type' => 'product', 'meta_key' => '_vs08v_booking_hash', 'meta_value' => $hash, 'posts_per_page' => 1]);
-        if ($existing) {
-            $product_id = $existing[0]->ID;
-        } else {
-            // Créer le produit WooCommerce temporaire
-            $product = new \WC_Product_Simple();
-            $product->set_name($product_name);
-            $product->set_price($acompte);
-            $product->set_regular_price($acompte);
-            $product->set_status('private');
-            $product->set_virtual(true);
-            $product->set_sold_individually(true);
-            $product->set_catalog_visibility('hidden');
-            $product->set_short_description($product_name);
-            $product_id = $product->save();
-            update_post_meta($product_id, '_vs08v_booking_hash', $hash);
-        }
-
-        // Legacy _vs08v_: garder un payload minimal (évite l’explosion mémoire au checkout).
-        $booking_data_legacy = [
-            'type'         => 'sejour',
-            'sejour_id'    => $sejour_id,
-            'voyage_id'    => $sejour_id,
-            'sejour_titre' => $titre,
-            'voyage_titre' => $titre,
-            'total'        => $total,
-            'acompte'      => $acompte,
-            'payer_tout'   => !empty($devis['payer_tout']),
-            'params'       => [
-                'date_depart' => (string) ($params['date_depart'] ?? ''),
-                'aeroport'    => strtoupper((string) ($params['aeroport'] ?? '')),
-                'nb_adultes'  => intval($params['nb_adultes'] ?? 0),
-                'nb_chambres' => intval($params['nb_chambres'] ?? 0),
-            ],
-        ];
-
-        // TOUJOURS mettre à jour les données + description (neuf OU existant)
-        // Conserver le dossier complet en transient (hors parcours checkout HPOS).
         $booking_token = wp_generate_password(24, false);
-        set_transient('vs08s_booking_full_' . $booking_token, $booking_data, DAY_IN_SECONDS);
+        set_transient('vs08s_booking_full_' . $booking_token, $booking_data, 2 * DAY_IN_SECONDS);
 
-        update_post_meta($product_id, '_vs08v_booking_data', $booking_data_legacy);
-        update_post_meta($product_id, '_vs08s_booking_data', $booking_data_light);
+        error_log('[VS08S Booking] Token=' . $booking_token . ' total=' . $total . ' acompte=' . $acompte);
+
+        // ── Produit WooCommerce MINIMAL ──
+        $product = new \WC_Product_Simple();
+        $product->set_name($product_name);
+        $product->set_price($acompte);
+        $product->set_regular_price($acompte);
+        $product->set_status('private');
+        $product->set_virtual(true);
+        $product->set_sold_individually(true);
+        $product->set_catalog_visibility('hidden');
+        $product_id = $product->save();
+
+        // Seules meta sur le produit : token + type + sejour_id (ultra-léger)
         update_post_meta($product_id, '_vs08s_booking_token', $booking_token);
-        update_post_meta($product_id, '_vs08v_voyage_id', $sejour_id);
-        update_post_meta($product_id, '_vs08v_total_voyage', $total);
-        update_post_meta($product_id, '_vs08v_acompte', $acompte);
-        update_post_meta($product_id, '_vs08v_payer_tout', $devis['payer_tout']);
+        update_post_meta($product_id, '_vs08s_sejour_id', $sejour_id);
+        // Marqueur minimal pour que les hooks golf sachent que c'est un séjour
+        // + params suffisants pour le recap checkout
+        update_post_meta($product_id, '_vs08v_booking_data', [
+            'type' => 'sejour', 'sejour_id' => $sejour_id, 'voyage_id' => $sejour_id,
+            'voyage_titre' => $titre, 'total' => $total, 'acompte' => $acompte,
+            'payer_tout' => $devis['payer_tout'] ?? false,
+            'params' => [
+                'date_depart' => $params['date_depart'] ?? '',
+                'aeroport' => strtoupper($params['aeroport'] ?? ''),
+                'nb_adultes' => intval($params['nb_adultes'] ?? 2),
+                'nb_chambres' => intval($params['nb_chambres'] ?? 1),
+                'vol_aller_num' => $params['vol_aller_num'] ?? '',
+                'vol_aller_cie' => $params['vol_aller_cie'] ?? '',
+                'vol_aller_depart' => $params['vol_aller_depart'] ?? '',
+                'vol_aller_arrivee' => $params['vol_aller_arrivee'] ?? '',
+                'vol_retour_num' => $params['vol_retour_num'] ?? '',
+                'vol_retour_depart' => $params['vol_retour_depart'] ?? '',
+                'vol_retour_arrivee' => $params['vol_retour_arrivee'] ?? '',
+            ],
+            'devis' => ['nb_total' => intval($params['nb_adultes'] ?? 2)],
+        ]);
 
-        $desc = self::build_description($sejour_id, $params, $devis, $m, $titre, $total, $acompte, $acompte_pct);
-        wp_update_post(['ID' => $product_id, 'post_content' => $desc]);
-        // Vider le cache WC produit
-        clean_post_cache($product_id);
-        wc_delete_product_transients($product_id);
-
-        // Stocker le mode de paiement sur le produit
-        update_post_meta($product_id, '_vs08v_payment_mode', $payment_mode);
-        update_post_meta($product_id, '_vs08v_reglement_agence', $reglement_agence ? 1 : 0);
-
-        // Cart token (même mécanisme que golf)
+        // ── Cart token ──
         $cart_token = wp_generate_password(32, false);
         set_transient('vs08_cart_' . $cart_token, [
             'product_id'   => $product_id,
             'payment_mode' => $payment_mode,
         ], 900);
 
-        // Tenter l'ajout au panier WooCommerce
+        // Ajouter au panier
         try {
             if (function_exists('WC') && WC()) {
                 if (is_null(WC()->session) && method_exists(WC(), 'initialize_session')) WC()->initialize_session();
@@ -195,12 +117,14 @@ class VS08S_Booking {
                 }
             }
         } catch (\Throwable $e) {
-            error_log('[VS08S Booking] Cart add fallback: ' . $e->getMessage());
+            error_log('[VS08S Booking] Cart: ' . $e->getMessage());
         }
 
         $checkout_url = wc_get_checkout_url();
-        if (strpos($checkout_url, '?') !== false) $checkout_url .= '&vs08_cart=' . $cart_token;
-        else $checkout_url .= '?vs08_cart=' . $cart_token;
+        $sep = (strpos($checkout_url, '?') !== false) ? '&' : '?';
+        $checkout_url .= $sep . 'vs08_cart=' . $cart_token;
+
+        error_log('[VS08S Booking] Produit #' . $product_id . ' → ' . $checkout_url);
 
         return [
             'order_id'     => 0,
@@ -208,57 +132,5 @@ class VS08S_Booking {
             'total'        => $total,
             'acompte'      => $acompte,
         ];
-    }
-
-    private static function build_description($sejour_id, $params, $devis, $m, $titre, $total, $acompte, $acompte_pct) {
-        $pension_map = ['ai'=>'All Inclusive','pc'=>'Pension complète','dp'=>'Demi-pension','bb'=>'Petit-déjeuner','lo'=>'Logement seul'];
-        $pension = $pension_map[$m['pension'] ?? 'ai'] ?? 'All Inclusive';
-        $hotel_nom = $m['hotel_nom'] ?? '';
-        $hotel_etoiles = intval($m['hotel_etoiles'] ?? 5);
-        $duree = intval($m['duree'] ?? 7);
-        $duree_j = intval($m['duree_jours'] ?? ($duree + 1));
-        $transfert_map = ['groupes'=>'Transferts groupés','prives'=>'Transferts privés','inclus'=>'Inclus dans l\'hôtel','aucun'=>'Non inclus'];
-        $transfert_type = $m['transfert_type'] ?? '';
-        if (empty($transfert_type)) $transfert_type = 'groupes';
-        $transfert = $transfert_map[$transfert_type] ?? 'Transferts groupés';
-        $iata_dest = strtoupper($m['iata_dest'] ?? '');
-        $aeroport = strtoupper($params['aeroport'] ?? '');
-        $date_depart = $params['date_depart'] ?? '';
-        $date_retour = $date_depart ? date('d/m/Y', strtotime($date_depart . ' +' . $duree . ' days')) : '';
-        $date_fmt = $date_depart ? date('d/m/Y', strtotime($date_depart)) : '';
-        $payer_tout = $devis['payer_tout'] ?? false;
-
-        ob_start(); ?>
-        <div class="vs08v-woo-recap">
-            <h3>📋 Récapitulatif de votre réservation</h3>
-            <table>
-                <tr><td><strong>Séjour</strong></td><td><?php echo esc_html($titre); ?></td></tr>
-                <tr><td><strong>🗓️ Dates</strong></td><td><?php echo esc_html($date_fmt . ' → ' . $date_retour); ?></td></tr>
-                <tr><td><strong>🌙 Durée</strong></td><td><?php echo $duree_j; ?> jours / <?php echo $duree; ?> nuits</td></tr>
-                <tr><td><strong>✈️ Vols</strong></td><td><?php echo esc_html($aeroport); ?> → <?php echo esc_html($iata_dest); ?></td></tr>
-                <?php if (!empty($params['vol_aller_num'])): ?>
-                <tr><td><strong>🛫 Aller</strong></td><td><?php echo esc_html($params['vol_aller_num']); ?> (<?php echo esc_html($params['vol_aller_cie'] ?? ''); ?>) · <?php echo esc_html($params['vol_aller_depart'] ?? ''); ?> → <?php echo esc_html($params['vol_aller_arrivee'] ?? ''); ?></td></tr>
-                <?php endif; ?>
-                <?php if (!empty($params['vol_retour_num'])): ?>
-                <tr><td><strong>🛬 Retour</strong></td><td><?php echo esc_html($params['vol_retour_num']); ?> · <?php echo esc_html($params['vol_retour_depart'] ?? ''); ?> → <?php echo esc_html($params['vol_retour_arrivee'] ?? ''); ?></td></tr>
-                <?php endif; ?>
-                <?php if ($hotel_nom): ?>
-                <tr><td><strong>🏨 Hôtel</strong></td><td><?php echo esc_html($hotel_nom); ?><?php if ($hotel_etoiles): ?> <?php echo str_repeat('★', $hotel_etoiles); ?><?php endif; ?></td></tr>
-                <?php endif; ?>
-                <tr><td><strong>🍽️ Formule</strong></td><td><?php echo esc_html($pension); ?></td></tr>
-                <tr><td><strong>🚐 Transferts</strong></td><td><?php echo esc_html($transfert); ?></td></tr>
-                <tr><td><strong>👥 Voyageurs</strong></td><td><?php echo intval($params['nb_adultes'] ?? 2); ?> adulte(s)</td></tr>
-            </table>
-            <h4>💰 Détail du prix</h4>
-            <table>
-                <tr style="font-weight:bold;border-top:2px solid #333"><td>TOTAL VOYAGE</td><td><?php echo number_format($total, 2, ',', ' '); ?> €</td></tr>
-            <?php if (!$payer_tout): ?>
-                <tr style="color:#e8724a"><td>Acompte à régler (<?php echo $acompte_pct; ?>%)</td><td><?php echo number_format($acompte, 2, ',', ' '); ?> €</td></tr>
-                <tr><td>Solde à régler <?php echo intval($m['delai_solde'] ?? 30); ?> jours avant le départ</td><td><?php echo number_format($total - $acompte, 2, ',', ' '); ?> €</td></tr>
-            <?php endif; ?>
-            </table>
-        </div>
-        <?php
-        return ob_get_clean();
     }
 }

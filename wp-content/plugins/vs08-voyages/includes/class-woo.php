@@ -136,46 +136,26 @@ class VS08V_Woo {
     }
 }
 
-// ══════════════════════════════════════════════════════════
-// COPIE BOOKING DATA — DIFFÉRÉE (pas pendant le checkout AJAX)
-// Avec HPOS activé, chaque update_post_meta/add_meta_data
-// sur une commande déclenche une sync complète entre les tables
-// wp_posts et wp_wc_orders → 1 Go+ de RAM → crash.
-//
-// Solution : pendant le checkout AJAX, on ne copie RIEN.
-// On stocke juste le product_id sur l'item (déjà fait par WC).
-// La copie des booking_data se fait sur la page "merci"
-// (requête séparée, mémoire séparée).
-// ══════════════════════════════════════════════════════════
-
-// Pendant le checkout AJAX : NE PAS copier les booking_data
-// WooCommerce stocke déjà le product_id sur le line item
+// Copier les booking_data dans les meta de l'item de commande
 add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_item_key, $values, $order) {
-    if (!empty($_GET['wc-ajax'])) return; // différé
     try {
         $product_id = $item->get_product_id();
         if (!$product_id) return;
-        if (metadata_exists('post', $product_id, '_vs08s_booking_data') || metadata_exists('post', $product_id, '_vs08s_booking_token')) {
-            return;
-        }
+        // Séjour → skip (copié sur thankyou par vs08-sejours)
+        if (get_post_meta($product_id, '_vs08s_booking_token', true)) return;
         $booking_data = get_post_meta($product_id, '_vs08v_booking_data', true);
-        // Séjours all inclusive: ne pas dupliquer les gros blobs _vs08v_ sur les items.
-        // Le flux séjour utilise _vs08s_booking_data (copie différée sur la commande).
-        if (is_array($booking_data) && (($booking_data['type'] ?? '') === 'sejour')) {
-            return;
-        }
         if (!empty($booking_data) && is_array($booking_data)) {
+            if (($booking_data['type'] ?? '') === 'sejour') return;
             $item->add_meta_data('_vs08v_booking_data', $booking_data, true);
             $item->add_meta_data('_vs08v_voyage_id', $booking_data['voyage_id'] ?? 0, true);
         }
     } catch (\Throwable $e) {
-        error_log('VS08 line_item: ' . $e->getMessage());
+        error_log('VS08 checkout_create_order_line_item: ' . $e->getMessage());
     }
 }, 10, 4);
 
-// Pendant le checkout AJAX : NE PAS copier sur la commande
+// Copier booking_data sur la commande
 add_action('woocommerce_checkout_update_order_meta', function($order_id) {
-    if (!empty($_GET['wc-ajax'])) return; // différé
     try {
         $existing = get_post_meta($order_id, '_vs08v_booking_data', true);
         if (!empty($existing) && is_array($existing)) return;
@@ -184,37 +164,35 @@ add_action('woocommerce_checkout_update_order_meta', function($order_id) {
         foreach ($order->get_items() as $item) {
             $pid = $item->get_product_id();
             if (!$pid) continue;
-            if (metadata_exists('post', $pid, '_vs08s_booking_data') || metadata_exists('post', $pid, '_vs08s_booking_token')) {
-                continue;
-            }
+            // Séjour → skip
+            if (get_post_meta($pid, '_vs08s_booking_token', true)) continue;
             $data = get_post_meta($pid, '_vs08v_booking_data', true);
-            if (is_array($data) && (($data['type'] ?? '') === 'sejour')) {
-                continue;
-            }
             if (!empty($data) && is_array($data)) {
+                if (($data['type'] ?? '') === 'sejour') continue;
                 update_post_meta($order_id, '_vs08v_booking_data', $data);
                 break;
             }
         }
     } catch (\Throwable $e) {
-        error_log('VS08 update_order_meta: ' . $e->getMessage());
+        error_log('VS08 checkout_update_order_meta: ' . $e->getMessage());
     }
 }, 10, 2);
 
-// ═══ PAGE MERCI : copier les booking_data (mémoire séparée) ═══
+// ═══ PAGE MERCI : copier les booking_data golf (mémoire séparée) ═══
 add_action('woocommerce_thankyou', function($order_id) {
     if (!$order_id) return;
-    // Déjà fait ?
     $existing = get_post_meta($order_id, '_vs08v_booking_data', true);
     if (!empty($existing) && is_array($existing)) return;
-    // Chercher dans les items de la commande
     $order = wc_get_order($order_id);
     if (!$order) return;
     foreach ($order->get_items() as $item) {
         $pid = $item->get_product_id();
         if (!$pid) continue;
+        // Séjour → géré par vs08-sejours thankyou hook
+        if (get_post_meta($pid, '_vs08s_booking_token', true)) continue;
         $data = get_post_meta($pid, '_vs08v_booking_data', true);
         if (!empty($data) && is_array($data)) {
+            if (($data['type'] ?? '') === 'sejour') continue;
             update_post_meta($order_id, '_vs08v_booking_data', $data);
             error_log('[VS08] Booking data copié sur commande VS08-' . $order_id . ' (thankyou)');
             break;
