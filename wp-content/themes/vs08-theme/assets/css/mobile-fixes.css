@@ -197,11 +197,18 @@ html, body {
 
 /* ═══ 14. TOUCH TARGETS — minimum 44px sur mobile ═══ */
 @media (max-width: 768px) {
-    a, button, select, input[type="checkbox"], input[type="radio"] {
+    /* Formulaires et navigation principale uniquement */
+    .bk-field input, .bk-field select,
+    .sv-field input, .sv-field select,
+    .vc-field input, .vc-field select,
+    .vs08-devis-field input, .vs08-devis-field select,
+    .vs08-da-field input, .vs08-da-field select,
+    .sv-btn-reserver, .bk-btn-next, .bk-btn-prev,
+    .vc-cta-btn, .vs08-devis-submit, .vs08-da-submit,
+    .vs08-mm-nav a,
+    .fp-btn-search {
         min-height: 44px;
     }
-    /* Exception pour les liens inline dans les paragraphes */
-    p a, span a, li a, td a { min-height: auto; }
 }
 
 /* ═══ 15. IMAGES — empêcher le débordement ═══ */
@@ -210,38 +217,38 @@ img {
     height: auto;
 }
 
-/* ═══ 16. TABLES — scroll horizontal sur mobile ═══ */
+/* ═══ 16. TABLES LARGES — scroll horizontal sur mobile ═══ */
 @media (max-width: 640px) {
-    table {
+    /* Seulement les tables de données, pas les tables de layout */
+    .vs08v-woo-recap table,
+    .vs08c-woo-recap table,
+    .woocommerce table:not(.shop_table) {
         display: block;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
-    /* Exception pour les tables de layout (recap, etc.) */
-    .bk-recap-row, .bkc-recap-line { display: flex; overflow: visible; }
 }
 
-/* ═══ 17. SINGLE VOYAGE — CTA STICKY MOBILE ═══
-   Bouton "Réserver" fixe en bas sur mobile */
+/* ═══ 17. SINGLE VOYAGE — CTA BAR STICKY MOBILE ═══
+   Barre fixe en bas avec prix + bouton "Réserver" uniquement
+   La calc card reste dans le flux normal (on scroll pour remplir les champs) */
 @media (max-width: 768px) {
-    .sv-calc-col {
-        position: fixed;
+    .sv-calc-col { position: static; }
+    /* La partie prix + bouton sera gérée par le JS existant */
+    /* On ajoute un padding en bas pour que le contenu ne soit pas caché */
+    .sv-content-col { padding-bottom: 20px; }
+    /* Bouton bien visible */
+    .sv-btn-reserver {
+        position: sticky;
         bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 9990;
-        padding: 0;
+        z-index: 100;
+        margin: 0 -16px -20px;
+        padding: 18px;
+        border-radius: 0;
+        font-size: 16px;
+        background: linear-gradient(135deg, #59b7b7, #3d9a9a);
+        box-shadow: 0 -4px 20px rgba(0,0,0,.15);
     }
-    .sv-calc-card {
-        border-radius: 20px 20px 0 0 !important;
-        box-shadow: 0 -8px 40px rgba(0,0,0,.15) !important;
-        max-height: 80vh;
-        overflow-y: auto;
-    }
-    /* Espace en bas du contenu pour que le CTA ne couvre rien */
-    .sv-content-col { padding-bottom: 200px; }
-    /* Reassurance visible directement */
-    .sv-reassurance { display: none; }
 }
 
 /* ═══ 18. SAFE AREAS iOS (encoche, barre home) ═══ */
