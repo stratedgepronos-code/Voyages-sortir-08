@@ -61,3 +61,21 @@ add_action('save_post', function($post_id, $post) {
         remove_all_actions('save_post');
     }
 }, 0, 2);
+
+// ─── 4. FIX MySQL "Commands out of sync" pendant shutdown ──────────
+// WooCommerce Action Scheduler fait des requêtes pendant le hook shutdown.
+// Si une requête précédente (HPOS sync, emails) a laissé des résultats
+// non lus dans la connexion MySQL, toutes les requêtes suivantes échouent
+// avec "Commands out of sync". On vide la connexion avant le shutdown.
+add_action('shutdown', function() {
+    global $wpdb;
+    if (!$wpdb || !$wpdb->dbh || !($wpdb->dbh instanceof mysqli)) return;
+    // Vider tous les résultats non lus de la connexion MySQL
+    while ($wpdb->dbh->more_results()) {
+        $wpdb->dbh->next_result();
+        $res = $wpdb->dbh->store_result();
+        if ($res instanceof mysqli_result) {
+            $res->free();
+        }
+    }
+}, 0); // priorité 0 = avant tout le monde dans shutdown
