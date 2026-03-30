@@ -1465,6 +1465,12 @@ function bkGo(step) {
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // ── Mobile : masquer la recap card sur les étapes 2, 3, 4 ──
+    var recapCol = document.querySelector('.bk-recap-col');
+    if (recapCol && window.innerWidth <= 900) {
+        recapCol.style.display = (step === 1) ? '' : 'none';
+    }
 }
 
 

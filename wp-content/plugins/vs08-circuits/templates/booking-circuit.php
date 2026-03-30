@@ -1188,12 +1188,18 @@ var BK_CIRCUIT = <?php echo json_encode([
     window.bkcGoToStep2 = function() {
         document.getElementById('bkc-step-1').classList.remove('bkc-step-active');
         document.getElementById('bkc-step-2').classList.add('bkc-step-active');
+        // Mobile : masquer le recap sur l'étape 2
+        var recap = document.querySelector('.bkc-recap');
+        if (recap && window.innerWidth <= 960) recap.style.display = 'none';
         window.scrollTo({top:0,behavior:'smooth'});
     };
 
     window.bkcGoBackToStep1 = function() {
         document.getElementById('bkc-step-2').classList.remove('bkc-step-active');
         document.getElementById('bkc-step-1').classList.add('bkc-step-active');
+        // Mobile : réafficher le recap sur l'étape 1
+        var recap = document.querySelector('.bkc-recap');
+        if (recap && window.innerWidth <= 960) recap.style.display = '';
         window.scrollTo({top:0,behavior:'smooth'});
     };
 
@@ -1206,6 +1212,9 @@ var BK_CIRCUIT = <?php echo json_encode([
         bkcBuildRecap();
         document.getElementById('bkc-steps-form').style.display = 'none';
         document.getElementById('bkc-step-confirm').style.display = 'block';
+        // Mobile : masquer le recap sur la page confirmation
+        var recap = document.querySelector('.bkc-recap');
+        if (recap && window.innerWidth <= 960) recap.style.display = 'none';
         window.scrollTo({top:0,behavior:'smooth'});
     };
 
