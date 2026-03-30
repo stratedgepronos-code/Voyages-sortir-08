@@ -407,3 +407,102 @@ html, body {
         overflow-x: hidden;
     }
 }
+
+/* ═══ 28. SINGLE CIRCUIT — CALC CARD EN HAUT SUR MOBILE ═══ */
+@media (max-width: 1024px) {
+    .vc-inner {
+        display: flex !important;
+        flex-direction: column;
+    }
+    .vc-calc-col {
+        order: -1 !important;
+        position: static !important;
+        width: 100%;
+    }
+    .vc-main {
+        order: 1;
+        width: 100%;
+    }
+}
+@media (max-width: 640px) {
+    .vc-calc-card {
+        padding: 20px 16px;
+        border-radius: 16px;
+        margin-bottom: 16px;
+    }
+    .vc-cta-btn {
+        font-size: 16px;
+        min-height: 52px;
+        border-radius: 12px;
+    }
+}
+
+/* ═══ 29. SH-CARDS (séjours dark section) — 1 colonne sur mobile ═══ */
+@media (max-width: 640px) {
+    .sh-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px;
+    }
+    .sh-card-img { height: 200px; }
+    .sh-name { font-size: 18px; }
+}
+
+/* ═══ 30. HOMEPAGE COUPS DE CŒUR — cards pleine largeur mobile ═══ */
+@media (max-width: 768px) {
+    .fp-cards-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px;
+    }
+    .scard-featured {
+        grid-column: span 1 !important;
+        flex-direction: column !important;
+    }
+    .scard-featured .scard-img {
+        width: 100% !important;
+        height: 200px;
+    }
+    .scard-featured .scard-body {
+        padding: 20px !important;
+    }
+    .scard-body h3 { font-size: 18px; }
+}
+
+/* ═══ 31. BOOKING CIRCUIT — RECAP + FORM mobile ═══ */
+@media (max-width: 960px) {
+    .bkc-inner {
+        display: flex !important;
+        flex-direction: column;
+    }
+    .bkc-recap {
+        order: -1 !important;
+        position: static !important;
+        width: 100%;
+        margin-bottom: 16px;
+    }
+}
+
+/* ═══ 32. PAGE CONTACT / MENTIONS — conteneur mobile ═══ */
+@media (max-width: 768px) {
+    .entry-content,
+    .page-content,
+    .vs08-page-wrap {
+        padding: 0 14px;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+    }
+}
+
+/* ═══ 33. CONNEXION / AUTH — form mobile ═══ */
+@media (max-width: 640px) {
+    .vs08-auth-card {
+        margin: 0 12px;
+        padding: 24px 18px;
+        border-radius: 16px;
+    }
+    .vs08-auth-card input[type="text"],
+    .vs08-auth-card input[type="email"],
+    .vs08-auth-card input[type="password"] {
+        font-size: 16px; /* anti-zoom iOS */
+        min-height: 48px;
+    }
+}
