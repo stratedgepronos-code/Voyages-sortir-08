@@ -114,12 +114,17 @@ jobs:
           done
           [ "$ok" -eq 1 ] || echo "Theme deploy failed (non-blocking)"
 
-      - name: Remove paybox-polyfill (causes show_message conflict)
+      - name: Remove paybox-polyfill + force opcache invalidation via touch
         run: |
           sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ env.SSH_OPTS }} \
-            ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} \
-            "rm -f ${{ env.WEBROOT }}/wp-content/mu-plugins/paybox-polyfill.php && echo 'paybox-polyfill removed'" \
-          || echo "Remove skipped (non-blocking)"
+            ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} "
+            rm -f ${{ env.WEBROOT }}/wp-content/mu-plugins/paybox-polyfill.php
+            find ${{ env.WEBROOT }}/wp-content/plugins/vs08-voyages -name '*.php' -exec touch {} +
+            find ${{ env.WEBROOT }}/wp-content/plugins/vs08-circuits -name '*.php' -exec touch {} +
+            find ${{ env.WEBROOT }}/wp-content/plugins/vs08-sejours -name '*.php' -exec touch {} +
+            find ${{ env.WEBROOT }}/wp-content/mu-plugins -name '*.php' -exec touch {} +
+            echo 'Files touched + paybox removed'
+          " || echo "Touch/remove skipped (non-blocking)"
 
       - name: Purge caches and opcache
         run: |
