@@ -34,7 +34,7 @@ img.custom-logo,.custom-logo{background:transparent!important}
 
 .mega-nav{display:flex;align-items:center;gap:0;list-style:none;height:100%;margin:0;padding:0}
 .mega-nav > li{position:relative;height:100%}
-.mega-nav > li > a{display:flex;align-items:center;gap:4px;padding:12px 18px;color:rgba(255,255,255,.88);font-size:14px;font-weight:500;transition:all .25s;border-bottom:2px solid transparent;white-space:nowrap}
+.mega-nav > li > a{display:flex;align-items:center;gap:4px;padding:12px 18px;color:rgba(255,255,255,.88);font-size:14px;font-weight:500;font-family:'Outfit',sans-serif;transition:all .25s;border-bottom:2px solid transparent;white-space:nowrap}
 .mega-nav > li > a:hover,.mega-nav > li:hover > a{color:var(--teal-light);border-bottom-color:var(--teal-light)}
 .mega-nav > li > a .arrow{font-size:10px;transition:transform .3s}
 .mega-nav > li:hover > a .arrow{transform:rotate(180deg)}

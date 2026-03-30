@@ -40,9 +40,8 @@ add_action('after_setup_theme', function() {
    STYLES & SCRIPTS
 ============================================================ */
 add_action('wp_enqueue_scripts', function() {
-    // Évite les erreurs réseau récurrentes sur fonts.gstatic (ERR_CONNECTION_CLOSED).
-    // On garde le handle pour les dépendances CSS existantes, sans appel externe.
-    wp_register_style('vs08-fonts', false, [], '1.0');
+    // Google Fonts : Playfair Display + Outfit (design system VS08)
+    wp_register_style('vs08-fonts', 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700&display=swap', [], '1.1');
     wp_enqueue_style('vs08-fonts');
     wp_enqueue_style('vs08-main', get_template_directory_uri() . '/assets/css/main.css', ['vs08-fonts'], '1.3');
     wp_enqueue_style('vs08-header-mega', get_template_directory_uri() . '/assets/css/header-mega.css', ['vs08-main'], '1.3');
@@ -58,6 +57,12 @@ add_action('wp_enqueue_scripts', function() {
     }
     wp_enqueue_script('vs08-main', get_template_directory_uri() . '/assets/js/main.js', [], '1.3', true);
     wp_enqueue_script('vs08-footer-terminal', get_template_directory_uri() . '/assets/js/footer-terminal.js', [], '1.2', true);
+    // Calendrier VS08 sur les pages de devis
+    if (is_page(['devis-golf', 'devis-gratuit', 'devis-circuit', 'devis-sejour-vacances', 'devis-city-trip', 'devis-road-trip'])) {
+        $cal_base = defined('VS08V_URL') ? VS08V_URL : content_url('/plugins/vs08-voyages/');
+        wp_enqueue_style('vs08-calendar', $cal_base . 'assets/css/vs08-calendar.css', [], '1.5.0');
+        wp_enqueue_script('vs08-calendar', $cal_base . 'assets/js/vs08-calendar.js', [], '1.5.0', true);
+    }
 });
 
 /* Ne pas charger stats.wp.com (Jetpack) — évite ERR_BLOCKED_BY_CLIENT en admin si extension bloque la requête */
@@ -457,13 +462,16 @@ function vs08_mega_circuit_destinations($limit = 8) {
  * Devis hors golf : envoi aux deux adresses agence.
  */
 function vs08_mail_devis_agence($subject, $body_plain, $reply_to_email) {
-    $headers = ['Content-Type: text/plain; charset=UTF-8'];
+    $headers = [
+        'Content-Type: text/plain; charset=UTF-8',
+        'From: Voyages Sortir 08 <noreply@sortirmonde.fr>',
+    ];
     if (is_email($reply_to_email)) {
         $headers[] = 'Reply-To: ' . $reply_to_email;
     }
-    $ok1 = wp_mail('sortir08@wanadoo.fr', $subject, $body_plain, $headers);
-    $ok2 = wp_mail('sortir08.ag@wanadoo.fr', $subject, $body_plain, $headers);
-    return $ok1 && $ok2;
+    // Circuits, séjours vacances, city trip, road trip → sortir08.ag@wanadoo.fr
+    $ok = wp_mail('sortir08.ag@wanadoo.fr', $subject, $body_plain, $headers);
+    return $ok;
 }
 
 /* Pages devis (hub + formulaires) — création / template une fois */

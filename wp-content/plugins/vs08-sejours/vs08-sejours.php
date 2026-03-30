@@ -48,6 +48,27 @@ require_once VS08S_PATH . 'includes/class-vs08s-hotel-scanner.php';
 
 // ── Initialisation ──
 add_action('init', ['VS08S_CPT', 'register']);
+
+// ── TEMPORAIRE : Bloquer l'accès front-end aux séjours All Inclusive ──
+// Les séjours sont en cours de développement, on redirige vers "bientôt disponible"
+add_action('template_redirect', function() {
+    if (is_admin()) return;
+    // Bloquer les pages individuelles séjour
+    if (is_singular('vs08_sejour')) {
+        wp_redirect(home_url('/bientot-disponible/?univers=sejour'), 302);
+        exit;
+    }
+    // Bloquer les archives séjour
+    if (is_post_type_archive('vs08_sejour')) {
+        wp_redirect(home_url('/bientot-disponible/?univers=sejour'), 302);
+        exit;
+    }
+    // Bloquer la page de booking séjour
+    if (get_query_var('vs08s_booking')) {
+        wp_redirect(home_url('/bientot-disponible/?univers=sejour'), 302);
+        exit;
+    }
+});
 VS08S_Meta::register();
 VS08S_Rest::register();
 VS08S_Booking::register();

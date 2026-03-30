@@ -130,14 +130,28 @@ $extra_field = $c['extra_field'] ?? ''; // 'city' | 'road' | 'circuit' | ''
                 <?php endif; ?>
                 <div class="vs08-da-row">
                     <div class="vs08-da-field">
-                        <label for="da-d1">Date de départ souhaitée</label>
-                        <input type="date" id="da-d1" name="date_debut" value="<?php echo esc_attr(wp_unslash($_POST['date_debut'] ?? '')); ?>">
+                        <label>Date de départ souhaitée</label>
+                        <input type="hidden" id="da-d1" name="date_debut" value="<?php echo esc_attr(wp_unslash($_POST['date_debut'] ?? '')); ?>">
+                        <div id="da-cal-d1" style="position:relative"></div>
                     </div>
                     <div class="vs08-da-field">
-                        <label for="da-d2">Date de retour souhaitée</label>
-                        <input type="date" id="da-d2" name="date_fin" value="<?php echo esc_attr(wp_unslash($_POST['date_fin'] ?? '')); ?>">
+                        <label>Date de retour souhaitée</label>
+                        <input type="hidden" id="da-d2" name="date_fin" value="<?php echo esc_attr(wp_unslash($_POST['date_fin'] ?? '')); ?>">
+                        <div id="da-cal-d2" style="position:relative"></div>
                     </div>
                 </div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function(){
+                    if (typeof VS08Calendar === 'undefined') return;
+                    var minD = new Date(); minD.setDate(minD.getDate() + 7);
+                    new VS08Calendar({ el:'#da-cal-d1', input:'#da-d1', mode:'date', inline:false, title:'Date de départ', minDate:minD,
+                        onSelect: function(d){ document.getElementById('da-d1').value = d.toISOString().slice(0,10); }
+                    });
+                    new VS08Calendar({ el:'#da-cal-d2', input:'#da-d2', mode:'date', inline:false, title:'Date de retour', minDate:minD,
+                        onSelect: function(d){ document.getElementById('da-d2').value = d.toISOString().slice(0,10); }
+                    });
+                });
+                </script>
                 <div class="vs08-da-field">
                     <label for="da-flex">Flexibilité sur les dates</label>
                     <select id="da-flex" name="dates_flex">

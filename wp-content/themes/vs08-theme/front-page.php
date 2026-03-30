@@ -513,9 +513,9 @@ $fp_url_rgpd         = home_url('/rgpd/');
    DONNÉES HERO CAROUSEL
    ═══════════════════════════════════════════════════════════════ */
 $hc_slides = [
-    ['title'=>"Jouez sur les plus beaux parcours du monde",'sub'=>'On s\'occupe de tout. Vous n\'avez qu\'à swinguer.','img'=>'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=1920&q=80','cta'=>'Explorer nos golfs','url'=>home_url('/resultats-recherche?type=sejour_golf'),'ov'=>'linear-gradient(135deg,rgba(11,17,32,.7),rgba(45,106,79,.4))'],
-    ['title'=>"Chaque étape raconte une histoire",'sub'=>'Circuits guidés en Crète, Thaïlande, Costa Rica… rien à organiser.','img'=>'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1920&q=80','cta'=>'Voir les circuits','url'=>home_url('/resultats-recherche?type=circuit'),'ov'=>'linear-gradient(135deg,rgba(11,17,32,.7),rgba(106,76,147,.4))'],
-    ['title'=>"Vous avez le droit de ne rien faire",'sub'=>'Séjours all inclusive, soleil, plage et farniente — tout est inclus.','img'=>'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1920&q=80','cta'=>'Voir les séjours','url'=>home_url('/bientot-disponible/?univers=sejour'),'ov'=>'linear-gradient(135deg,rgba(11,17,32,.7),rgba(89,183,183,.3))'],
+    ['title'=>"Jouez sur les plus beaux parcours du monde",'sub'=>'On s\'occupe de tout. Vous n\'avez qu\'à swinguer.','img'=>'https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=1920&q=80','cta'=>'Explorer nos golfs','url'=>home_url('/resultats-recherche?type=sejour_golf'),'ov'=>'linear-gradient(135deg,rgba(11,17,32,.65),rgba(45,106,79,.35))'],
+    ['title'=>"Chaque étape raconte une histoire",'sub'=>'Circuits guidés en Crète, Thaïlande, Costa Rica… rien à organiser.','img'=>'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=1920&q=80','cta'=>'Voir les circuits','url'=>home_url('/resultats-recherche?type=circuit'),'ov'=>'linear-gradient(135deg,rgba(11,17,32,.65),rgba(106,76,147,.35))'],
+    ['title'=>"Vous avez le droit de ne rien faire",'sub'=>'Séjours all inclusive, soleil, plage et farniente — tout est inclus.','img'=>'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=1920&q=80','cta'=>'Voir les séjours','url'=>home_url('/bientot-disponible/?univers=sejour'),'ov'=>'linear-gradient(135deg,rgba(11,17,32,.65),rgba(89,183,183,.25))'],
 ];
 ?>
 

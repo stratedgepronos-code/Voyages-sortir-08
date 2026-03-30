@@ -237,24 +237,59 @@ class VS08V_Emails {
         $titre  = $data['voyage_titre'] ?? 'Séjour golf';
         $prenom = $fact['prenom'] ?? 'Cher voyageur';
         $params = $data['params'] ?? [];
+        $devis  = $data['devis'] ?? [];
         $total  = number_format(floatval($data['total'] ?? 0), 2, ',', ' ');
         $c      = VS08V_Contract::COMPANY;
+
+        // Infos de réservation
+        $m = [];
+        $voyage_id = intval($data['voyage_id'] ?? 0);
+        if ($voyage_id && class_exists('VS08V_Meta')) {
+            $m = VS08V_Meta::get($voyage_id);
+        }
+        $destination  = $m['destination'] ?? '';
+        $hotel_nom    = $m['hotel']['nom'] ?? ($m['hotel_nom'] ?? '');
+        $etoiles      = intval($m['hotel']['etoiles'] ?? ($m['hotel_etoiles'] ?? 0));
+        $pension_map  = ['bb'=>'Petit-déjeuner','hb'=>'Demi-pension','fb'=>'Pension complète','ai'=>'Tout inclus','sc'=>'Sans repas'];
+        $pension      = $pension_map[$m['hotel']['pension'] ?? ($m['pension'] ?? 'bb')] ?? '';
+        $duree        = intval($m['duree'] ?? 7);
+        $duree_j      = $duree + 1;
+        $aeroport     = strtoupper($params['aeroport'] ?? '');
+        $nb_golf      = intval($params['nb_golfeurs'] ?? 0);
+        $nb_nongolf   = intval($params['nb_nongolfeurs'] ?? 0);
+        $nb_total     = $nb_golf + $nb_nongolf;
 
         $subject = sprintf('Votre réservation — %s — Voyages Sortir 08', $titre);
 
         $account_url = class_exists('VS08V_Traveler_Space') ? VS08V_Traveler_Space::voyage_url($order_id) : home_url('/espace-voyageur/');
+
+        // Table récapitulative (pas de détail tarif — juste Total à la fin)
+        $recap = '<table cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;background:#edf8f8;border-radius:8px;">'
+            . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Voyage</td><td style="padding:12px 16px;">' . esc_html($titre) . '</td></tr>';
+        if ($destination) {
+            $recap .= '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Destination</td><td style="padding:12px 16px;">' . esc_html($destination) . '</td></tr>';
+        }
+        $recap .= '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Date de départ</td><td style="padding:12px 16px;">' . esc_html(!empty($params['date_depart']) ? date('d/m/Y', strtotime($params['date_depart'])) : '') . '</td></tr>'
+            . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Durée</td><td style="padding:12px 16px;">' . $duree_j . ' jours / ' . $duree . ' nuits</td></tr>';
+        if ($aeroport) {
+            $recap .= '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Aéroport</td><td style="padding:12px 16px;">✈️ ' . esc_html($aeroport) . '</td></tr>';
+        }
+        if ($hotel_nom) {
+            $hotel_str = $hotel_nom . ($etoiles > 0 ? ' ' . str_repeat('★', $etoiles) : '') . ($pension ? ' · ' . $pension : '');
+            $recap .= '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Hôtel</td><td style="padding:12px 16px;">🏨 ' . esc_html($hotel_str) . '</td></tr>';
+        }
+        $recap .= '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Voyageurs</td><td style="padding:12px 16px;">👥 ' . $nb_total . ' (' . $nb_golf . ' golfeur' . ($nb_golf > 1 ? 's' : '') . ($nb_nongolf > 0 ? ', ' . $nb_nongolf . ' accompagnant' . ($nb_nongolf > 1 ? 's' : '') : '') . ')</td></tr>'
+            . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">N° contrat</td><td style="padding:12px 16px;">VS08-' . $order_id . '</td></tr>'
+            . '<tr style="font-weight:bold;font-size:16px;"><td style="padding:12px 16px;color:#1a3a3a;">Total</td><td style="padding:12px 16px;color:#e8724a;">' . $total . ' &euro;</td></tr>'
+            . '</table>';
 
         $body = self::email_wrapper(
             $subject,
             '<div style="padding:32px;">'
             . '<h1 style="margin:0 0 8px;color:#1a3a3a;font-family:Georgia,serif;font-size:24px;">Merci ' . esc_html($prenom) . ' !</h1>'
             . '<p style="font-size:16px;color:#555;margin:0 0 24px;">Votre réservation a bien été enregistrée. Vous trouverez ci-dessous votre contrat de vente.</p>'
-            . '<table cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;background:#edf8f8;border-radius:8px;">'
-            . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Voyage</td><td style="padding:12px 16px;">' . esc_html($titre) . '</td></tr>'
-            . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">Date de départ</td><td style="padding:12px 16px;">' . esc_html($params['date_depart'] ? date('d/m/Y', strtotime($params['date_depart'])) : '') . '</td></tr>'
-            . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">N° contrat</td><td style="padding:12px 16px;">VS08-' . $order_id . '</td></tr>'
-            . '<tr style="font-weight:bold;font-size:16px;"><td style="padding:12px 16px;color:#1a3a3a;">Total</td><td style="padding:12px 16px;color:#e8724a;">' . $total . ' &euro;</td></tr>'
-            . '</table>'
+            . $recap
+            . self::voyageurs_table($data['voyageurs'] ?? [])
             . '<div style="text-align:center;margin:24px 0;">'
             . '<a href="' . esc_url($account_url) . '" style="display:inline-block;padding:14px 32px;background:#2a7f7f;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;font-size:15px;">Voir mon voyage dans l\'espace voyageur</a>'
             . '</div>'

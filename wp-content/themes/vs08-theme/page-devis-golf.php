@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
     $date_fin = sanitize_text_field(wp_unslash($_POST['date_fin'] ?? ''));
     $nb_golfeurs = sanitize_text_field(wp_unslash($_POST['nb_golfeurs'] ?? ''));
     $nb_accompagnants = sanitize_text_field(wp_unslash($_POST['nb_accompagnants'] ?? ''));
-    $niveau = sanitize_text_field(wp_unslash($_POST['niveau'] ?? ''));
+    $budget = sanitize_text_field(wp_unslash($_POST['budget'] ?? ''));
     $budget = sanitize_text_field(wp_unslash($_POST['budget'] ?? ''));
     $message = sanitize_textarea_field(wp_unslash($_POST['message'] ?? ''));
 
@@ -33,11 +33,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
         $body .= "— Dates : du " . $date_debut . " au " . $date_fin . "\n";
         $body .= "— Nombre de golfeurs : " . $nb_golfeurs . "\n";
         $body .= "— Nombre d'accompagnants : " . $nb_accompagnants . "\n";
-        $body .= "— Niveau : " . $niveau . "\n";
+        $body .= "— Budget : " . $budget . "\n";
         $body .= "— Budget indicatif : " . $budget . "\n\n";
         $body .= "— Message :\n" . $message . "\n";
 
-        $headers = ['Content-Type: text/plain; charset=UTF-8', 'Reply-To: ' . $email];
+        $headers = ['Content-Type: text/plain; charset=UTF-8', 'From: Voyages Sortir 08 <noreply@sortirmonde.fr>', 'Reply-To: ' . $email];
         if (wp_mail($to, $subject, $body, $headers)) {
             $devis_sent = true;
         } else {
@@ -51,13 +51,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
 <style>
 .vs08-devis-hero{min-height:42vh;display:flex;align-items:center;background:linear-gradient(135deg,#0f2424 0%,#1a3a3a 100%);position:relative;padding:100px 80px 60px}
 .vs08-devis-hero h1{font-size:clamp(32px,4vw,48px);color:#fff;font-family:'Playfair Display',serif;margin-bottom:12px}
-.vs08-devis-hero p{color:rgba(255,255,255,.8);font-size:16px;max-width:560px}
+.vs08-devis-hero p{color:rgba(255,255,255,.8);font-size:16px;max-width:560px;font-family:'Outfit',sans-serif;line-height:1.6}
 .vs08-devis-wrap{max-width:720px;margin:0 auto;padding:56px 24px 80px}
 .vs08-devis-card{background:#fff;border-radius:20px;padding:40px;box-shadow:0 12px 48px rgba(0,0,0,.08);border:1px solid #f0f2f4}
 .vs08-devis-card h2{font-size:22px;color:#0f2424;margin-bottom:24px;font-family:'Playfair Display',serif}
 .vs08-devis-row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .vs08-devis-field{margin-bottom:20px}
-.vs08-devis-field label{display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px}
+.vs08-devis-field label{display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;font-family:'Outfit',sans-serif;text-transform:uppercase;letter-spacing:.04em}
 .vs08-devis-field input,.vs08-devis-field select,.vs08-devis-field textarea{width:100%;padding:12px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:15px;font-family:'Outfit',sans-serif}
 .vs08-devis-field textarea{min-height:120px;resize:vertical}
 .vs08-devis-field input:focus,.vs08-devis-field select:focus,.vs08-devis-field textarea:focus{outline:none;border-color:#59b7b7}
@@ -115,14 +115,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
                 </div>
                 <div class="vs08-devis-row">
                     <div class="vs08-devis-field">
-                        <label for="devis-date-debut">Date de départ</label>
-                        <input type="date" id="devis-date-debut" name="date_debut" value="<?php echo esc_attr(wp_unslash($_POST['date_debut'] ?? '')); ?>">
+                        <label>Date de départ</label>
+                        <input type="hidden" id="devis-date-debut" name="date_debut" value="<?php echo esc_attr(wp_unslash($_POST['date_debut'] ?? '')); ?>">
+                        <div id="devis-cal-debut" style="position:relative"></div>
                     </div>
                     <div class="vs08-devis-field">
-                        <label for="devis-date-fin">Date de retour</label>
-                        <input type="date" id="devis-date-fin" name="date_fin" value="<?php echo esc_attr(wp_unslash($_POST['date_fin'] ?? '')); ?>">
+                        <label>Date de retour</label>
+                        <input type="hidden" id="devis-date-fin" name="date_fin" value="<?php echo esc_attr(wp_unslash($_POST['date_fin'] ?? '')); ?>">
+                        <div id="devis-cal-fin" style="position:relative"></div>
                     </div>
                 </div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function(){
+                    if (typeof VS08Calendar === 'undefined') return;
+                    var minD = new Date(); minD.setDate(minD.getDate() + 7);
+                    new VS08Calendar({ el:'#devis-cal-debut', input:'#devis-date-debut', mode:'date', inline:false, title:'Date de départ', minDate:minD,
+                        onSelect: function(d){ document.getElementById('devis-date-debut').value = d.toISOString().slice(0,10); }
+                    });
+                    new VS08Calendar({ el:'#devis-cal-fin', input:'#devis-date-fin', mode:'date', inline:false, title:'Date de retour', minDate:minD,
+                        onSelect: function(d){ document.getElementById('devis-date-fin').value = d.toISOString().slice(0,10); }
+                    });
+                });
+                </script>
                 <div class="vs08-devis-row">
                     <div class="vs08-devis-field">
                         <label for="devis-nb-golfeurs">Nombre de golfeurs</label>
@@ -134,15 +148,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
                     </div>
                 </div>
                 <div class="vs08-devis-row">
-                    <div class="vs08-devis-field">
-                        <label for="devis-niveau">Niveau golf</label>
-                        <select id="devis-niveau" name="niveau">
-                            <option value="">— Choisir —</option>
-                            <option value="Débutant" <?php selected(wp_unslash($_POST['niveau'] ?? ''), 'Débutant'); ?>>Débutant</option>
-                            <option value="Intermédiaire" <?php selected(wp_unslash($_POST['niveau'] ?? ''), 'Intermédiaire'); ?>>Intermédiaire</option>
-                            <option value="Confirmé" <?php selected(wp_unslash($_POST['niveau'] ?? ''), 'Confirmé'); ?>>Confirmé</option>
-                        </select>
-                    </div>
                     <div class="vs08-devis-field">
                         <label for="devis-budget">Budget indicatif / personne</label>
                         <input type="text" id="devis-budget" name="budget" placeholder="Ex. 1500 €" value="<?php echo esc_attr(wp_unslash($_POST['budget'] ?? '')); ?>">

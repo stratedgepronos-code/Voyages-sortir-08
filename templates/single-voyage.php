@@ -543,13 +543,8 @@ function sv_do_calc() {
         document.getElementById('sv-price-loading').style.display = 'none';
         if (!res.success) return;
         var d = res.data;
-        // Lignes de détail
-        var lines_html = '';
-        d.lines.forEach(function(l) {
-            lines_html += '<div class="sv-price-line"><span>' + l.label + '</span><span>' + sv_fmt(l.montant) + '</span></div>';
-        });
-        lines_html += '<div class="sv-price-line total"><span>Total</span><span>' + sv_fmt(d.total) + '</span></div>';
-        document.getElementById('sv-price-lines').innerHTML = lines_html;
+        // Masquer le détail tarif (réservé admin) — afficher uniquement le Total
+        document.getElementById('sv-price-lines').innerHTML = '';
         document.getElementById('sv-price-total-val').textContent = sv_fmt(d.total);
         document.getElementById('sv-price-perpers').textContent   = sv_fmt(d.par_pers);
         document.getElementById('sv-price-acompte').textContent   = '🔒 Acompte ' + d.acompte_pct + '% = ' + sv_fmt(d.acompte);

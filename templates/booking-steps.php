@@ -201,6 +201,8 @@ get_header();
 .bk-recap-voyage-dest{font-size:13px;color:#6b7280;font-family:'Outfit',sans-serif}
 .bk-recap-row{display:flex;justify-content:space-between;padding:6px 0;font-family:'Outfit',sans-serif;font-size:14px;border-bottom:1px solid #f9f6f0}
 .bk-recap-row:last-child{border-bottom:none}
+/* Masquer le détail tarif côté client (réservé admin) */
+.bk-recap-row{display:none!important}
 .bk-recap-lbl{color:#6b7280}
 .bk-recap-val{font-weight:600;color:#0f2424;text-align:right;display:block}
 .bk-recap-total{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:14px;border-top:2px solid #3d9a9a}
@@ -1567,18 +1569,18 @@ function bkBuildRecap() {
         var bQty = document.getElementById('opt-qty-val-bagage_soute');
         var bVal = bQty ? parseInt(bQty.textContent) : parseInt(bagSoute.getAttribute('data-qty-default')) || 0;
         var bPrix = parseFloat(bagSoute.getAttribute('data-prix')) || 0;
-        if (bVal > 0) bagageRows.push({ lbl: '🧳 Bagage soute × ' + bVal, montant: bVal * bPrix });
+        if (bVal > 0) bagageRows.push({ lbl: '🧳 Bagage soute × ' + bVal, montant: 0 });
     }
     if (bagGolf) {
         var gQty = document.getElementById('opt-qty-val-bagage_golf');
         var gVal = gQty ? parseInt(gQty.textContent) : parseInt(bagGolf.getAttribute('data-qty-default')) || 0;
         var gPrix = parseFloat(bagGolf.getAttribute('data-prix')) || 0;
-        if (gVal > 0) bagageRows.push({ lbl: '🏌️ Bagage golf × ' + gVal, montant: gVal * gPrix });
+        if (gVal > 0) bagageRows.push({ lbl: '🏌️ Bagage golf × ' + gVal, montant: 0 });
     }
     if (bagageRows.length) {
         html += '<div style="' + section + '">🧳 Bagages</div>';
         bagageRows.forEach(function(b) {
-            html += '<div style="' + rowS + '"><span style="' + lblS + '">' + b.lbl + '</span><span style="' + valS + '">' + bkFmt(b.montant) + '</span></div>';
+            html += '<div style="' + rowS + '"><span style="' + lblS + '">' + b.lbl + '</span><span style="' + valS + ';color:#2d8a5a">Inclus</span></div>';
         });
     }
 

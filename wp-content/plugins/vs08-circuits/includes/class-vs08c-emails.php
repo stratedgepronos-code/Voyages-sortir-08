@@ -170,7 +170,7 @@ class VS08C_Emails {
             . '<tr><td style="padding:12px 16px;font-weight:bold;color:#1a3a3a;">' . esc_html($ref_l) . '</td><td style="padding:12px 16px;">VS08-' . $order_id . '</td></tr>'
             . '<tr style="font-weight:bold;font-size:16px;"><td style="padding:12px 16px;color:#1a3a3a;">' . esc_html($tot_l) . '</td><td style="padding:12px 16px;color:#e8724a;">' . $total . ' €</td></tr>'
             . '</table>'
-            . self::prix_detail_table($devis, $data)
+            . self::voyageurs_table($data['voyageurs'] ?? [])
             . '<p style="margin-top:24px;color:#6b7280;font-size:13px;line-height:1.6;">Un conseiller prendra contact avec vous sous 24h pour finaliser votre dossier.<br>Pour toute question : <a href="tel:0326652863" style="color:#3d9a9a">03 26 65 28 63</a> ou <a href="mailto:sortir08.ag@wanadoo.fr" style="color:#3d9a9a">sortir08.ag@wanadoo.fr</a></p>'
             . '</div>'
             . (empty($contract_html) ? '' : '<div style="border-top:3px solid #2a7f7f;margin-top:8px;"></div>' . $foot . $contract_html)

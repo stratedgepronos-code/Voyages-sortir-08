@@ -162,9 +162,8 @@ function doCalc(){
     $.post(vs08c.ajax_url,{action:'vs08c_calculate',nonce:vs08c.nonce,circuit_id:CIRCUIT.id,nb_adultes:parseInt($('#vc-nb-adultes').val())||2,nb_enfants:0,nb_chambres:parseInt($('#vc-nb-chambres').val())||1,date_depart:date,aeroport:aero,prix_vol:vc_prix_vol,rooms:JSON.stringify(rooms),options:JSON.stringify(options)},function(r){$('#vc-price-loading').hide();if(!r.success)return;renderPrice(r.data);});
 }
 function renderPrice(d){
-    var $r=$('#vc-price-result'),h='<div class="vc-price-lines">';
-    (d.lines||[]).forEach(function(l){h+='<div class="vc-price-line"><span>'+l.label+'</span><span>'+fmt(l.montant)+' €</span></div>';});
-    h+='</div><div class="vc-price-total"><span class="vc-price-total-label">Total estimé tout compris</span><span class="vc-price-total-val">'+fmt(d.total)+' €</span></div>';
+    var $r=$('#vc-price-result'),h='';
+    h+='<div class="vc-price-total"><span class="vc-price-total-label">Total estimé tout compris</span><span class="vc-price-total-val">'+fmt(d.total)+' €</span></div>';
     if(d.nb_total>0) h+='<div class="vc-price-pp">'+fmt(d.par_pers)+' € / pers.</div>';
     if(d.acompte&&d.acompte<d.total) h+='<div class="vc-acompte-line"><span>Acompte '+Math.round(d.acompte_pct)+'%</span><span>='+fmt(d.acompte)+' €</span></div>';
     $r.html(h);$('.vc-cta-btn').prop('disabled',false);

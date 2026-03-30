@@ -552,7 +552,7 @@ var BK_CIRCUIT = <?php echo json_encode([
         <div class="bkc-recap-line"><span>✈️ Aéroport</span><span><?php echo esc_html($params['aeroport'] ?: '—'); ?></span></div>
         <div class="bkc-recap-line" id="bkc-recap-row-vol" style="display:none"><span>✈️ Vol aller</span><span id="bkc-recap-vol-detail">—</span></div>
         <div class="bkc-recap-line" id="bkc-recap-row-retour" style="display:none"><span>✈️ Vol retour</span><span id="bkc-recap-retour-detail">—</span></div>
-        <div class="bkc-recap-line" id="bkc-recap-row-vol-delta" style="display:none"><span>Supplément vol</span><span id="bkc-recap-vol-delta-val">—</span></div>
+        <div class="bkc-recap-line" id="bkc-recap-row-vol-delta" style="display:none!important"><span>Supplément vol</span><span id="bkc-recap-vol-delta-val">—</span></div>
         <div class="bkc-recap-line"><span>📅 Durée</span><span><?php echo $duree_j; ?>j / <?php echo $duree; ?>n</span></div>
         <div class="bkc-recap-line"><span>👥 Voyageurs</span><span><?php echo $nb_total; ?> pers.</span></div>
         <?php if (!empty($options_recap)): ?>
@@ -560,9 +560,7 @@ var BK_CIRCUIT = <?php echo json_encode([
         <?php endif; ?>
         <div class="bkc-recap-line" id="bkc-recap-row-insurance" style="display:none"><span>🛡️ Assurance Multirisques</span><span id="bkc-recap-insurance-val">—</span></div>
         <div style="height:12px"></div>
-        <?php foreach ($devis['lines'] as $line): ?>
-        <div class="bkc-recap-line"><span><?php echo esc_html($line['label']); ?></span><span><?php echo number_format($line['montant'], 0, ',', ' '); ?> €</span></div>
-        <?php endforeach; ?>
+        <!-- Détail tarif masqué côté client (réservé admin) -->
         <div class="bkc-recap-sep"></div>
         <div class="bkc-recap-total">
             <span class="bkc-recap-total-lbl">Total circuit</span>
