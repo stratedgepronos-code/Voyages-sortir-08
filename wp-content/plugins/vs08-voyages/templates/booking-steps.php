@@ -477,7 +477,7 @@ get_header();
                     <a href="<?php echo esc_url(get_permalink($voyage_id)); ?>" class="bk-btn-prev">← Retour au séjour</a>
                     <button class="bk-btn-next" onclick="bkGo(2)">Continuer →</button>
                 </div>
-                <style>@media(max-width:768px){.bk-nav-step1{display:none!important}}</style>
+                <script>if(window.innerWidth<=768){var ns1=document.querySelector('.bk-nav-step1');if(ns1)ns1.style.display='none';}</script>
             </div>
         </div>
 
