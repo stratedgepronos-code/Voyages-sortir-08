@@ -29,6 +29,14 @@ class VS08V_Booking {
             'vol_retour_num'    => sanitize_text_field($_POST['vol_retour_num'] ?? ''),
         ];
 
+        // Fermeture des ventes J-7 : interdire les départs dans moins de 7 jours
+        if (!empty($params['date_depart'])) {
+            $jours_avant_depart = (strtotime($params['date_depart']) - time()) / 86400;
+            if ($jours_avant_depart < 7) {
+                return ['error' => 'Les réservations sont fermées à moins de 7 jours du départ. Veuillez choisir une date ultérieure.'];
+            }
+        }
+
         // Calcul du prix
         $devis = VS08V_Calculator::calculate($voyage_id, $params);
 

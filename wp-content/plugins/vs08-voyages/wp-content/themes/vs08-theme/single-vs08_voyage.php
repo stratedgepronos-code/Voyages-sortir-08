@@ -692,7 +692,7 @@ $periodes_fermees_vente_js = array_values(array_map(function($p) {
                     window.svCalDate = new VS08Calendar({
                         el: '#sv-date-wrap', mode: 'date', inline: false, input: '#sv-date-depart',
                         title: '📅 Date de départ', subtitle: 'Sélectionnez votre date',
-                        yearRange: [<?php echo date('Y'); ?>, <?php echo date('Y') + 2; ?>], minDate: new Date(),
+                        yearRange: [<?php echo date('Y'); ?>, <?php echo date('Y') + 2; ?>], minDate: new Date(Date.now() + 7 * 86400000), // J-7 fermeture ventes
                         onConfirm: function(dt) {
                             var opts = { day: 'numeric', month: 'long', year: 'numeric' };
                             document.getElementById('sv-date-trigger').textContent = '📅 ' + dt.toLocaleDateString('fr-FR', opts);
@@ -1066,7 +1066,7 @@ function svOnAeroportChange(){
                 el: '#sv-date-wrap', mode: 'date', inline: true, input: '#sv-date-depart',
                 title: '📅 Date d\'aller · ' + code + ' → ' + iataDest,
                 subtitle: 'Retour auto après ' + dureeNuits + ' nuits. Cliquez sur un jour avec vol direct.',
-                yearRange: [new Date().getFullYear(), new Date().getFullYear() + 2], minDate: new Date(),
+                yearRange: [new Date().getFullYear(), new Date().getFullYear() + 2], minDate: new Date(Date.now() + 7 * 86400000), // J-7 fermeture ventes
                 available: allowed,
                 onSelect: function(dt) {
                     if (dt) {

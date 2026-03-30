@@ -38,8 +38,15 @@ class VS08C_Booking {
             'vol_retour_num'    => sanitize_text_field($_POST['vol_retour_num'] ?? ''),
         ];
 
+        // Fermeture des ventes J-20 : interdire les départs dans moins de 20 jours
+        if (!empty($params['date_depart'])) {
+            $jours_avant_depart = (strtotime($params['date_depart']) - time()) / 86400;
+            if ($jours_avant_depart < 20) {
+                return ['error' => 'Les réservations de circuits sont fermées à moins de 20 jours du départ. Veuillez choisir une date ultérieure.'];
+            }
+        }
+
         // Calcul du prix
-        $devis = VS08C_Calculator::calculate($circuit_id, $params);
         $nb_total = $devis['nb_total'];
 
         // Options sélectionnées

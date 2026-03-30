@@ -54,6 +54,7 @@ class VS08V_Search {
         $durees       = [];
         $dates        = [];
         $today        = date('Y-m-d');
+        $cutoff_golf  = date('Y-m-d', strtotime('+7 days')); // J-7 fermeture ventes golf
 
         foreach ($posts as $pid) {
             $m = VS08V_MetaBoxes::get($pid);
@@ -112,7 +113,7 @@ class VS08V_Search {
                 foreach ($m['dates_depart'] as $dd) {
                     $dt = $dd['date'] ?? '';
                     $st = $dd['statut'] ?? 'dispo';
-                    if ($dt && $dt >= $today && $st !== 'complet') {
+                    if ($dt && $dt >= $cutoff_golf && $st !== 'complet') {
                         $dates[] = $dt;
                     }
                 }

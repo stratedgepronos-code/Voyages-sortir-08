@@ -73,7 +73,7 @@ $(document).on('change','#vc-aeroport',function(){
         el:'#vc-date-wrap',mode:'date',inline:true,input:'#vc-date-depart',
         title:'📅 Date d\'aller · '+code+' → '+iataDest,
         subtitle:'Retour auto après '+dur+' nuits. Cliquez sur un jour avec vol direct.',
-        yearRange:[new Date().getFullYear(),new Date().getFullYear()+2],minDate:new Date(),
+        yearRange:[new Date().getFullYear(),new Date().getFullYear()+2],minDate:new Date(Date.now()+20*86400000), // J-20 fermeture ventes circuits
         available:allowed,
         onSelect:function(dt){
             if(dt){var ds=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');document.getElementById('vc-date-depart').value=ds;vcOnDateSelected();}

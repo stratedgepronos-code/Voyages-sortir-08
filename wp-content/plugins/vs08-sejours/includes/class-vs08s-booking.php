@@ -15,6 +15,14 @@ class VS08S_Booking {
             return new \WP_Error('no_wc', 'WooCommerce non disponible.', ['status' => 500]);
         }
 
+        // Fermeture des ventes J-7 : interdire les départs dans moins de 7 jours
+        if (!empty($params['date_depart'])) {
+            $jours_avant_depart = (strtotime($params['date_depart']) - time()) / 86400;
+            if ($jours_avant_depart < 7) {
+                return new \WP_Error('cutoff', 'Les réservations sont fermées à moins de 7 jours du départ. Veuillez choisir une date ultérieure.', ['status' => 400]);
+            }
+        }
+
         $m     = VS08S_Meta::get($sejour_id);
         $titre = get_the_title($sejour_id);
         $devis = VS08S_Calculator::compute($sejour_id, $params);
