@@ -116,6 +116,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
 .vs08-devis-field input,.vs08-devis-field select,.vs08-devis-field textarea{width:100%;padding:12px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:15px;font-family:'Outfit',sans-serif}
 .vs08-devis-field textarea{min-height:120px;resize:vertical}
 .vs08-devis-field input:focus,.vs08-devis-field select:focus,.vs08-devis-field textarea:focus{outline:none;border-color:#59b7b7}
+.vs08-devis-date-trigger{width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:15px;font-family:'Outfit',sans-serif;color:#9ca3af;background:#fff;cursor:pointer;transition:all .2s;box-sizing:border-box}
+.vs08-devis-date-trigger:hover{border-color:#59b7b7;background:#f9fffe}
 .vs08-devis-submit{background:#0f2424;color:#fff;border:none;padding:16px 32px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:10px}
 .vs08-devis-submit:hover{background:#59b7b7}
 .vs08-devis-success{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;padding:24px;border-radius:12px;margin-bottom:24px}
@@ -172,12 +174,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
                     <div class="vs08-devis-field">
                         <label>Date de départ</label>
                         <input type="hidden" id="devis-date-debut" name="date_debut" value="<?php echo esc_attr(wp_unslash($_POST['date_debut'] ?? '')); ?>">
-                        <div id="devis-cal-debut" style="position:relative"></div>
+                        <div id="devis-cal-debut-wrap" style="position:relative">
+                            <div id="devis-cal-debut-trigger" class="vs08-devis-date-trigger" onclick="window.devisCalDebut && window.devisCalDebut.toggle()">📅 Choisir une date</div>
+                        </div>
                     </div>
                     <div class="vs08-devis-field">
                         <label>Date de retour</label>
                         <input type="hidden" id="devis-date-fin" name="date_fin" value="<?php echo esc_attr(wp_unslash($_POST['date_fin'] ?? '')); ?>">
-                        <div id="devis-cal-fin" style="position:relative"></div>
+                        <div id="devis-cal-fin-wrap" style="position:relative">
+                            <div id="devis-cal-fin-trigger" class="vs08-devis-date-trigger" onclick="window.devisCalFin && window.devisCalFin.toggle()">📅 Choisir une date</div>
+                        </div>
                     </div>
                 </div>
                 <script>
@@ -185,13 +191,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
                     if (typeof VS08Calendar === 'undefined') { console.warn('VS08Calendar not loaded'); return; }
                     var minD = new Date(); minD.setDate(minD.getDate() + 7);
                     var yr = new Date().getFullYear();
-                    new VS08Calendar({ el:'#devis-cal-debut', input:'#devis-date-debut', mode:'date', inline:true, title:'Date de départ souhaitée',
+                    var fmtOpts = { day:'numeric', month:'short', year:'numeric' };
+
+                    window.devisCalDebut = new VS08Calendar({
+                        el:'#devis-cal-debut-wrap', input:'#devis-date-debut', mode:'date', inline:false,
+                        title:'📅 Date de départ souhaitée', subtitle:'Cliquez sur le jour souhaité',
                         yearRange:[yr, yr+2], minDate:minD,
-                        onSelect: function(d){ if(d){ var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); document.getElementById('devis-date-debut').value=ds; } }
+                        onSelect: function(d){
+                            if(!d) return;
+                            var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+                            document.getElementById('devis-date-debut').value = ds;
+                            var trigger = document.getElementById('devis-cal-debut-trigger');
+                            if(trigger){ trigger.textContent = '📅 ' + d.toLocaleDateString('fr-FR', fmtOpts); trigger.style.color = '#0f2424'; trigger.style.borderColor = '#59b7b7'; }
+                        }
                     });
-                    new VS08Calendar({ el:'#devis-cal-fin', input:'#devis-date-fin', mode:'date', inline:true, title:'Date de retour souhaitée',
+
+                    window.devisCalFin = new VS08Calendar({
+                        el:'#devis-cal-fin-wrap', input:'#devis-date-fin', mode:'date', inline:false,
+                        title:'📅 Date de retour souhaitée', subtitle:'Cliquez sur le jour souhaité',
                         yearRange:[yr, yr+2], minDate:minD,
-                        onSelect: function(d){ if(d){ var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); document.getElementById('devis-date-fin').value=ds; } }
+                        onSelect: function(d){
+                            if(!d) return;
+                            var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+                            document.getElementById('devis-date-fin').value = ds;
+                            var trigger = document.getElementById('devis-cal-fin-trigger');
+                            if(trigger){ trigger.textContent = '📅 ' + d.toLocaleDateString('fr-FR', fmtOpts); trigger.style.color = '#0f2424'; trigger.style.borderColor = '#59b7b7'; }
+                        }
                     });
                 });
                 </script>
