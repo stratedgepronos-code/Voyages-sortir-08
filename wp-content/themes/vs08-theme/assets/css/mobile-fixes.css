@@ -230,24 +230,14 @@ img {
 }
 
 /* ═══ 17. SINGLE VOYAGE — CTA BAR STICKY MOBILE ═══
-   Barre fixe en bas avec prix + bouton "Réserver" uniquement
-   La calc card reste dans le flux normal (on scroll pour remplir les champs) */
+   Bouton "Réserver" collé en bas quand on scroll dans la calc card */
 @media (max-width: 768px) {
     .sv-calc-col { position: static; }
-    /* La partie prix + bouton sera gérée par le JS existant */
-    /* On ajoute un padding en bas pour que le contenu ne soit pas caché */
-    .sv-content-col { padding-bottom: 20px; }
-    /* Bouton bien visible */
     .sv-btn-reserver {
-        position: sticky;
-        bottom: 0;
-        z-index: 100;
-        margin: 0 -16px -20px;
-        padding: 18px;
-        border-radius: 0;
         font-size: 16px;
+        min-height: 52px;
+        border-radius: 12px;
         background: linear-gradient(135deg, #59b7b7, #3d9a9a);
-        box-shadow: 0 -4px 20px rgba(0,0,0,.15);
     }
 }
 
@@ -268,5 +258,152 @@ img {
 @media (max-width: 768px) {
     button, a, .combo-card, .sv-btn-reserver, .bk-btn-next, .bk-btn-prev {
         -webkit-tap-highlight-color: rgba(89, 183, 183, 0.15);
+    }
+}
+
+/* ═══ 21. FULL WIDTH FIX — forcer le 100% viewport ═══ */
+html, body {
+    width: 100%;
+    max-width: 100vw;
+}
+* { box-sizing: border-box; }
+
+/* ═══ 22. BARRE DE RECHERCHE HOMEPAGE — mobile ═══ */
+@media (max-width: 768px) {
+    .fp-search {
+        margin-top: -40px;
+        padding: 0 14px 14px;
+    }
+    .fp-search-card {
+        padding: 20px 18px;
+        border-radius: 18px;
+        flex-direction: column;
+        gap: 0;
+    }
+    .fp-search-field {
+        padding: 0;
+        border-right: none;
+        border-bottom: 1px solid var(--gray-light, #f0f2f4);
+        padding-bottom: 14px;
+        margin-bottom: 14px;
+    }
+    .fp-search-field:last-of-type {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    .fp-search-field label {
+        font-size: 10px;
+        margin-bottom: 4px;
+    }
+    .fp-search-field select,
+    .fp-search-field input {
+        font-size: 15px;
+        height: 44px;
+        padding: 8px 0;
+        width: 100%;
+    }
+    .fp-search-date-trigger {
+        height: 44px;
+        font-size: 14px;
+    }
+    .fp-btn-search {
+        margin: 16px 0 0;
+        width: 100%;
+        padding: 16px;
+        font-size: 16px;
+        border-radius: 12px;
+    }
+}
+
+/* ═══ 23. CIRCUIT CARDS (dl-item) — image AU-DESSUS sur mobile ═══ */
+@media (max-width: 768px) {
+    .dl-item {
+        flex-direction: column !important;
+        gap: 0 !important;
+    }
+    .dl-item-photo {
+        width: 100% !important;
+        min-width: 100% !important;
+        height: 180px;
+    }
+    .dl-item-body {
+        padding: 14px 16px !important;
+    }
+    .dl-half {
+        padding: 24px 18px !important;
+        border-radius: 18px !important;
+    }
+}
+@media (max-width: 480px) {
+    .dl-item-photo { height: 150px; }
+    .dl-item-body h4 { font-size: 15px !important; }
+}
+
+/* ═══ 24. SINGLE VOYAGE — CALC CARD EN HAUT SUR MOBILE ═══ */
+@media (max-width: 1100px) {
+    .sv-inner {
+        display: flex !important;
+        flex-direction: column;
+    }
+    /* Calc card EN PREMIER (avant le contenu) */
+    .sv-calc-col {
+        order: -1 !important;
+        position: static !important;
+        width: 100%;
+    }
+    /* Le contenu en dessous */
+    .sv-inner > div:first-child {
+        order: 1;
+        width: 100%;
+    }
+}
+@media (max-width: 768px) {
+    .sv-calc-card {
+        border-radius: 16px;
+        padding: 20px 16px;
+        margin-bottom: 16px;
+    }
+}
+
+/* ═══ 25. HOMEPAGE — bannière confiance responsive ═══ */
+@media (max-width: 640px) {
+    .hc-conf {
+        padding: 8px 16px;
+        gap: 8px;
+        justify-content: center;
+    }
+    .hc-conf-i {
+        font-size: 11px;
+        gap: 6px;
+    }
+    .hc-conf-i span:first-child { font-size: 14px; }
+}
+
+/* ═══ 26. HOMEPAGE — section univers bento mobile ═══ */
+@media (max-width: 768px) {
+    .fp-univers {
+        margin-top: -60px;
+        padding-top: 5rem;
+    }
+}
+
+/* ═══ 27. OVERFLOW PREVENTION — éléments spécifiques ═══ */
+@media (max-width: 768px) {
+    .fp-bridge-inner::before,
+    .fp-bridge-inner::after {
+        display: none; /* les lignes décoratives causent un overflow */
+    }
+    .hc-stats { display: none; }
+    /* Forcer les conteneurs à respecter la largeur */
+    .fp-container,
+    .sv-inner,
+    .bk-inner,
+    .bkc-inner,
+    .dl-grid,
+    .sh-section,
+    .fp-univers .fp-container {
+        max-width: 100vw;
+        overflow-x: hidden;
     }
 }
