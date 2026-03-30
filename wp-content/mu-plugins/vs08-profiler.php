@@ -129,5 +129,39 @@ add_action('action_scheduler_begin_execute', function($action_id) {
     vs08_profile("Action Scheduler exécute action #$action_id");
 }, 1);
 
+// ── TRAÇAGE DU TROU NOIR : log TOUTE action quand la mémoire dépasse 30 Mo ──
+// Pendant le checkout, quelque chose bouffe 1.4 Go entre save_post et shutdown.
+// On intercepte TOUTES les actions WordPress pour trouver le coupable.
+if ($is_checkout) {
+    $GLOBALS['vs08_all_actions_count'] = 0;
+    add_action('all', function() {
+        $mem = memory_get_usage() / 1024 / 1024;
+        $GLOBALS['vs08_all_actions_count']++;
+        $tag = current_filter();
+        
+        // Toujours logger les actions WooCommerce checkout
+        $is_wc = (strpos($tag, 'woocommerce_') === 0);
+        $is_order = (strpos($tag, 'order') !== false || strpos($tag, 'save_post') === 0 || strpos($tag, 'transition_post') === 0);
+        
+        // Logger si : mémoire > 30 Mo OU action WC OU action order OU toutes les 500 actions
+        if ($mem > 30 || $is_wc || $is_order || $GLOBALS['vs08_all_actions_count'] % 500 === 0) {
+            vs08_profile("ACTION #{$GLOBALS['vs08_all_actions_count']}: {$tag}");
+        }
+        
+        // SÉCURITÉ : si mémoire > 500 Mo → ARRÊTER et logger la stack trace
+        if ($mem > 500 && !isset($GLOBALS['vs08_mem_dumped'])) {
+            $GLOBALS['vs08_mem_dumped'] = true;
+            $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 15);
+            $callers = [];
+            foreach ($trace as $f) {
+                if (isset($f['file'])) {
+                    $callers[] = basename($f['file']) . ':' . ($f['line'] ?? '?') . ' → ' . ($f['function'] ?? '?');
+                }
+            }
+            vs08_profile("ALERTE MÉMOIRE 500Mo+ — STACK TRACE :\n    " . implode("\n    ", $callers));
+        }
+    });
+}
+
 // Shutdown
 add_action('shutdown', function() { vs08_profile('shutdown'); }, 1);
