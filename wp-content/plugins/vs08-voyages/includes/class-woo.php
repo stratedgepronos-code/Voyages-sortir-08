@@ -228,18 +228,19 @@ add_action('woocommerce_admin_order_data_after_order_details', function($order) 
 });
 
 // Sauvegarder la case "Solde marqué réglé" à l'enregistrement de la commande
-add_action('woocommerce_update_order', function($order_id) {
+// UNIQUEMENT en admin (pas pendant le checkout !) et SANS $order->save()
+// car save() re-déclenche woocommerce_update_order → boucle infinie.
+add_action('woocommerce_process_shop_order_meta', function($order_id) {
+    if (!is_admin() || wp_doing_ajax()) return;
+    if (!class_exists('VS08V_Traveler_Space')) return;
     $order = wc_get_order($order_id);
-    if (!$order || !class_exists('VS08V_Traveler_Space') || !VS08V_Traveler_Space::get_booking_data_from_order($order)) {
-        return;
-    }
+    if (!$order || !VS08V_Traveler_Space::get_booking_data_from_order($order)) return;
     if (!empty($_POST['vs08v_solde_marque_paye'])) {
-        $order->update_meta_data('_vs08v_solde_marque_paye', 1);
+        update_post_meta($order_id, '_vs08v_solde_marque_paye', 1);
     } else {
-        $order->delete_meta_data('_vs08v_solde_marque_paye');
+        delete_post_meta($order_id, '_vs08v_solde_marque_paye');
     }
-    $order->save();
-}, 10, 1);
+}, 20);
 
 // Masquer les produits de réservation du catalogue
 add_filter('woocommerce_product_query_meta_query', function($meta_query) {
