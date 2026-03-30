@@ -721,14 +721,18 @@ get_header();
             </div>
             <?php endif; ?>
 
-            <?php /* ═══ LIGNES DÉTAILLÉES — ADMIN UNIQUEMENT ═══ */ ?>
-            <?php if (current_user_can('manage_options')): ?>
+            <?php $is_admin_user = current_user_can('manage_options'); ?>
+
             <!-- 1. VOL ALLER -->
             <div class="bk-recap-row" id="bk-recap-row-vol">
                 <span class="bk-recap-lbl">✈️ Vol aller <span id="bk-recap-vol-date" style="font-weight:400;color:#9ca3af;font-size:12px">· le <?php echo $date_aller_recap; ?></span>
                     <div id="bk-recap-vol-detail" style="font-size:11px;color:#9ca3af;margin-top:2px"><?php echo esc_html(strtoupper((string)($params['aeroport'] ?: '—'))); ?> → <?php echo esc_html(strtoupper((string)($m['iata_dest'] ?? '—'))); ?></div>
                 </span>
+                <?php if ($is_admin_user): ?>
                 <span class="bk-recap-val" id="bk-recap-vol-val"><?php echo $recap_vol > 0 ? number_format($recap_vol, 0, ',', ' ').' €' : '—'; ?></span>
+                <?php else: ?>
+                <span class="bk-recap-val" id="bk-recap-vol-val" style="color:#2d8a5a;font-size:12px">✓</span>
+                <?php endif; ?>
             </div>
 
             <!-- 2. VOL RETOUR -->
@@ -736,14 +740,22 @@ get_header();
                 <span class="bk-recap-lbl">✈️ Vol retour <span id="bk-recap-retour-date" style="font-weight:400;color:#9ca3af;font-size:12px">· le <?php echo $date_retour_recap; ?></span>
                     <div id="bk-recap-retour-detail" style="font-size:11px;color:#9ca3af;margin-top:2px"><?php echo esc_html(strtoupper((string)($m['iata_dest'] ?? '—'))); ?> → <?php echo esc_html(strtoupper((string)($params['aeroport'] ?: '—'))); ?></div>
                 </span>
+                <?php if ($is_admin_user): ?>
                 <span class="bk-recap-val" id="bk-recap-retour-val">—</span>
+                <?php else: ?>
+                <span class="bk-recap-val" id="bk-recap-retour-val" style="color:#2d8a5a;font-size:12px">✓</span>
+                <?php endif; ?>
             </div>
 
-            <!-- SUPPLÉMENT VOL -->
+            <!-- SUPPLÉMENT VOL (admin only) -->
+            <?php if ($is_admin_user): ?>
             <div class="bk-recap-row" id="bk-recap-row-vol-delta" style="display:none">
                 <span class="bk-recap-lbl">⬆️ Supplément vol</span>
                 <span class="bk-recap-val" id="bk-recap-vol-delta-val" style="color:#b85c1a"></span>
             </div>
+            <?php else: ?>
+            <div style="display:none"><span id="bk-recap-vol-delta-val"></span></div>
+            <?php endif; ?>
 
             <!-- 3. TRANSFERT / LOCATION -->
             <?php if ($transfert_type_recap && isset($transfert_labels_recap[$transfert_type_recap])): ?>
@@ -753,7 +765,7 @@ get_header();
                     <div style="font-size:11px;color:#9ca3af;margin-top:2px"><?php echo esc_html($m['voiture_details']['modele']); ?></div>
                     <?php endif; ?>
                 </span>
-                <span class="bk-recap-val"><?php echo $recap_transfert > 0 ? number_format($recap_transfert, 0, ',', ' ').' €' : '0 €'; ?></span>
+                <span class="bk-recap-val"><?php echo $is_admin_user ? ($recap_transfert > 0 ? number_format($recap_transfert, 0, ',', ' ').' €' : '0 €') : '<span style="color:#2d8a5a;font-size:12px">✓</span>'; ?></span>
             </div>
             <?php endif; ?>
 
@@ -763,7 +775,7 @@ get_header();
                 <span class="bk-recap-lbl">🏨 <?php echo esc_html($hotel_nom_recap); ?> <?php echo $etoiles_recap > 0 ? str_repeat('★', $etoiles_recap) : ''; ?>
                     <div style="font-size:11px;color:#9ca3af;margin-top:2px"><?php echo esc_html($pension_recap); ?> · <?php echo $duree; ?> nuits</div>
                 </span>
-                <span class="bk-recap-val"><?php echo ($recap_hebergement + $recap_saison) > 0 ? number_format($recap_hebergement + $recap_saison, 0, ',', ' ').' €' : '0 €'; ?></span>
+                <span class="bk-recap-val"><?php echo $is_admin_user ? number_format($recap_hebergement + $recap_saison, 0, ',', ' ').' €' : '<span style="color:#2d8a5a;font-size:12px">✓</span>'; ?></span>
             </div>
             <?php endif; ?>
 
@@ -771,7 +783,7 @@ get_header();
             <?php if ($recap_accomp > 0): ?>
             <div class="bk-recap-row">
                 <span class="bk-recap-lbl">👤 Accompagnants non-golfeurs</span>
-                <span class="bk-recap-val"><?php echo number_format($recap_accomp, 0, ',', ' '); ?> €</span>
+                <span class="bk-recap-val"><?php echo $is_admin_user ? number_format($recap_accomp, 0, ',', ' ').' €' : '<span style="color:#2d8a5a;font-size:12px">✓</span>'; ?></span>
             </div>
             <?php endif; ?>
 
@@ -781,7 +793,11 @@ get_header();
                 <span class="bk-recap-lbl">🧳 Bagage en soute
                     <div style="font-size:11px;color:#9ca3af;margin-top:2px" id="bk-recap-bag-soute-detail"><?php echo $nb_total; ?> bagage<?php echo $nb_total > 1 ? 's' : ''; ?></div>
                 </span>
+                <?php if ($is_admin_user): ?>
                 <span class="bk-recap-val" id="bk-recap-bag-soute-val"><?php echo number_format($prix_bag_soute * $nb_total, 0, ',', ' '); ?> €</span>
+                <?php else: ?>
+                <span class="bk-recap-val" id="bk-recap-bag-soute-val" style="color:#2d8a5a;font-size:12px">✓</span>
+                <?php endif; ?>
             </div>
             <?php endif; ?>
 
@@ -791,7 +807,11 @@ get_header();
                 <span class="bk-recap-lbl">🏌️ Bagage golf
                     <div style="font-size:11px;color:#9ca3af;margin-top:2px" id="bk-recap-bag-golf-detail"><?php echo $nb_golfeurs_bk; ?> bagage<?php echo $nb_golfeurs_bk > 1 ? 's' : ''; ?></div>
                 </span>
+                <?php if ($is_admin_user): ?>
                 <span class="bk-recap-val" id="bk-recap-bag-golf-val"><?php echo number_format($prix_bag_golf * $nb_golfeurs_bk, 0, ',', ' '); ?> €</span>
+                <?php else: ?>
+                <span class="bk-recap-val" id="bk-recap-bag-golf-val" style="color:#2d8a5a;font-size:12px">✓</span>
+                <?php endif; ?>
             </div>
             <?php endif; ?>
 
@@ -801,38 +821,23 @@ get_header();
                 <span class="bk-recap-lbl">⛳ Forfait green fees
                     <div style="font-size:11px;color:#9ca3af;margin-top:2px"><?php echo $nb_golfeurs_bk; ?> golfeur<?php echo $nb_golfeurs_bk > 1 ? 's' : ''; ?></div>
                 </span>
-                <span class="bk-recap-val"><?php echo $recap_greenfees > 0 ? number_format($recap_greenfees, 0, ',', ' ').' €' : '0 €'; ?></span>
+                <span class="bk-recap-val"><?php echo $is_admin_user ? number_format($recap_greenfees, 0, ',', ' ').' €' : '<span style="color:#2d8a5a;font-size:12px">✓</span>'; ?></span>
             </div>
             <?php endif; ?>
 
-            <!-- TAXES -->
-            <?php if ($recap_taxe > 0): ?>
+            <!-- TAXES (admin only) -->
+            <?php if ($is_admin_user && $recap_taxe > 0): ?>
             <div class="bk-recap-row">
                 <span class="bk-recap-lbl">🏛️ Taxes aéroport</span>
                 <span class="bk-recap-val"><?php echo number_format($recap_taxe, 0, ',', ' '); ?> €</span>
             </div>
             <?php endif; ?>
 
-            <!-- MARGE -->
-            <?php if ($recap_marge > 0): ?>
+            <!-- MARGE (admin only) -->
+            <?php if ($is_admin_user && $recap_marge > 0): ?>
             <div class="bk-recap-row">
                 <span class="bk-recap-lbl">📊 Marge agence</span>
                 <span class="bk-recap-val"><?php echo number_format($recap_marge, 0, ',', ' '); ?> €</span>
-            </div>
-            <?php endif; ?>
-            <?php endif; ?>
-            <?php /* ═══ FIN LIGNES ADMIN ═══ */ ?>
-
-            <?php /* Conteneurs cachés pour le JS recap-final (non-admins) */ ?>
-            <?php if (!current_user_can('manage_options')): ?>
-            <div style="display:none">
-                <span id="bk-recap-vol-detail"><?php echo esc_html(strtoupper((string)($params['aeroport'] ?: '—'))); ?> → <?php echo esc_html(strtoupper((string)($m['iata_dest'] ?? '—'))); ?></span>
-                <span id="bk-recap-retour-detail"><?php echo esc_html(strtoupper((string)($m['iata_dest'] ?? '—'))); ?> → <?php echo esc_html(strtoupper((string)($params['aeroport'] ?: '—'))); ?></span>
-                <span id="bk-recap-vol-val"></span>
-                <span id="bk-recap-retour-val"></span>
-                <span id="bk-recap-vol-delta-val"></span>
-                <span id="bk-recap-bag-soute-val"></span>
-                <span id="bk-recap-bag-golf-val"></span>
             </div>
             <?php endif; ?>
 
