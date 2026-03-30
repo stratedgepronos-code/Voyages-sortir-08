@@ -186,34 +186,32 @@ class VS08C_Woo {
     }
 }
 
-// Copier booking_data dans les items de commande ET sur la commande tout de suite (pour espace membre + redirection)
+// Marquer le line item avec le circuit_id (léger) — PAS les booking_data
 add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_item_key, $values, $order) {
     try {
         $pid = $item->get_product_id();
         if (!$pid) return;
         $bd = get_post_meta($pid, '_vs08c_booking_data', true);
         if (!empty($bd) && is_array($bd)) {
-            $item->add_meta_data('_vs08c_booking_data', $bd, true);
             $item->add_meta_data('_vs08c_circuit_id', $bd['circuit_id'] ?? 0, true);
-            if ($order && is_object($order)) {
-                $order->update_meta_data('_vs08c_booking_data', $bd);
-            }
         }
     } catch (Throwable $e) {
         error_log('VS08C checkout_create_order_line_item: ' . $e->getMessage());
     }
 }, 10, 4);
 
-// Copier sur la commande
+// Copier sur la commande — via update_post_meta (pas $order->save)
 add_action('woocommerce_checkout_update_order_meta', function($order_id) {
     try {
-        $order = wc_get_order($order_id);
-        if (!$order || $order->get_meta('_vs08c_booking_data')) return;
-        foreach ($order->get_items() as $item) {
-            $data = $item->get_meta('_vs08c_booking_data');
+        $existing = get_post_meta($order_id, '_vs08c_booking_data', true);
+        if (!empty($existing) && is_array($existing)) return;
+        if (!WC()->cart) return;
+        foreach (WC()->cart->get_cart() as $item) {
+            $pid = $item['product_id'] ?? 0;
+            if (!$pid) continue;
+            $data = get_post_meta($pid, '_vs08c_booking_data', true);
             if (!empty($data) && is_array($data)) {
-                $order->update_meta_data('_vs08c_booking_data', $data);
-                $order->save();
+                update_post_meta($order_id, '_vs08c_booking_data', $data);
                 break;
             }
         }

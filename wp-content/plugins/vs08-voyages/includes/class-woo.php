@@ -136,40 +136,41 @@ class VS08V_Woo {
     }
 }
 
-// Copier les booking_data dans les meta de l'item de commande (pas seulement le produit)
+// Marquer le line item avec le voyage_id (léger) — PAS les booking_data (trop lourd pour HPOS)
 add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_item_key, $values, $order) {
     try {
         $product_id = $item->get_product_id();
         if (!$product_id) return;
         $booking_data = get_post_meta($product_id, '_vs08v_booking_data', true);
         if (!empty($booking_data) && is_array($booking_data)) {
-            $item->add_meta_data('_vs08v_booking_data', $booking_data, true);
+            // Seulement l'ID du voyage (4 octets, pas 50Ko)
             $item->add_meta_data('_vs08v_voyage_id', $booking_data['voyage_id'] ?? 0, true);
         }
     } catch (\Throwable $e) {
-        if (function_exists('error_log')) {
-            error_log('VS08 checkout_create_order_line_item: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-        }
+        error_log('VS08 checkout_create_order_line_item: ' . $e->getMessage());
     }
 }, 10, 4);
 
 // Après création de la commande, copier booking_data sur la commande (pour admin Gestion Dossiers)
 add_action('woocommerce_checkout_update_order_meta', function($order_id) {
     try {
-        $order = wc_get_order($order_id);
-        if (!$order || $order->get_meta('_vs08v_booking_data')) return;
-        foreach ($order->get_items() as $item) {
-            $data = $item->get_meta('_vs08v_booking_data');
+        // Vérifier si déjà copié (sans charger l'order complet)
+        $existing = get_post_meta($order_id, '_vs08v_booking_data', true);
+        if (!empty($existing) && is_array($existing)) return;
+        // Chercher dans le panier le product_id
+        if (!WC()->cart) return;
+        foreach (WC()->cart->get_cart() as $item) {
+            $pid = $item['product_id'] ?? 0;
+            if (!$pid) continue;
+            $data = get_post_meta($pid, '_vs08v_booking_data', true);
             if (!empty($data) && is_array($data)) {
-                $order->update_meta_data('_vs08v_booking_data', $data);
-                $order->save();
+                // Écrire directement en base — PAS de $order->save() (crash HPOS 2 Go)
+                update_post_meta($order_id, '_vs08v_booking_data', $data);
                 break;
             }
         }
     } catch (\Throwable $e) {
-        if (function_exists('error_log')) {
-            error_log('VS08 checkout_update_order_meta: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-        }
+        error_log('VS08 checkout_update_order_meta: ' . $e->getMessage());
     }
 }, 10, 2);
 
