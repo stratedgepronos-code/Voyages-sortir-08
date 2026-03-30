@@ -45,7 +45,7 @@ class VS08V_Woo {
         $product->set_name($product_name);
         $product->set_price($prix_final);
         $product->set_regular_price($prix_final);
-        $product->set_status('private');
+        $product->set_status('publish');
         $product->set_virtual(true);
         $product->set_sold_individually(true);
         $product->set_catalog_visibility('hidden');
@@ -249,3 +249,16 @@ add_filter('woocommerce_product_query_meta_query', function($meta_query) {
     ];
     return $meta_query;
 });
+
+// Filet de sécurité : les produits de réservation VS08 sont TOUJOURS achetables
+// (même si leur statut est encore 'private' dans la base — anciens produits)
+add_filter('woocommerce_is_purchasable', function($purchasable, $product) {
+    if (!$purchasable && $product && $product->get_id()) {
+        $is_vs08 = get_post_meta($product->get_id(), '_vs08v_booking_data', true)
+                || get_post_meta($product->get_id(), '_vs08v_voyage_id', true)
+                || get_post_meta($product->get_id(), '_vs08c_booking_data', true)
+                || get_post_meta($product->get_id(), '_vs08s_booking_data', true);
+        if ($is_vs08) return true;
+    }
+    return $purchasable;
+}, 10, 2);
