@@ -83,7 +83,13 @@ jQuery(function($) {
             '<div class="vs08v-aero-jours">' + j + '</div>' +
             '</div></div>';
     }
-    var aeroIdx = $('.vs08v-aeroport-block').length;
+    // Calcul de l'index = MAX des indices existants + 1 (pas le nombre de blocs)
+    // Sinon, après suppression d'un aéroport, le nouvel index peut entrer en collision
+    var aeroIdx = 0;
+    $('.vs08v-aeroport-block').each(function() {
+        var idx = parseInt($(this).attr('data-aero-idx')) || 0;
+        if (idx >= aeroIdx) aeroIdx = idx + 1;
+    });
     $('.vs08v-add-aeroport').on('click', function() {
         var i = aeroIdx++;
         $('#vs08v-aeroports').append(vs08vAeroBlockHtml(i));

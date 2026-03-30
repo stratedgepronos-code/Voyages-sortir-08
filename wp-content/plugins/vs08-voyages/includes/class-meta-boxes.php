@@ -778,6 +778,8 @@ class VS08V_MetaBoxes {
         }
         $data['vol_escale_max_heures'] = min(24, max(1, $h_esc));
         if (!empty($data['aeroports']) && is_array($data['aeroports'])) {
+            // Réindexer 0, 1, 2... (évite les trous d'indices après suppression)
+            $data['aeroports'] = array_values($data['aeroports']);
             foreach ($data['aeroports'] as $k => $a) {
                 if (isset($a['code']) && is_string($a['code'])) {
                     $data['aeroports'][$k]['code'] = strtoupper(trim($a['code']));
