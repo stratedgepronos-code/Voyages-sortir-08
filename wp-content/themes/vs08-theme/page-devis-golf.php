@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
     $destination = sanitize_text_field(wp_unslash($_POST['destination'] ?? ''));
     $date_debut = sanitize_text_field(wp_unslash($_POST['date_debut'] ?? ''));
     $date_fin = sanitize_text_field(wp_unslash($_POST['date_fin'] ?? ''));
+    $nb_nuits = sanitize_text_field(wp_unslash($_POST['nb_nuits'] ?? '7'));
     $nb_golfeurs = sanitize_text_field(wp_unslash($_POST['nb_golfeurs'] ?? ''));
     $nb_accompagnants = sanitize_text_field(wp_unslash($_POST['nb_accompagnants'] ?? ''));
     $budget = sanitize_text_field(wp_unslash($_POST['budget'] ?? ''));
@@ -24,9 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
         $to = 'sortir08@wanadoo.fr';
         $subject = '⛳ [Devis Golf] ' . $prenom . ' ' . strtoupper($nom) . ' — ' . ($destination ?: 'Destination à définir');
 
-        // Formater les dates
-        $date_debut_fmt = $date_debut ? date('d/m/Y', strtotime($date_debut)) : '—';
-        $date_fin_fmt   = $date_fin ? date('d/m/Y', strtotime($date_fin)) : '—';
+        // Formater les dates (période de départ)
+        $date_debut_fmt = $date_debut ? date('d/m/Y', strtotime($date_debut)) : '';
+        $date_fin_fmt   = $date_fin ? date('d/m/Y', strtotime($date_fin)) : '';
+        $periode_fmt    = '';
+        if ($date_debut_fmt && $date_fin_fmt) {
+            $periode_fmt = $date_debut_fmt . ' → ' . $date_fin_fmt;
+        } elseif ($date_debut_fmt) {
+            $periode_fmt = 'À partir du ' . $date_debut_fmt;
+        }
 
         // Email HTML premium VS08
         $tr = function($icon, $label, $value) {
@@ -65,7 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
             . '<div style="font-size:11px;font-weight:700;color:#59b7b7;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;font-family:Outfit,Arial,sans-serif">🗓️ Projet de voyage</div>'
             . '<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse">'
             . $tr('🌍', 'Destination', $destination)
-            . $tr('📅', 'Dates', $date_debut_fmt . ' → ' . $date_fin_fmt)
+            . $tr('📅', 'Période départ', $periode_fmt)
+            . $tr('🌙', 'Durée', $nb_nuits . ' nuits')
             . $tr('⛳', 'Golfeurs', $nb_golfeurs)
             . $tr('👥', 'Accompagnants', $nb_accompagnants)
             . $tr('💰', 'Budget / pers.', $budget ? $budget . ' €' : '')
@@ -170,12 +178,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
                     <label for="devis-destination">Destination souhaitée</label>
                     <input type="text" id="devis-destination" name="destination" placeholder="Ex. Algarve, Maroc, Espagne..." value="<?php echo esc_attr(wp_unslash($_POST['destination'] ?? '')); ?>">
                 </div>
-                <div class="vs08-devis-field">
-                    <label>Période souhaitée</label>
-                    <input type="hidden" id="devis-date-debut" name="date_debut" value="<?php echo esc_attr(wp_unslash($_POST['date_debut'] ?? '')); ?>">
-                    <input type="hidden" id="devis-date-fin" name="date_fin" value="<?php echo esc_attr(wp_unslash($_POST['date_fin'] ?? '')); ?>">
-                    <div id="devis-cal-wrap" style="position:relative">
-                        <div id="devis-cal-trigger" class="vs08-devis-date-trigger" onclick="window.devisCalRange && window.devisCalRange.toggle()">📅 Départ entre… et…</div>
+                <div class="vs08-devis-row">
+                    <div class="vs08-devis-field">
+                        <label>Période de départ</label>
+                        <input type="hidden" id="devis-date-debut" name="date_debut" value="<?php echo esc_attr(wp_unslash($_POST['date_debut'] ?? '')); ?>">
+                        <input type="hidden" id="devis-date-fin" name="date_fin" value="<?php echo esc_attr(wp_unslash($_POST['date_fin'] ?? '')); ?>">
+                        <div id="devis-cal-wrap" style="position:relative">
+                            <div id="devis-cal-trigger" class="vs08-devis-date-trigger" onclick="window.devisCalRange && window.devisCalRange.toggle()">📅 Départ entre… et…</div>
+                        </div>
+                    </div>
+                    <div class="vs08-devis-field">
+                        <label for="devis-nb-nuits">Nombre de nuits</label>
+                        <select id="devis-nb-nuits" name="nb_nuits">
+                            <?php for ($n = 5; $n <= 14; $n++): ?>
+                            <option value="<?php echo $n; ?>" <?php selected(wp_unslash($_POST['nb_nuits'] ?? '7'), $n); ?>><?php echo $n; ?> nuits</option>
+                            <?php endfor; ?>
+                        </select>
                     </div>
                 </div>
                 <script>
@@ -188,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
                     window.devisCalRange = new VS08Calendar({
                         el:'#devis-cal-wrap', input:'#devis-date-debut', inputEnd:'#devis-date-fin',
                         mode:'range', inline:false,
-                        title:'📅 Période de départ', subtitle:'Départ au plus tôt → départ au plus tard',
+                        title:'📅 Période de départ', subtitle:'Départ au plus tôt → au plus tard',
                         yearRange:[yr, yr+2], minDate:minD,
                         onConfirm: function(dep, ret){
                             var trigger = document.getElementById('devis-cal-trigger');

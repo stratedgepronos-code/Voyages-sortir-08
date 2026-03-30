@@ -130,12 +130,22 @@ $extra_field = $c['extra_field'] ?? ''; // 'city' | 'road' | 'circuit' | ''
                     <input type="text" id="da-dest" name="destination" required placeholder="Mer, montagne, île, pays…" value="<?php echo esc_attr(wp_unslash($_POST['destination'] ?? '')); ?>">
                 </div>
                 <?php endif; ?>
-                <div class="vs08-da-field">
-                    <label>Période souhaitée</label>
-                    <input type="hidden" id="da-d1" name="date_debut" value="<?php echo esc_attr(wp_unslash($_POST['date_debut'] ?? '')); ?>">
-                    <input type="hidden" id="da-d2" name="date_fin" value="<?php echo esc_attr(wp_unslash($_POST['date_fin'] ?? '')); ?>">
-                    <div id="da-cal-wrap" style="position:relative">
-                        <div id="da-cal-trigger" class="vs08-da-date-trigger" onclick="window.daCalRange && window.daCalRange.toggle()">📅 Départ entre… et…</div>
+                <div class="vs08-da-row">
+                    <div class="vs08-da-field">
+                        <label>Période de départ</label>
+                        <input type="hidden" id="da-d1" name="date_debut" value="<?php echo esc_attr(wp_unslash($_POST['date_debut'] ?? '')); ?>">
+                        <input type="hidden" id="da-d2" name="date_fin" value="<?php echo esc_attr(wp_unslash($_POST['date_fin'] ?? '')); ?>">
+                        <div id="da-cal-wrap" style="position:relative">
+                            <div id="da-cal-trigger" class="vs08-da-date-trigger" onclick="window.daCalRange && window.daCalRange.toggle()">📅 Départ entre… et…</div>
+                        </div>
+                    </div>
+                    <div class="vs08-da-field">
+                        <label for="da-nuits">Nombre de nuits</label>
+                        <select id="da-nuits" name="nb_nuits">
+                            <?php for ($n = 5; $n <= 14; $n++): ?>
+                            <option value="<?php echo $n; ?>" <?php selected(wp_unslash($_POST['nb_nuits'] ?? '7'), $n); ?>><?php echo $n; ?> nuits</option>
+                            <?php endfor; ?>
+                        </select>
                     </div>
                 </div>
                 <script>
@@ -148,7 +158,7 @@ $extra_field = $c['extra_field'] ?? ''; // 'city' | 'road' | 'circuit' | ''
                     window.daCalRange = new VS08Calendar({
                         el:'#da-cal-wrap', input:'#da-d1', inputEnd:'#da-d2',
                         mode:'range', inline:false,
-                        title:'📅 Période de départ', subtitle:'Départ au plus tôt → départ au plus tard',
+                        title:'📅 Période de départ', subtitle:'Départ au plus tôt → au plus tard',
                         yearRange:[yr, yr+2], minDate:minD,
                         onConfirm: function(dep, ret){
                             var trigger = document.getElementById('da-cal-trigger');

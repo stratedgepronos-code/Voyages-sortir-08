@@ -27,6 +27,7 @@ $destination    = sanitize_text_field(wp_unslash($_POST['destination'] ?? ''));
 $date_debut     = sanitize_text_field(wp_unslash($_POST['date_debut'] ?? ''));
 $date_fin       = sanitize_text_field(wp_unslash($_POST['date_fin'] ?? ''));
 $dates_flex     = sanitize_text_field(wp_unslash($_POST['dates_flex'] ?? ''));
+$nb_nuits       = sanitize_text_field(wp_unslash($_POST['nb_nuits'] ?? ''));
 $nb_adultes     = sanitize_text_field(wp_unslash($_POST['nb_adultes'] ?? ''));
 $nb_enfants     = sanitize_text_field(wp_unslash($_POST['nb_enfants'] ?? ''));
 $hebergement    = sanitize_text_field(wp_unslash($_POST['hebergement'] ?? ''));
@@ -45,6 +46,9 @@ $subject = ($vs08_devis_cfg['subject_prefix'] ?? '[Devis]') . ' ' . $prenom . ' 
 
 $d1_fmt = $date_debut ? date('d/m/Y', strtotime($date_debut)) : '';
 $d2_fmt = $date_fin ? date('d/m/Y', strtotime($date_fin)) : '';
+$periode_fmt = '';
+if ($d1_fmt && $d2_fmt) { $periode_fmt = $d1_fmt . ' → ' . $d2_fmt; }
+elseif ($d1_fmt) { $periode_fmt = 'À partir du ' . $d1_fmt; }
 
 $tr = function($icon, $label, $value) {
     if (empty($value) || trim($value) === '' || $value === '—') return '';
@@ -65,8 +69,8 @@ $body = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>'
     . '</table></div>'
     . '<div style="padding:20px 32px 0"><div style="font-size:11px;font-weight:700;color:#59b7b7;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;font-family:Outfit,Arial,sans-serif">🗓️ Projet de voyage</div>'
     . '<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse">'
-    . $tr('🌍', 'Destination', $destination) . $tr('📅', 'Dates', ($d1_fmt && $d2_fmt ? $d1_fmt . ' → ' . $d2_fmt : ($d1_fmt ?: $d2_fmt)))
-    . $tr('🔄', 'Flexibilité', $dates_flex) . $tr('👥', 'Adultes', $nb_adultes) . $tr('👶', 'Enfants', $nb_enfants)
+    . $tr('🌍', 'Destination', $destination) . $tr('📅', 'Période départ', $periode_fmt)
+    . $tr('🌙', 'Durée', $nb_nuits ? $nb_nuits . ' nuits' : '') . $tr('👥', 'Adultes', $nb_adultes) . $tr('👶', 'Enfants', $nb_enfants)
     . $tr('🏨', 'Hébergement', $hebergement) . $tr('💰', 'Budget', $budget) . $tr('📣', 'Connu via', $comment_connu)
     . '</table></div>'
     . (trim($message) ? '<div style="padding:20px 32px 0"><div style="font-size:11px;font-weight:700;color:#59b7b7;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;font-family:Outfit,Arial,sans-serif">💬 Message</div>'
