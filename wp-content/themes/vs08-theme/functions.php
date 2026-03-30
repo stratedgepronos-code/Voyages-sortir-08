@@ -47,7 +47,7 @@ add_action('wp_enqueue_scripts', function() {
     wp_enqueue_style('vs08-header-mega', get_template_directory_uri() . '/assets/css/header-mega.css', ['vs08-main'], '1.3');
     wp_enqueue_style('vs08-footer-terminal', get_template_directory_uri() . '/assets/css/footer-terminal.css', ['vs08-main'], '1.0');
     // Mobile responsive fixes — chargé sur toutes les pages, après tout le CSS
-    wp_enqueue_style('vs08-mobile-fixes', get_template_directory_uri() . '/assets/css/mobile-fixes.css', ['vs08-main', 'vs08-header-mega', 'vs08-footer-terminal'], '1.0');
+    wp_enqueue_style('vs08-mobile-fixes', get_template_directory_uri() . '/assets/css/mobile-fixes.css', ['vs08-main', 'vs08-header-mega', 'vs08-footer-terminal'], '2.0.' . date('Ymd'));
     if (is_front_page()) {
         /* Déploiement #373 — feat(homepage) : homepage-v3 + front-page-v2 (cartes dynamiques BDD) */
         wp_enqueue_style('vs08-homepage-v3', get_template_directory_uri() . '/assets/css/homepage-v3.css', ['vs08-main', 'vs08-header-mega'], '1.0');
