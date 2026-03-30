@@ -638,9 +638,11 @@ get_header();
             $recap_marge     = vs08v_find_line($recap_montants, 'Marge');
             ?>
 
-            <!-- DEBUG: TOUTES LES LIGNES DU DEVIS -->
+            <?php /* Détail calcul réservé aux admins uniquement */ ?>
+            <?php if (current_user_can('manage_options')): ?>
+            <!-- ADMIN ONLY: DÉTAIL CALCUL -->
             <div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;padding:10px 12px;margin-bottom:8px">
-                <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px;font-family:'Outfit',sans-serif">🔍 DÉTAIL CALCUL (debug)</div>
+                <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px;font-family:'Outfit',sans-serif">🔍 DÉTAIL CALCUL (admin)</div>
                 <?php foreach ($recap_montants as $dl): ?>
                 <div style="display:flex;justify-content:space-between;font-size:11px;font-family:'Outfit',sans-serif;padding:2px 0;color:#78350f">
                     <span><?php echo esc_html($dl['label']); ?> <span style="color:#a3a3a3"><?php echo esc_html($dl['detail'] ?? ''); ?></span></span>
@@ -652,7 +654,10 @@ get_header();
                     <span><?php echo number_format($devis['total'], 0, ',', ' '); ?> €</span>
                 </div>
             </div>
+            <?php endif; ?>
 
+            <?php /* ═══ LIGNES DÉTAILLÉES — ADMIN UNIQUEMENT ═══ */ ?>
+            <?php if (current_user_can('manage_options')): ?>
             <!-- 1. VOL ALLER -->
             <div class="bk-recap-row" id="bk-recap-row-vol">
                 <span class="bk-recap-lbl">✈️ Vol aller <span id="bk-recap-vol-date" style="font-weight:400;color:#9ca3af;font-size:12px">· le <?php echo $date_aller_recap; ?></span>
@@ -750,8 +755,26 @@ get_header();
                 <span class="bk-recap-val"><?php echo number_format($recap_marge, 0, ',', ' '); ?> €</span>
             </div>
             <?php endif; ?>
+            <?php endif; ?>
+            <?php /* ═══ FIN LIGNES ADMIN ═══ */ ?>
 
+            <?php /* Conteneurs cachés pour les infos vol (utilisés par le JS recap-final même pour les non-admins) */ ?>
+            <?php if (!current_user_can('manage_options')): ?>
+            <div style="display:none">
+                <span id="bk-recap-vol-detail"><?php echo esc_html(strtoupper((string)($params['aeroport'] ?: '—'))); ?> → <?php echo esc_html(strtoupper((string)($m['iata_dest'] ?? '—'))); ?></span>
+                <span id="bk-recap-retour-detail"><?php echo esc_html(strtoupper((string)($m['iata_dest'] ?? '—'))); ?> → <?php echo esc_html(strtoupper((string)($params['aeroport'] ?: '—'))); ?></span>
+                <span id="bk-recap-vol-val"></span>
+                <span id="bk-recap-retour-val"></span>
+                <span id="bk-recap-vol-delta-val"></span>
+                <span id="bk-recap-bag-soute-val"></span>
+                <span id="bk-recap-bag-golf-val"></span>
+                <div id="bk-recap-insurance-line"></div>
+            </div>
+            <?php endif; ?>
+
+            <?php if (current_user_can('manage_options')): ?>
             <div id="bk-recap-insurance-line"></div>
+            <?php endif; ?>
 
             <div class="bk-recap-total">
                 <div class="bk-recap-total-lbl">Total</div>
