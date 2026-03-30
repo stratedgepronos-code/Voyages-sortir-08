@@ -114,7 +114,14 @@ jobs:
           done
           [ "$ok" -eq 1 ] || echo "Theme deploy failed (non-blocking)"
 
-      - name: Purge caches
+      - name: Remove paybox-polyfill (causes show_message conflict)
+        run: |
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ env.SSH_OPTS }} \
+            ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }} \
+            "rm -f ${{ env.WEBROOT }}/wp-content/mu-plugins/paybox-polyfill.php && echo 'paybox-polyfill removed'" \
+          || echo "Remove skipped (non-blocking)"
+
+      - name: Purge caches and opcache
         run: |
           ok=0
           for attempt in 1 2 3; do
@@ -125,7 +132,8 @@ jobs:
               rm -rf \$WEBROOT/wp-content/cache/
               rm -rf \$WEBROOT/wp-content/litespeed/
               rm -rf \$WEBROOT/wp-content/advanced-cache.php
-              echo '<?php if(function_exists(\"opcache_reset\")){opcache_reset();echo \"OK\";}' > \$WEBROOT/_opcache_flush.php
+              echo '<?php if(function_exists(\"opcache_reset\")){opcache_reset();} foreach(glob(__DIR__.\"/wp-content/plugins/vs08-*/includes/*.php\") as \$f){if(function_exists(\"opcache_invalidate\"))opcache_invalidate(\$f,true);} foreach(glob(__DIR__.\"/wp-content/plugins/vs08-*/*.php\") as \$f){if(function_exists(\"opcache_invalidate\"))opcache_invalidate(\$f,true);} foreach(glob(__DIR__.\"/wp-content/mu-plugins/*.php\") as \$f){if(function_exists(\"opcache_invalidate\"))opcache_invalidate(\$f,true);} echo \"opcache purged\";' > \$WEBROOT/_opcache_flush.php
+              curl -s https://sortirmonde.fr/_opcache_flush.php || true
               curl -s https://sortirmonde.fr/_opcache_flush.php || true
               rm -f \$WEBROOT/_opcache_flush.php
               echo 'Cache purged OK'
