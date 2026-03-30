@@ -38,3 +38,30 @@ add_filter('woocommerce_email_enabled_customer_on_hold_order',     '__return_fal
 add_filter('woocommerce_email_enabled_customer_processing_order',  '__return_false', 999);
 add_filter('woocommerce_email_enabled_customer_completed_order',   '__return_false', 999);
 add_filter('woocommerce_email_enabled_customer_invoice',           '__return_false', 999);
+
+// ── 3. Fix MySQL "Commands out of sync" ──
+// WooCommerce HPOS laisse des résultats non lus sur la connexion MySQL.
+// Au shutdown, Action Scheduler et wp_cron essaient des requêtes → crash.
+// On vide la connexion à plusieurs moments clés pour garantir un état propre.
+function vs08_flush_mysqli() {
+    global $wpdb;
+    if (!$wpdb || !isset($wpdb->dbh) || !($wpdb->dbh instanceof mysqli)) return;
+    // Vider les résultats wpdb internes
+    if (isset($wpdb->result) && $wpdb->result instanceof mysqli_result) {
+        @$wpdb->result->free();
+        $wpdb->result = null;
+    }
+    // Consommer tous les result sets non lus sur la connexion
+    while (@$wpdb->dbh->more_results()) {
+        @$wpdb->dbh->next_result();
+        $r = @$wpdb->dbh->store_result();
+        if ($r instanceof mysqli_result) $r->free();
+    }
+}
+
+// Flush après chaque étape majeure du checkout
+add_action('woocommerce_checkout_order_processed', 'vs08_flush_mysqli', PHP_INT_MAX);
+add_action('woocommerce_payment_complete',         'vs08_flush_mysqli', PHP_INT_MAX);
+
+// Flush au tout début du shutdown (avant WooCommerce BatchProcessing + Action Scheduler)
+add_action('shutdown', 'vs08_flush_mysqli', PHP_INT_MIN);
