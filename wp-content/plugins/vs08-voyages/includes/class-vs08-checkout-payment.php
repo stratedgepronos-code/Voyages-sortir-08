@@ -103,6 +103,8 @@ class VS08_Checkout_Payment {
 
     /**
      * Après commande « en agence » : emails pré-réservation (pas le contrat de vente définitif).
+     * Note : les booking_data ne sont PAS sur la commande pendant le checkout
+     * (copie reportée sur thankyou/payment_complete). On lit depuis le produit.
      */
     public static function maybe_send_pre_reservation_emails($order_id, $posted_data, $order) {
         if (!$order || !is_a($order, 'WC_Order')) {
@@ -112,23 +114,55 @@ class VS08_Checkout_Payment {
             return;
         }
 
-        if (class_exists('VS08C_Emails')) {
-            $c = $order->get_meta('_vs08c_booking_data');
-            if (!empty($c) && is_array($c) && (($c['type'] ?? '') === 'circuit')) {
-                VS08C_Emails::dispatch_pre_reservation($order->get_id());
-                return;
+        // Récupérer les booking_data : d'abord la commande, sinon le produit
+        $data = null;
+        $data_source = 'order';
+
+        // 1. Essayer depuis la commande (cas normal post-checkout)
+        $data = $order->get_meta('_vs08v_booking_data');
+        if (empty($data) || !is_array($data)) {
+            $data = $order->get_meta('_vs08c_booking_data');
+        }
+
+        // 2. Fallback : lire depuis le produit dans les line items
+        if (empty($data) || !is_array($data)) {
+            $data_source = 'product';
+            foreach ($order->get_items() as $item) {
+                $pid = $item->get_product_id();
+                if (!$pid) continue;
+                // Golf
+                $d = get_post_meta($pid, '_vs08v_booking_data', true);
+                if (!empty($d) && is_array($d)) { $data = $d; break; }
+                // Circuit
+                $d = get_post_meta($pid, '_vs08c_booking_data', true);
+                if (!empty($d) && is_array($d)) { $data = $d; break; }
+                // Séjour
+                $d = get_post_meta($pid, '_vs08s_booking_data', true);
+                if (!empty($d) && is_array($d)) { $data = $d; break; }
             }
         }
 
+        if (empty($data) || !is_array($data)) {
+            error_log('[VS08] pre_res_emails order #' . $order_id . ' — pas de booking_data (ni commande ni produit)');
+            return;
+        }
+
+        $type = $data['type'] ?? '';
+        error_log('[VS08] pre_res_emails order #' . $order_id . ' — type=' . $type . ', source=' . $data_source);
+
+        // Circuit
+        if ($type === 'circuit' && class_exists('VS08C_Emails')) {
+            VS08C_Emails::dispatch_pre_reservation($order->get_id());
+            return;
+        }
+
+        // Séjour → géré par son propre plugin (sur thankyou)
+        if ($type === 'sejour') {
+            return;
+        }
+
+        // Golf (ou type vide = golf par défaut)
         if (class_exists('VS08V_Emails')) {
-            $v = $order->get_meta('_vs08v_booking_data');
-            if (empty($v) || !is_array($v)) {
-                return;
-            }
-            $t = $v['type'] ?? '';
-            if ($t === 'circuit' || $t === 'sejour') {
-                return;
-            }
             VS08V_Emails::dispatch_pre_reservation($order->get_id());
         }
     }
