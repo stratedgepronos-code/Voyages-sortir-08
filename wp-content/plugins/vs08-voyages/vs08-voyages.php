@@ -17,63 +17,6 @@ define('VS08V_URL',  plugin_dir_url(__FILE__));
 define('VS08V_VER',  '2.0.0');
 
 // ============================================================
-// LOG ERREURS FATALES PENDANT LE CHECKOUT (pour debug 500)
-// + Désactiver WC emails + WC Admin (trop de RAM)
-// ============================================================
-if (!empty($_GET['wc-ajax']) && $_GET['wc-ajax'] === 'checkout') {
-    @ini_set('memory_limit', '1536M');
-
-    // Désactiver WooCommerce Admin (Analytics) — consomme 200Mo+
-    add_filter('woocommerce_admin_disabled', '__return_true');
-    // Désactiver l'Action Scheduler inline pendant le checkout
-    add_filter('action_scheduler_queue_runner_time_limit', function() { return 0; });
-    add_filter('action_scheduler_queue_runner_batch_size', function() { return 0; });
-
-    // Diagnostic mémoire : loguer l'utilisation à la fin de la requête
-    register_shutdown_function(function() {
-        $peak = memory_get_peak_usage(true);
-        $current = memory_get_usage(true);
-        $limit = ini_get('memory_limit');
-        $hpos = 'unknown';
-        if (function_exists('wc_get_container')) {
-            try {
-                $hpos = get_option('woocommerce_custom_orders_table_enabled', 'no');
-            } catch (\Throwable $ex) { $hpos = 'err'; }
-        }
-        error_log(sprintf(
-            '[VS08 CHECKOUT MEM] peak=%s current=%s limit=%s hpos=%s',
-            size_format($peak), size_format($current), $limit, $hpos
-        ));
-        $e = error_get_last();
-        if ($e && in_array($e['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE])) {
-            error_log(sprintf(
-                '[VS08 FATAL CHECKOUT] %s in %s:%d (peak=%s)',
-                $e['message'], $e['file'], $e['line'], size_format($peak)
-            ));
-        }
-    });
-
-    // Désactiver TOUS les emails WooCommerce pendant le checkout
-    add_filter('woocommerce_email_enabled_new_order', '__return_false');
-    add_filter('woocommerce_email_enabled_customer_processing_order', '__return_false');
-    add_filter('woocommerce_email_enabled_customer_on_hold_order', '__return_false');
-    add_filter('woocommerce_email_enabled_customer_completed_order', '__return_false');
-
-    // Différer nos propres emails via cron (pas pendant checkout)
-    add_action('woocommerce_payment_complete', function($order_id) {
-        wp_schedule_single_event(time(), 'vs08_deferred_email_dispatch', [$order_id]);
-    }, 1);
-    add_action('woocommerce_order_status_changed', function($order_id) {
-        wp_schedule_single_event(time(), 'vs08_deferred_email_dispatch', [$order_id]);
-    }, 1);
-}
-
-// ============================================================
-// NOTE: Yoast SEO est désactivé pendant le checkout via
-// le mu-plugin wp-content/mu-plugins/vs08-disable-yoast-checkout.php
-// ============================================================
-
-// ============================================================
 // CHARGEMENT SÉCURISÉ DE LA CLÉ DUFFEL DEPUIS config.cfg
 // Le fichier config.cfg doit être à la racine du plugin :
 //   public_html/wp-content/plugins/vs08-voyages/config.cfg
@@ -146,25 +89,7 @@ if (!defined('VS08_SERPAPI_API_KEY')) {
     }
 }
 
-// ── Pendant wc-ajax=checkout : chargement MINIMAL (même pattern que vs08-circuits) ──
-// On ne charge que 4 fichiers au lieu de 24. Les classes lourdes (HotelScanner/Claude AI,
-// Duffel API, SerpAPI, Calculator, Search, Contract, Admin, etc.) sont inutiles
-// pendant le traitement de la commande et gaspillent 500Mo+ de RAM.
-if (!empty($_GET['wc-ajax']) && $_GET['wc-ajax'] === 'checkout') {
-    require_once VS08V_PATH . 'includes/class-woo.php';
-    require_once VS08V_PATH . 'includes/class-checkout.php';
-    require_once VS08V_PATH . 'includes/class-traveler-space.php';
-
-    add_action('woocommerce_loaded', function() {
-        require_once VS08V_PATH . 'includes/class-gateway-agence.php';
-        require_once VS08V_PATH . 'includes/class-vs08-checkout-payment.php';
-        VS08_Checkout_Payment::register();
-    });
-
-    return;
-}
-
-// ── Chargement COMPLET (toutes les requêtes sauf checkout) ──
+// Chargement des modules
 require_once VS08V_PATH . 'includes/class-post-type.php';
 require_once VS08V_PATH . 'includes/class-meta-boxes.php';
 require_once VS08V_PATH . 'includes/class-search.php';
@@ -414,28 +339,17 @@ add_action('template_redirect', function() {
 // EMAILS POST-PAIEMENT (contrat de vente admin + client)
 // ============================================================
 // Hook principal : déclenché par WooCommerce quand le paiement est confirmé
-// Pendant le checkout AJAX, les emails sont différés via cron (voir plus haut)
 add_action('woocommerce_payment_complete', function($order_id) {
-    if (!empty($_GET['wc-ajax'])) return; // différé via cron
     VS08V_Emails::dispatch($order_id);
 });
 
 // Fallback : certains moyens de paiement (virement, chèque) ne déclenchent
 // pas woocommerce_payment_complete mais changent le statut en « processing »
 add_action('woocommerce_order_status_changed', function($order_id, $old_status, $new_status) {
-    if (!empty($_GET['wc-ajax'])) return; // différé via cron
     if (in_array($new_status, ['processing', 'completed'])) {
         VS08V_Emails::dispatch($order_id);
     }
 }, 10, 3);
-
-// Dispatch différé via cron (planifié pendant le checkout AJAX)
-add_action('vs08_deferred_email_dispatch', function($order_id) {
-    error_log('[VS08] Deferred email dispatch for order ' . $order_id);
-    if (class_exists('VS08V_Emails')) VS08V_Emails::dispatch($order_id);
-    if (class_exists('VS08S_Emails')) VS08S_Emails::dispatch($order_id);
-    if (class_exists('VS08C_Emails')) VS08C_Emails::dispatch($order_id);
-});
 
 // Helper : retourne l'ID de dossier espace membre cible (commande principale ou parent solde), sinon 0.
 function vs08v_get_target_order_id_for_espace($order) {
@@ -452,22 +366,15 @@ function vs08v_get_target_order_id_for_espace($order) {
 
     // Réservation circuit sur la commande.
     if ($order->get_meta('_vs08c_booking_data')) return $order_id;
-    // Réservation séjour sur la commande.
-    if ($order->get_meta('_vs08s_booking_data')) return $order_id;
 
     // Réservation circuit/golf sur les lignes (fallback).
     foreach ($order->get_items() as $item) {
-        if ($item->get_meta('_vs08c_booking_data') || $item->get_meta('_vs08v_booking_data') || $item->get_meta('_vs08s_booking_data')) {
+        if ($item->get_meta('_vs08c_booking_data') || $item->get_meta('_vs08v_booking_data')) {
             return $order_id;
         }
         $pid = (int) $item->get_product_id();
         if ($pid > 0) {
-            if (
-                metadata_exists('post', $pid, '_vs08s_booking_data') ||
-                metadata_exists('post', $pid, '_vs08s_booking_token') ||
-                metadata_exists('post', $pid, '_vs08c_booking_data') ||
-                metadata_exists('post', $pid, '_vs08v_booking_data')
-            ) {
+            if (get_post_meta($pid, '_vs08c_booking_data', true) || get_post_meta($pid, '_vs08v_booking_data', true)) {
                 return $order_id;
             }
         }
@@ -483,40 +390,25 @@ function vs08v_get_espace_url_for_order($order) {
 }
 
 // Redirection checkout côté serveur : URL de retour = espace membre (golf + circuit + solde).
-add_filter('woocommerce_get_checkout_order_received_url', function($url, $order = null) {
-    try {
-        $target = vs08v_get_espace_url_for_order($order);
-        return $target ?: $url;
-    } catch (\Throwable $e) {
-        error_log('[VS08 Checkout Redirect] order_received_url error: ' . $e->getMessage());
-        return $url;
-    }
+add_filter('woocommerce_get_checkout_order_received_url', function($url, $order) {
+    $target = vs08v_get_espace_url_for_order($order);
+    return $target ?: $url;
 }, 10, 2);
 
 // Même logique pour les paiements "sans page de paiement" (bacs/cheque/cod...).
-add_filter('woocommerce_checkout_no_payment_needed_redirect', function($url, $order = null) {
-    try {
-        $target = vs08v_get_espace_url_for_order($order);
-        return $target ?: $url;
-    } catch (\Throwable $e) {
-        error_log('[VS08 Checkout Redirect] no_payment_needed error: ' . $e->getMessage());
-        return $url;
-    }
+add_filter('woocommerce_checkout_no_payment_needed_redirect', function($url, $order) {
+    $target = vs08v_get_espace_url_for_order($order);
+    return $target ?: $url;
 }, 10, 2);
 
 // Surcharge du résultat checkout AJAX (point critique pour certains gateways / thèmes).
-add_filter('woocommerce_payment_successful_result', function($result, $order_id = 0) {
-    try {
-        $order = $order_id ? wc_get_order($order_id) : null;
-        $target = vs08v_get_espace_url_for_order($order);
-        if ($target) {
-            $result['redirect'] = $target;
-        }
-        return $result;
-    } catch (\Throwable $e) {
-        error_log('[VS08 Checkout Redirect] payment_successful_result error: ' . $e->getMessage());
-        return $result;
+add_filter('woocommerce_payment_successful_result', function($result, $order_id) {
+    $order = wc_get_order($order_id);
+    $target = vs08v_get_espace_url_for_order($order);
+    if ($target) {
+        $result['redirect'] = $target;
     }
+    return $result;
 }, 10, 2);
 
 // Si on arrive quand même sur order-received : redirection immédiate vers l'espace membre.

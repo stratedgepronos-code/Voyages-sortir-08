@@ -186,7 +186,7 @@ class VS08C_Woo {
     }
 }
 
-// Copier booking_data dans les items de commande ET sur la commande
+// Copier booking_data dans les items de commande ET sur la commande tout de suite (pour espace membre + redirection)
 add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_item_key, $values, $order) {
     try {
         $pid = $item->get_product_id();
@@ -212,7 +212,8 @@ add_action('woocommerce_checkout_update_order_meta', function($order_id) {
         foreach ($order->get_items() as $item) {
             $data = $item->get_meta('_vs08c_booking_data');
             if (!empty($data) && is_array($data)) {
-                update_post_meta($order_id, '_vs08c_booking_data', $data);
+                $order->update_meta_data('_vs08c_booking_data', $data);
+                $order->save();
                 break;
             }
         }

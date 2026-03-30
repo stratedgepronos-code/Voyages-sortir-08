@@ -73,12 +73,7 @@ class VS08_Checkout_Payment {
             if (!$pid) {
                 continue;
             }
-            if (
-                metadata_exists('post', $pid, '_vs08s_booking_data') ||
-                metadata_exists('post', $pid, '_vs08s_booking_token') ||
-                metadata_exists('post', $pid, '_vs08c_booking_data') ||
-                metadata_exists('post', $pid, '_vs08v_booking_data')
-            ) {
+            if (get_post_meta($pid, '_vs08v_booking_data', true) || get_post_meta($pid, '_vs08c_booking_data', true) || get_post_meta($pid, '_vs08s_booking_data', true)) {
                 $has_vs08 = true;
                 break;
             }
@@ -109,37 +104,32 @@ class VS08_Checkout_Payment {
     /**
      * Après commande « en agence » : emails pré-réservation (pas le contrat de vente définitif).
      */
-    public static function maybe_send_pre_reservation_emails($order_id, $posted_data = null, $order = null) {
-        unset($posted_data);
-        try {
-            if (!$order || !is_a($order, 'WC_Order')) {
-                $order = wc_get_order($order_id);
-            }
-            if (!$order || $order->get_payment_method() !== 'vs08_agence') {
+    public static function maybe_send_pre_reservation_emails($order_id, $posted_data, $order) {
+        if (!$order || !is_a($order, 'WC_Order')) {
+            $order = wc_get_order($order_id);
+        }
+        if (!$order || $order->get_payment_method() !== 'vs08_agence') {
+            return;
+        }
+
+        if (class_exists('VS08C_Emails')) {
+            $c = $order->get_meta('_vs08c_booking_data');
+            if (!empty($c) && is_array($c) && (($c['type'] ?? '') === 'circuit')) {
+                VS08C_Emails::dispatch_pre_reservation($order->get_id());
                 return;
             }
+        }
 
-            if (class_exists('VS08C_Emails')) {
-                $c = $order->get_meta('_vs08c_booking_data');
-                if (!empty($c) && is_array($c) && (($c['type'] ?? '') === 'circuit')) {
-                    VS08C_Emails::dispatch_pre_reservation($order->get_id());
-                    return;
-                }
+        if (class_exists('VS08V_Emails')) {
+            $v = $order->get_meta('_vs08v_booking_data');
+            if (empty($v) || !is_array($v)) {
+                return;
             }
-
-            if (class_exists('VS08V_Emails')) {
-                $v = $order->get_meta('_vs08v_booking_data');
-                if (empty($v) || !is_array($v)) {
-                    return;
-                }
-                $t = $v['type'] ?? '';
-                if ($t === 'circuit' || $t === 'sejour') {
-                    return;
-                }
-                VS08V_Emails::dispatch_pre_reservation($order->get_id());
+            $t = $v['type'] ?? '';
+            if ($t === 'circuit' || $t === 'sejour') {
+                return;
             }
-        } catch (\Throwable $e) {
-            error_log('[VS08 Checkout Payment] maybe_send_pre_reservation_emails error: ' . $e->getMessage());
+            VS08V_Emails::dispatch_pre_reservation($order->get_id());
         }
     }
 }

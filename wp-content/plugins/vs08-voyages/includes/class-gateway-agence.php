@@ -81,7 +81,7 @@ class VS08V_Gateway_Agence extends WC_Payment_Gateway {
             'on-hold',
             __('Pré-réservation — règlement prévu en agence (pas d’encaissement CB en ligne à ce stade).', 'vs08-voyages')
         );
-        // PAS de $order->save() — update_status fait déjà un save interne
+        $order->save();
 
         return [
             'result'   => 'success',
