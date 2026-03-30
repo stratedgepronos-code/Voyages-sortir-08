@@ -721,6 +721,8 @@ get_header();
             </div>
             <?php endif; ?>
 
+            <?php /* ═══ LIGNES DÉTAILLÉES — ADMIN UNIQUEMENT ═══ */ ?>
+            <?php if (current_user_can('manage_options')): ?>
             <!-- 1. VOL ALLER -->
             <div class="bk-recap-row" id="bk-recap-row-vol">
                 <span class="bk-recap-lbl">✈️ Vol aller <span id="bk-recap-vol-date" style="font-weight:400;color:#9ca3af;font-size:12px">· le <?php echo $date_aller_recap; ?></span>
@@ -737,7 +739,7 @@ get_header();
                 <span class="bk-recap-val" id="bk-recap-retour-val">—</span>
             </div>
 
-            <!-- SUPPLÉMENT VOL (visible si delta > 0) -->
+            <!-- SUPPLÉMENT VOL -->
             <div class="bk-recap-row" id="bk-recap-row-vol-delta" style="display:none">
                 <span class="bk-recap-lbl">⬆️ Supplément vol</span>
                 <span class="bk-recap-val" id="bk-recap-vol-delta-val" style="color:#b85c1a"></span>
@@ -816,6 +818,21 @@ get_header();
             <div class="bk-recap-row">
                 <span class="bk-recap-lbl">📊 Marge agence</span>
                 <span class="bk-recap-val"><?php echo number_format($recap_marge, 0, ',', ' '); ?> €</span>
+            </div>
+            <?php endif; ?>
+            <?php endif; ?>
+            <?php /* ═══ FIN LIGNES ADMIN ═══ */ ?>
+
+            <?php /* Conteneurs cachés pour le JS recap-final (non-admins) */ ?>
+            <?php if (!current_user_can('manage_options')): ?>
+            <div style="display:none">
+                <span id="bk-recap-vol-detail"><?php echo esc_html(strtoupper((string)($params['aeroport'] ?: '—'))); ?> → <?php echo esc_html(strtoupper((string)($m['iata_dest'] ?? '—'))); ?></span>
+                <span id="bk-recap-retour-detail"><?php echo esc_html(strtoupper((string)($m['iata_dest'] ?? '—'))); ?> → <?php echo esc_html(strtoupper((string)($params['aeroport'] ?: '—'))); ?></span>
+                <span id="bk-recap-vol-val"></span>
+                <span id="bk-recap-retour-val"></span>
+                <span id="bk-recap-vol-delta-val"></span>
+                <span id="bk-recap-bag-soute-val"></span>
+                <span id="bk-recap-bag-golf-val"></span>
             </div>
             <?php endif; ?>
 
