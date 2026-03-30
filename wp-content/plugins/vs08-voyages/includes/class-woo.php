@@ -151,27 +151,73 @@ add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_
     }
 }, 10, 4);
 
-// Après création de la commande, copier booking_data sur la commande (pour admin Gestion Dossiers)
+// Après création de la commande, programmer la copie des booking_data en ASYNCHRONE
+// POURQUOI : update_post_meta() sur une commande avec HPOS sync mode déclenche
+// une synchronisation wp_posts ↔ wp_wc_orders qui consomme des centaines de Mo.
+// En reportant la copie à 10 secondes après le checkout, on évite le crash.
+// Le produit temporaire contient déjà toutes les données — la commande peut attendre.
 add_action('woocommerce_checkout_update_order_meta', function($order_id) {
     try {
-        // Vérifier si déjà copié (sans charger l'order complet)
-        $existing = get_post_meta($order_id, '_vs08v_booking_data', true);
-        if (!empty($existing) && is_array($existing)) return;
-        // Chercher dans le panier le product_id
+        // Trouver le product_id dans le panier
         if (!WC()->cart) return;
+        $target_pid = 0;
         foreach (WC()->cart->get_cart() as $item) {
             $pid = $item['product_id'] ?? 0;
             if (!$pid) continue;
             $data = get_post_meta($pid, '_vs08v_booking_data', true);
             if (!empty($data) && is_array($data)) {
-                // Écrire directement en base — PAS de $order->save() (crash HPOS 2 Go)
-                update_post_meta($order_id, '_vs08v_booking_data', $data);
+                $target_pid = $pid;
                 break;
             }
+        }
+        if (!$target_pid) return;
+
+        // Stocker SEULEMENT le product_id comme référence légère (4 octets)
+        // Le gros blob booking_data sera copié en async ci-dessous
+        update_post_meta($order_id, '_vs08v_booking_product_id', $target_pid);
+        error_log('[VS08] Checkout order #' . $order_id . ' — product_id=' . $target_pid . ' stocké, copie booking_data programmée en async');
+
+        // Programmer la copie lourde via Action Scheduler (WooCommerce l'inclut)
+        if (function_exists('as_schedule_single_action')) {
+            as_schedule_single_action(
+                time() + 10, // 10 secondes après (le checkout sera fini)
+                'vs08v_deferred_copy_booking_data',
+                ['order_id' => $order_id, 'product_id' => $target_pid],
+                'vs08-voyages'
+            );
+        } else {
+            // Fallback : wp_schedule_single_event (moins fiable mais marche)
+            wp_schedule_single_event(time() + 30, 'vs08v_deferred_copy_booking_data_cron', [$order_id, $target_pid]);
         }
     } catch (\Throwable $e) {
         error_log('VS08 checkout_update_order_meta: ' . $e->getMessage());
     }
+}, 10, 2);
+
+// ── HANDLER ASYNC : copie les booking_data sur la commande (hors checkout) ──
+// Cette action tourne APRÈS le checkout, dans un process séparé, sans pression mémoire.
+add_action('vs08v_deferred_copy_booking_data', function($order_id, $product_id) {
+    // Sécurité : vérifier que la copie n'a pas déjà été faite
+    $existing = get_post_meta($order_id, '_vs08v_booking_data', true);
+    if (!empty($existing) && is_array($existing)) {
+        error_log('[VS08] Deferred copy order #' . $order_id . ' — déjà fait, skip');
+        return;
+    }
+
+    $data = get_post_meta($product_id, '_vs08v_booking_data', true);
+    if (empty($data) || !is_array($data)) {
+        error_log('[VS08] Deferred copy order #' . $order_id . ' — pas de booking_data sur product #' . $product_id);
+        return;
+    }
+
+    // Écrire les données sur la commande — ici on est hors checkout, la mémoire est libre
+    update_post_meta($order_id, '_vs08v_booking_data', $data);
+    error_log('[VS08] Deferred copy order #' . $order_id . ' — booking_data copié OK depuis product #' . $product_id);
+}, 10, 2);
+
+// Fallback wp_cron (si Action Scheduler n'est pas dispo)
+add_action('vs08v_deferred_copy_booking_data_cron', function($order_id, $product_id) {
+    do_action('vs08v_deferred_copy_booking_data', $order_id, $product_id);
 }, 10, 2);
 
 // Afficher les infos de réservation + option "Solde marqué réglé" dans la commande admin
