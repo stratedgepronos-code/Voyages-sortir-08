@@ -389,48 +389,16 @@ function vs08v_get_espace_url_for_order($order) {
     return VS08V_Traveler_Space::voyage_url($target_order_id);
 }
 
-// Redirection checkout côté serveur : URL de retour = espace membre (golf + circuit + solde).
-add_filter('woocommerce_get_checkout_order_received_url', function($url, $order) {
-    $target = vs08v_get_espace_url_for_order($order);
-    return $target ?: $url;
-}, 10, 2);
+// ═══════════════════════════════════════════════════════════════════
+// REDIRECTION VERS ESPACE VOYAGEUR
+// ═══════════════════════════════════════════════════════════════════
+// IMPORTANT : on ne redirige PAS côté serveur (exit). On laisse la
+// page merci (order-received) charger normalement pour que les hooks
+// woocommerce_thankyou se déclenchent (copie données + envoi emails).
+// La redirection vers l'espace voyageur se fait via JS APRÈS les hooks.
 
-// Même logique pour les paiements "sans page de paiement" (bacs/cheque/cod...).
-add_filter('woocommerce_checkout_no_payment_needed_redirect', function($url, $order) {
-    $target = vs08v_get_espace_url_for_order($order);
-    return $target ?: $url;
-}, 10, 2);
-
-// Surcharge du résultat checkout AJAX (point critique pour certains gateways / thèmes).
-add_filter('woocommerce_payment_successful_result', function($result, $order_id) {
-    $order = wc_get_order($order_id);
-    $target = vs08v_get_espace_url_for_order($order);
-    if ($target) {
-        $result['redirect'] = $target;
-    }
-    return $result;
-}, 10, 2);
-
-// Si on arrive quand même sur order-received : redirection immédiate vers l'espace membre.
-add_action('template_redirect', function() {
-    if (!function_exists('is_wc_endpoint_url') || !is_wc_endpoint_url('order-received')) return;
-    $endpoint_slug = get_option('woocommerce_checkout_order_received_endpoint', 'order-received');
-    $order_id = absint(get_query_var($endpoint_slug));
-    if (!$order_id) {
-        $order_id = absint(get_query_var('order-received'));
-    }
-    if (!$order_id && !empty($_GET['key'])) {
-        $order_id = wc_get_order_id_by_order_key(sanitize_text_field(wp_unslash($_GET['key'])));
-    }
-    if (!$order_id) return;
-    $order = wc_get_order($order_id);
-    $target = vs08v_get_espace_url_for_order($order);
-    if (!$target) return;
-    wp_safe_redirect($target);
-    exit;
-}, 1);
-
-// Secours ultime : redirection JS sur la page thank you classique.
+// Secours : redirection JS sur la page thank you.
+// Priorité 5 = APRÈS copie données (0) + pré-resa emails (2)
 add_action('woocommerce_thankyou', function($order_id) {
     if (!$order_id) return;
     // Filet de sécurité : dispatch email si pas encore fait
@@ -440,7 +408,7 @@ add_action('woocommerce_thankyou', function($order_id) {
     $target = vs08v_get_espace_url_for_order($order);
     if (!$target) return;
     echo '<script>window.location.replace("' . esc_js(esc_url($target)) . '");</script>';
-}, 1);
+}, 5);
 
 // Cron rappel solde (J-14 et J-3)
 add_action('vs08v_solde_reminder_cron', function() {

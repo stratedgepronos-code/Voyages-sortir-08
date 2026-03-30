@@ -27,7 +27,10 @@ class VS08_Checkout_Payment {
     public static function register() {
         add_filter('woocommerce_payment_gateways', [__CLASS__, 'alter_payment_gateways']);
         add_filter('woocommerce_available_payment_gateways', [__CLASS__, 'filter_gateways'], 50);
-        add_action('woocommerce_checkout_order_processed', [__CLASS__, 'maybe_send_pre_reservation_emails'], 30, 3);
+        // PRÉ-RÉSA EMAILS : envoyés sur la page merci (pas pendant le checkout AJAX)
+        // Pendant le checkout = contrat + 2 wp_mail() = 15-30s → timeout navigateur
+        // Sur thankyou = requête GET séparée, pas de pression de temps
+        add_action('woocommerce_thankyou', [__CLASS__, 'maybe_send_pre_reservation_emails_on_thankyou'], 2);
         add_action('woocommerce_checkout_order_processed', [__CLASS__, 'clear_session_payment_mode'], 999, 1);
     }
 
@@ -99,6 +102,16 @@ class VS08_Checkout_Payment {
         }
 
         return $gateways;
+    }
+
+    /**
+     * Wrapper pour woocommerce_thankyou (reçoit seulement $order_id).
+     */
+    public static function maybe_send_pre_reservation_emails_on_thankyou($order_id) {
+        if (!$order_id) return;
+        $order = wc_get_order($order_id);
+        if (!$order) return;
+        self::maybe_send_pre_reservation_emails($order_id, null, $order);
     }
 
     /**
