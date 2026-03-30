@@ -313,6 +313,16 @@ var BK_CIRCUIT = <?php echo json_encode([
     <div class="bkc-main">
         <div class="bkc-error" id="bkc-error"></div>
 
+        <!-- MOBILE : bouton retour au produit (visible uniquement ≤ 768px) -->
+        <a href="<?php echo esc_url(get_permalink($circuit_id)); ?>" class="bkc-mobile-back">← Retour à la fiche circuit</a>
+        <style>
+        .bkc-mobile-back{display:none}
+        @media(max-width:768px){
+            .bkc-mobile-back{display:inline-flex;align-items:center;gap:4px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;color:#59b7b7;text-decoration:none;padding:8px 14px;background:rgba(89,183,183,.08);border:1px solid rgba(89,183,183,.15);border-radius:100px;margin-bottom:14px;transition:all .2s}
+            .bkc-mobile-back:hover,.bkc-mobile-back:active{background:rgba(89,183,183,.15);color:#3d9a9a}
+        }
+        </style>
+
         <!-- ═══ ÉTAPES 1-3 (formulaire) ═══ -->
         <div id="bkc-steps-form">
 

@@ -303,6 +303,16 @@ get_header();
             </div>
         </div>
 
+        <!-- MOBILE : bouton retour au produit (visible uniquement ≤ 768px) -->
+        <a href="<?php echo esc_url(get_permalink($voyage_id)); ?>" class="bk-mobile-back">← Retour à la fiche séjour</a>
+        <style>
+        .bk-mobile-back{display:none}
+        @media(max-width:768px){
+            .bk-mobile-back{display:inline-flex;align-items:center;gap:4px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;color:#59b7b7;text-decoration:none;padding:8px 14px;background:rgba(89,183,183,.08);border:1px solid rgba(89,183,183,.15);border-radius:100px;margin-bottom:14px;transition:all .2s}
+            .bk-mobile-back:hover,.bk-mobile-back:active{background:rgba(89,183,183,.15);color:#3d9a9a}
+        }
+        </style>
+
         <!-- STEP 1 — VOL -->
         <div id="bk-step-1" class="bk-step-content">
             <div class="bk-card">
