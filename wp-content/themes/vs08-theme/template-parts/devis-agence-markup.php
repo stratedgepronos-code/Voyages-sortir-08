@@ -130,20 +130,12 @@ $extra_field = $c['extra_field'] ?? ''; // 'city' | 'road' | 'circuit' | ''
                     <input type="text" id="da-dest" name="destination" required placeholder="Mer, montagne, île, pays…" value="<?php echo esc_attr(wp_unslash($_POST['destination'] ?? '')); ?>">
                 </div>
                 <?php endif; ?>
-                <div class="vs08-da-row">
-                    <div class="vs08-da-field">
-                        <label>Date de départ souhaitée</label>
-                        <input type="hidden" id="da-d1" name="date_debut" value="<?php echo esc_attr(wp_unslash($_POST['date_debut'] ?? '')); ?>">
-                        <div id="da-cal-d1-wrap" style="position:relative">
-                            <div id="da-cal-d1-trigger" class="vs08-da-date-trigger" onclick="window.daCalD1 && window.daCalD1.toggle()">📅 Choisir une date</div>
-                        </div>
-                    </div>
-                    <div class="vs08-da-field">
-                        <label>Date de retour souhaitée</label>
-                        <input type="hidden" id="da-d2" name="date_fin" value="<?php echo esc_attr(wp_unslash($_POST['date_fin'] ?? '')); ?>">
-                        <div id="da-cal-d2-wrap" style="position:relative">
-                            <div id="da-cal-d2-trigger" class="vs08-da-date-trigger" onclick="window.daCalD2 && window.daCalD2.toggle()">📅 Choisir une date</div>
-                        </div>
+                <div class="vs08-da-field">
+                    <label>Période souhaitée</label>
+                    <input type="hidden" id="da-d1" name="date_debut" value="<?php echo esc_attr(wp_unslash($_POST['date_debut'] ?? '')); ?>">
+                    <input type="hidden" id="da-d2" name="date_fin" value="<?php echo esc_attr(wp_unslash($_POST['date_fin'] ?? '')); ?>">
+                    <div id="da-cal-wrap" style="position:relative">
+                        <div id="da-cal-trigger" class="vs08-da-date-trigger" onclick="window.daCalRange && window.daCalRange.toggle()">📅 Départ entre… et…</div>
                     </div>
                 </div>
                 <script>
@@ -151,31 +143,21 @@ $extra_field = $c['extra_field'] ?? ''; // 'city' | 'road' | 'circuit' | ''
                     if (typeof VS08Calendar === 'undefined') { console.warn('VS08Calendar not loaded'); return; }
                     var minD = new Date(); minD.setDate(minD.getDate() + 7);
                     var yr = new Date().getFullYear();
-                    var fmtOpts = { day:'numeric', month:'short', year:'numeric' };
+                    var fmtOpts = { day:'numeric', month:'short' };
 
-                    window.daCalD1 = new VS08Calendar({
-                        el:'#da-cal-d1-wrap', input:'#da-d1', mode:'date', inline:false,
-                        title:'📅 Date de départ souhaitée', subtitle:'Cliquez sur le jour souhaité',
+                    window.daCalRange = new VS08Calendar({
+                        el:'#da-cal-wrap', input:'#da-d1', inputEnd:'#da-d2',
+                        mode:'range', inline:false,
+                        title:'📅 Période de départ', subtitle:'Départ au plus tôt → départ au plus tard',
                         yearRange:[yr, yr+2], minDate:minD,
-                        onSelect: function(d){
-                            if(!d) return;
-                            var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-                            document.getElementById('da-d1').value = ds;
-                            var trigger = document.getElementById('da-cal-d1-trigger');
-                            if(trigger){ trigger.textContent = '📅 ' + d.toLocaleDateString('fr-FR', fmtOpts); trigger.style.color = '#0f2424'; trigger.style.borderColor = '#59b7b7'; }
-                        }
-                    });
-
-                    window.daCalD2 = new VS08Calendar({
-                        el:'#da-cal-d2-wrap', input:'#da-d2', mode:'date', inline:false,
-                        title:'📅 Date de retour souhaitée', subtitle:'Cliquez sur le jour souhaité',
-                        yearRange:[yr, yr+2], minDate:minD,
-                        onSelect: function(d){
-                            if(!d) return;
-                            var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-                            document.getElementById('da-d2').value = ds;
-                            var trigger = document.getElementById('da-cal-d2-trigger');
-                            if(trigger){ trigger.textContent = '📅 ' + d.toLocaleDateString('fr-FR', fmtOpts); trigger.style.color = '#0f2424'; trigger.style.borderColor = '#59b7b7'; }
+                        onConfirm: function(dep, ret){
+                            var trigger = document.getElementById('da-cal-trigger');
+                            if(!trigger) return;
+                            var txt = '📅 ' + dep.toLocaleDateString('fr-FR', fmtOpts);
+                            if(ret) txt += ' → ' + ret.toLocaleDateString('fr-FR', fmtOpts);
+                            trigger.textContent = txt;
+                            trigger.style.color = '#0f2424';
+                            trigger.style.borderColor = '#59b7b7';
                         }
                     });
                 });
