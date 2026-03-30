@@ -473,10 +473,11 @@ get_header();
                 </div>
                 <?php endif; ?>
 
-                <div class="bk-nav" style="margin-top:24px">
+                <div class="bk-nav bk-nav-step1" style="margin-top:24px">
                     <a href="<?php echo esc_url(get_permalink($voyage_id)); ?>" class="bk-btn-prev">← Retour au séjour</a>
                     <button class="bk-btn-next" onclick="bkGo(2)">Continuer →</button>
                 </div>
+                <style>@media(max-width:768px){.bk-nav-step1{display:none!important}}</style>
             </div>
         </div>
 
@@ -885,10 +886,13 @@ get_header();
             <div style="font-size:11px;color:rgba(255,255,255,.5);font-family:'Outfit',sans-serif;line-height:1.7">Lun–Ven 09h–12h / 14h–18h30<br>Sam 09h–12h / 14h–18h00</div>
         </div>
 
-        <!-- Bouton Continuer sous recap -->
-        <div id="bk-recap-btn-wrap" style="margin-top:14px;display:none">
-            <button class="bk-btn-next" style="width:100%" id="bk-recap-btn">Continuer →</button>
+        <!-- Bouton Continuer sous recap (visible sur mobile step 1) -->
+        <div id="bk-recap-btn-wrap" style="margin-top:14px">
+            <button class="bk-btn-next" style="width:100%" id="bk-recap-btn" onclick="bkGo(2)">Continuer →</button>
         </div>
+        <style>
+        @media(min-width:769px){#bk-recap-btn-wrap{display:none!important}}
+        </style>
     </div>
 
 </div>

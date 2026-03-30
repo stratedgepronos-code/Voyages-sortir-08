@@ -398,9 +398,10 @@ var BK_CIRCUIT = <?php echo json_encode([
         </div>
         <?php endif; ?>
 
-        <div class="bkc-nav">
+        <div class="bkc-nav bkc-nav-step1">
             <button type="button" class="bkc-btn-next" onclick="bkcGoToStep2()">Continuer →</button>
         </div>
+        <style>@media(max-width:768px){.bkc-nav-step1{display:none!important}}</style>
         </div><!-- /bkc-step-1 -->
 
         <!-- PAGE 2 : ÉTAPE 2 — Bulletin d'inscription (voyageurs + facturation), step juste après la page Vols -->
