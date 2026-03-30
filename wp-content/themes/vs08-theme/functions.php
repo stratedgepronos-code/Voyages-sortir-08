@@ -461,16 +461,16 @@ function vs08_mega_circuit_destinations($limit = 8) {
 /**
  * Devis hors golf : envoi aux deux adresses agence.
  */
-function vs08_mail_devis_agence($subject, $body_plain, $reply_to_email) {
+function vs08_mail_devis_agence($subject, $body_html, $reply_to_email) {
     $headers = [
-        'Content-Type: text/plain; charset=UTF-8',
+        'Content-Type: text/html; charset=UTF-8',
         'From: Voyages Sortir 08 <noreply@sortirmonde.fr>',
     ];
     if (is_email($reply_to_email)) {
         $headers[] = 'Reply-To: ' . $reply_to_email;
     }
     // Circuits, séjours vacances, city trip, road trip → sortir08.ag@wanadoo.fr
-    $ok = wp_mail('sortir08.ag@wanadoo.fr', $subject, $body_plain, $headers);
+    $ok = wp_mail('sortir08.ag@wanadoo.fr', $subject, $body_html, $headers);
     return $ok;
 }
 

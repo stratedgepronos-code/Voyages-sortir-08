@@ -18,26 +18,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
     $nb_golfeurs = sanitize_text_field(wp_unslash($_POST['nb_golfeurs'] ?? ''));
     $nb_accompagnants = sanitize_text_field(wp_unslash($_POST['nb_accompagnants'] ?? ''));
     $budget = sanitize_text_field(wp_unslash($_POST['budget'] ?? ''));
-    $budget = sanitize_text_field(wp_unslash($_POST['budget'] ?? ''));
     $message = sanitize_textarea_field(wp_unslash($_POST['message'] ?? ''));
 
     if (is_email($email) && $nom && $prenom) {
         $to = 'sortir08@wanadoo.fr';
-        $subject = '[Devis Golf] Demande de ' . $prenom . ' ' . $nom;
-        $body = "Nouvelle demande de devis séjour golf depuis le site.\n\n";
-        $body .= "— Nom : " . $nom . "\n";
-        $body .= "— Prénom : " . $prenom . "\n";
-        $body .= "— Email : " . $email . "\n";
-        $body .= "— Téléphone : " . $tel . "\n\n";
-        $body .= "— Destination souhaitée : " . $destination . "\n";
-        $body .= "— Dates : du " . $date_debut . " au " . $date_fin . "\n";
-        $body .= "— Nombre de golfeurs : " . $nb_golfeurs . "\n";
-        $body .= "— Nombre d'accompagnants : " . $nb_accompagnants . "\n";
-        $body .= "— Budget : " . $budget . "\n";
-        $body .= "— Budget indicatif : " . $budget . "\n\n";
-        $body .= "— Message :\n" . $message . "\n";
+        $subject = '⛳ [Devis Golf] ' . $prenom . ' ' . strtoupper($nom) . ' — ' . ($destination ?: 'Destination à définir');
 
-        $headers = ['Content-Type: text/plain; charset=UTF-8', 'From: Voyages Sortir 08 <noreply@sortirmonde.fr>', 'Reply-To: ' . $email];
+        // Formater les dates
+        $date_debut_fmt = $date_debut ? date('d/m/Y', strtotime($date_debut)) : '—';
+        $date_fin_fmt   = $date_fin ? date('d/m/Y', strtotime($date_fin)) : '—';
+
+        // Email HTML premium VS08
+        $tr = function($icon, $label, $value) {
+            if (empty($value) || $value === '—') return '';
+            return '<tr><td style="padding:10px 14px;font-size:13px;color:#6b7280;font-weight:600;width:40%;border-bottom:1px solid #f0ece4;font-family:Outfit,Arial,sans-serif">' . $icon . ' ' . $label . '</td><td style="padding:10px 14px;font-size:14px;color:#0f2424;font-weight:500;border-bottom:1px solid #f0ece4;font-family:Outfit,Arial,sans-serif">' . esc_html($value) . '</td></tr>';
+        };
+
+        $body = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>'
+            . '<body style="margin:0;padding:0;background:#f4f1ea;font-family:Arial,Helvetica,sans-serif">'
+            . '<div style="max-width:640px;margin:20px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">'
+
+            // Header
+            . '<div style="background:linear-gradient(135deg,#0f2424,#1a4a4a);padding:28px 32px;text-align:center">'
+            . '<div style="font-size:20px;font-weight:700;color:#fff;font-family:Georgia,serif;letter-spacing:1px">Voyages Sortir 08</div>'
+            . '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:4px;letter-spacing:.5px">SPÉCIALISTE GOLF & VOYAGES</div>'
+            . '</div>'
+
+            // Badge type
+            . '<div style="text-align:center;padding:20px 32px 0">'
+            . '<span style="display:inline-block;background:linear-gradient(135deg,#059669,#0d9488);color:#fff;padding:6px 20px;border-radius:100px;font-size:12px;font-weight:700;letter-spacing:1px;font-family:Outfit,Arial,sans-serif">⛳ DEMANDE DE DEVIS GOLF</span>'
+            . '</div>'
+
+            // Client info
+            . '<div style="padding:20px 32px 0">'
+            . '<div style="font-size:11px;font-weight:700;color:#59b7b7;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;font-family:Outfit,Arial,sans-serif">👤 Client</div>'
+            . '<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse">'
+            . $tr('', 'Nom', strtoupper($nom))
+            . $tr('', 'Prénom', $prenom)
+            . $tr('📧', 'Email', $email)
+            . $tr('📞', 'Téléphone', $tel)
+            . '</table>'
+            . '</div>'
+
+            // Projet
+            . '<div style="padding:20px 32px 0">'
+            . '<div style="font-size:11px;font-weight:700;color:#59b7b7;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;font-family:Outfit,Arial,sans-serif">🗓️ Projet de voyage</div>'
+            . '<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse">'
+            . $tr('🌍', 'Destination', $destination)
+            . $tr('📅', 'Dates', $date_debut_fmt . ' → ' . $date_fin_fmt)
+            . $tr('⛳', 'Golfeurs', $nb_golfeurs)
+            . $tr('👥', 'Accompagnants', $nb_accompagnants)
+            . $tr('💰', 'Budget / pers.', $budget ? $budget . ' €' : '')
+            . '</table>'
+            . '</div>'
+
+            // Message
+            . (trim($message) ? '<div style="padding:20px 32px 0">'
+                . '<div style="font-size:11px;font-weight:700;color:#59b7b7;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;font-family:Outfit,Arial,sans-serif">💬 Message</div>'
+                . '<div style="background:#f9f6f0;border-radius:12px;padding:16px;font-size:14px;color:#374151;line-height:1.6;font-family:Outfit,Arial,sans-serif;white-space:pre-wrap">' . esc_html($message) . '</div>'
+                . '</div>' : '')
+
+            // CTA répondre
+            . '<div style="padding:24px 32px;text-align:center">'
+            . '<a href="mailto:' . esc_attr($email) . '?subject=' . rawurlencode('Votre devis golf — Voyages Sortir 08') . '" style="display:inline-block;padding:14px 36px;background:linear-gradient(135deg,#0f2424,#1a3a3a);color:#fff;text-decoration:none;border-radius:12px;font-weight:700;font-size:14px;font-family:Outfit,Arial,sans-serif">✉️ Répondre au client</a>'
+            . '</div>'
+
+            // Footer
+            . '<div style="background:#f9f6f0;padding:16px 32px;text-align:center;font-size:11px;color:#9ca3af;font-family:Outfit,Arial,sans-serif;line-height:1.5">'
+            . 'Reçu le ' . date('d/m/Y à H:i') . ' · Formulaire devis golf · <a href="' . esc_url(home_url('/wp-admin/')) . '" style="color:#59b7b7">Accès admin</a>'
+            . '</div>'
+
+            . '</div></body></html>';
+
+        $headers = ['Content-Type: text/html; charset=UTF-8', 'From: Voyages Sortir 08 <noreply@sortirmonde.fr>', 'Reply-To: ' . $email];
         if (wp_mail($to, $subject, $body, $headers)) {
             $devis_sent = true;
         } else {
