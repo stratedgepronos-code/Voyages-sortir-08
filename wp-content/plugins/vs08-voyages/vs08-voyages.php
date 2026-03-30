@@ -89,47 +89,78 @@ if (!defined('VS08_SERPAPI_API_KEY')) {
     }
 }
 
-// Chargement des modules
-require_once VS08V_PATH . 'includes/class-post-type.php';
-require_once VS08V_PATH . 'includes/class-meta-boxes.php';
-require_once VS08V_PATH . 'includes/class-search.php';
-require_once VS08V_PATH . 'includes/class-hotel-box.php';
-require_once VS08V_PATH . 'includes/class-hotel-scanner.php';
-require_once VS08V_PATH . 'includes/class-golf-box.php';
-require_once VS08V_PATH . 'includes/class-compris-box.php';
-require_once VS08V_PATH . 'includes/class-calculator.php';
-require_once VS08V_PATH . 'includes/class-booking.php';
-require_once VS08V_PATH . 'includes/class-insurance.php';
-require_once VS08V_PATH . 'includes/class-woo.php';
-require_once VS08V_PATH . 'includes/class-checkout.php';
-require_once VS08V_PATH . 'includes/class-duffel-api.php';
-require_once VS08V_PATH . 'includes/class-serpapi.php';
-require_once VS08V_PATH . 'includes/class-ajax.php';
-require_once VS08V_PATH . 'includes/class-rest.php';
-require_once VS08V_PATH . 'includes/class-contract.php';
-require_once VS08V_PATH . 'includes/class-emails.php';
-require_once VS08V_PATH . 'includes/class-traveler-space.php';
-require_once VS08V_PATH . 'includes/class-admin-dossiers.php';
-require_once VS08V_PATH . 'includes/class-admin-espace-ajax.php';
-require_once VS08V_PATH . 'includes/class-homepage-editor.php';
-VS08V_Homepage_Editor::register();
-require_once VS08V_PATH . 'includes/class-duplicate-voyage.php';
-try {
-    require_once VS08V_PATH . 'includes/class-paybox-mail.php';
-} catch (\Throwable $e) {
-    error_log('VS08 Paybox Mail load error: ' . $e->getMessage());
+// ════════════════════════════════════════════════════════════════════
+// CHARGEMENT INTELLIGENT DES MODULES
+// Avant : 27 fichiers PHP chargés sur CHAQUE requête (13 000 lignes)
+// Après : seulement les fichiers nécessaires au contexte
+// ════════════════════════════════════════════════════════════════════
+
+// ── TOUJOURS (core WordPress / WooCommerce hooks) ──
+require_once VS08V_PATH . 'includes/class-post-type.php';      // CPT registration
+require_once VS08V_PATH . 'includes/class-woo.php';             // hooks checkout/thankyou
+require_once VS08V_PATH . 'includes/class-checkout.php';        // affichage page checkout
+require_once VS08V_PATH . 'includes/class-booking.php';         // tunnel de réservation
+require_once VS08V_PATH . 'includes/class-search.php';          // recherche AJAX (front+admin)
+require_once VS08V_PATH . 'includes/class-rest.php';            // REST API
+require_once VS08V_PATH . 'includes/class-traveler-space.php';  // espace voyageur (front)
+require_once VS08V_PATH . 'includes/class-emails.php';          // dispatch emails (hooks WC)
+require_once VS08V_PATH . 'includes/class-ajax.php';            // AJAX front
+
+// ── ADMIN SEULEMENT (back-office WordPress) ──
+if (is_admin()) {
+    require_once VS08V_PATH . 'includes/class-meta-boxes.php';       // meta boxes voyage
+    require_once VS08V_PATH . 'includes/class-hotel-box.php';        // meta box hôtel
+    require_once VS08V_PATH . 'includes/class-hotel-scanner.php';    // scan Bedsonline
+    require_once VS08V_PATH . 'includes/class-golf-box.php';         // meta box golf
+    require_once VS08V_PATH . 'includes/class-compris-box.php';      // meta box "compris"
+    require_once VS08V_PATH . 'includes/class-admin-dossiers.php';   // gestion dossiers
+    require_once VS08V_PATH . 'includes/class-admin-espace-ajax.php';// AJAX admin
+    require_once VS08V_PATH . 'includes/class-homepage-editor.php';  // éditeur homepage
+    require_once VS08V_PATH . 'includes/class-duplicate-voyage.php'; // dupliquer voyage
+    require_once VS08V_PATH . 'includes/class-insurance.php';        // page assurances admin
+    VS08V_Homepage_Editor::register();
+    VS08V_Admin_Dossiers::register();
+    VS08V_Admin_Espace_Ajax::register();
+    VS08V_Duplicate_Voyage::register();
 }
 
-// Init
+// ── CHARGEMENT À LA DEMANDE (jamais au boot) ──
+// Ces classes n'ont AUCUN hook WordPress. Elles sont appelées par
+// d'autres classes quand elles en ont besoin. On les charge via
+// un autoloader léger.
+//
+// class-calculator.php    → appelé par booking-steps.php
+// class-serpapi.php        → appelé par class-ajax.php (recherche vols Ryanair)
+// class-duffel-api.php     → appelé par class-ajax.php (recherche vols Duffel)
+// class-contract.php       → appelé par class-emails.php (génération contrat)
+// class-paybox-mail.php    → appelé par class-woo.php (notification Paybox)
+
+spl_autoload_register(function($class) {
+    $map = [
+        'VS08V_Calculator'    => 'class-calculator.php',
+        'VS08_SerpApi'        => 'class-serpapi.php',
+        'VS08_Duffel_API'     => 'class-duffel-api.php',
+        'VS08V_Contract'      => 'class-contract.php',
+        'VS08V_Paybox_Mail'   => 'class-paybox-mail.php',
+        'VS08V_Insurance'     => 'class-insurance.php',
+        'VS08V_MetaBoxes'     => 'class-meta-boxes.php',
+        'VS08V_HotelBox'      => 'class-hotel-box.php',
+        'VS08V_HotelScanner'  => 'class-hotel-scanner.php',
+        'VS08V_GolfBox'       => 'class-golf-box.php',
+        'VS08V_ComprisBox'    => 'class-compris-box.php',
+    ];
+    if (isset($map[$class])) {
+        $file = VS08V_PATH . 'includes/' . $map[$class];
+        if (file_exists($file)) {
+            require_once $file;
+        }
+    }
+});
+
+// Init des modules toujours chargés
 VS08V_Search::register();
 VS08V_REST::register();
 VS08V_Traveler_Space::register();
-VS08V_Admin_Dossiers::register();
-VS08V_Admin_Espace_Ajax::register();
-VS08V_Duplicate_Voyage::register();
-if (class_exists('VS08V_Paybox_Mail')) {
-    VS08V_Paybox_Mail::register();
-}
 
 add_action('woocommerce_loaded', function() {
     require_once VS08V_PATH . 'includes/class-gateway-agence.php';
@@ -177,13 +208,17 @@ add_filter('document_title_parts', function($parts) {
     }
     return $parts;
 }, 1);
-add_action('add_meta_boxes', ['VS08V_MetaBoxes', 'register']);
-add_action('add_meta_boxes', ['VS08V_HotelBox', 'register']);
-add_action('add_meta_boxes', ['VS08V_GolfBox', 'register']);
-add_action('add_meta_boxes', ['VS08V_ComprisBox', 'register']);
-VS08V_HotelScanner::register();
-add_action('wp_ajax_vs08v_scan_golf_pdf', ['VS08V_HotelScanner', 'ajax_scan_golf_pdf']);
-add_action('save_post', ['VS08V_MetaBoxes', 'save'], 10, 2);
+// Meta boxes + hotel scanner : ADMIN SEULEMENT
+// add_meta_boxes ne fire qu'en admin, mais HotelScanner::register() est un appel direct
+if (is_admin()) {
+    add_action('add_meta_boxes', ['VS08V_MetaBoxes', 'register']);
+    add_action('add_meta_boxes', ['VS08V_HotelBox', 'register']);
+    add_action('add_meta_boxes', ['VS08V_GolfBox', 'register']);
+    add_action('add_meta_boxes', ['VS08V_ComprisBox', 'register']);
+    VS08V_HotelScanner::register();
+    add_action('wp_ajax_vs08v_scan_golf_pdf', ['VS08V_HotelScanner', 'ajax_scan_golf_pdf']);
+    add_action('save_post', ['VS08V_MetaBoxes', 'save'], 10, 2);
+}
 add_action('wp_enqueue_scripts', 'vs08v_frontend_assets');
 add_action('wp_enqueue_scripts', function () {
     /* Thème vs08 : handle réel = vs08-footer-terminal (l’ancien footer-terminal ne matchait pas → wttr.in partait encore) */
