@@ -49,7 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce']) 
 }
 ?>
 <style>
-.vs08-devis-hero{min-height:42vh;display:flex;align-items:center;background:linear-gradient(135deg,#0f2424 0%,#1a3a3a 100%);position:relative;padding:100px 80px 60px}
+.vs08-devis-hero{min-height:42vh;display:flex;align-items:center;background:url('https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=1600&q=80') center/cover no-repeat;position:relative;padding:100px 80px 60px}
+.vs08-devis-hero::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(15,36,36,.88) 0%,rgba(26,74,74,.75) 100%)}
+.vs08-devis-hero>*{position:relative;z-index:1}
 .vs08-devis-hero h1{font-size:clamp(32px,4vw,48px);color:#fff;font-family:'Playfair Display',serif;margin-bottom:12px}
 .vs08-devis-hero p{color:rgba(255,255,255,.8);font-size:16px;max-width:560px;font-family:'Outfit',sans-serif;line-height:1.6}
 .vs08-devis-wrap{max-width:720px;margin:0 auto;padding:56px 24px 80px}
