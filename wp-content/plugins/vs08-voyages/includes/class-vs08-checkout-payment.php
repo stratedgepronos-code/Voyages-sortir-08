@@ -27,10 +27,9 @@ class VS08_Checkout_Payment {
     public static function register() {
         add_filter('woocommerce_payment_gateways', [__CLASS__, 'alter_payment_gateways']);
         add_filter('woocommerce_available_payment_gateways', [__CLASS__, 'filter_gateways'], 50);
-        // PRÉ-RÉSA EMAILS : envoyés sur la page merci (pas pendant le checkout AJAX)
-        // Pendant le checkout = contrat + 2 wp_mail() = 15-30s → timeout navigateur
-        // Sur thankyou = requête GET séparée, pas de pression de temps
-        add_action('woocommerce_thankyou', [__CLASS__, 'maybe_send_pre_reservation_emails_on_thankyou'], 2);
+        // PRÉ-RÉSA EMAILS : envoyés en arrière-plan via Action Scheduler
+        // (programmé sur woocommerce_thankyou dans vs08-voyages.php)
+        // Plus de hook ici — tout passe par vs08v_async_send_emails.
         add_action('woocommerce_checkout_order_processed', [__CLASS__, 'clear_session_payment_mode'], 999, 1);
     }
 

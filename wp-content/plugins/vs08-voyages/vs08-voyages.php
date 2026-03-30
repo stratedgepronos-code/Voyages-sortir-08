@@ -436,23 +436,67 @@ function vs08v_get_espace_url_for_order($order) {
 // ═══════════════════════════════════════════════════════════════════
 // REDIRECTION VERS ESPACE VOYAGEUR
 // ═══════════════════════════════════════════════════════════════════
-// IMPORTANT : on ne redirige PAS côté serveur (exit). On laisse la
-// page merci (order-received) charger normalement pour que les hooks
-// woocommerce_thankyou se déclenchent (copie données + envoi emails).
-// La redirection vers l'espace voyageur se fait via JS APRÈS les hooks.
+// Flux ultra-rapide :
+// 1. Copie données (priorité 0) → <1 seconde
+// 2. Programme emails en arrière-plan (priorité 2) → instantané
+// 3. Redirect JS vers espace voyageur (priorité 3) → immédiat
+// Total côté client : 2-3 secondes max. Emails envoyés 10s après.
 
-// Secours : redirection JS sur la page thank you.
-// Priorité 5 = APRÈS copie données (0) + pré-resa emails (2)
+// Priorité 2 : programmer les emails en arrière-plan (PAS les envoyer maintenant)
 add_action('woocommerce_thankyou', function($order_id) {
     if (!$order_id) return;
-    // Filet de sécurité : dispatch email si pas encore fait
-    VS08V_Emails::dispatch($order_id);
-    if (class_exists('VS08C_Emails')) VS08C_Emails::dispatch($order_id);
+    // Ne rien faire si déjà programmé ou envoyé
+    if (get_post_meta($order_id, '_vs08v_emails_sent', true)) return;
+    if (get_post_meta($order_id, '_vs08v_emails_scheduled', true)) return;
+
+    // Marquer comme programmé (évite les doublons)
+    update_post_meta($order_id, '_vs08v_emails_scheduled', current_time('mysql'));
+
+    // Programmer l'envoi via Action Scheduler (inclus dans WooCommerce)
+    if (function_exists('as_schedule_single_action')) {
+        as_schedule_single_action(time() + 10, 'vs08v_async_send_emails', ['order_id' => $order_id], 'vs08-emails');
+        error_log('[VS08] Emails programmés en async pour order #' . $order_id);
+    } else {
+        // Fallback : envoyer maintenant si Action Scheduler indisponible
+        VS08V_Emails::dispatch($order_id);
+        if (class_exists('VS08C_Emails')) VS08C_Emails::dispatch($order_id);
+    }
+}, 2);
+
+// Priorité 3 : redirect JS immédiat vers espace voyageur
+add_action('woocommerce_thankyou', function($order_id) {
+    if (!$order_id) return;
     $order = wc_get_order($order_id);
     $target = vs08v_get_espace_url_for_order($order);
     if (!$target) return;
     echo '<script>window.location.replace("' . esc_js(esc_url($target)) . '");</script>';
-}, 5);
+}, 3);
+
+// Handler Action Scheduler : envoie les emails en arrière-plan (10s après le checkout)
+add_action('vs08v_async_send_emails', function($order_id) {
+    error_log('[VS08] Envoi async emails order #' . $order_id . ' — début');
+    $order = wc_get_order($order_id);
+    if (!$order) { error_log('[VS08] Async emails: order #' . $order_id . ' introuvable'); return; }
+
+    // Copier les booking_data si pas encore fait (filet de sécurité)
+    if (function_exists('vs08v_copy_booking_data_to_order')) {
+        vs08v_copy_booking_data_to_order($order_id);
+    }
+
+    // Mode agence → emails pré-réservation
+    if ($order->get_payment_method() === 'vs08_agence') {
+        if (class_exists('VS08_Checkout_Payment')) {
+            VS08_Checkout_Payment::maybe_send_pre_reservation_emails($order_id, null, $order);
+        }
+    }
+
+    // Dispatch emails classiques (contrat de vente, confirmation)
+    VS08V_Emails::dispatch($order_id);
+    if (class_exists('VS08C_Emails')) VS08C_Emails::dispatch($order_id);
+    if (class_exists('VS08S_Emails')) VS08S_Emails::dispatch($order_id);
+
+    error_log('[VS08] Envoi async emails order #' . $order_id . ' — terminé');
+}, 10, 1);
 
 // Cron rappel solde (J-14 et J-3)
 add_action('vs08v_solde_reminder_cron', function() {

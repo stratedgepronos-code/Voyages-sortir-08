@@ -254,7 +254,7 @@ add_action('woocommerce_thankyou', function($order_id) {
     // Déjà copié ?
     $existing = get_post_meta($order_id, '_vs08s_booking_data', true);
     if (!empty($existing) && is_array($existing)) {
-        VS08S_Emails::dispatch($order_id);
+        // Données déjà copiées — emails envoyés par Action Scheduler (vs08-voyages.php)
         return;
     }
     $order = wc_get_order($order_id);
@@ -275,6 +275,5 @@ add_action('woocommerce_thankyou', function($order_id) {
             break;
         }
     }
-    // Dispatch emails séjour
-    VS08S_Emails::dispatch($order_id);
-}, 5);
+    // Emails envoyés en arrière-plan par Action Scheduler (vs08v_async_send_emails)
+}, 1); // priorité 1 = copie données AVANT le scheduler (priorité 2)
