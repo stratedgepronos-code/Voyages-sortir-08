@@ -201,24 +201,27 @@ add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_
 }, 10, 4);
 
 // Copier sur la commande — via update_post_meta (pas $order->save)
-add_action('woocommerce_checkout_update_order_meta', function($order_id) {
-    try {
-        $existing = get_post_meta($order_id, '_vs08c_booking_data', true);
-        if (!empty($existing) && is_array($existing)) return;
-        if (!WC()->cart) return;
-        foreach (WC()->cart->get_cart() as $item) {
-            $pid = $item['product_id'] ?? 0;
-            if (!$pid) continue;
-            $data = get_post_meta($pid, '_vs08c_booking_data', true);
-            if (!empty($data) && is_array($data)) {
-                update_post_meta($order_id, '_vs08c_booking_data', $data);
-                break;
-            }
+// Copier _vs08c_booking_data sur la commande — APRÈS le checkout (pas pendant)
+// Même approche que vs08-voyages : zéro écriture lourde pendant le checkout.
+function vs08c_copy_booking_data_to_order($order_id) {
+    if (!$order_id) return;
+    $existing = get_post_meta($order_id, '_vs08c_booking_data', true);
+    if (!empty($existing) && is_array($existing)) return;
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+    foreach ($order->get_items() as $item) {
+        $pid = $item->get_product_id();
+        if (!$pid) continue;
+        $data = get_post_meta($pid, '_vs08c_booking_data', true);
+        if (!empty($data) && is_array($data)) {
+            update_post_meta($order_id, '_vs08c_booking_data', $data);
+            error_log('[VS08C] booking_data copié sur order #' . $order_id . ' depuis product #' . $pid);
+            return;
         }
-    } catch (Throwable $e) {
-        error_log('VS08C checkout_update_order_meta: ' . $e->getMessage());
     }
-}, 10, 2);
+}
+add_action('woocommerce_thankyou', 'vs08c_copy_booking_data_to_order', 0);
+add_action('woocommerce_payment_complete', 'vs08c_copy_booking_data_to_order', 5);
 
 // Masquer les produits circuit du catalogue
 add_filter('woocommerce_product_query_meta_query', function($meta_query) {
