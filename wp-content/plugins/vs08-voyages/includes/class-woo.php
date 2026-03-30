@@ -136,14 +136,55 @@ class VS08V_Woo {
     }
 }
 
-// Marquer le line item avec le voyage_id (léger) — PAS les booking_data (trop lourd pour HPOS)
+// ════════════════════════════════════════════════════════════════════
+// HOOKS CHECKOUT — approche "zéro écriture lourde pendant le checkout"
+// Les booking_data vivent sur le produit temporaire. Pendant le checkout,
+// on stocke SEULEMENT le voyage_id sur le line item (4 octets).
+// La copie complète se fait APRÈS le checkout (thankyou ou payment_complete),
+// dans une requête séparée où la mémoire est libre.
+// C'est la même approche que vs08-sejours — prouvée, fiable.
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * Copie les booking_data depuis le produit vers la commande.
+ * Idempotent : si déjà copié, ne fait rien.
+ * Utilisé par thankyou + payment_complete comme double filet.
+ */
+function vs08v_copy_booking_data_to_order($order_id) {
+    if (!$order_id) return;
+
+    // Déjà copié ? (idempotent)
+    $existing = get_post_meta($order_id, '_vs08v_booking_data', true);
+    if (!empty($existing) && is_array($existing)) return;
+
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+
+    foreach ($order->get_items() as $item) {
+        $pid = $item->get_product_id();
+        if (!$pid) continue;
+
+        $data = get_post_meta($pid, '_vs08v_booking_data', true);
+        if (empty($data) || !is_array($data)) continue;
+
+        // Type séjour ou circuit → géré par leur propre plugin
+        $type = $data['type'] ?? '';
+        if ($type === 'sejour' || $type === 'circuit') continue;
+
+        // Copier en base directement (pas $order->save())
+        update_post_meta($order_id, '_vs08v_booking_data', $data);
+        error_log('[VS08] booking_data copié sur order #' . $order_id . ' depuis product #' . $pid);
+        return;
+    }
+}
+
+// ── 1. Line item : juste le voyage_id (pendant le checkout) ──
 add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_item_key, $values, $order) {
     try {
         $product_id = $item->get_product_id();
         if (!$product_id) return;
         $booking_data = get_post_meta($product_id, '_vs08v_booking_data', true);
         if (!empty($booking_data) && is_array($booking_data)) {
-            // Seulement l'ID du voyage (4 octets, pas 50Ko)
             $item->add_meta_data('_vs08v_voyage_id', $booking_data['voyage_id'] ?? 0, true);
         }
     } catch (\Throwable $e) {
@@ -151,74 +192,14 @@ add_action('woocommerce_checkout_create_order_line_item', function($item, $cart_
     }
 }, 10, 4);
 
-// Après création de la commande, programmer la copie des booking_data en ASYNCHRONE
-// POURQUOI : update_post_meta() sur une commande avec HPOS sync mode déclenche
-// une synchronisation wp_posts ↔ wp_wc_orders qui consomme des centaines de Mo.
-// En reportant la copie à 10 secondes après le checkout, on évite le crash.
-// Le produit temporaire contient déjà toutes les données — la commande peut attendre.
-add_action('woocommerce_checkout_update_order_meta', function($order_id) {
-    try {
-        // Trouver le product_id dans le panier
-        if (!WC()->cart) return;
-        $target_pid = 0;
-        foreach (WC()->cart->get_cart() as $item) {
-            $pid = $item['product_id'] ?? 0;
-            if (!$pid) continue;
-            $data = get_post_meta($pid, '_vs08v_booking_data', true);
-            if (!empty($data) && is_array($data)) {
-                $target_pid = $pid;
-                break;
-            }
-        }
-        if (!$target_pid) return;
+// ── 2. Page merci : copier les booking_data (requête GET, mémoire libre) ──
+add_action('woocommerce_thankyou', 'vs08v_copy_booking_data_to_order', 0);
 
-        // Stocker SEULEMENT le product_id comme référence légère (4 octets)
-        // Le gros blob booking_data sera copié en async ci-dessous
-        update_post_meta($order_id, '_vs08v_booking_product_id', $target_pid);
-        error_log('[VS08] Checkout order #' . $order_id . ' — product_id=' . $target_pid . ' stocké, copie booking_data programmée en async');
-
-        // Programmer la copie lourde via Action Scheduler (WooCommerce l'inclut)
-        if (function_exists('as_schedule_single_action')) {
-            as_schedule_single_action(
-                time() + 10, // 10 secondes après (le checkout sera fini)
-                'vs08v_deferred_copy_booking_data',
-                ['order_id' => $order_id, 'product_id' => $target_pid],
-                'vs08-voyages'
-            );
-        } else {
-            // Fallback : wp_schedule_single_event (moins fiable mais marche)
-            wp_schedule_single_event(time() + 30, 'vs08v_deferred_copy_booking_data_cron', [$order_id, $target_pid]);
-        }
-    } catch (\Throwable $e) {
-        error_log('VS08 checkout_update_order_meta: ' . $e->getMessage());
-    }
-}, 10, 2);
-
-// ── HANDLER ASYNC : copie les booking_data sur la commande (hors checkout) ──
-// Cette action tourne APRÈS le checkout, dans un process séparé, sans pression mémoire.
-add_action('vs08v_deferred_copy_booking_data', function($order_id, $product_id) {
-    // Sécurité : vérifier que la copie n'a pas déjà été faite
-    $existing = get_post_meta($order_id, '_vs08v_booking_data', true);
-    if (!empty($existing) && is_array($existing)) {
-        error_log('[VS08] Deferred copy order #' . $order_id . ' — déjà fait, skip');
-        return;
-    }
-
-    $data = get_post_meta($product_id, '_vs08v_booking_data', true);
-    if (empty($data) || !is_array($data)) {
-        error_log('[VS08] Deferred copy order #' . $order_id . ' — pas de booking_data sur product #' . $product_id);
-        return;
-    }
-
-    // Écrire les données sur la commande — ici on est hors checkout, la mémoire est libre
-    update_post_meta($order_id, '_vs08v_booking_data', $data);
-    error_log('[VS08] Deferred copy order #' . $order_id . ' — booking_data copié OK depuis product #' . $product_id);
-}, 10, 2);
-
-// Fallback wp_cron (si Action Scheduler n'est pas dispo)
-add_action('vs08v_deferred_copy_booking_data_cron', function($order_id, $product_id) {
-    do_action('vs08v_deferred_copy_booking_data', $order_id, $product_id);
-}, 10, 2);
+// ── 3. Backup : copier aussi sur payment_complete (callback Paybox côté serveur) ──
+// Si le client ferme le navigateur après paiement, la page merci ne charge pas.
+// Mais payment_complete est appelé par le callback IPN de Paybox → les données
+// sont quand même copiées sur la commande.
+add_action('woocommerce_payment_complete', 'vs08v_copy_booking_data_to_order', 5);
 
 // Afficher les infos de réservation + option "Solde marqué réglé" dans la commande admin
 add_action('woocommerce_admin_order_data_after_order_details', function($order) {
