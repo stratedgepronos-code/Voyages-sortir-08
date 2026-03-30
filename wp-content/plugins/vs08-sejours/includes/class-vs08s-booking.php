@@ -57,7 +57,7 @@ class VS08S_Booking {
         $product->set_name($product_name);
         $product->set_price($acompte);
         $product->set_regular_price($acompte);
-        $product->set_status('private');
+        $product->set_status('publish');
         $product->set_virtual(true);
         $product->set_sold_individually(true);
         $product->set_catalog_visibility('hidden');
