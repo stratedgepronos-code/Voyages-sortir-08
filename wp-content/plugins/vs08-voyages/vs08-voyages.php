@@ -373,14 +373,23 @@ add_action('template_redirect', function() {
 // ============================================================
 // EMAILS POST-PAIEMENT (contrat de vente admin + client)
 // ============================================================
-// Hook principal : déclenché par WooCommerce quand le paiement est confirmé
+// EMAILS POST-PAIEMENT
+// ============================================================
+// IMPORTANT : on NE dispatch PAS pendant le checkout AJAX.
+// Le checkout doit répondre en <3 secondes. Les emails SMTP prennent
+// 1-2 minutes chacun sur Hostinger mutualisé.
+// Les emails sont envoyés sur la page merci (woocommerce_thankyou)
+// qui est une requête GET séparée, sans contrainte de temps.
+
 add_action('woocommerce_payment_complete', function($order_id) {
+    // Ne PAS envoyer pendant le checkout AJAX (trop lent)
+    if (!empty($_REQUEST['wc-ajax'])) return;
     VS08V_Emails::dispatch($order_id);
 });
 
-// Fallback : certains moyens de paiement (virement, chèque) ne déclenchent
-// pas woocommerce_payment_complete mais changent le statut en « processing »
 add_action('woocommerce_order_status_changed', function($order_id, $old_status, $new_status) {
+    // Ne PAS envoyer pendant le checkout AJAX (trop lent)
+    if (!empty($_REQUEST['wc-ajax'])) return;
     if (in_array($new_status, ['processing', 'completed'])) {
         VS08V_Emails::dispatch($order_id);
     }

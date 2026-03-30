@@ -145,11 +145,13 @@ add_action('template_redirect', function() {
     }
 }, 5);
 
-/* Emails post-paiement */
+/* Emails post-paiement — PAS pendant le checkout AJAX (trop lent) */
 add_action('woocommerce_payment_complete', function($order_id) {
+    if (!empty($_REQUEST['wc-ajax'])) return;
     VS08C_Emails::dispatch($order_id);
 });
 add_action('woocommerce_order_status_changed', function($order_id, $old_status, $new_status) {
+    if (!empty($_REQUEST['wc-ajax'])) return;
     if (in_array($new_status, ['processing', 'completed'])) {
         VS08C_Emails::dispatch($order_id);
     }
