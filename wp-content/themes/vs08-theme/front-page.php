@@ -64,6 +64,7 @@ body.home,body.page-template-default{background:#fff!important}
 .fp-search-field label{display:block;font-size:10px;font-weight:700;color:var(--teal-dark);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px;flex-shrink:0}
 .fp-search-field input,.fp-search-field select{width:100%;border:none;border-bottom:2px solid var(--gray-light);padding:10px 0;font-size:14px;line-height:20px;color:var(--dark);background:transparent;outline:none;cursor:pointer;transition:border-color .2s;font-family:'Outfit',sans-serif;height:40px;box-sizing:border-box}
 .fp-search-field input:focus,.fp-search-field select:focus{border-bottom-color:var(--teal)}
+.fp-search-field select:disabled{color:#9ca3af;cursor:not-allowed;opacity:.6}
 .fp-search-field #fp-date-wrap{flex-shrink:0;margin:0;padding:0}
 .fp-search-date-trigger{width:100%;border:none;border-bottom:2px solid var(--gray-light);padding:0;font-size:14px;line-height:20px;color:#9ca3af;background:transparent;cursor:pointer;transition:border-color .2s;font-family:'Outfit',sans-serif;height:40px;box-sizing:border-box;display:flex;align-items:center}
 #fp-date-wrap:focus-within .fp-search-date-trigger{border-bottom-color:var(--teal)}
@@ -615,16 +616,17 @@ if (count($vs08_opts['aeroports']) < 3) {
 <section class="fp-search">
     <form class="fp-search-card" action="<?php echo esc_url(home_url('/resultats-recherche')); ?>" method="get">
         <div class="fp-search-field"><label>Type de voyage</label>
-            <select name="type">
+            <select name="type" id="fp-sel-type">
                 <option value="">Tous les types</option>
                 <?php foreach ($vs08_opts['types'] as $tv => $tl): ?>
                 <option value="<?php echo esc_attr($tv); ?>"><?php echo esc_html($tl); ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
-        <div class="fp-search-field"><label>Destination</label>
-            <select name="dest" id="fp-sel-dest">
-                <option value="">Toutes les destinations</option>
+        <div class="fp-search-field" id="fp-dest-wrap" style="position:relative">
+            <label>Destination</label>
+            <select name="dest" id="fp-sel-dest" disabled>
+                <option value="">— Choisissez un type d'abord —</option>
                 <?php foreach ($vs08_opts['destinations'] as $d): ?>
                 <option value="<?php echo esc_attr($d['value']); ?>"><?php echo esc_html($d['label']); ?></option>
                 <?php endforeach; ?>
@@ -690,72 +692,113 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- Filtrage dynamique : aéroport → destinations desservies -->
+<!-- Filtrage dynamique : type + aéroport → destinations -->
 <script>
 (function(){
+    var typeSel    = document.getElementById('fp-sel-type');
     var airportSel = document.getElementById('fp-sel-airport');
     var destSel    = document.getElementById('fp-sel-dest');
-    if (!airportSel || !destSel) return;
+    var destWrap   = document.getElementById('fp-dest-wrap');
+    if (!typeSel || !airportSel || !destSel) return;
 
-    // Map aéroport → destinations (générée depuis la BDD)
     var airportDestMap = <?php echo wp_json_encode($vs08_opts['airport_dest_map'] ?? new stdClass()); ?>;
+    var typeDestMap    = <?php echo wp_json_encode($vs08_opts['type_dest_map'] ?? new stdClass()); ?>;
 
-    // Sauvegarder toutes les options destination originales
-    var allDestOptions = [];
-    for (var i = 0; i < destSel.options.length; i++) {
-        allDestOptions.push({
-            value: destSel.options[i].value,
-            text:  destSel.options[i].text
-        });
+    var allDestOptions = <?php echo wp_json_encode(array_map(function($d) {
+        return ['value' => $d['value'], 'text' => $d['label']];
+    }, $vs08_opts['destinations'])); ?>;
+
+    var tooltip = null;
+
+    destWrap.addEventListener('click', function(e) {
+        if (!destSel.disabled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        showTooltip();
+    });
+
+    function showTooltip() {
+        if (tooltip) return;
+        tooltip = document.createElement('div');
+        tooltip.textContent = 'Sélectionnez d\'abord un type de voyage';
+        tooltip.style.cssText = 'position:absolute;top:-40px;left:50%;transform:translateX(-50%);background:#1e3a3a;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;white-space:nowrap;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.15);pointer-events:none';
+        var arrow = document.createElement('div');
+        arrow.style.cssText = 'position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:12px;height:12px;background:#1e3a3a;rotate:45deg';
+        tooltip.appendChild(arrow);
+        destWrap.appendChild(tooltip);
+        setTimeout(function() { if (tooltip) { tooltip.remove(); tooltip = null; } }, 2500);
     }
 
-    airportSel.addEventListener('change', function() {
-        var code = this.value;
+    function rebuildDest() {
+        var type = typeSel.value;
+        var code = airportSel.value;
         var currentDest = destSel.value;
 
-        // Vider et re-remplir le select destination
         destSel.innerHTML = '';
 
-        if (!code || !airportDestMap[code]) {
-            // Pas d'aéroport sélectionné → toutes les destinations
-            allDestOptions.forEach(function(o) {
-                var opt = document.createElement('option');
-                opt.value = o.value;
-                opt.textContent = o.text;
-                if (o.value === currentDest) opt.selected = true;
-                destSel.appendChild(opt);
-            });
-        } else {
-            // Aéroport sélectionné → filtrer
-            var allowed = airportDestMap[code];
-            var optAll = document.createElement('option');
-            optAll.value = '';
-            optAll.textContent = 'Destinations au départ de ' + code;
-            destSel.appendChild(optAll);
+        if (!type) {
+            destSel.disabled = true;
+            var ph = document.createElement('option');
+            ph.value = '';
+            ph.textContent = '— Choisissez un type d\'abord —';
+            destSel.appendChild(ph);
+            return;
+        }
 
-            var found = false;
-            allDestOptions.forEach(function(o) {
-                if (o.value === '') return; // skip "Toutes les destinations"
-                if (allowed.indexOf(o.value) !== -1) {
+        destSel.disabled = false;
+
+        var typeDests = typeDestMap[type] || null;
+        var airDests  = (code && airportDestMap[code]) ? airportDestMap[code] : null;
+
+        var ph = document.createElement('option');
+        ph.value = '';
+        if (typeDests && airDests) {
+            ph.textContent = 'Destinations disponibles';
+        } else if (typeDests) {
+            ph.textContent = 'Toutes les destinations';
+        } else if (airDests) {
+            ph.textContent = 'Destinations au départ de ' + code;
+        } else {
+            ph.textContent = 'Toutes les destinations';
+        }
+        destSel.appendChild(ph);
+
+        allDestOptions.forEach(function(o) {
+            if (!o.value) return;
+            if (typeDests && typeDests.indexOf(o.value) === -1) return;
+            if (airDests && airDests.indexOf(o.value) === -1) return;
+
+            var opt = document.createElement('option');
+            opt.value = o.value;
+            opt.textContent = o.text;
+            if (o.value === currentDest) opt.selected = true;
+            destSel.appendChild(opt);
+        });
+
+        if (destSel.options.length <= 1 && (typeDests || airDests)) {
+            var pool = typeDests || [];
+            if (airDests) pool = pool.length ? pool.filter(function(d){ return airDests.indexOf(d) !== -1; }) : airDests;
+            pool.forEach(function(d) {
+                var exists = false;
+                for (var i = 0; i < destSel.options.length; i++) {
+                    if (destSel.options[i].value === d) { exists = true; break; }
+                }
+                if (!exists) {
                     var opt = document.createElement('option');
-                    opt.value = o.value;
-                    opt.textContent = o.text;
-                    if (o.value === currentDest) { opt.selected = true; found = true; }
+                    opt.value = d;
+                    opt.textContent = d.charAt(0).toUpperCase() + d.slice(1);
                     destSel.appendChild(opt);
                 }
             });
-
-            // Si aucune destination trouvée dans les options existantes, ajouter les destinations brutes
-            if (destSel.options.length <= 1) {
-                allowed.forEach(function(d) {
-                    var opt = document.createElement('option');
-                    opt.value = d;
-                    opt.textContent = d;
-                    destSel.appendChild(opt);
-                });
-            }
         }
+    }
+
+    typeSel.addEventListener('change', function() {
+        if (tooltip) { tooltip.remove(); tooltip = null; }
+        rebuildDest();
     });
+
+    airportSel.addEventListener('change', rebuildDest);
 })();
 </script>
 
