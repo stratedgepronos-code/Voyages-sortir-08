@@ -284,13 +284,13 @@ get_header();
                 <div class="bk-step" id="bk-ind-2">
                     <div class="bk-step-pin"><div class="bk-step-pin-body"><span class="bk-step-pin-icon">👤</span></div></div>
                     <div class="bk-step-label">Voyageurs</div>
-                    <div class="bk-step-hint">Escale 1</div>
+                    <div class="bk-step-hint">Renseignements</div>
                 </div>
                 <div class="bk-step-line" id="bk-line-2"></div>
                 <div class="bk-step" id="bk-ind-3">
                     <div class="bk-step-pin"><div class="bk-step-pin-body"><span class="bk-step-pin-icon">💳</span></div></div>
                     <div class="bk-step-label">Paiement</div>
-                    <div class="bk-step-hint">Escale 2</div>
+                    <div class="bk-step-hint">Contrat</div>
                 </div>
                 <div class="bk-step-line" id="bk-line-3"></div>
                 <div class="bk-step" id="bk-ind-4">
