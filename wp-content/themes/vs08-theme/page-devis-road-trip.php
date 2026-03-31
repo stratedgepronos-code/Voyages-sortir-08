@@ -63,7 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce_roa
         elseif ($d1) $periode = 'À partir du ' . $d1;
 
         if (is_email($email) && $nom && $prenom) {
-            $to = 'sortir08.ag@wanadoo.fr';
             $subject = '🚗 [Devis Road Trip] ' . $prenom . ' ' . strtoupper($nom) . ' — ' . ($destination ?: 'Road Trip');
 
             $tr = function($icon, $label, $value) {
@@ -100,8 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['vs08_devis_nonce_roa
                 . '<div style="background:#f9f6f0;padding:16px 32px;text-align:center;font-size:11px;color:#9ca3af">Reçu le ' . date('d/m/Y à H:i') . ' · Formulaire devis Road Trip</div>'
                 . '</div></body></html>';
 
-            $headers = ['Content-Type: text/html; charset=UTF-8', 'Reply-To: ' . $email];
-            $ok = vs08_mail_devis_agence($to, $subject, $body, $headers);
+            $ok = vs08_mail_devis_agence($subject, $body, $email);
             $devis_sent = (bool) $ok;
             if (!$devis_sent) $devis_error = 'Erreur technique lors de l\'envoi.';
         } else {
