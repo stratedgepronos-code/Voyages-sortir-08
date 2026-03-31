@@ -1455,6 +1455,21 @@ $fp_dest_to_pays = [
     'St Andrews'=>'Écosse','Édimbourg'=>'Écosse',
     // France
     'Biarritz'=>'France','Côte d\'Azur'=>'France','Provence'=>'France','Normandie'=>'France','Corse'=>'France',
+    // DOM-TOM
+    'Pointe-à-Pitre'=>'Guadeloupe','Guadeloupe'=>'Guadeloupe','Sainte-Anne'=>'Guadeloupe','Saint-François'=>'Guadeloupe',
+    'Fort-de-France'=>'Martinique','Martinique'=>'Martinique','Les Trois-Îlets'=>'Martinique',
+    'Réunion'=>'Réunion','Saint-Denis'=>'Réunion','Saint-Gilles'=>'Réunion',
+    // Afrique & Océan Indien
+    'Zanzibar'=>'Tanzanie','Nosy Be'=>'Madagascar','Antananarivo'=>'Madagascar',
+    'Mombasa'=>'Kenya','Nairobi'=>'Kenya',
+    // Asie
+    'Bali'=>'Indonésie','Siem Reap'=>'Cambodge','Phnom Penh'=>'Cambodge',
+    'Cancún'=>'Mexique','Playa del Carmen'=>'Mexique',
+    // Amérique du Sud
+    'Cusco'=>'Pérou','Lima'=>'Pérou',
+    // Divers
+    'Dubaï'=>'Émirats arabes unis','Abu Dhabi'=>'Émirats arabes unis',
+    'Bergen'=>'Norvège','Reykjavik'=>'Islande',
 ];
 // IATA destination → pays (fallback ultime : résout via le code aéroport d'arrivée)
 $fp_iata_to_pays = [
@@ -1507,7 +1522,16 @@ $fp_iata_to_pays = [
     'PPT'=>'Polynésie','NOU'=>'Nouvelle-Calédonie',
     'TIV'=>'Monténégro','TGD'=>'Monténégro','BOJ'=>'Bulgarie','VAR'=>'Bulgarie',
     'PRG'=>'République Tchèque','BUD'=>'Hongrie','WAW'=>'Pologne','OTP'=>'Roumanie',
-    'KEF'=>'Islande','OSL'=>'Norvège','ARN'=>'Suède','HEL'=>'Finlande',
+    'KEF'=>'Islande','OSL'=>'Norvège','BGO'=>'Norvège','ARN'=>'Suède','HEL'=>'Finlande',
+    // DOM-TOM & océan Indien
+    'PTP'=>'Guadeloupe','FDF'=>'Martinique','RUN'=>'Réunion','CAY'=>'Guyane',
+    'TNR'=>'Madagascar','NOS'=>'Madagascar',
+    // Afrique
+    'ZNZ'=>'Tanzanie','MBA'=>'Kenya','NBO'=>'Kenya',
+    // Asie
+    'REP'=>'Cambodge','PNH'=>'Cambodge',
+    // Amérique du Sud
+    'CUZ'=>'Pérou','LIM'=>'Pérou',
 ];
 // Ajouter les coords pour les pays qui ne sont pas encore dans la table
 $fp_map_coords += [
@@ -1527,6 +1551,16 @@ $fp_map_coords += [
     'Monténégro'=>['lat'=>42.4,'lon'=>18.8,'city'=>'Tivat','iata'=>'TIV','region'=>'MONTÉNÉGRO'],
     'Bulgarie'=>['lat'=>42.57,'lon'=>27.5,'city'=>'Bourgas','iata'=>'BOJ','region'=>'BULGARIE'],
     'Polynésie'=>['lat'=>-17.55,'lon'=>-149.6,'city'=>'Tahiti','iata'=>'PPT','region'=>'POLYNÉSIE'],
+    'Guadeloupe'=>['lat'=>16.27,'lon'=>-61.53,'city'=>'Pointe-à-Pitre','iata'=>'PTP','region'=>'GUADELOUPE'],
+    'Martinique'=>['lat'=>14.59,'lon'=>-61.0,'city'=>'Fort-de-France','iata'=>'FDF','region'=>'MARTINIQUE'],
+    'Réunion'=>['lat'=>-21.32,'lon'=>55.42,'city'=>'Saint-Denis','iata'=>'RUN','region'=>'LA RÉUNION'],
+    'Madagascar'=>['lat'=>-18.9,'lon'=>47.5,'city'=>'Antananarivo','iata'=>'TNR','region'=>'MADAGASCAR'],
+    'Norvège'=>['lat'=>60.2,'lon'=>5.23,'city'=>'Bergen','iata'=>'BGO','region'=>'NORVÈGE'],
+    'Malaisie'=>['lat'=>3.14,'lon'=>101.7,'city'=>'Kuala Lumpur','iata'=>'KUL','region'=>'MALAISIE'],
+    'Cambodge'=>['lat'=>13.41,'lon'=>103.87,'city'=>'Siem Reap','iata'=>'REP','region'=>'CAMBODGE'],
+    'Pérou'=>['lat'=>-13.53,'lon'=>-71.97,'city'=>'Cusco','iata'=>'CUZ','region'=>'PÉROU'],
+    'Tanzanie'=>['lat'=>-6.77,'lon'=>39.3,'city'=>'Zanzibar','iata'=>'ZNZ','region'=>'TANZANIE'],
+    'Kenya'=>['lat'=>-4.03,'lon'=>39.6,'city'=>'Mombasa','iata'=>'MBA','region'=>'KENYA'],
 ];
 $fp_type_colors = ['sejour_golf'=>'#c9a84c','circuit'=>'#e55d3a','sejour'=>'#59b7b7','road_trip'=>'#8e44ad','city_trip'=>'#3498db','parc'=>'#e74c3c'];
 
@@ -1643,7 +1677,15 @@ foreach (($fp_dest_agg ?? []) as $k => $v) {
         {code:'TLS',name:'Toulouse',lat:43.63,lon:1.37},
         {code:'LIL',name:'Lille',lat:50.57,lon:3.10},
         {code:'NCE',name:'Nice',lat:43.66,lon:7.22},
-        {code:'BRU',name:'Bruxelles',lat:50.90,lon:4.48}
+        {code:'BRU',name:'Bruxelles',lat:50.90,lon:4.48},
+        {code:'SXB',name:'Strasbourg',lat:48.54,lon:7.63},
+        {code:'BVA',name:'Beauvais',lat:49.45,lon:2.11},
+        {code:'MLH',name:'Mulhouse',lat:47.59,lon:7.53},
+        {code:'GVA',name:'Genève',lat:46.24,lon:6.11},
+        {code:'LUX',name:'Luxembourg',lat:49.63,lon:6.20},
+        {code:'ETZ',name:'Metz-Nancy',lat:48.98,lon:6.25},
+        {code:'RNS',name:'Rennes',lat:48.07,lon:-1.73},
+        {code:'CFE',name:'Clermont-Fd',lat:45.79,lon:3.16}
     ];
     var TYPE_LABELS = {sejour_golf:'Séjours Golf',circuit:'Circuits',sejour:'All Inclusive',road_trip:'Road Trip',city_trip:'City Trip',parc:'Parcs'};
     var APT_MAP = {}; APTS.forEach(function(a){ APT_MAP[a.code]=a; });

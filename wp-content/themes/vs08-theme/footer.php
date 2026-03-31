@@ -85,14 +85,10 @@ $ft_slide_count = count($ft_bg_slides);
 }
 .ft-root *{margin:0;padding:0;box-sizing:border-box}
 
-/* Ambient glows + pulse */
-.ft-glow{position:absolute;border-radius:50%;pointer-events:none;filter:blur(120px);will-change:transform,opacity;z-index:4}
-.ft-glow--1{width:min(70vw,700px);height:min(70vw,700px);top:-18%;left:-8%;background:radial-gradient(circle,rgba(89,183,183,.07),transparent 65%);animation:ft-glow-pulse 14s ease-in-out infinite}
-.ft-glow--2{width:min(55vw,520px);height:min(55vw,520px);bottom:-12%;right:-5%;background:radial-gradient(circle,rgba(200,164,94,.05),transparent 60%);animation:ft-glow-pulse 18s ease-in-out infinite 3s}
-@keyframes ft-glow-pulse{
-    0%,100%{opacity:.55;transform:scale(1) translate(0,0)}
-    50%{opacity:.95;transform:scale(1.08) translate(2%,-1%)}
-}
+/* Ambient glows — static (pas de blur GPU, pas d'animation = 0 lag) */
+.ft-glow{position:absolute;border-radius:50%;pointer-events:none;z-index:4;opacity:.7}
+.ft-glow--1{width:min(70vw,700px);height:min(70vw,700px);top:-18%;left:-8%;background:radial-gradient(circle,rgba(89,183,183,.06),rgba(89,183,183,.02) 40%,transparent 65%)}
+.ft-glow--2{width:min(55vw,520px);height:min(55vw,520px);bottom:-12%;right:-5%;background:radial-gradient(circle,rgba(200,164,94,.04),rgba(200,164,94,.015) 35%,transparent 60%)}
 
 /* Particules / étoiles discrètes */
 .ft-stars{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:4}
