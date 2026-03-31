@@ -381,7 +381,7 @@ var VS08C_CIRCUIT = <?php echo json_encode([
                 <div style="font-size:28px">📅</div>
                 <h3>Vous ne trouvez pas votre date ?</h3>
                 <p>Notre équipe organise ce circuit sur mesure. Réponse garantie sous 24h ouvrées.</p>
-                <a class="vc-devis-btn" href="mailto:contact@voyagessortir08.fr?subject=<?php echo rawurlencode('Demande de devis circuit — '.get_the_title()); ?>&body=<?php echo rawurlencode("Bonjour,\n\nJe souhaite un devis pour le circuit : ".get_the_title()."\n\nMes disponibilités :\nNombre de voyageurs :\n\nMerci !"); ?>">✉️ Demander un devis personnalisé</a>
+                <a class="vc-devis-btn" href="mailto:resa@voyagessortir08.com?subject=<?php echo rawurlencode('Demande de devis circuit — '.get_the_title()); ?>&body=<?php echo rawurlencode("Bonjour,\n\nJe souhaite un devis pour le circuit : ".get_the_title()."\n\nMes disponibilités :\nNombre de voyageurs :\n\nMerci !"); ?>">✉️ Demander un devis personnalisé</a>
             </div>
         </div>
 
@@ -390,7 +390,7 @@ var VS08C_CIRCUIT = <?php echo json_encode([
 
 <!-- PRINT FOOTER (visible uniquement à l'impression) -->
 <div class="vc-print-footer">
-    <span>Voyages Sortir Charleville-Mézières — 03 26 65 28 63 — contact@voyagessortir08.fr — voyagessortir08.fr</span>
+    <span>Voyages Sortir 08 — Châlons-en-Champagne — 03 26 65 28 63 — resa@voyagessortir08.com — www.voyagessortir08.com</span>
     <span>Document généré le <?php echo date('d/m/Y'); ?> — Ce document n'a pas de valeur contractuelle.</span>
 </div>
 

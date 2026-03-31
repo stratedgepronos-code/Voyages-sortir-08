@@ -47,6 +47,7 @@ class VS08C_Booking {
         }
 
         // Calcul du prix
+        $devis = VS08C_Calculator::calculate($circuit_id, $params);
         $nb_total = $devis['nb_total'];
 
         // Options sélectionnées
