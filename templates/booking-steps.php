@@ -628,7 +628,7 @@ get_header();
             $transfert_labels_recap  = ['groupes'=>'Transferts groupés','prives'=>'Transferts privés','voiture'=>'Location de voiture'];
             $transfert_icons_recap   = ['groupes'=>'🚌','prives'=>'🚐','voiture'=>'🚗'];
 
-            // Extraire les montants du devis pour le debug
+            // Lignes de devis → totaux par catégorie (récap admin)
             $recap_montants = [];
             foreach ($devis['lines'] as $dl) {
                 $recap_montants[] = $dl;
@@ -659,24 +659,6 @@ get_header();
             $recap_taxe      = vs08v_find_line($recap_montants, 'Taxe');
             $recap_marge     = vs08v_find_line($recap_montants, 'Marge');
             ?>
-
-            <?php /* Détail calcul réservé aux admins uniquement */ ?>
-            <?php if (current_user_can('manage_options')): ?>
-            <!-- ADMIN ONLY: DÉTAIL CALCUL -->
-            <div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;padding:10px 12px;margin-bottom:8px">
-                <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px;font-family:'Outfit',sans-serif">🔍 DÉTAIL CALCUL (admin)</div>
-                <?php foreach ($recap_montants as $dl): ?>
-                <div style="display:flex;justify-content:space-between;font-size:11px;font-family:'Outfit',sans-serif;padding:2px 0;color:#78350f">
-                    <span><?php echo esc_html($dl['label']); ?> <span style="color:#a3a3a3"><?php echo esc_html($dl['detail'] ?? ''); ?></span></span>
-                    <span style="font-weight:600"><?php echo number_format($dl['montant'], 0, ',', ' '); ?> €</span>
-                </div>
-                <?php endforeach; ?>
-                <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#92400e;border-top:1px solid #f59e0b;margin-top:4px;padding-top:4px;font-family:'Outfit',sans-serif">
-                    <span>TOTAL CALCULÉ</span>
-                    <span><?php echo number_format($devis['total'], 0, ',', ' '); ?> €</span>
-                </div>
-            </div>
-            <?php endif; ?>
 
             <?php /* ═══ LIGNES DÉTAILLÉES — ADMIN UNIQUEMENT ═══ */ ?>
             <?php if (current_user_can('manage_options')): ?>
