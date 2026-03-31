@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) exit;
 
 define('VS08V_PATH', plugin_dir_path(__FILE__));
 define('VS08V_URL',  plugin_dir_url(__FILE__));
-define('VS08V_VER',  '2.0.0');
+define('VS08V_VER',  '2.0.1');
 
 // ============================================================
 // CHARGEMENT SÉCURISÉ DE LA CLÉ DUFFEL DEPUIS config.cfg

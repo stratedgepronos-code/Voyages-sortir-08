@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) exit;
 
 define('VS08C_PATH', plugin_dir_path(__FILE__));
 define('VS08C_URL',  plugin_dir_url(__FILE__));
-define('VS08C_VER',  '1.2.1');
+define('VS08C_VER',  '1.2.2');
 
 /* ─── Load all modules ─── */
 require_once VS08C_PATH . 'includes/class-vs08c-cpt.php';

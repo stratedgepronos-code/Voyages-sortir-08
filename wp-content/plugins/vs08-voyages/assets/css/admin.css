@@ -1,4 +1,4 @@
-/* VS08 Voyages — Admin CSS v1.1 */
+/* VS08 Voyages — Admin CSS v1.2 (interrupteurs types chambre) */
 
 .vs08v-field-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-start}
 .vs08v-field{display:flex;flex-direction:column;flex:1 1 140px;min-width:0}
@@ -57,4 +57,83 @@
 }
 .post-type-vs08_voyage .postbox .postbox-header .toggle-indicator:before{
     color:#fff!important;
+}
+
+/* ── Interrupteurs types chambre (partagé visuel avec vs08-circuits) — pill teal / gris ── */
+.vs08-chambre-switch-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 20px;
+    margin-bottom: 10px;
+}
+.vs08-chambre-switch-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    margin: 0;
+}
+.vs08-chambre-switch-item--locked {
+    cursor: default;
+    opacity: 0.92;
+}
+.vs08-chambre-switch-input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+.vs08-chambre-switch-input:focus-visible + .vs08-chambre-switch-track {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #59b7b7;
+    outline: none;
+}
+.vs08-chambre-switch-track {
+    position: relative;
+    flex-shrink: 0;
+    width: 46px;
+    height: 26px;
+    border-radius: 13px;
+    background: #d1d5db;
+    transition: background-color 0.2s ease;
+}
+.vs08-chambre-switch-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.vs08-chambre-switch-input:checked + .vs08-chambre-switch-track {
+    background: #59b7b7;
+}
+.vs08-chambre-switch-input:checked + .vs08-chambre-switch-track .vs08-chambre-switch-thumb {
+    transform: translateX(20px);
+}
+.vs08-chambre-switch-track--on {
+    background: #59b7b7;
+}
+.vs08-chambre-switch-track--on .vs08-chambre-switch-thumb {
+    transform: translateX(20px);
+}
+.vs08-chambre-switch-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a3a3a;
+    line-height: 1.3;
+}
+.vs08-chambre-switch-hint {
+    font-size: 11px;
+    font-weight: 500;
+    color: #9ca3af;
 }

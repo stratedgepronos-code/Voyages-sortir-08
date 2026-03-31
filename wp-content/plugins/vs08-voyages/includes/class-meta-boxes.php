@@ -160,12 +160,27 @@ class VS08V_MetaBoxes {
 
         <div class="vs08v-stitle">🏨 Hébergement</div>
         <div class="vs08v-notice" style="margin-bottom:10px;border-left:4px solid #59b7b7;padding:10px 12px;background:#f0fafa">
-            <strong>Types de chambre visibles par le client</strong> — cochez ou décochez pour afficher (ou masquer) les options <em>Individuelle</em> et <em>Triple</em> dans la liste déroulante <strong>Type</strong> sur la fiche séjour et dans l’étape « chambres » après choix aéroport + date. La <strong>Double</strong> reste toujours proposée.
+            <strong>Types de chambre visibles par le client</strong> — activez ou désactivez les interrupteurs pour afficher (ou masquer) <em>Individuelle</em> et <em>Triple</em> dans le menu <strong>Type</strong> sur la fiche séjour et à l’étape chambres (après aéroport + date). La <strong>double</strong> reste toujours proposée.
         </div>
-        <div class="vs08v-field-row" style="margin-bottom:8px;flex-wrap:wrap;gap:10px 16px;align-items:center">
-            <div class="vs08v-field" style="flex:0 0 auto"><label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="hidden" name="vs08v[chambre_double_active]" value="1"><input type="checkbox" checked disabled style="accent-color:#59b7b7;width:18px;height:18px"> Chambre double</label></div>
-            <div class="vs08v-field" style="flex:0 0 auto"><label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="hidden" name="vs08v[chambre_simple_active]" value="0"><input type="checkbox" name="vs08v[chambre_simple_active]" value="1" <?php checked($m['chambre_simple_active'] ?? '1', '1'); ?> style="accent-color:#59b7b7;width:18px;height:18px"> Chambre individuelle</label></div>
-            <div class="vs08v-field" style="flex:0 0 auto"><label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="hidden" name="vs08v[chambre_triple_active]" value="0"><input type="checkbox" name="vs08v[chambre_triple_active]" value="1" <?php checked($m['chambre_triple_active'] ?? '1', '1'); ?> style="accent-color:#59b7b7;width:18px;height:18px"> Chambre triple</label></div>
+        <div class="vs08-chambre-switch-row">
+            <div class="vs08-chambre-switch-item vs08-chambre-switch-item--locked">
+                <input type="hidden" name="vs08v[chambre_double_active]" value="1">
+                <span class="vs08-chambre-switch-track vs08-chambre-switch-track--on" aria-hidden="true"><span class="vs08-chambre-switch-thumb"></span></span>
+                <span class="vs08-chambre-switch-label">Chambre double</span>
+                <span class="vs08-chambre-switch-hint">toujours</span>
+            </div>
+            <label class="vs08-chambre-switch-item" for="vs08v-switch-simple">
+                <input type="hidden" name="vs08v[chambre_simple_active]" value="0">
+                <input type="checkbox" name="vs08v[chambre_simple_active]" value="1" id="vs08v-switch-simple" class="vs08-chambre-switch-input" <?php checked($m['chambre_simple_active'] ?? '1', '1'); ?>>
+                <span class="vs08-chambre-switch-track" aria-hidden="true"><span class="vs08-chambre-switch-thumb"></span></span>
+                <span class="vs08-chambre-switch-label">Chambre individuelle</span>
+            </label>
+            <label class="vs08-chambre-switch-item" for="vs08v-switch-triple">
+                <input type="hidden" name="vs08v[chambre_triple_active]" value="0">
+                <input type="checkbox" name="vs08v[chambre_triple_active]" value="1" id="vs08v-switch-triple" class="vs08-chambre-switch-input" <?php checked($m['chambre_triple_active'] ?? '1', '1'); ?>>
+                <span class="vs08-chambre-switch-track" aria-hidden="true"><span class="vs08-chambre-switch-thumb"></span></span>
+                <span class="vs08-chambre-switch-label">Chambre triple</span>
+            </label>
         </div>
         <div class="vs08v-field-row">
             <div class="vs08v-field"><label>Chambre Double /pers./nuit</label><div class="vs08v-pi"><span>€</span><input type="number" name="vs08v[prix_double]" value="<?php echo esc_attr($m['prix_double']??''); ?>" step="0.01" placeholder="85"></div></div>
