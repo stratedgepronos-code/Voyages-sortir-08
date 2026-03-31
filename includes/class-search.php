@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) exit;
 
 class VS08V_Search {
 
-    const TRANSIENT_KEY = 'vs08v_search_agg_v4';
+    const TRANSIENT_KEY = 'vs08v_search_agg_v5';
 
     const TYPE_LABELS = [
         'sejour_golf'   => 'Séjours Golf',
@@ -13,6 +13,155 @@ class VS08V_Search {
         'city_trip'     => 'City Trip',
         'parc'          => 'Billets Parcs',
     ];
+
+    /**
+     * Normalisation aéroports : corrige les typos et doublons.
+     * Clé = code saisi dans le produit → valeur = code IATA correct.
+     */
+    const AIRPORT_NORMALIZE = [
+        'NTA'  => 'NTE',
+        'ORLY' => 'ORY',
+        'BAL'  => 'BSL',
+        'BLS'  => 'BSL',
+        'LIM'  => 'LIG',
+        'DOL'  => 'DOL',
+        'CRL'  => 'CRL',
+    ];
+
+    /**
+     * Noms propres des aéroports (code IATA → ville).
+     * Utilisé pour uniformiser les labels dans les dropdowns.
+     */
+    const AIRPORT_NAMES = [
+        'BSL' => 'Bâle-Mulhouse',
+        'BES' => 'Brest',
+        'BIO' => 'Bilbao',
+        'BIQ' => 'Biarritz',
+        'BOD' => 'Bordeaux',
+        'BRU' => 'Bruxelles',
+        'BVA' => 'Paris Beauvais',
+        'CDG' => 'Paris Charles de Gaulle',
+        'CRL' => 'Charleroi',
+        'DLE' => 'Dole',
+        'DOL' => 'Deauville',
+        'GVA' => 'Genève',
+        'LIG' => 'Limoges',
+        'LIL' => 'Lille',
+        'LRH' => 'La Rochelle',
+        'LUX' => 'Luxembourg',
+        'LYS' => 'Lyon',
+        'MPL' => 'Montpellier',
+        'MRS' => 'Marseille',
+        'NCE' => 'Nice',
+        'NTE' => 'Nantes',
+        'ORY' => 'Paris Orly',
+        'PGF' => 'Perpignan',
+        'RNS' => 'Rennes',
+        'SXB' => 'Strasbourg',
+        'TLS' => 'Toulouse',
+        'TUF' => 'Tours',
+        'XCR' => 'Vatry',
+    ];
+
+    /**
+     * Normalisation destinations : ville/région → pays.
+     * Quand un produit a "Djerba" comme destination, on le regroupe sous "Tunisie".
+     */
+    const DEST_NORMALIZE = [
+        'Djerba'            => 'Tunisie',
+        'Hammamet'          => 'Tunisie',
+        'Sousse'            => 'Tunisie',
+        'Faro'              => 'Portugal',
+        'Algarve'           => 'Portugal',
+        'Lisbonne'          => 'Portugal',
+        'Madère'            => 'Portugal',
+        'Fes'               => 'Maroc',
+        'Fès'               => 'Maroc',
+        'Marrakech'         => 'Maroc',
+        'Tanger'            => 'Maroc',
+        'Agadir'            => 'Maroc',
+        'El Jadida'         => 'Maroc',
+        'Grande Canarie'    => 'Canaries',
+        'Fuerteventura'     => 'Canaries',
+        'Tenerife'          => 'Canaries',
+        'Lanzarote'         => 'Canaries',
+        'Costa del Sol'     => 'Espagne',
+        'Marbella'          => 'Espagne',
+        'Majorque'          => 'Espagne',
+        'Andalousie'        => 'Espagne',
+        'Antalya'           => 'Turquie',
+        'Belek'             => 'Turquie',
+        'Phuket'            => 'Thaïlande',
+        'Hua Hin'           => 'Thaïlande',
+        'Hurghada'          => 'Égypte',
+        'Soma Bay'          => 'Égypte',
+        'El Gouna'          => 'Égypte',
+        'Sharm el Sheikh'   => 'Égypte',
+        'Punta Cana'        => 'République Dominicaine',
+        'Rép. Dominicaine'  => 'République Dominicaine',
+        'Île Maurice'       => 'Maurice',
+        'Crète'             => 'Grèce',
+        'Rhodes'            => 'Grèce',
+        'Sicile'            => 'Italie',
+        'Sardaigne'         => 'Italie',
+        'Split'             => 'Croatie',
+        'Dubrovnik'         => 'Croatie',
+        'Da Nang'           => 'Vietnam',
+        'Hanoï'             => 'Vietnam',
+        'St Andrews'        => 'Écosse',
+        'Paphos'            => 'Chypre',
+        'San José'          => 'Costa Rica',
+    ];
+
+    /**
+     * Drapeaux par pays (fallback quand le produit n'a pas de flag).
+     */
+    const COUNTRY_FLAGS = [
+        'Portugal'              => '🇵🇹',
+        'Espagne'               => '🇪🇸',
+        'Maroc'                 => '🇲🇦',
+        'Tunisie'               => '🇹🇳',
+        'Turquie'               => '🇹🇷',
+        'Canaries'              => '🇪🇸',
+        'Grèce'                 => '🇬🇷',
+        'Italie'                => '🇮🇹',
+        'Croatie'               => '🇭🇷',
+        'Irlande'               => '🇮🇪',
+        'Écosse'                => '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+        'France'                => '🇫🇷',
+        'Égypte'                => '🇪🇬',
+        'Thaïlande'             => '🇹🇭',
+        'Maurice'               => '🇲🇺',
+        'République Dominicaine'=> '🇩🇴',
+        'Chypre'                => '🇨🇾',
+        'Vietnam'               => '🇻🇳',
+        'Costa Rica'            => '🇨🇷',
+        'Malte'                 => '🇲🇹',
+    ];
+
+    /**
+     * Normalise un code aéroport (corrige les typos).
+     */
+    public static function normalize_airport(string $code): string {
+        $code = strtoupper(trim($code));
+        return self::AIRPORT_NORMALIZE[$code] ?? $code;
+    }
+
+    /**
+     * Normalise une destination (ville → pays).
+     */
+    public static function normalize_destination(string $dest): string {
+        $dest = trim($dest);
+        return self::DEST_NORMALIZE[$dest] ?? $dest;
+    }
+
+    /**
+     * Retourne le nom propre d'un aéroport.
+     */
+    public static function airport_name(string $code): string {
+        $code = self::normalize_airport($code);
+        return self::AIRPORT_NAMES[$code] ?? $code;
+    }
 
     public static function register() {
         add_action('wp_ajax_vs08v_search',        [__CLASS__, 'ajax_search']);
@@ -26,6 +175,22 @@ class VS08V_Search {
             add_action('init', function() {
                 self::rebuild_map_json();
                 wp_die('✅ vs08-map-data.json régénéré à ' . date('H:i:s'));
+            });
+        }
+
+        // Admin: rebuild complet (carte + recherche) via ?vs08_rebuild_search=1
+        if (is_admin() && isset($_GET['vs08_rebuild_search'])) {
+            add_action('init', function() {
+                delete_transient(self::TRANSIENT_KEY);
+                self::rebuild_map_json();
+                $agg = self::get_aggregated_options();
+                $nb_dest = count($agg['destinations'] ?? []);
+                $nb_aero = count($agg['aeroports'] ?? []);
+                $nb_dates = count($agg['dates'] ?? []);
+                wp_die(sprintf(
+                    '✅ Index de recherche reconstruit à %s<br>• %d destinations<br>• %d aéroports<br>• %d dates de départ<br>• Carte JSON régénérée',
+                    date('H:i:s'), $nb_dest, $nb_aero, $nb_dates
+                ));
             });
         }
 
@@ -116,6 +281,9 @@ class VS08V_Search {
 
             $dest = trim($m['destination'] ?? '');
             $pays = trim($m['pays'] ?? '');
+            // Normaliser la destination
+            $dest = self::normalize_destination($dest);
+            $pays = $pays ? self::normalize_destination($pays) : $dest;
             $key  = $pays ?: $dest;
             $type = $m['type_voyage'] ?? '';
             if (!$key || !$type) continue;
@@ -130,8 +298,8 @@ class VS08V_Search {
 
             if (!empty($m['aeroports']) && is_array($m['aeroports'])) {
                 foreach ($m['aeroports'] as $a) {
-                    $code = strtoupper(trim($a['code'] ?? ''));
-                    $ville = trim($a['ville'] ?? '');
+                    $code = self::normalize_airport($a['code'] ?? '');
+                    $ville = self::airport_name($code);
                     if (!$code) continue;
                     if (!in_array($code, $dest_data[$key]['airports'])) {
                         $dest_data[$key]['airports'][] = $code;
@@ -222,8 +390,15 @@ class VS08V_Search {
             $dest = trim($m['destination'] ?? '');
             $pays = trim($m['pays'] ?? '');
             $flag = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : trim($m['flag'] ?? '');
-            if ($dest) {
-                $key = $pays ?: $dest;
+            // Normaliser : ville → pays
+            $dest_normalized = self::normalize_destination($dest);
+            $pays_normalized = $pays ? self::normalize_destination($pays) : $dest_normalized;
+            if ($dest_normalized) {
+                $key = $pays_normalized ?: $dest_normalized;
+                // Flag : essayer le produit d'abord, sinon la table COUNTRY_FLAGS
+                if (!$flag || $flag === '') {
+                    $flag = self::COUNTRY_FLAGS[$key] ?? '';
+                }
                 if (!isset($destinations[$key])) {
                     $img = get_the_post_thumbnail_url($pid, 'large');
                     if (!$img) {
@@ -231,10 +406,10 @@ class VS08V_Search {
                         $img = !empty($gal[0]) ? $gal[0] : '';
                     }
                     $destinations[$key] = [
-                        'value'    => $dest,
-                        'pays'     => $pays,
+                        'value'    => $key,
+                        'pays'     => $key,
                         'flag'     => $flag,
-                        'label'    => mb_convert_case($dest, MB_CASE_TITLE, 'UTF-8'),
+                        'label'    => mb_convert_case($key, MB_CASE_TITLE, 'UTF-8'),
                         'image'    => $img ?: '',
                         'count'    => 1,
                     ];
@@ -245,8 +420,8 @@ class VS08V_Search {
 
             if (!empty($m['aeroports']) && is_array($m['aeroports'])) {
                 foreach ($m['aeroports'] as $a) {
-                    $code  = strtoupper(trim($a['code'] ?? ''));
-                    $ville = trim($a['ville'] ?? '');
+                    $code  = self::normalize_airport($a['code'] ?? '');
+                    $ville = self::airport_name($code);
                     if ($code && !isset($airports[$code])) {
                         $airports[$code] = [
                             'code'  => $code,
@@ -255,12 +430,12 @@ class VS08V_Search {
                         ];
                     }
                     // Map aéroport → destinations desservies
-                    if ($code && $dest) {
+                    if ($code && $dest_normalized) {
                         if (!isset($airport_dest[$code])) {
                             $airport_dest[$code] = [];
                         }
-                        if (!in_array($dest, $airport_dest[$code])) {
-                            $airport_dest[$code][] = $dest;
+                        if (!in_array($dest_normalized, $airport_dest[$code])) {
+                            $airport_dest[$code][] = $dest_normalized;
                         }
                     }
                 }
