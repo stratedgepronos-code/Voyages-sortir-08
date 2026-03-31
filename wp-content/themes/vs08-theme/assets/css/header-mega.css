@@ -15,11 +15,21 @@
 html{margin-top:0!important}
 body{margin:0!important;padding:0!important}
 .header{position:fixed;top:0!important;left:0;right:0;z-index:10000;margin:0!important;padding:0!important}
+/* Même offset scrollé : la variante admin-bar (plus bas) fixe le top réel */
 .header.scrolled{top:0!important}
 .announce{margin:0!important}
-/* Admin bar WP : header juste dessous */
+/* Admin bar WP — desktop : barre fixe, on colle le header dessous (z-index header < #wpadminbar 99999) */
 body.admin-bar .header{top:32px!important}
-@media screen and (max-width:782px){body.admin-bar .header{top:46px!important}}
+body.admin-bar .header.scrolled{top:32px!important}
+/*
+ * ≤782px : le core WP met #wpadminbar en position:absolute (elle défile avec la page).
+ * Un header fixed à 46px laisse un « trou » au-dessus dès qu’on scroll. Top:0 = collé au viewport ;
+ * la barre admin reste au-dessus grâce au z-index plus élevé de #wpadminbar.
+ */
+@media screen and (max-width:782px){
+    body.admin-bar .header,
+    body.admin-bar .header.scrolled{top:0!important}
+}
 .header.scrolled .announce{max-height:0;padding:0;overflow:hidden;opacity:0}
 .nav-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 32px;background:#0f2424;transition:all .4s;height:56px;box-sizing:border-box;border-bottom:1px solid rgba(0,0,0,.2)}
 .header.scrolled .nav-bar{background:#0f2424;padding:10px 32px;box-shadow:0 4px 24px rgba(0,0,0,.4);height:50px;border-bottom:none}

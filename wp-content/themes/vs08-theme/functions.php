@@ -44,7 +44,7 @@ add_action('wp_enqueue_scripts', function() {
     wp_register_style('vs08-fonts', 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700&display=swap', [], '1.1');
     wp_enqueue_style('vs08-fonts');
     wp_enqueue_style('vs08-main', get_template_directory_uri() . '/assets/css/main.css', ['vs08-fonts'], '1.3');
-    wp_enqueue_style('vs08-header-mega', get_template_directory_uri() . '/assets/css/header-mega.css', ['vs08-main'], '1.3');
+    wp_enqueue_style('vs08-header-mega', get_template_directory_uri() . '/assets/css/header-mega.css', ['vs08-main'], '1.4');
     wp_enqueue_style('vs08-footer-terminal', get_template_directory_uri() . '/assets/css/footer-terminal.css', ['vs08-main'], '1.0');
     if (is_front_page()) {
         /* Déploiement #373 — feat(homepage) : homepage-v3 + front-page-v2 (cartes dynamiques BDD) */
