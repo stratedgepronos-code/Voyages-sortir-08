@@ -77,7 +77,8 @@ jobs:
             sleep 10
           done
           [ "$ok" -eq 1 ] || echo "Sejours deploy failed (non-blocking)"
-- name: Deploy plugin vs08-splitpay (with retry)
+
+      - name: Deploy plugin vs08-splitpay (with retry)
         run: |
           ok=0
           for attempt in 1 2 3; do
@@ -92,6 +93,7 @@ jobs:
             sleep 10
           done
           [ "$ok" -eq 1 ] || echo "SplitPay deploy failed (non-blocking)"
+
       - name: Deploy mu-plugins (with retry)
         run: |
           ok=0
@@ -136,6 +138,7 @@ jobs:
             find ${{ env.WEBROOT }}/wp-content/plugins/vs08-voyages -name '*.php' -exec touch {} +
             find ${{ env.WEBROOT }}/wp-content/plugins/vs08-circuits -name '*.php' -exec touch {} +
             find ${{ env.WEBROOT }}/wp-content/plugins/vs08-sejours -name '*.php' -exec touch {} +
+            find ${{ env.WEBROOT }}/wp-content/plugins/vs08-splitpay -name '*.php' -exec touch {} +
             find ${{ env.WEBROOT }}/wp-content/mu-plugins -name '*.php' -exec touch {} +
             echo 'Files touched + paybox removed'
           " || echo "Touch/remove skipped (non-blocking)"
