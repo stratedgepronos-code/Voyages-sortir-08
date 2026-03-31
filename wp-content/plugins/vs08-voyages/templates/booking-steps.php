@@ -1,6 +1,4 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 /**
  * Tunnel de réservation multi-étapes
  * Accessible via /reservation/{voyage_id}/

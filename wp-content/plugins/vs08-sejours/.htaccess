@@ -1,0 +1,4 @@
+# Protéger les fichiers sensibles
+<FilesMatch "(config\.cfg|\.log|\.bak|\.old|\.sql)$">
+    Require all denied
+</FilesMatch>

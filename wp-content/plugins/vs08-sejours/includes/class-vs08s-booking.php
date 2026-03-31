@@ -58,7 +58,7 @@ class VS08S_Booking {
         $booking_token = wp_generate_password(24, false);
         set_transient('vs08s_booking_full_' . $booking_token, $booking_data, 2 * DAY_IN_SECONDS);
 
-        error_log('[VS08S Booking] Token=' . $booking_token . ' total=' . $total . ' acompte=' . $acompte);
+        error_log('[VS08S Booking] Produit créé — total=' . $total . ' acompte=' . $acompte);
 
         // ── Produit WooCommerce MINIMAL ──
         $product = new \WC_Product_Simple();
