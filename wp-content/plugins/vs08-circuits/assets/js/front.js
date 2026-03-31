@@ -3,7 +3,8 @@
 if (typeof vs08c === 'undefined') return;
 var CIRCUIT = window.VS08C_CIRCUIT || {};
 var vc_prix_vol = 0, calcTimer = null;
-var hasTriple = CIRCUIT.prix_triple && parseFloat(CIRCUIT.prix_triple) > 0;
+var hasSimple = parseInt(CIRCUIT.chambre_simple_active, 10) === 1;
+var hasTriple = parseInt(CIRCUIT.chambre_triple_active, 10) === 1 && parseFloat(CIRCUIT.prix_triple || 0) > 0;
 
 /* ══ ITINERARY ACCORDION ══ */
 $(document).on('click', '.vc-day-header', function(){ $(this).closest('.vc-day').toggleClass('open'); });
@@ -129,13 +130,17 @@ function applyRoomDefaults(){
 function buildRooms(){
     var pax=parseInt($('#vc-nb-adultes').val())||2;
     var n=parseInt($('#vc-nb-chambres').val())||1,$s=$('#vc-rooms-section');$s.empty();
-    var defaultType=(pax===1)?'simple':'double';
+    var defaultType=(pax===1&&hasSimple)?'simple':'double';
     var defaultOcc=(pax===1)?1:Math.min(2,pax);
     for(var i=0;i<n;i++){
         var remaining=pax;$('.vc-room-card').each(function(){remaining-=parseInt($(this).find('.vc-room-occupants').val())||0;});
         var selSimple=(defaultType==='simple')?' selected':'';
         var selDouble=(defaultType==='double')?' selected':'';
-        $s.append('<div class="vc-room-card" data-room="'+i+'"><div class="vc-room-header"><span class="vc-room-title">🛏️ Chambre '+(i+1)+'</span></div><div class="vc-field-row"><div class="vc-field"><label>Type</label><select class="vc-room-type"><option value="double"'+selDouble+'>Double (max 2)</option><option value="simple"'+selSimple+'>Individuelle (1)</option>'+(hasTriple?'<option value="triple">Triple (max 3)</option>':'')+'</select></div><div class="vc-field"><label>Occupants</label><select class="vc-room-occupants"><option value="1"'+(defaultOcc===1?' selected':'')+'>1</option><option value="2"'+(defaultOcc===2?' selected':'')+'>2</option></select></div></div></div>');
+        var selTriple=(defaultType==='triple')?' selected':'';
+        var typeOpts='<option value="double"'+selDouble+'>Double (max 2)</option>';
+        if(hasSimple)typeOpts+='<option value="simple"'+selSimple+'>Individuelle (1)</option>';
+        if(hasTriple)typeOpts+='<option value="triple"'+selTriple+'>Triple (max 3)</option>';
+        $s.append('<div class="vc-room-card" data-room="'+i+'"><div class="vc-room-header"><span class="vc-room-title">🛏️ Chambre '+(i+1)+'</span></div><div class="vc-field-row"><div class="vc-field"><label>Type</label><select class="vc-room-type">'+typeOpts+'</select></div><div class="vc-field"><label>Occupants</label><select class="vc-room-occupants"><option value="1"'+(defaultOcc===1?' selected':'')+'>1</option><option value="2"'+(defaultOcc===2?' selected':'')+'>2</option></select></div></div></div>');
     }
     updOcc();triggerCalc();
 }

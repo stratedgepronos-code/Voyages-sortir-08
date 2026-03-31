@@ -356,10 +356,13 @@ class VS08C_Meta {
 
                 <div class="vs08c-pricing-section">
                     <h4>💰 Prix de base (par personne)</h4>
-                    <div class="vs08c-field-row" style="margin-bottom:8px">
-                        <div class="vs08c-field" style="flex:0 0 auto"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="hidden" name="vs08c[chambre_double_active]" value="1"><input type="checkbox" checked disabled style="accent-color:#59b7b7"> Chambre Double</label></div>
-                        <div class="vs08c-field" style="flex:0 0 auto"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="hidden" name="vs08c[chambre_simple_active]" value="0"><input type="checkbox" name="vs08c[chambre_simple_active]" value="1" <?php checked($m['chambre_simple_active'] ?? '1', '1'); ?> style="accent-color:#59b7b7"> Chambre Individuelle</label></div>
-                        <div class="vs08c-field" style="flex:0 0 auto"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="hidden" name="vs08c[chambre_triple_active]" value="0"><input type="checkbox" name="vs08c[chambre_triple_active]" value="1" <?php checked($m['chambre_triple_active'] ?? '1', '1'); ?> style="accent-color:#59b7b7"> Chambre Triple</label></div>
+                    <p class="vs08c-help" style="margin:0 0 10px;padding:10px 12px;background:#f0fafa;border-left:4px solid #59b7b7;font-size:13px;line-height:1.45">
+                        <strong>Types visibles sur la fiche circuit</strong> — cases à cocher = options dans le sélecteur <strong>Type</strong> (étape chambres, après aéroport + date). La triple n’apparaît côté client que si la case est cochée <em>et</em> un <strong>prix chambre triple</strong> &gt; 0 est renseigné.
+                    </p>
+                    <div class="vs08c-field-row" style="margin-bottom:8px;flex-wrap:wrap;gap:10px 16px;align-items:center">
+                        <div class="vs08c-field" style="flex:0 0 auto"><label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="hidden" name="vs08c[chambre_double_active]" value="1"><input type="checkbox" checked disabled style="accent-color:#59b7b7;width:18px;height:18px"> Chambre double</label></div>
+                        <div class="vs08c-field" style="flex:0 0 auto"><label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="hidden" name="vs08c[chambre_simple_active]" value="0"><input type="checkbox" name="vs08c[chambre_simple_active]" value="1" <?php checked($m['chambre_simple_active'] ?? '1', '1'); ?> style="accent-color:#59b7b7;width:18px;height:18px"> Chambre individuelle</label></div>
+                        <div class="vs08c-field" style="flex:0 0 auto"><label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:600"><input type="hidden" name="vs08c[chambre_triple_active]" value="0"><input type="checkbox" name="vs08c[chambre_triple_active]" value="1" <?php checked($m['chambre_triple_active'] ?? '1', '1'); ?> style="accent-color:#59b7b7;width:18px;height:18px"> Chambre triple</label></div>
                     </div>
                     <div class="vs08c-field-row">
                         <div class="vs08c-field"><label>Prix en chambre double</label>
