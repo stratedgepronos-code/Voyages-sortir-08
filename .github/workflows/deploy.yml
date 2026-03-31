@@ -77,7 +77,21 @@ jobs:
             sleep 10
           done
           [ "$ok" -eq 1 ] || echo "Sejours deploy failed (non-blocking)"
-
+- name: Deploy plugin vs08-splitpay (with retry)
+        run: |
+          ok=0
+          for attempt in 1 2 3; do
+            echo "=== Attempt $attempt/3 — Deploy SplitPay ==="
+            if sshpass -p "${{ secrets.SSH_PASSWORD }}" rsync -avz --delete \
+              -e "ssh ${{ env.SSH_OPTS }}" \
+              wp-content/plugins/vs08-splitpay/ \
+              ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }}:${{ env.WEBROOT }}/wp-content/plugins/vs08-splitpay/; then
+              echo "Plugin SplitPay deployed OK" && ok=1 && break
+            fi
+            echo "Attempt $attempt failed, waiting 10s..."
+            sleep 10
+          done
+          [ "$ok" -eq 1 ] || echo "SplitPay deploy failed (non-blocking)"
       - name: Deploy mu-plugins (with retry)
         run: |
           ok=0
