@@ -43,8 +43,8 @@ function vs08c_admin_assets($hook) {
     wp_enqueue_media();
     $admin_deps = ['jquery', 'jquery-ui-sortable'];
     if (defined('VS08V_URL')) {
-        wp_enqueue_style('vs08-calendar', VS08V_URL . 'assets/css/vs08-calendar.css', [], '1.5.0');
-        wp_enqueue_script('vs08-calendar', VS08V_URL . 'assets/js/vs08-calendar.js', [], '1.5.0', true);
+        wp_enqueue_style('vs08-calendar', VS08V_URL . 'assets/css/vs08-calendar.css', [], '1.6.0');
+        wp_enqueue_script('vs08-calendar', VS08V_URL . 'assets/js/vs08-calendar.js', [], '1.6.0', true);
         $admin_deps[] = 'vs08-calendar';
     }
     wp_enqueue_style('vs08c-admin', VS08C_URL . 'admin/css/admin.css', [], VS08C_VER);
@@ -69,8 +69,8 @@ function vs08c_frontend_assets() {
     ]);
     // Charger aussi le calendrier VS08 si disponible
     if (defined('VS08V_URL')) {
-        wp_enqueue_style('vs08-calendar', VS08V_URL . 'assets/css/vs08-calendar.css', [], '1.5.0');
-        wp_enqueue_script('vs08-calendar', VS08V_URL . 'assets/js/vs08-calendar.js', [], '1.5.0', true);
+        wp_enqueue_style('vs08-calendar', VS08V_URL . 'assets/css/vs08-calendar.css', [], '1.6.0');
+        wp_enqueue_script('vs08-calendar', VS08V_URL . 'assets/js/vs08-calendar.js', [], '1.6.0', true);
     }
 }
 

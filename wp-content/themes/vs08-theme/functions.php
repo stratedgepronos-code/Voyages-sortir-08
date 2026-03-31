@@ -60,8 +60,8 @@ add_action('wp_enqueue_scripts', function() {
     // Calendrier VS08 sur les pages de devis
     if (is_page(['devis-golf', 'devis-gratuit', 'devis-circuit', 'devis-sejour-vacances', 'devis-city-trip', 'devis-road-trip'])) {
         $cal_base = defined('VS08V_URL') ? VS08V_URL : content_url('/plugins/vs08-voyages/');
-        wp_enqueue_style('vs08-calendar', $cal_base . 'assets/css/vs08-calendar.css', [], '1.5.0');
-        wp_enqueue_script('vs08-calendar', $cal_base . 'assets/js/vs08-calendar.js', [], '1.5.0', true);
+        wp_enqueue_style('vs08-calendar', $cal_base . 'assets/css/vs08-calendar.css', [], '1.6.0');
+        wp_enqueue_script('vs08-calendar', $cal_base . 'assets/js/vs08-calendar.js', [], '1.6.0', true);
     }
 });
 

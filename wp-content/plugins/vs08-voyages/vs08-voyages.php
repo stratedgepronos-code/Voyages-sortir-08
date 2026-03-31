@@ -254,8 +254,8 @@ function vs08v_frontend_assets() {
     ]);
 
     // ── VS08 Calendar Premium ──
-    wp_enqueue_style('vs08-calendar', VS08V_URL . 'assets/css/vs08-calendar.css', [], '1.5.0');
-    wp_enqueue_script('vs08-calendar', VS08V_URL . 'assets/js/vs08-calendar.js', [], '1.5.0', true);
+    wp_enqueue_style('vs08-calendar', VS08V_URL . 'assets/css/vs08-calendar.css', [], '1.6.0');
+    wp_enqueue_script('vs08-calendar', VS08V_URL . 'assets/js/vs08-calendar.js', [], '1.6.0', true);
 }
 
 function vs08v_admin_assets($hook) {
@@ -271,8 +271,8 @@ function vs08v_admin_assets($hook) {
     ]);
 
     // ── VS08 Calendar Premium (admin) ──
-    wp_enqueue_style('vs08-calendar', VS08V_URL . 'assets/css/vs08-calendar.css', [], '1.5.0');
-    wp_enqueue_script('vs08-calendar', VS08V_URL . 'assets/js/vs08-calendar.js', [], '1.5.0', true);
+    wp_enqueue_style('vs08-calendar', VS08V_URL . 'assets/css/vs08-calendar.css', [], '1.6.0');
+    wp_enqueue_script('vs08-calendar', VS08V_URL . 'assets/js/vs08-calendar.js', [], '1.6.0', true);
 }
 
 // Barre admin VS08

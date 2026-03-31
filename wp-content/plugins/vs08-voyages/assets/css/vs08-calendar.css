@@ -103,9 +103,17 @@
 .vs-cal-overlay{position:absolute;top:100%;left:0;z-index:9999;margin-top:6px;display:none;min-width:340px}
 .vs-cal-overlay.open{display:block;animation:vs-calFadeIn .2s ease}
 .vs-cal-overlay.right{left:auto;right:0}
-/* Dropdown attaché au body (sidebar / overflow) : position + scroll gérés en JS */
-.vs-cal-overlay.vs-cal-overlay--body{position:fixed;top:0;left:0;margin:0!important;z-index:100100;max-height:calc(100vh - 16px);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;box-sizing:border-box}
-.vs-cal-overlay.vs-cal-overlay--body .vs-cal{min-width:min(340px,calc(100vw - 24px));max-width:calc(100vw - 16px)}
+/* Dropdown attaché au body (sidebar résultats) : largeur explicite, pas de clip horizontal */
+.vs-cal-overlay.vs-cal-overlay--body{
+  position:fixed!important;top:0;left:0;margin:0!important;z-index:100100;
+  width:auto!important;min-width:322px;max-width:min(348px,calc(100vw - 16px));
+  max-height:min(560px,calc(100vh - 16px));overflow-y:auto;overflow-x:visible;
+  -webkit-overflow-scrolling:touch;box-sizing:border-box;
+}
+.vs-cal-overlay.vs-cal-overlay--body .vs-cal{
+  width:340px!important;max-width:min(340px,calc(100vw - 16px))!important;min-width:300px;
+  flex-shrink:0;
+}
 @keyframes vs-calFadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 /* Backdrop click to close */
 .vs-cal-backdrop{position:fixed;inset:0;z-index:9998;display:none}
