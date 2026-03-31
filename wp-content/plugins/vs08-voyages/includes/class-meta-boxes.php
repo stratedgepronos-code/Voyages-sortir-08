@@ -159,6 +159,11 @@ class VS08V_MetaBoxes {
         <p class="vs08v-notice">💡 Tarifs <strong>par personne / nuit</strong> pour l'hébergement. Le prix total est calculé automatiquement selon la sélection du client.</p>
 
         <div class="vs08v-stitle">🏨 Hébergement</div>
+        <div class="vs08v-field-row" style="margin-bottom:8px">
+            <div class="vs08v-field" style="flex:0 0 auto"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="hidden" name="vs08v[chambre_double_active]" value="1"><input type="checkbox" checked disabled style="accent-color:#59b7b7"> Chambre Double</label></div>
+            <div class="vs08v-field" style="flex:0 0 auto"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="hidden" name="vs08v[chambre_simple_active]" value="0"><input type="checkbox" name="vs08v[chambre_simple_active]" value="1" <?php checked($m['chambre_simple_active'] ?? '1', '1'); ?> style="accent-color:#59b7b7"> Chambre Individuelle</label></div>
+            <div class="vs08v-field" style="flex:0 0 auto"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="hidden" name="vs08v[chambre_triple_active]" value="0"><input type="checkbox" name="vs08v[chambre_triple_active]" value="1" <?php checked($m['chambre_triple_active'] ?? '1', '1'); ?> style="accent-color:#59b7b7"> Chambre Triple</label></div>
+        </div>
         <div class="vs08v-field-row">
             <div class="vs08v-field"><label>Chambre Double /pers./nuit</label><div class="vs08v-pi"><span>€</span><input type="number" name="vs08v[prix_double]" value="<?php echo esc_attr($m['prix_double']??''); ?>" step="0.01" placeholder="85"></div></div>
             <div class="vs08v-field"><label>Suppl. Chambre Simple</label><div class="vs08v-pi"><span>€</span><input type="number" name="vs08v[prix_simple_supp]" value="<?php echo esc_attr($m['prix_simple_supp']??''); ?>" step="0.01" placeholder="40"></div>

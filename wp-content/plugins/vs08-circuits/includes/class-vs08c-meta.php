@@ -356,6 +356,11 @@ class VS08C_Meta {
 
                 <div class="vs08c-pricing-section">
                     <h4>💰 Prix de base (par personne)</h4>
+                    <div class="vs08c-field-row" style="margin-bottom:8px">
+                        <div class="vs08c-field" style="flex:0 0 auto"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="hidden" name="vs08c[chambre_double_active]" value="1"><input type="checkbox" checked disabled style="accent-color:#59b7b7"> Chambre Double</label></div>
+                        <div class="vs08c-field" style="flex:0 0 auto"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="hidden" name="vs08c[chambre_simple_active]" value="0"><input type="checkbox" name="vs08c[chambre_simple_active]" value="1" <?php checked($m['chambre_simple_active'] ?? '1', '1'); ?> style="accent-color:#59b7b7"> Chambre Individuelle</label></div>
+                        <div class="vs08c-field" style="flex:0 0 auto"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="hidden" name="vs08c[chambre_triple_active]" value="0"><input type="checkbox" name="vs08c[chambre_triple_active]" value="1" <?php checked($m['chambre_triple_active'] ?? '1', '1'); ?> style="accent-color:#59b7b7"> Chambre Triple</label></div>
+                    </div>
                     <div class="vs08c-field-row">
                         <div class="vs08c-field"><label>Prix en chambre double</label>
                             <input type="number" name="vs08c[prix_double]" value="<?php echo esc_attr($m['prix_double'] ?? ''); ?>" step="0.01" placeholder="890">
@@ -713,6 +718,9 @@ class VS08C_Meta {
         }
         $m['vol_open_jaw']             = !empty($raw['vol_open_jaw']) ? 1 : 0;
         $m['vol_escales_autorisees']   = !empty($raw['vol_escales_autorisees']) ? 1 : 0;
+        $m['chambre_double_active']    = 1; // toujours actif
+        $m['chambre_simple_active']    = !empty($raw['chambre_simple_active']) ? 1 : 0;
+        $m['chambre_triple_active']    = !empty($raw['chambre_triple_active']) ? 1 : 0;
         $num_fields = ['duree_jours','duree','group_min','group_max','prix_double','prix_simple_supp','prix_triple','prix_vol_base','prix_bagage','prix_taxe','prix_transfert','reduc_enfant','acompte_pct','delai_solde','marge_pct','marge_montant','vol_escale_max_heures'];
         foreach ($num_fields as $f) {
             $m[$f] = floatval($raw[$f] ?? 0);

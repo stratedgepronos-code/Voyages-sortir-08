@@ -35,6 +35,8 @@ var VS08C_CIRCUIT = <?php echo json_encode([
     'aeroports'     => $aeroports,
     'options'       => $options,
     'booking_url'   => home_url('/reservation-circuit/' . $id),
+    'chambre_simple_active' => intval($m['chambre_simple_active'] ?? 1),
+    'chambre_triple_active' => intval($m['chambre_triple_active'] ?? 1),
 ]); ?>;
 </script>
 
