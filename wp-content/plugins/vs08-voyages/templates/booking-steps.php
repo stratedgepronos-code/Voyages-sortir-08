@@ -900,6 +900,8 @@ var BK_DATA = <?php echo json_encode([
     'insurance_price' => $insurance_price,
     'insurance_total' => $insurance_price * $nb_total,
     'acompte_pct'     => $acompte_pct,
+    'acompte_mode'    => $m['acompte_mode'] ?? 'pct',
+    'acompte_eur'     => floatval($m['acompte_eur'] ?? 0),
     'payer_tout'      => $payer_tout,
     'delai_solde'     => $delai_solde,
     'ajax_url'        => admin_url('admin-ajax.php'),
@@ -1370,6 +1372,11 @@ function bkSelectCombo(idx) {
     // Supplément vol
     bk_vol_delta_total = (c.total_delta || 0) * bk_vol_nb_pax;
 
+    // Compagnie → bagage golf offert TU/AT (aligné calculateur / Paybox)
+    if (c.aller && c.aller.airline_iata) {
+        BK_DATA.params.airline_iata = c.aller.airline_iata;
+    }
+
     // Stocker les détails du vol sélectionné pour le submit
     window.bk_selected_combo = c;
 
@@ -1473,6 +1480,47 @@ function bkGo(step) {
 // MISE À JOUR DU TOTAL (récap sticky droite)
 // ══════════════════════════════════════════════════════════════════════════════
 
+/** Plancher vols + bagages (même règle que VS08V_Calculator::compute_acompte_for_total) */
+function bkPlancherVolBagages() {
+    var prixVolPax = parseFloat(BK_DATA.params.prix_vol) || 0;
+    var coutVol = prixVolPax * bk_vol_nb_pax + (bk_vol_delta_total || 0);
+    var nbSouteEl = document.getElementById('bk-nb-bagage-soute');
+    var nbGolfEl = document.getElementById('bk-nb-bagage-golf');
+    var nbSoute = nbSouteEl ? parseInt(nbSouteEl.value, 10) : bk_vol_nb_pax;
+    var nbGolf = nbGolfEl ? parseInt(nbGolfEl.value, 10) : (parseInt(BK_DATA.nb_golfeurs, 10) || 0);
+    if (isNaN(nbSoute) || nbSoute < 0) nbSoute = bk_vol_nb_pax;
+    if (isNaN(nbGolf) || nbGolf < 0) nbGolf = parseInt(BK_DATA.nb_golfeurs, 10) || 0;
+    var ps = parseFloat(BK_DATA.prix_bagage_soute) || 0;
+    var pg = parseFloat(BK_DATA.prix_bagage_golf) || 0;
+    var iata = (BK_DATA.params.airline_iata || '').toUpperCase();
+    var golfFree = (iata === 'TU' || iata === 'AT');
+    return coutVol + ps * nbSoute + (golfFree ? 0 : pg * nbGolf);
+}
+
+/** Acompte affiché = logique serveur (%, € fixe, plancher) */
+function bkComputeAcompteDisplay(total) {
+    if (BK_DATA.payer_tout) {
+        return {acompte: total, acomptePct: 100};
+    }
+    var mode = BK_DATA.acompte_mode || 'pct';
+    var acomptePct = parseFloat(BK_DATA.acompte_pct) || 30;
+    var plancher = bkPlancherVolBagages();
+    var acompte;
+    if (mode === 'eur' && parseFloat(BK_DATA.acompte_eur) > 0) {
+        acompte = Math.max(Math.ceil(parseFloat(BK_DATA.acompte_eur)), Math.ceil(plancher));
+        acompte = Math.min(total, acompte);
+        acomptePct = total > 0 ? Math.min(100, Math.ceil(100 * acompte / total)) : acomptePct;
+    } else {
+        acompte = total * acomptePct / 100;
+        if (plancher > 0 && acompte < plancher && total > 0) {
+            acomptePct = Math.ceil((plancher / total) * 100 / 5) * 5;
+            acompte = total * acomptePct / 100;
+        }
+        acompte = Math.ceil(acompte);
+    }
+    return {acompte: acompte, acomptePct: acomptePct};
+}
+
 function bkUpdateTotal() {
     var base      = parseFloat(BK_DATA.devis.total) || 0;
     var volDelta  = bk_vol_delta_total || 0;
@@ -1493,27 +1541,9 @@ function bkUpdateTotal() {
     var totalEl = document.getElementById('bk-recap-total');
     if (totalEl) totalEl.textContent = bkFmt(total);
 
-    // ── ACOMPTE : ne peut JAMAIS être inférieur au prix total des vols ──
-    var acomptePct = parseFloat(BK_DATA.acompte_pct) || 30;
-    var acompte;
-
-    if (BK_DATA.payer_tout) {
-        acompte = total;
-    } else {
-        acompte = total * acomptePct / 100;
-        // Coût vol total = prix_vol/pers × nb passagers
-        var prixVolPax = parseFloat(BK_DATA.params.prix_vol) || 0;
-        var coutVolTotal = prixVolPax * bk_vol_nb_pax;
-        // Ajouter le supplément vol (delta) qui est déjà en total
-        coutVolTotal += volDelta;
-
-        if (coutVolTotal > 0 && acompte < coutVolTotal && total > 0) {
-            var pctReel = (coutVolTotal / total) * 100;
-            acomptePct = Math.ceil(pctReel / 5) * 5;
-            acompte = total * acomptePct / 100;
-        }
-        acompte = Math.ceil(acompte);
-    }
+    var ac = bkComputeAcompteDisplay(total);
+    var acompte = ac.acompte;
+    var acomptePct = ac.acomptePct;
 
     var acompteEl = document.getElementById('bk-recap-acompte-val');
     if (acompteEl) acompteEl.textContent = bkFmt(acompte);
@@ -1771,20 +1801,12 @@ function bkBuildRecap() {
     html += '<span style="font-family:Playfair Display,serif;font-size:28px;font-weight:700;color:#3d9a9a">' + bkFmt(total) + '</span>';
     html += '</div>';
 
-    // Acompte
+    // Acompte (même moteur que récap latéral / serveur)
     if (!BK_DATA.payer_tout) {
-        var acomptePct = parseFloat(BK_DATA.acompte_pct) || 30;
-        var acompte = total * acomptePct / 100;
-        var prixVolPax = parseFloat(BK_DATA.params.prix_vol) || 0;
-        var coutVol = prixVolPax * bk_vol_nb_pax + (bk_vol_delta_total || 0);
-        if (coutVol > 0 && acompte < coutVol && total > 0) {
-            acomptePct = Math.ceil((coutVol / total) * 100 / 5) * 5;
-            acompte = total * acomptePct / 100;
-        }
-        acompte = Math.ceil(acompte);
+        var acFin = bkComputeAcompteDisplay(total);
         html += '<div style="background:#e8f8f0;border-radius:10px;padding:10px;margin-top:8px;text-align:center">';
-        html += '<div style="font-weight:700;font-size:17px;color:#2d8a5a">' + bkFmt(acompte) + '</div>';
-        html += '<div style="font-size:11px;color:#6b7280">Acompte ' + acomptePct + '% à payer maintenant · Solde ' + BK_DATA.delai_solde + ' j. avant départ</div>';
+        html += '<div style="font-weight:700;font-size:17px;color:#2d8a5a">' + bkFmt(acFin.acompte) + '</div>';
+        html += '<div style="font-size:11px;color:#6b7280">Acompte ' + acFin.acomptePct + '% à payer maintenant · Solde ' + BK_DATA.delai_solde + ' j. avant départ</div>';
         html += '</div>';
     } else {
         html += '<div style="background:#fff3e0;border-radius:10px;padding:10px;margin-top:8px;text-align:center">';
@@ -1850,6 +1872,7 @@ function bkSubmit() {
         type_chambre    : BK_DATA.params.type_chambre,
         nb_chambres     : BK_DATA.params.nb_chambres,
         prix_vol        : BK_DATA.params.prix_vol,
+        airline_iata    : (window.bk_selected_combo && window.bk_selected_combo.aller && window.bk_selected_combo.aller.airline_iata) ? window.bk_selected_combo.aller.airline_iata : (BK_DATA.params.airline_iata || ''),
         selected_offer_id: (document.getElementById('bk-selected-offer-id') || {}).value || '',
         vol_delta_pax   : (document.getElementById('bk-selected-vol-delta') || {}).value || '0',
         vol_aller_depart : (window.bk_selected_combo && window.bk_selected_combo.aller) ? window.bk_selected_combo.aller.depart_time  : '',

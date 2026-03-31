@@ -12,7 +12,9 @@ class VS08V_Woo {
         $voyage_id    = $data['voyage_id'];
         $m            = VS08V_MetaBoxes::get($voyage_id);
         $payer_tout   = $data['payer_tout'];
-        $acompte_pct  = floatval($m['acompte_pct'] ?? 30);
+        $acompte_pct  = isset($data['acompte_pct_applied'])
+            ? floatval($data['acompte_pct_applied'])
+            : floatval($m['acompte_pct'] ?? 30);
         $total        = floatval($data['total']);
         $acompte      = floatval($data['acompte']);
         $prix_final   = $payer_tout ? $total : $acompte;

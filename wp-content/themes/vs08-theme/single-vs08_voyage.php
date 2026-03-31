@@ -1477,27 +1477,13 @@ function svDoCalc(){
         var nb=totalGolf+totalNonGolf;
         var pp=nb>0?Math.ceil(grand/nb):grand;
 
-        // ── RÈGLE : l'acompte ne peut JAMAIS être inférieur au prix des vols ──
+        // Acompte = valeurs serveur (VS08V_Calculator : % ou € + plancher vol+bagages) — aligné Paybox
         var acompteMode = VS08V_VOYAGE.acompte_mode || 'pct';
+        var acompteVal = Math.ceil(parseFloat(d.acompte || 0));
         var acomptePct = parseFloat(d.acompte_pct_final || d.acompte_pct || 30);
-        var acompteLabel, acompteVal;
-
-        if(acompteMode === 'eur' && VS08V_VOYAGE.acompte_eur > 0){
-            acompteVal = Math.ceil(VS08V_VOYAGE.acompte_eur);
-            var coutVolTotal = svPrixVol * nb;
-            if(coutVolTotal > acompteVal) acompteVal = Math.ceil(coutVolTotal);
-            acompteLabel = 'Acompte à la réservation : '+svFmt(acompteVal);
-        } else {
-            acompteVal = grand * acomptePct / 100;
-            var coutVolTotal = svPrixVol * nb;
-            if(coutVolTotal > 0 && acompteVal < coutVolTotal && grand > 0){
-                var pctReel = (coutVolTotal / grand) * 100;
-                acomptePct = Math.ceil(pctReel / 5) * 5;
-                acompteVal = grand * acomptePct / 100;
-            }
-            acompteVal = Math.ceil(acompteVal);
-            acompteLabel = 'Acompte '+acomptePct+'% = '+svFmt(acompteVal);
-        }
+        var acompteLabel = (acompteMode === 'eur' && VS08V_VOYAGE.acompte_eur > 0)
+            ? ('Acompte à la réservation : ' + svFmt(acompteVal))
+            : ('Acompte ' + Math.round(acomptePct) + '% = ' + svFmt(acompteVal));
 
         document.getElementById('sv-price-val').textContent=svFmt(grand);
         document.getElementById('sv-price-pp').textContent=svFmt(pp);

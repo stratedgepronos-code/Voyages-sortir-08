@@ -83,19 +83,27 @@ class VS08SP_Group {
 
         $captain_name = trim(sanitize_text_field($facturation['prenom'] ?? '') . ' ' . sanitize_text_field($facturation['nom'] ?? ''));
 
-        // ── Calculer l'acompte (même logique que class-booking.php) ──
-        $acompte = $total * $acompte_pct / 100;
-        $prix_vol_pp = floatval($params['prix_vol'] ?? 0);
+        // ── Acompte = même moteur que VS08V_Booking (vol + bagages plancher, mode €…) ──
         $nb_total = intval($params['nb_golfeurs'] ?? 0) + intval($params['nb_nongolfeurs'] ?? 0);
-        $cout_vol_total = $prix_vol_pp * $nb_total;
-
-        if ($cout_vol_total > 0 && $acompte < $cout_vol_total && $total > 0) {
-            $pct_reel = ($cout_vol_total / $total) * 100;
-            $acompte_pct = ceil($pct_reel / 5) * 5;
-            $acompte = $total * $acompte_pct / 100;
+        $total_i  = (int) ceil($total);
+        if (class_exists('VS08V_MetaBoxes') && class_exists('VS08V_Calculator')) {
+            $m_sp    = VS08V_MetaBoxes::get($voyage_id);
+            $params_sp = is_array($params) ? $params : [];
+            if (!isset($params_sp['nb_bagage_soute'])) {
+                $params_sp['nb_bagage_soute'] = $nb_total;
+            }
+            if (!isset($params_sp['nb_bagage_golf'])) {
+                $params_sp['nb_bagage_golf'] = intval($params_sp['nb_golfeurs'] ?? 0);
+            }
+            $ac_brk = VS08V_Calculator::compute_acompte_for_total($m_sp, $params_sp, $total_i, $nb_total);
+            $acompte     = $ac_brk['acompte'];
+            $acompte_pct = $ac_brk['acompte_pct_final'];
+        } else {
+            $acompte = (int) ceil($total * $acompte_pct / 100);
         }
-        $acompte = (int) ceil($acompte);
-        if ($payer_tout) $acompte = $total;
+        if ($payer_tout) {
+            $acompte = $total_i;
+        }
 
         // ── Créer/trouver le compte WP du capitaine ──
         $user_id = email_exists($captain_email);

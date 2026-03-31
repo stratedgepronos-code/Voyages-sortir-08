@@ -19,6 +19,7 @@ class VS08V_Booking {
             'date_depart'    => sanitize_text_field($_POST['date_depart'] ?? ''),
             'aeroport'       => sanitize_text_field($_POST['aeroport'] ?? ''),
             'prix_vol'       => floatval($_POST['prix_vol'] ?? 0) + floatval($_POST['vol_delta_pax'] ?? 0),
+            'airline_iata'   => strtoupper(sanitize_text_field($_POST['airline_iata'] ?? '')),
             'vol_delta_pax'     => floatval($_POST['vol_delta_pax'] ?? 0),
             'vol_aller_depart'  => sanitize_text_field($_POST['vol_aller_depart'] ?? ''),
             'vol_aller_arrivee' => sanitize_text_field($_POST['vol_aller_arrivee'] ?? ''),
@@ -73,22 +74,14 @@ class VS08V_Booking {
         $total_final = $devis['total'] + $options_totaux + $assurance;
         $total_final = (int) ceil($total_final); // Arrondi à l'euro supérieur
 
-        $acompte_pct = floatval($m['acompte_pct'] ?? 30);
-        $acompte     = $total_final * $acompte_pct / 100;
-
-        // ── RÈGLE ABSOLUE : l'acompte ne peut JAMAIS être inférieur au prix des vols ──
-        $prix_vol_par_pers = floatval($params['prix_vol'] ?? 0);
-        if ($prix_vol_par_pers <= 0) $prix_vol_par_pers = floatval($m['prix_vol_base'] ?? 0);
-        $nb_total          = $devis['nb_total'] ?? ($params['nb_golfeurs'] + $params['nb_nongolfeurs']);
-        $cout_vol_total    = $prix_vol_par_pers * $nb_total;
-
-        if ($cout_vol_total > 0 && $acompte < $cout_vol_total && $total_final > 0) {
-            $pct_reel    = ($cout_vol_total / $total_final) * 100;
-            $acompte_pct = ceil($pct_reel / 5) * 5;
-            $acompte     = $total_final * $acompte_pct / 100;
-        }
-
-        $acompte = (int) ceil($acompte); // Arrondi à l'euro supérieur — envoyé au paiement
+        $nb_total = (int) ($devis['nb_total'] ?? ($params['nb_golfeurs'] + $params['nb_nongolfeurs']));
+        // Même règle que VS08V_Calculator (plancher vol + bagages) — évite écart tunnel / Paybox
+        $params_acompte = $params;
+        $params_acompte['nb_bagage_soute'] = isset($_POST['nb_bagage_soute']) ? intval($_POST['nb_bagage_soute']) : $nb_total;
+        $params_acompte['nb_bagage_golf']  = isset($_POST['nb_bagage_golf']) ? intval($_POST['nb_bagage_golf']) : intval($params['nb_golfeurs'] ?? 0);
+        $ac_brk = VS08V_Calculator::compute_acompte_for_total($m, $params_acompte, $total_final, $nb_total);
+        $acompte = $ac_brk['acompte'];
+        $acompte_pct = $ac_brk['acompte_pct_final'];
 
         // Vérifier si solde complet requis (départ dans moins de delai_solde jours)
         $payer_tout = false;
@@ -146,6 +139,7 @@ class VS08V_Booking {
             'assurance'        => $assurance,
             'total'            => $total_final,
             'acompte'          => $acompte,
+            'acompte_pct_applied' => $ac_brk['acompte_pct_final'],
             'payer_tout'       => $payer_tout,
             'voyageurs'        => $voyageurs,
             'facturation'      => $facturation,

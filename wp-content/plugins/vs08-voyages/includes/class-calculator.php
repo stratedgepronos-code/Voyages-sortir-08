@@ -223,32 +223,96 @@ class VS08V_Calculator {
         $result['nb_total'] = $nb_total;
         $result['par_pers'] = $nb_total > 0 ? (int) ceil($total / $nb_total) : 0;
 
-        // 5. ACOMPTE — ne peut JAMAIS être inférieur au prix des vols + bagages
-        $acompte_pct       = floatval($m['acompte_pct'] ?? 30);
-        $acompte_base      = $total * $acompte_pct / 100;
-        $cout_vol_total    = $prix_vol_par_pers * $nb_total;
-        $bag_soute_total   = $prix_bagage_soute * $nb_bagage_soute;
-        $bag_golf_total    = ($golf_bag_free ? 0 : $prix_bagage_golf * $nb_bagage_golf);
-        $plancher_vol      = $cout_vol_total + $bag_soute_total + $bag_golf_total; // vols + bagages
-
-        // Si l'acompte de base ne couvre pas les vols+bagages → augmenter le %
-        $acompte_pct_final = $acompte_pct;
-        if ($plancher_vol > 0 && $acompte_base < $plancher_vol && $total > 0) {
-            $pct_reel = ($plancher_vol / $total) * 100;
-            $acompte_pct_final = ceil($pct_reel / 5) * 5;
-            $acompte_base = $total * $acompte_pct_final / 100;
-        }
-
-        // Arrondi à l'euro supérieur — montant envoyé au serveur de paiement
-        $result['acompte']          = (int) ceil($acompte_base);
-        $result['solde']            = $total - $result['acompte'];
-        $result['acompte_pct']      = $acompte_pct;        // % configuré dans le back-office
-        $result['acompte_pct_final']= $acompte_pct_final;  // % réellement appliqué (peut être plus élevé)
+        // 5. ACOMPTE — même fonction que booking / splitpay / tunnel (vols + bagages plancher)
+        $ac = self::compute_acompte_for_total($m, $params, $total, $nb_total);
+        $result['acompte']           = $ac['acompte'];
+        $result['solde']             = $ac['solde'];
+        $result['acompte_pct']       = $ac['acompte_pct'];
+        $result['acompte_pct_final'] = $ac['acompte_pct_final'];
 
         // Délai solde
         $result['delai_solde'] = intval($m['delai_solde'] ?? 30);
 
         return $result;
+    }
+
+    /**
+     * Acompte pour un total TTC donné (devis seul ou devis + options + assurance).
+     * Règle unique : plancher = vols × nb + bagages soute + golf (hors offerts TU/AT) ;
+     * mode € fixe possible ; sinon % avec relevage par paliers de 5 % si besoin.
+     *
+     * @param array $m      Meta voyage (VS08V_MetaBoxes::get)
+     * @param array $params nb_golfeurs, nb_nongolfeurs, prix_vol, nb_bagage_*, airline_iata…
+     * @param int   $total_final Total arrondi (€)
+     * @param int   $nb_total      Nombre de passagers
+     * @return array{acompte:int,solde:int,acompte_pct:float,acompte_pct_final:float}
+     */
+    public static function compute_acompte_for_total(array $m, array $params, int $total_final, int $nb_total): array {
+        $prix_vol_api = floatval($params['prix_vol'] ?? 0);
+        $prix_vol_par_pers = $prix_vol_api > 0 ? $prix_vol_api : floatval($m['prix_vol_base'] ?? 0);
+
+        $prix_bagage_soute = floatval($m['prix_bagage_soute'] ?? 120);
+        $prix_bagage_golf  = floatval($m['prix_bagage_golf'] ?? 120);
+        if (empty($m['prix_bagage_soute']) && !isset($m['prix_bagage_soute'])) {
+            $prix_bagage_soute = 120;
+        }
+        if (empty($m['prix_bagage_golf']) && !isset($m['prix_bagage_golf'])) {
+            $prix_bagage_golf = 120;
+        }
+
+        $airline_iata   = strtoupper(sanitize_text_field($params['airline_iata'] ?? ''));
+        $golf_bag_free  = in_array($airline_iata, ['TU', 'AT'], true);
+        $nb_golfeurs    = intval($params['nb_golfeurs'] ?? 0);
+
+        $nb_bagage_soute = isset($params['nb_bagage_soute']) ? intval($params['nb_bagage_soute']) : $nb_total;
+        $nb_bagage_golf  = isset($params['nb_bagage_golf']) ? intval($params['nb_bagage_golf']) : $nb_golfeurs;
+        if ($nb_bagage_soute < 0) {
+            $nb_bagage_soute = 0;
+        }
+        if ($nb_bagage_golf < 0) {
+            $nb_bagage_golf = 0;
+        }
+
+        $cout_vol_total  = $prix_vol_par_pers * $nb_total;
+        $bag_soute_total = $prix_bagage_soute * $nb_bagage_soute;
+        $bag_golf_total  = ($golf_bag_free ? 0 : $prix_bagage_golf * $nb_bagage_golf);
+        $plancher_vol    = $cout_vol_total + $bag_soute_total + $bag_golf_total;
+
+        $acompte_mode = $m['acompte_mode'] ?? 'pct';
+        $acompte_pct  = floatval($m['acompte_pct'] ?? 30);
+        $acompte_pct_final = $acompte_pct;
+        $acompte_eur  = floatval($m['acompte_eur'] ?? 0);
+
+        if ($total_final <= 0) {
+            return [
+                'acompte'             => 0,
+                'solde'               => 0,
+                'acompte_pct'         => $acompte_pct,
+                'acompte_pct_final'   => $acompte_pct_final,
+            ];
+        }
+
+        if ($acompte_mode === 'eur' && $acompte_eur > 0) {
+            $acompte_base = max(ceil($acompte_eur), ceil($plancher_vol));
+            $acompte_base = min($total_final, $acompte_base);
+            $acompte_pct_final = min(100, (int) ceil(100 * $acompte_base / $total_final));
+        } else {
+            $acompte_base = $total_final * $acompte_pct / 100;
+            if ($plancher_vol > 0 && $acompte_base < $plancher_vol) {
+                $pct_reel          = ($plancher_vol / $total_final) * 100;
+                $acompte_pct_final = (int) ceil($pct_reel / 5) * 5;
+                $acompte_base      = $total_final * $acompte_pct_final / 100;
+            }
+        }
+
+        $acompte = (int) ceil(min($total_final, $acompte_base));
+
+        return [
+            'acompte'           => $acompte,
+            'solde'             => max(0, $total_final - $acompte),
+            'acompte_pct'       => $acompte_pct,
+            'acompte_pct_final' => $acompte_pct_final,
+        ];
     }
 
     /**

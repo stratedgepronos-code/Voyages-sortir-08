@@ -80,17 +80,31 @@ class VS08C_Booking {
 
         $total_final = (int) ceil($devis['total'] + $options_totaux + $assurance);
 
-        // Acompte
+        // Acompte — aligné sur VS08C_Calculator : plancher = vols (avec supp. aéroport) + bagages soute
         $acompte_pct = floatval($m['acompte_pct'] ?? 30);
         $acompte = $total_final * $acompte_pct / 100;
 
-        // Règle : acompte ≥ coût vol total
-        $prix_vol_pp = floatval($params['prix_vol'] ?? 0);
-        if ($prix_vol_pp <= 0) $prix_vol_pp = floatval($m['prix_vol_base'] ?? 0);
-        $cout_vol = $prix_vol_pp * $nb_total;
-        if ($cout_vol > 0 && $acompte < $cout_vol && $total_final > 0) {
-            $pct = ceil(($cout_vol / $total_final) * 100 / 5) * 5;
-            $acompte_pct = $pct;
+        $ae = strtoupper(sanitize_text_field($params['aeroport'] ?? ''));
+        $supp_aero = 0;
+        if ($ae !== '' && !empty($m['aeroports'])) {
+            foreach ($m['aeroports'] as $a) {
+                if (strtoupper($a['code'] ?? '') === $ae) {
+                    $supp_aero = floatval($a['supp'] ?? 0);
+                    break;
+                }
+            }
+        }
+        $prix_vol_raw = floatval($params['prix_vol'] ?? 0);
+        if ($prix_vol_raw <= 0) {
+            $prix_vol_raw = floatval($m['prix_vol_base'] ?? 0);
+        }
+        $prix_vol_final_pp = $prix_vol_raw + $supp_aero;
+        $cout_vol = $prix_vol_final_pp * $nb_total;
+        $bagage_plancher = floatval($m['prix_bagage'] ?? 0) * $nb_total;
+        $plancher = $cout_vol + $bagage_plancher;
+
+        if ($plancher > 0 && $acompte < $plancher && $total_final > 0) {
+            $acompte_pct = (int) ceil(($plancher / $total_final) * 100 / 5) * 5;
             $acompte = $total_final * $acompte_pct / 100;
         }
         $acompte = (int) ceil($acompte);
