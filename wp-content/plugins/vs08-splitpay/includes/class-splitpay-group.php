@@ -52,9 +52,10 @@ class VS08SP_Group {
      *  }
      */
     public static function handle_create_group(WP_REST_Request $request) {
-        // Vérifier le nonce
+        // Vérifier le nonce (accepter vs08sp_nonce ou vs08v_nonce pour compatibilité refresh)
         $nonce = $request->get_param('nonce') ?: '';
-        if (!wp_verify_nonce($nonce, 'vs08sp_nonce')) {
+        $nonce_valid = wp_verify_nonce($nonce, 'vs08sp_nonce') || wp_verify_nonce($nonce, 'vs08v_nonce');
+        if (!$nonce_valid) {
             return new WP_REST_Response(
                 ['success' => false, 'message' => 'Session expirée. Rechargez la page.'],
                 200
@@ -87,39 +88,41 @@ class VS08SP_Group {
         }
 
         $total_voyage = floatval($booking_data['total'] ?? 0);
-        if ($total_voyage <= 0) {
+        $acompte = floatval($booking_data['acompte'] ?? 0);
+        $payer_tout = !empty($booking_data['payer_tout']);
+        // Le montant à partager est l'acompte (ou le total si paiement intégral)
+        $amount_to_split = $payer_tout ? $total_voyage : $acompte;
+        if ($amount_to_split <= 0) {
             return new WP_REST_Response(
-                ['success' => false, 'message' => 'Le montant total est invalide.'],
+                ['success' => false, 'message' => 'Le montant à répartir est invalide.'],
                 200
             );
         }
 
-        // ── Vérifier que la somme des parts = total ──────
+        // ── Vérifier que la somme des parts = montant à répartir ──────
         $sum_shares = 0;
         foreach ($participants as $p) {
             $sum_shares += floatval($p['amount'] ?? 0);
         }
         // Tolérance de 1€ pour les arrondis
-        if (abs($sum_shares - $total_voyage) > 1) {
+        if (abs($sum_shares - $amount_to_split) > 1) {
             return new WP_REST_Response(
                 ['success' => false, 'message' => sprintf(
-                    'La somme des parts (%.2f €) ne correspond pas au total (%.2f €).',
-                    $sum_shares, $total_voyage
+                    'La somme des parts (%.0f €) ne correspond pas au montant à répartir (%.0f €).',
+                    $sum_shares, $amount_to_split
                 )],
                 200
             );
         }
 
         // ── Calculer le montant minimum par part ─────────
-        // Règle : max(30% du partage équitable, coût vol par personne)
-        // On ne dit PAS au client pourquoi — on impose juste un minimum
         $nb = count($participants);
-        $equal_share = $total_voyage / $nb;
+        $equal_share = $amount_to_split / $nb;
         $min_from_pct = $equal_share * 0.30;
 
         $prix_vol_pp = floatval($booking_data['params']['prix_vol'] ?? 0);
         $min_share = max($min_from_pct, $prix_vol_pp);
-        $min_share = ceil($min_share); // Arrondi à l'euro supérieur
+        $min_share = ceil($min_share);
 
         // Vérifier que chaque part respecte le minimum
         foreach ($participants as $i => $p) {
@@ -178,7 +181,7 @@ class VS08SP_Group {
             'booking_data'    => $booking_data,
             'captain_email'   => $captain['email'],
             'captain_name'    => $captain['name'] ?? '',
-            'total_amount'    => $total_voyage,
+            'total_amount'    => $amount_to_split,
             'min_share'       => $min_share,
             'nb_participants' => $nb,
         ]);
