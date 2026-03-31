@@ -13,6 +13,197 @@ $f_date_max = sanitize_text_field($_GET['date_max'] ?? '');
 $f_duree   = intval($_GET['duree'] ?? 0);
 $f_niveau  = sanitize_key($_GET['niveau'] ?? '');
 
+/**
+ * Filtres résultats : date + aéroport cohérents (périodes vol / jours comme sur les fiches).
+ */
+if (!function_exists('vs08_sr_weekday_n')) {
+    function vs08_sr_weekday_n(string $ymd): int {
+        $ts = strtotime($ymd . ' 12:00:00');
+        if (!$ts) {
+            return 0;
+        }
+        $n = (int) date('N', $ts);
+        return ($n >= 1 && $n <= 7) ? $n : 0;
+    }
+}
+
+if (!function_exists('vs08_sr_parse_date_range')) {
+    /**
+     * @return array{0:string,1:string}|null
+     */
+    function vs08_sr_parse_date_range(?string $f_min, ?string $f_max): ?array {
+        if (!$f_min && !$f_max) {
+            return null;
+        }
+        $start = $f_min ?: '1970-01-01';
+        $end   = $f_max ?: '2100-12-31';
+        if ($start > $end) {
+            $t = $start;
+            $start = $end;
+            $end = $t;
+        }
+        return [$start, $end];
+    }
+}
+
+if (!function_exists('vs08_sr_aeroport_allows_date')) {
+    /** @param array $aero entrée aeroports[] (periodes_vol, jours_direct) — golf, circuit, séjour */
+    function vs08_sr_aeroport_allows_date(string $ymd, array $aero): bool {
+        if ($ymd === '') {
+            return false;
+        }
+        $phpDay = vs08_sr_weekday_n($ymd);
+        if ($phpDay < 1) {
+            return false;
+        }
+        $per = $aero['periodes_vol'] ?? [];
+        $jdDefault = $aero['jours_direct'] ?? [1, 2, 3, 4, 5, 6, 7];
+        if (!is_array($jdDefault) || $jdDefault === []) {
+            $jdDefault = [1, 2, 3, 4, 5, 6, 7];
+        }
+        $jdDefault = array_map('intval', $jdDefault);
+
+        if ($per === [] || !is_array($per)) {
+            return in_array($phpDay, $jdDefault, true);
+        }
+
+        foreach ($per as $p) {
+            $deb = trim($p['date_debut'] ?? '');
+            $fin = trim($p['date_fin'] ?? '');
+            if ($deb === '' && $fin === '') {
+                continue;
+            }
+            if ($deb !== '' && $ymd < $deb) {
+                continue;
+            }
+            if ($fin !== '' && $ymd > $fin) {
+                continue;
+            }
+            $jp = $p['jours_direct'] ?? [];
+            $jours = (!empty($jp) && is_array($jp)) ? array_map('intval', $jp) : $jdDefault;
+            if (in_array($phpDay, $jours, true)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+if (!function_exists('vs08_sr_circuit_tour_allows_date')) {
+    /** Périodes « dates_depart » du circuit (date début/fin + jours de départ) */
+    function vs08_sr_circuit_tour_allows_date(string $ymd, array $periods): bool {
+        if ($ymd === '' || $periods === []) {
+            return false;
+        }
+        $phpDay = vs08_sr_weekday_n($ymd);
+        if ($phpDay < 1) {
+            return false;
+        }
+        foreach ($periods as $per) {
+            if (($per['statut'] ?? 'ouvert') === 'complet') {
+                continue;
+            }
+            $db = trim($per['date_debut'] ?? '');
+            $df = trim($per['date_fin'] ?? '');
+            if ($db === '' || $df === '') {
+                continue;
+            }
+            if ($ymd < $db || $ymd > $df) {
+                continue;
+            }
+            $jours = $per['jours_depart'] ?? [];
+            if ($jours !== [] && is_array($jours)) {
+                if (!in_array($phpDay, array_map('intval', $jours), true)) {
+                    continue;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+}
+
+if (!function_exists('vs08_sr_circuit_matches_date_airport')) {
+    function vs08_sr_circuit_matches_date_airport(array $cm, ?string $f_min, ?string $f_max, string $f_airport): bool {
+        $range = vs08_sr_parse_date_range($f_min, $f_max);
+        if (!$range) {
+            return true;
+        }
+        [$start, $end] = $range;
+        $periods = $cm['dates_depart'] ?? [];
+        $aero    = null;
+        if ($f_airport !== '') {
+            foreach (($cm['aeroports'] ?? []) as $a) {
+                if (strtoupper(trim($a['code'] ?? '')) === $f_airport) {
+                    $aero = $a;
+                    break;
+                }
+            }
+            if (!$aero) {
+                return false;
+            }
+        }
+
+        $cur = strtotime($start . ' 12:00:00');
+        $end_ts = strtotime($end . ' 12:00:00');
+        $i = 0;
+        while ($cur <= $end_ts && $i++ < 800) {
+            $ymd = date('Y-m-d', $cur);
+            if (!vs08_sr_circuit_tour_allows_date($ymd, $periods)) {
+                $cur = strtotime('+1 day', $cur);
+                continue;
+            }
+            if ($aero && !vs08_sr_aeroport_allows_date($ymd, $aero)) {
+                $cur = strtotime('+1 day', $cur);
+                continue;
+            }
+            return true;
+        }
+        return false;
+    }
+}
+
+if (!function_exists('vs08_sr_sejour_matches_date_airport')) {
+    function vs08_sr_sejour_matches_date_airport(array $sm, ?string $f_min, ?string $f_max, string $f_airport): bool {
+        $range = vs08_sr_parse_date_range($f_min, $f_max);
+        if (!$range) {
+            return true;
+        }
+        [$start, $end] = $range;
+        $aeros = $sm['aeroports'] ?? [];
+        if ($f_airport !== '') {
+            $one = null;
+            foreach ($aeros as $a) {
+                if (strtoupper(trim($a['code'] ?? '')) === $f_airport) {
+                    $one = $a;
+                    break;
+                }
+            }
+            if (!$one) {
+                return false;
+            }
+            $aeros = [$one];
+        }
+        if ($aeros === []) {
+            return false;
+        }
+
+        $cur = strtotime($start . ' 12:00:00');
+        $end_ts = strtotime($end . ' 12:00:00');
+        $i = 0;
+        while ($cur <= $end_ts && $i++ < 800) {
+            $ymd = date('Y-m-d', $cur);
+            foreach ($aeros as $aero) {
+                if (vs08_sr_aeroport_allows_date($ymd, $aero)) {
+                    return true;
+                }
+            }
+            $cur = strtotime('+1 day', $cur);
+        }
+        return false;
+    }
+}
+
 $opts  = class_exists('VS08V_Search') ? VS08V_Search::get_aggregated_options() : ['types'=>[],'destinations'=>[],'aeroports'=>[],'durees'=>[],'dates'=>[]];
 $types_labels = class_exists('VS08V_Search') ? VS08V_Search::TYPE_LABELS : [];
 // Même périmètre que la page d'accueil : golf + circuits uniquement (pour l'instant)
@@ -76,16 +267,39 @@ foreach ($all_posts as $p) {
     }
 
     if ($f_date_min || $f_date_max) {
+        $range = vs08_sr_parse_date_range($f_date_min, $f_date_max);
+        if (!$range) {
+            continue;
+        }
+        [$d_start, $d_end] = $range;
+        $aero_for_day = null;
+        if ($f_airport !== '') {
+            foreach (($m['aeroports'] ?? []) as $a) {
+                if (strtoupper(trim($a['code'] ?? '')) === $f_airport) {
+                    $aero_for_day = $a;
+                    break;
+                }
+            }
+        }
         $date_match = false;
         foreach (($m['dates_depart'] ?? []) as $dd) {
             $dt = $dd['date'] ?? '';
             $st = $dd['statut'] ?? 'dispo';
-            if (!$dt || $st === 'complet') continue;
-            if ($f_date_min && $dt < $f_date_min) continue;
-            if ($f_date_max && $dt > $f_date_max) continue;
-            $date_match = true; break;
+            if (!$dt || $st === 'complet') {
+                continue;
+            }
+            if ($dt < $d_start || $dt > $d_end) {
+                continue;
+            }
+            if ($aero_for_day && !vs08_sr_aeroport_allows_date($dt, $aero_for_day)) {
+                continue;
+            }
+            $date_match = true;
+            break;
         }
-        if (!$date_match) continue;
+        if (!$date_match) {
+            continue;
+        }
     }
 
     if ($f_duree && intval($m['duree'] ?? 0) !== $f_duree) continue;
@@ -154,6 +368,12 @@ if (class_exists('VS08C_Meta') && (!$f_type || $f_type === 'circuit')) {
                 if (strtoupper(trim($a['code'] ?? '')) === $f_airport) { $aero_match = true; break; }
             }
             if (!$aero_match) continue;
+        }
+
+        if ($f_date_min || $f_date_max) {
+            if (!vs08_sr_circuit_matches_date_airport($cm, $f_date_min, $f_date_max, $f_airport)) {
+                continue;
+            }
         }
 
         $cthumb = get_the_post_thumbnail_url($cp->ID, 'medium');
@@ -286,6 +506,12 @@ if (class_exists('VS08S_Meta') && (!$f_type || $f_type === 'sejour')) {
                 if (strtoupper(trim($a['code'] ?? '')) === $f_airport) { $aero_match = true; break; }
             }
             if (!$aero_match) continue;
+        }
+
+        if ($f_date_min || $f_date_max) {
+            if (!vs08_sr_sejour_matches_date_airport($sm, $f_date_min, $f_date_max, $f_airport)) {
+                continue;
+            }
         }
 
         $sthumb = get_the_post_thumbnail_url($sp->ID, 'medium');
