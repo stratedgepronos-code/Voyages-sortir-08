@@ -1,13 +1,20 @@
 <?php
 /**
- * VS08 SplitPay — Gestion des groupes
+ * VS08 SplitPay v2 — Gestion des groupes
  *
- * Endpoints REST :
- *   POST /vs08sp/v1/create-group   → crée le groupe + parts + envoie les liens
- *   GET  /vs08sp/v1/group/{id}     → récupère les infos d'un groupe (pour le capitaine)
+ * Approche "2 temps" :
+ *   TEMPS 1 (tunnel booking) :
+ *     POST /vs08sp/v1/create-booking
+ *     → Crée une commande WC "sp-group-wait" + groupe splitpay "draft"
+ *     → Redirige vers l'espace voyageur
  *
- * Ce fichier est le point d'entrée principal quand le capitaine
- * choisit "Payer à plusieurs" dans le tunnel de réservation.
+ *   TEMPS 2 (espace voyageur) :
+ *     POST /vs08sp/v1/configure-group
+ *     → Le capitaine configure les participants (nom/email/montant)
+ *     → Crée les comptes WP + parts + envoie les liens
+ *
+ *   GET /vs08sp/v1/group/{id}
+ *     → Récupère les infos d'un groupe (pour le capitaine)
  */
 if (!defined('ABSPATH')) exit;
 
@@ -15,20 +22,49 @@ class VS08SP_Group {
 
     public static function init() {
         add_action('rest_api_init', [__CLASS__, 'register_routes']);
+        add_action('init', [__CLASS__, 'register_order_status']);
+        add_filter('wc_order_statuses', [__CLASS__, 'add_order_status']);
+    }
+
+    /* ══════════════════════════════════════════
+     *  STATUT WOOCOMMERCE CUSTOM
+     * ══════════════════════════════════════════ */
+    public static function register_order_status() {
+        register_post_status('wc-sp-group-wait', [
+            'label'                     => 'En attente groupe',
+            'public'                    => true,
+            'show_in_admin_status_list' => true,
+            'show_in_admin_all_list'    => true,
+            'exclude_from_search'       => false,
+            'label_count'               => _n_noop(
+                'En attente groupe <span class="count">(%s)</span>',
+                'En attente groupe <span class="count">(%s)</span>',
+                'vs08-splitpay'
+            ),
+        ]);
+    }
+
+    public static function add_order_status($statuses) {
+        $statuses['wc-sp-group-wait'] = 'En attente groupe';
+        return $statuses;
     }
 
     /* ══════════════════════════════════════════
      *  ROUTES REST API
      * ══════════════════════════════════════════ */
     public static function register_routes() {
-        // Créer un groupe de paiement partagé
-        register_rest_route('vs08sp/v1', '/create-group', [
+        register_rest_route('vs08sp/v1', '/create-booking', [
             'methods'             => 'POST',
             'permission_callback' => '__return_true',
-            'callback'            => [__CLASS__, 'handle_create_group'],
+            'callback'            => [__CLASS__, 'handle_create_booking'],
         ]);
 
-        // Récupérer les infos d'un groupe (pour le capitaine dans son espace)
+        register_rest_route('vs08sp/v1', '/configure-group', [
+            'methods'             => 'POST',
+            'permission_callback' => function() { return is_user_logged_in(); },
+            'callback'            => [__CLASS__, 'handle_configure_group'],
+        ]);
+
         register_rest_route('vs08sp/v1', '/group/(?P<id>\d+)', [
             'methods'             => 'GET',
             'permission_callback' => '__return_true',
@@ -37,202 +73,355 @@ class VS08SP_Group {
     }
 
     /* ══════════════════════════════════════════
-     *  CRÉATION D'UN GROUPE
-     * ══════════════════════════════════════════
-     *
-     *  Le JS du tunnel de réservation envoie :
-     *  {
-     *    booking_data: { ...toutes les données du devis... },
-     *    participants: [
-     *      { email: "cap@mail.com", name: "Jean", amount: 1200, is_captain: true },
-     *      { email: "ami@mail.com", name: "Pierre", amount: 1000 },
-     *      ...
-     *    ],
-     *    nonce: "..."
-     *  }
-     */
-    public static function handle_create_group(WP_REST_Request $request) {
-        $booking_data  = $request->get_param('booking_data');
-        $participants  = $request->get_param('participants');
+     *  TEMPS 1 : CRÉER LE DOSSIER GROUPE
+     * ══════════════════════════════════════════ */
+    public static function handle_create_booking(WP_REST_Request $request) {
+        $body = $request->get_json_params();
 
-        // ── Validations ──────────────────────────
-        if (empty($booking_data) || empty($participants)) {
-            return new WP_REST_Response(
-                ['success' => false, 'message' => 'Données manquantes.'],
-                200
-            );
+        $voyage_id    = intval($body['voyage_id'] ?? 0);
+        $voyage_titre = sanitize_text_field($body['voyage_titre'] ?? '');
+        $total        = floatval($body['total'] ?? 0);
+        $acompte_pct  = floatval($body['acompte_pct'] ?? 30);
+        $payer_tout   = !empty($body['payer_tout']);
+        $params       = $body['params'] ?? [];
+        $devis        = $body['devis'] ?? [];
+        $facturation  = $body['facturation'] ?? [];
+        $voyageurs    = $body['voyageurs'] ?? [];
+
+        if (!$voyage_id || $total <= 0) {
+            return new WP_REST_Response(['success' => false, 'message' => 'Données de réservation invalides.'], 200);
         }
 
-        if (!is_array($participants) || count($participants) < 2) {
-            return new WP_REST_Response(
-                ['success' => false, 'message' => 'Il faut au moins 2 participants.'],
-                200
-            );
+        $captain_email = sanitize_email($facturation['email'] ?? '');
+        if (empty($captain_email) || !is_email($captain_email)) {
+            return new WP_REST_Response(['success' => false, 'message' => 'Email de facturation requis pour le paiement groupé.'], 200);
         }
 
-        if (count($participants) > VS08SP_MAX_PARTICIPANTS) {
-            return new WP_REST_Response(
-                ['success' => false, 'message' => 'Maximum ' . VS08SP_MAX_PARTICIPANTS . ' participants.'],
-                200
-            );
+        $captain_name = trim(sanitize_text_field($facturation['prenom'] ?? '') . ' ' . sanitize_text_field($facturation['nom'] ?? ''));
+
+        // Calculer l'acompte (même logique que class-booking.php)
+        $acompte = $total * $acompte_pct / 100;
+        $prix_vol_pp = floatval($params['prix_vol'] ?? 0);
+        $nb_total = intval($params['nb_golfeurs'] ?? 0) + intval($params['nb_nongolfeurs'] ?? 0);
+        $cout_vol_total = $prix_vol_pp * $nb_total;
+
+        if ($cout_vol_total > 0 && $acompte < $cout_vol_total && $total > 0) {
+            $pct_reel = ($cout_vol_total / $total) * 100;
+            $acompte_pct = ceil($pct_reel / 5) * 5;
+            $acompte = $total * $acompte_pct / 100;
         }
+        $acompte = (int) ceil($acompte);
+        if ($payer_tout) $acompte = $total;
 
-        $total_voyage = floatval($booking_data['total'] ?? 0);
-        $acompte = floatval($booking_data['acompte'] ?? 0);
-        $payer_tout = !empty($booking_data['payer_tout']);
-        // Le montant à partager est l'acompte (ou le total si paiement intégral)
-        $amount_to_split = $payer_tout ? $total_voyage : $acompte;
-        if ($amount_to_split <= 0) {
-            return new WP_REST_Response(
-                ['success' => false, 'message' => 'Le montant à répartir est invalide.'],
-                200
-            );
-        }
-
-        // ── Vérifier que la somme des parts = montant à répartir ──────
-        $sum_shares = 0;
-        foreach ($participants as $p) {
-            $sum_shares += floatval($p['amount'] ?? 0);
-        }
-        // Tolérance de 1€ pour les arrondis
-        if (abs($sum_shares - $amount_to_split) > 1) {
-            return new WP_REST_Response(
-                ['success' => false, 'message' => sprintf(
-                    'La somme des parts (%.0f €) ne correspond pas au montant à répartir (%.0f €).',
-                    $sum_shares, $amount_to_split
-                )],
-                200
-            );
-        }
-
-        // ── Calculer le montant minimum par part ─────────
-        $nb = count($participants);
-        $equal_share = $amount_to_split / $nb;
-        $min_from_pct = $equal_share * 0.30;
-
-        $prix_vol_pp = floatval($booking_data['params']['prix_vol'] ?? 0);
-        $min_share = max($min_from_pct, $prix_vol_pp);
-        $min_share = ceil($min_share);
-
-        // Vérifier que chaque part respecte le minimum
-        foreach ($participants as $i => $p) {
-            $amount = floatval($p['amount'] ?? 0);
-            if ($amount < $min_share) {
-                return new WP_REST_Response(
-                    ['success' => false, 'message' => sprintf(
-                        'Le montant minimum par participant est de %d €.',
-                        $min_share
-                    )],
-                    200
-                );
+        // Créer/trouver le compte WP du capitaine
+        $user_id = email_exists($captain_email);
+        if (!$user_id) {
+            $password = wp_generate_password(12, true, false);
+            $user_id = wp_create_user($captain_email, $password, $captain_email);
+            if (is_wp_error($user_id)) {
+                return new WP_REST_Response(['success' => false, 'message' => 'Erreur création compte : ' . $user_id->get_error_message()], 200);
             }
+            wp_update_user([
+                'ID'           => $user_id,
+                'first_name'   => sanitize_text_field($facturation['prenom'] ?? ''),
+                'last_name'    => sanitize_text_field($facturation['nom'] ?? ''),
+                'display_name' => $captain_name,
+                'role'         => 'customer',
+            ]);
+            VS08SP_Emails::send_account_created($captain_email, $password, $captain_name);
+            error_log(sprintf('[VS08SP] Compte WP créé pour capitaine %s (user #%d)', $captain_email, $user_id));
         }
 
-        // Vérifier les emails
-        $captain_found = false;
-        $emails_seen = [];
-        foreach ($participants as $p) {
-            $email = sanitize_email($p['email'] ?? '');
-            if (empty($email) || !is_email($email)) {
-                return new WP_REST_Response(
-                    ['success' => false, 'message' => 'Adresse email invalide : ' . esc_html($p['email'] ?? '')],
-                    200
-                );
-            }
-            if (in_array($email, $emails_seen)) {
-                return new WP_REST_Response(
-                    ['success' => false, 'message' => 'Email en doublon : ' . esc_html($email)],
-                    200
-                );
-            }
-            $emails_seen[] = $email;
-            if (!empty($p['is_captain'])) $captain_found = true;
-        }
-        if (!$captain_found) {
-            return new WP_REST_Response(
-                ['success' => false, 'message' => 'Un des participants doit être désigné capitaine.'],
-                200
-            );
+        // Booking data
+        $booking_data = [
+            'voyage_id'    => $voyage_id,
+            'voyage_titre' => $voyage_titre ?: get_the_title($voyage_id),
+            'params'       => $params,
+            'devis'        => $devis,
+            'total'        => $total,
+            'acompte'      => $acompte,
+            'acompte_pct'  => $acompte_pct,
+            'payer_tout'   => $payer_tout,
+            'facturation'  => $facturation,
+            'voyageurs'    => $voyageurs,
+            'splitpay'     => true,
+        ];
+
+        // Produit WooCommerce
+        $product_name = sprintf('Réservation groupe — %s — %s (%d pers.)',
+            $booking_data['voyage_titre'],
+            !empty($params['date_depart']) ? date('d/m/Y', strtotime($params['date_depart'])) : '—',
+            $nb_total ?: 1
+        );
+
+        $product = new WC_Product_Simple();
+        $product->set_name($product_name);
+        $product->set_price($total);
+        $product->set_regular_price($total);
+        $product->set_status('private');
+        $product->set_virtual(true);
+        $product->set_sold_individually(true);
+        $product->set_catalog_visibility('hidden');
+        $product_id = $product->save();
+
+        if (!$product_id) {
+            return new WP_REST_Response(['success' => false, 'message' => 'Erreur création produit.'], 200);
         }
 
-        // ── Trouver le capitaine ─────────────────────────
-        $captain = null;
-        foreach ($participants as $p) {
-            if (!empty($p['is_captain'])) {
-                $captain = $p;
-                break;
+        update_post_meta($product_id, '_vs08v_booking_data', $booking_data);
+        update_post_meta($product_id, '_vs08v_voyage_id', $voyage_id);
+        update_post_meta($product_id, '_vs08v_total_voyage', $total);
+        update_post_meta($product_id, '_vs08sp_is_group_product', 1);
+
+        // Commande WooCommerce en statut custom
+        try {
+            $order = wc_create_order([
+                'customer_id' => $user_id,
+                'status'      => 'sp-group-wait',
+            ]);
+            if (is_wp_error($order)) {
+                return new WP_REST_Response(['success' => false, 'message' => 'Erreur création commande.'], 200);
             }
+
+            $order->add_product($product, 1);
+            $order->set_billing_first_name(sanitize_text_field($facturation['prenom'] ?? ''));
+            $order->set_billing_last_name(sanitize_text_field($facturation['nom'] ?? ''));
+            $order->set_billing_email($captain_email);
+            $order->set_billing_phone(sanitize_text_field($facturation['tel'] ?? ''));
+            $order->set_billing_address_1(sanitize_text_field($facturation['adresse'] ?? ''));
+            $order->set_billing_postcode(sanitize_text_field($facturation['cp'] ?? ''));
+            $order->set_billing_city(sanitize_text_field($facturation['ville'] ?? ''));
+            $order->set_billing_country('FR');
+
+            $order->update_meta_data('_vs08v_booking_data', $booking_data);
+            $order->update_meta_data('_vs08v_voyage_id', $voyage_id);
+            $order->update_meta_data('_vs08v_total_voyage', $total);
+            $order->update_meta_data('_vs08sp_is_group_order', true);
+
+            $order->calculate_totals();
+            $order->add_order_note(sprintf(
+                '👥 Dossier paiement groupé créé par %s (%s). En attente de la configuration des participants.',
+                $captain_name, $captain_email
+            ));
+            $order->save();
+            $order_id = $order->get_id();
+
+        } catch (\Throwable $e) {
+            error_log('[VS08SP] Erreur création commande : ' . $e->getMessage());
+            return new WP_REST_Response(['success' => false, 'message' => 'Erreur serveur. Réessayez.'], 200);
         }
 
-        // ── Créer le groupe en BDD ───────────────────────
+        // Groupe splitpay en statut "draft"
         $group_id = VS08SP_DB::create_group([
-            'voyage_id'       => intval($booking_data['voyage_id'] ?? 0),
-            'voyage_titre'    => sanitize_text_field($booking_data['voyage_titre'] ?? ''),
-            'booking_data'    => $booking_data,
-            'captain_email'   => $captain['email'],
-            'captain_name'    => $captain['name'] ?? '',
-            'total_amount'    => $amount_to_split,
-            'min_share'       => $min_share,
-            'nb_participants' => $nb,
+            'voyage_id'       => $voyage_id,
+            'voyage_titre'    => $booking_data['voyage_titre'],
+            'booking_data'    => array_merge($booking_data, ['order_id' => $order_id]),
+            'captain_email'   => $captain_email,
+            'captain_name'    => $captain_name,
+            'total_amount'    => $payer_tout ? $total : $acompte,
+            'min_share'       => 0,
+            'nb_participants' => 2,
         ]);
 
-        if (!$group_id) {
-            return new WP_REST_Response(
-                ['success' => false, 'message' => 'Erreur lors de la création du groupe. Réessayez.'],
-                200
-            );
+        if ($group_id) {
+            VS08SP_DB::update_group_status($group_id, 'draft');
+            $order->update_meta_data('_vs08sp_group_id', $group_id);
+            $order->save();
+            error_log(sprintf('[VS08SP] Groupe #%d (draft) — commande #%d — capitaine %s', $group_id, $order_id, $captain_email));
         }
 
-        // ── Créer les parts (une par participant) ────────
-        $share_links = [];
-        foreach ($participants as $p) {
-            $share_id = VS08SP_DB::create_share([
-                'group_id'   => $group_id,
-                'email'      => $p['email'],
-                'name'       => $p['name'] ?? '',
-                'amount'     => floatval($p['amount']),
-                'is_captain' => !empty($p['is_captain']) ? 1 : 0,
-            ]);
-
-            if (!$share_id) {
-                // Rollback : on ne peut pas facilement, mais on log l'erreur
-                error_log("[VS08SP] Failed to create share for {$p['email']} in group $group_id");
-                continue;
-            }
-
-            // Récupérer le token pour construire le lien
-            $share = VS08SP_DB::get_share_by_token(''); // On a besoin du token qu'on vient de créer
-            // Plus simple : relire toutes les parts du groupe
+        // Connecter le capitaine automatiquement
+        if (!is_user_logged_in()) {
+            wp_set_current_user($user_id);
+            wp_set_auth_cookie($user_id, true);
         }
 
-        // Relire toutes les parts créées pour avoir les tokens
-        $shares = VS08SP_DB::get_shares($group_id);
-        foreach ($shares as $share) {
-            $share_links[] = [
-                'email'      => $share['email'],
-                'name'       => $share['name'],
-                'amount'     => floatval($share['amount']),
-                'is_captain' => (bool) $share['is_captain'],
-                'url'        => VS08SP_DB::get_payment_url($share['token']),
-                'token'      => $share['token'],
-            ];
+        $redirect_url = home_url('/espace-voyageur/');
+        if ($group_id) {
+            $redirect_url = add_query_arg('splitpay_group', $group_id, $redirect_url);
         }
 
-        // ── Envoyer les emails d'invitation ──────────────
-        VS08SP_Emails::send_invitations($group_id);
-
-        // ── Retourner la confirmation ────────────────────
         return new WP_REST_Response([
             'success'  => true,
             'group_id' => $group_id,
-            'message'  => 'Groupe créé ! Les liens de paiement ont été envoyés.',
-            'shares'   => $share_links,
-            'expires'  => date('d/m/Y à H:i', time() + (VS08SP_EXPIRY_HOURS * 3600)),
+            'order_id' => $order_id,
+            'redirect' => $redirect_url,
+            'message'  => 'Dossier groupe créé !',
         ], 200);
     }
 
     /* ══════════════════════════════════════════
-     *  RÉCUPÉRER UN GROUPE (pour le capitaine)
+     *  TEMPS 2 : CONFIGURER LES PARTICIPANTS
+     * ══════════════════════════════════════════ */
+    public static function handle_configure_group(WP_REST_Request $request) {
+        $body = $request->get_json_params();
+        $group_id     = intval($body['group_id'] ?? 0);
+        $participants = $body['participants'] ?? [];
+
+        if (!$group_id || empty($participants)) {
+            return new WP_REST_Response(['success' => false, 'message' => 'Données manquantes.'], 200);
+        }
+
+        $group = VS08SP_DB::get_group($group_id);
+        if (!$group) {
+            return new WP_REST_Response(['success' => false, 'message' => 'Groupe introuvable.'], 200);
+        }
+
+        $current_user = wp_get_current_user();
+        if ($current_user->user_email !== $group['captain_email']) {
+            return new WP_REST_Response(['success' => false, 'message' => 'Seul le capitaine peut configurer le groupe.'], 200);
+        }
+
+        if ($group['status'] !== 'draft') {
+            return new WP_REST_Response(['success' => false, 'message' => 'Ce groupe a déjà été configuré.'], 200);
+        }
+
+        if (count($participants) < 2) {
+            return new WP_REST_Response(['success' => false, 'message' => 'Il faut au moins 2 participants.'], 200);
+        }
+        if (count($participants) > VS08SP_MAX_PARTICIPANTS) {
+            return new WP_REST_Response(['success' => false, 'message' => 'Maximum ' . VS08SP_MAX_PARTICIPANTS . ' participants.'], 200);
+        }
+
+        $amount_to_split = floatval($group['total_amount']);
+
+        // Validation
+        $sum = 0;
+        $emails_seen = [];
+        foreach ($participants as $i => $p) {
+            $email = sanitize_email($p['email'] ?? '');
+            if (empty($email) || !is_email($email)) {
+                return new WP_REST_Response(['success' => false, 'message' => 'Email invalide pour le participant ' . ($i + 1) . '.'], 200);
+            }
+            if (in_array(strtolower($email), $emails_seen)) {
+                return new WP_REST_Response(['success' => false, 'message' => 'Email en doublon : ' . $email], 200);
+            }
+            $emails_seen[] = strtolower($email);
+            $amount = floatval($p['amount'] ?? 0);
+            if ($amount <= 0) {
+                return new WP_REST_Response(['success' => false, 'message' => 'Le montant doit être > 0 pour chaque participant.'], 200);
+            }
+            $sum += $amount;
+        }
+
+        if (abs($sum - $amount_to_split) > 1) {
+            return new WP_REST_Response(['success' => false, 'message' => sprintf(
+                'La somme (%s €) ne correspond pas au montant (%s €).',
+                number_format($sum, 0, ',', ' '), number_format($amount_to_split, 0, ',', ' ')
+            )], 200);
+        }
+
+        // Minimum par part
+        $nb = count($participants);
+        $booking_data = $group['booking_data'];
+        $prix_vol_pp = floatval($booking_data['params']['prix_vol'] ?? 0);
+        $min_share = ceil(max(($amount_to_split / $nb) * 0.30, $prix_vol_pp));
+
+        foreach ($participants as $i => $p) {
+            if (floatval($p['amount']) < $min_share) {
+                return new WP_REST_Response(['success' => false, 'message' => sprintf('Montant minimum par participant : %d €.', $min_share)], 200);
+            }
+        }
+
+        // Créer les comptes WP + shares
+        $created_shares = [];
+        foreach ($participants as $p) {
+            $email  = sanitize_email($p['email']);
+            $prenom = sanitize_text_field($p['prenom'] ?? '');
+            $nom    = sanitize_text_field($p['nom'] ?? '');
+            $name   = trim($prenom . ' ' . $nom);
+            $amount = floatval($p['amount']);
+            $is_captain = (strtolower($email) === strtolower($group['captain_email'])) ? 1 : 0;
+
+            // Compte WP
+            $user_id = email_exists($email);
+            $password_generated = '';
+            if (!$user_id) {
+                $password_generated = wp_generate_password(12, true, false);
+                $user_id = wp_create_user($email, $password_generated, $email);
+                if (is_wp_error($user_id)) {
+                    error_log(sprintf('[VS08SP] Erreur création compte %s : %s', $email, $user_id->get_error_message()));
+                    continue;
+                }
+                wp_update_user([
+                    'ID'           => $user_id,
+                    'first_name'   => $prenom,
+                    'last_name'    => $nom,
+                    'display_name' => $name ?: $email,
+                    'role'         => 'customer',
+                ]);
+            }
+
+            // Share en BDD
+            $share_id = VS08SP_DB::create_share([
+                'group_id'   => $group_id,
+                'email'      => $email,
+                'name'       => $name,
+                'amount'     => $amount,
+                'is_captain' => $is_captain,
+            ]);
+
+            if ($share_id) {
+                // Relire pour avoir le token
+                $all_shares = VS08SP_DB::get_shares($group_id);
+                $token = '';
+                foreach ($all_shares as $s) {
+                    if (intval($s['id']) === $share_id) { $token = $s['token']; break; }
+                }
+
+                $created_shares[] = [
+                    'share_id'   => $share_id,
+                    'email'      => $email,
+                    'name'       => $name,
+                    'amount'     => $amount,
+                    'is_captain' => $is_captain,
+                    'user_id'    => $user_id,
+                    'password'   => $password_generated,
+                    'token'      => $token,
+                ];
+            }
+        }
+
+        // Mettre à jour le groupe → "pending"
+        global $wpdb;
+        $wpdb->update(
+            $wpdb->prefix . 'vs08sp_groups',
+            ['status' => 'pending', 'nb_participants' => count($created_shares), 'min_share' => $min_share],
+            ['id' => $group_id],
+            ['%s', '%d', '%f'],
+            ['%d']
+        );
+
+        // Envoyer les emails
+        foreach ($created_shares as $cs) {
+            $payment_url = VS08SP_DB::get_payment_url($cs['token']);
+            if ($cs['is_captain']) {
+                VS08SP_Emails::send_captain_group_configured($group, $cs, $created_shares);
+            } else {
+                VS08SP_Emails::send_participant_invitation($group, $cs, $payment_url, $cs['password']);
+            }
+        }
+
+        error_log(sprintf('[VS08SP] Groupe #%d configuré — %d participants', $group_id, count($created_shares)));
+
+        return new WP_REST_Response([
+            'success'  => true,
+            'group_id' => $group_id,
+            'shares'   => array_map(function($cs) {
+                return [
+                    'email'      => $cs['email'],
+                    'name'       => $cs['name'],
+                    'amount'     => $cs['amount'],
+                    'is_captain' => (bool) $cs['is_captain'],
+                    'url'        => VS08SP_DB::get_payment_url($cs['token']),
+                ];
+            }, $created_shares),
+            'message'  => 'Groupe configuré ! Les liens de paiement ont été envoyés.',
+        ], 200);
+    }
+
+    /* ══════════════════════════════════════════
+     *  RÉCUPÉRER UN GROUPE
      * ══════════════════════════════════════════ */
     public static function handle_get_group(WP_REST_Request $request) {
         $group_id = intval($request->get_param('id'));
@@ -242,26 +431,20 @@ class VS08SP_Group {
             return new WP_REST_Response(['success' => false, 'message' => 'Groupe introuvable.'], 404);
         }
 
-        // Vérifier que le demandeur est le capitaine (par email user connecté)
-        $current_user = wp_get_current_user();
-        if ($current_user && $current_user->user_email !== $group['captain_email']) {
-            // Pas le capitaine → on renvoie seulement les infos publiques
-        }
-
         $shares = VS08SP_DB::get_shares($group_id);
         $progress = VS08SP_DB::get_payment_progress($group_id);
 
         return new WP_REST_Response([
-            'success'  => true,
-            'group'    => [
-                'id'             => $group['id'],
-                'voyage_titre'   => $group['voyage_titre'],
-                'total_amount'   => floatval($group['total_amount']),
-                'status'         => $group['status'],
-                'expires_at'     => $group['expires_at'],
+            'success' => true,
+            'group'   => [
+                'id'              => $group['id'],
+                'voyage_titre'    => $group['voyage_titre'],
+                'total_amount'    => floatval($group['total_amount']),
+                'status'          => $group['status'],
+                'expires_at'      => $group['expires_at'],
                 'nb_participants' => intval($group['nb_participants']),
             ],
-            'shares'   => array_map(function ($s) {
+            'shares'   => array_map(function($s) {
                 return [
                     'email'      => $s['email'],
                     'name'       => $s['name'],
@@ -276,14 +459,8 @@ class VS08SP_Group {
         ], 200);
     }
 
-    /* ══════════════════════════════════════════
-     *  UTILITAIRE : calculer le minimum par part
-     *  (utilisé aussi par le JS côté front)
-     * ══════════════════════════════════════════ */
     public static function calculate_min_share(float $total, int $nb_participants, float $prix_vol_pp = 0): float {
         $equal_share = $total / max($nb_participants, 1);
-        $min_from_pct = $equal_share * 0.30;
-        $min = max($min_from_pct, $prix_vol_pp);
-        return (float) ceil($min);
+        return (float) ceil(max($equal_share * 0.30, $prix_vol_pp));
     }
 }

@@ -533,6 +533,28 @@ get_header();
 
                 <div id="bk-recap-final" style="border-radius:14px;margin-bottom:20px"></div>
 
+                <!-- ═══ MODE DE RÈGLEMENT (SplitPay v2) ═══ -->
+                <div id="bk-payment-mode-section" style="background:#f8f5f0;border-radius:12px;padding:20px 24px;margin-bottom:20px;border:1.5px solid #e5e0d8">
+                    <div style="font-size:15px;font-weight:700;color:#0b1120;font-family:'Playfair Display',Georgia,serif;margin-bottom:14px">Mode de règlement</div>
+
+                    <!-- Option 1 : Payer seul (défaut) -->
+                    <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start;padding:12px 14px;background:#fff;border-radius:8px;border:1.5px solid #ddd;margin-bottom:8px" id="bk-mode-solo-label">
+                        <input type="radio" name="bk-payment-mode" value="solo" id="bk-payment-solo" checked style="margin-top:3px;flex-shrink:0;accent-color:#59b7b7">
+                        <span style="font-size:13px;color:#374151;line-height:1.5;font-family:'Outfit',sans-serif">
+                            <strong>💳 Payer seul</strong> — Vous réglez l'intégralité de l'acompte (ou du total) maintenant.
+                        </span>
+                    </label>
+
+                    <!-- Option 2 : Payer à plusieurs -->
+                    <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start;padding:12px 14px;background:#fff;border-radius:8px;border:1.5px solid #ddd" id="bk-mode-split-label">
+                        <input type="radio" name="bk-payment-mode" value="splitpay" id="bk-payment-splitpay" style="margin-top:3px;flex-shrink:0;accent-color:#59b7b7">
+                        <span style="font-size:13px;color:#374151;line-height:1.5;font-family:'Outfit',sans-serif">
+                            <strong>👥 Payer à plusieurs</strong> — Créez un dossier groupe. Chaque participant recevra son lien de paiement sécurisé.
+                            <br><span style="font-size:11px;color:#59b7b7">Idéal pour les groupes de golfeurs · Vous configurerez les parts dans votre espace voyageur</span>
+                        </span>
+                    </label>
+                </div>
+
                 <!-- Clause légale conforme au Code du Tourisme (art. L211-8 et suivants) et Directive UE 2015/2302 -->
                 <div style="background:#fff8f0;border:1.5px solid #f0dcc0;border-radius:12px;padding:16px;margin-bottom:16px">
                     <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start">
@@ -1718,6 +1740,11 @@ function bkSubmit() {
         return;
     }
 
+    // ── Vérifier le mode de règlement ──
+    var isSplitpay = false;
+    var splitRadio = document.getElementById('bk-payment-splitpay');
+    if (splitRadio && splitRadio.checked) isSplitpay = true;
+
     var data = {
         action               : 'vs08v_booking_submit',
         nonce                : BK_DATA.nonce,
@@ -1765,6 +1792,72 @@ function bkSubmit() {
     var btn = document.querySelector('.bk-btn-submit');
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Traitement en cours…'; }
 
+    // ═══ MODE SPLITPAY → créer un dossier groupe via REST API ═══
+    if (isSplitpay) {
+        var spPayload = {
+            voyage_id     : BK_DATA.voyage_id,
+            voyage_titre  : BK_DATA.titre || document.title,
+            total         : (parseFloat(BK_DATA.devis.total) || 0) + (window.bk_vol_delta_total || 0) + (window.bk_options_total || 0) + (bk_insurance_check ? (parseFloat(BK_DATA.insurance_total) || 0) : 0),
+            acompte_pct   : parseFloat(BK_DATA.acompte_pct) || 30,
+            payer_tout    : !!BK_DATA.payer_tout,
+            params        : BK_DATA.params,
+            devis         : BK_DATA.devis,
+            facturation   : {
+                prenom  : data.fact_prenom,
+                nom     : data.fact_nom,
+                email   : data.fact_email,
+                tel     : data.fact_tel,
+                adresse : data.fact_adresse,
+                cp      : data.fact_cp,
+                ville   : data.fact_ville
+            },
+            voyageurs     : [],
+            nonce         : BK_DATA.nonce
+        };
+        // Collecter les voyageurs
+        document.querySelectorAll('.bk-voyageur-row').forEach(function(row, i) {
+            var v = {};
+            row.querySelectorAll('input').forEach(function(input) {
+                var key = input.name ? input.name.replace(/voyageurs\[\d+\]\[/, '').replace(']','') : '';
+                if (key) v[key] = input.value;
+            });
+            spPayload.voyageurs.push(v);
+        });
+        spPayload.total = Math.ceil(spPayload.total);
+
+        // Rafraîchir le nonce puis envoyer
+        function doSplitpaySubmit() {
+            jQuery.ajax({
+                url: (typeof vs08sp !== 'undefined' && vs08sp.rest_url) ? vs08sp.rest_url + 'create-booking' : BK_DATA.ajax_url.replace('admin-ajax.php','') + '?rest_route=/vs08sp/v1/create-booking',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(spPayload),
+                success: function(r) {
+                    if (r.success && r.redirect) {
+                        window.location.href = r.redirect;
+                    } else {
+                        alert(r.message || 'Erreur lors de la création du dossier groupe.');
+                        if (btn) { btn.disabled = false; btn.textContent = '👥 Créer le dossier groupe →'; }
+                    }
+                },
+                error: function() {
+                    alert('Erreur de connexion. Vérifiez votre réseau puis réessayez.');
+                    if (btn) { btn.disabled = false; btn.textContent = '👥 Créer le dossier groupe →'; }
+                }
+            });
+        }
+        if (BK_DATA.rest_nonce) {
+            jQuery.get(BK_DATA.rest_nonce).done(function(res) {
+                if (res && res.nonce) spPayload.nonce = res.nonce;
+                doSplitpaySubmit();
+            }).fail(doSplitpaySubmit);
+        } else {
+            doSplitpaySubmit();
+        }
+        return; // ← Ne pas exécuter le flow solo
+    }
+
+    // ═══ MODE SOLO (comportement normal inchangé) ═══
     function onBookingDone(res) {
         if (res && res.success && res.data && res.data.redirect) {
             window.location.href = res.data.redirect;
@@ -1802,6 +1895,31 @@ function bkSubmit() {
         doSubmit();
     }
 }
+
+// ═══ SPLITPAY : Listeners radio pour changer le texte du bouton ═══
+(function() {
+    var radios = document.querySelectorAll('input[name="bk-payment-mode"]');
+    if (!radios.length) return;
+    var btn = document.querySelector('.bk-btn-submit');
+    var soloLabel = document.getElementById('bk-mode-solo-label');
+    var splitLabel = document.getElementById('bk-mode-split-label');
+    radios.forEach(function(r) {
+        r.addEventListener('change', function() {
+            if (this.value === 'splitpay') {
+                if (btn) btn.textContent = '👥 Créer le dossier groupe →';
+                if (soloLabel)  soloLabel.style.borderColor  = '#ddd';
+                if (splitLabel) splitLabel.style.borderColor  = '#59b7b7';
+                if (splitLabel) splitLabel.style.background   = '#f0fafa';
+            } else {
+                if (btn) btn.textContent = '🔒 Procéder au paiement →';
+                if (soloLabel)  soloLabel.style.borderColor  = '#59b7b7';
+                if (soloLabel)  soloLabel.style.background   = '#f0fafa';
+                if (splitLabel) splitLabel.style.borderColor  = '#ddd';
+                if (splitLabel) splitLabel.style.background   = '#fff';
+            }
+        });
+    });
+})();
 
 // Init bagages : au démarrage, les bagages sont inclus au prix par défaut → delta = 0
 bk_options_total = 0;
