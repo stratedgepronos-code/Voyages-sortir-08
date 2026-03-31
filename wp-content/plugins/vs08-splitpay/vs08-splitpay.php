@@ -70,30 +70,20 @@ add_action('plugins_loaded', function () {
 /* ── Assets frontend ───────────────────────────────────── */
 add_action('wp_enqueue_scripts', function () {
     // JS pour le formulaire de répartition dans booking-steps
-    if (is_singular('vs08_voyage') || is_page()) {
-        wp_enqueue_script(
-            'vs08-splitpay-booking',
-            VS08SP_URL . 'assets/js/splitpay-booking.js',
-            ['jquery'],
-            VS08SP_VER,
-            true
-        );
-        wp_localize_script('vs08-splitpay-booking', 'vs08sp', [
-            'ajax_url'         => admin_url('admin-ajax.php'),
-            'rest_url'         => rest_url('vs08sp/v1/'),
-            'nonce'            => wp_create_nonce('vs08sp_nonce'),
-            'max_participants' => VS08SP_MAX_PARTICIPANTS,
-            'i18n'             => [
-                'min_amount'      => 'Montant minimum : %s €',
-                'total_mismatch'  => 'La somme des parts doit être égale au total du voyage.',
-                'email_required'  => 'Veuillez renseigner l\'email de chaque participant.',
-                'email_invalid'   => 'L\'adresse email "%s" n\'est pas valide.',
-                'sending'         => 'Envoi en cours...',
-                'success'         => 'Liens de paiement envoyés !',
-                'error'           => 'Une erreur est survenue. Réessayez.',
-            ],
-        ]);
-    }
+    // Chargé sur toutes les pages — le JS vérifie BK_DATA avant de s'activer
+    wp_enqueue_script(
+        'vs08-splitpay-booking',
+        VS08SP_URL . 'assets/js/splitpay-booking.js',
+        ['jquery'],
+        VS08SP_VER . '.' . time(),
+        true
+    );
+    wp_localize_script('vs08-splitpay-booking', 'vs08sp', [
+        'ajax_url'         => admin_url('admin-ajax.php'),
+        'rest_url'         => rest_url('vs08sp/v1/'),
+        'nonce'            => wp_create_nonce('vs08sp_nonce'),
+        'max_participants' => VS08SP_MAX_PARTICIPANTS,
+    ]);
 
     // CSS global (page participant + barre progression)
     wp_enqueue_style(
