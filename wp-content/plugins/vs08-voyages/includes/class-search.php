@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) exit;
 
 class VS08V_Search {
 
-    const TRANSIENT_KEY = 'vs08v_search_agg_v3';
+    const TRANSIENT_KEY = 'vs08v_search_agg_v7';
 
     const TYPE_LABELS = [
         'sejour_golf' => 'Séjours Golfique',
@@ -17,6 +17,8 @@ class VS08V_Search {
         add_action('wp_ajax_vs08v_search',        [__CLASS__, 'ajax_search']);
         add_action('wp_ajax_nopriv_vs08v_search',  [__CLASS__, 'ajax_search']);
         add_action('save_post_vs08_voyage',        [__CLASS__, 'invalidate_cache']);
+        add_action('save_post_vs08_sejour',         [__CLASS__, 'invalidate_cache']);
+        add_action('save_post_vs08_circuit',       [__CLASS__, 'invalidate_cache']);
         add_action('trashed_post',                 [__CLASS__, 'invalidate_cache']);
         add_action('untrashed_post',               [__CLASS__, 'invalidate_cache']);
 
@@ -39,7 +41,42 @@ class VS08V_Search {
 
     public static function get_aggregated_options() {
         $cached = get_transient(self::TRANSIENT_KEY);
-        if ($cached !== false) return $cached;
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        $types         = [];
+        $destinations  = [];
+        $airports      = [];
+        $durees        = [];
+        $dates         = [];
+        $airport_dest  = [];
+        $type_dest     = [];
+        $cutoff_golf   = date('Y-m-d', strtotime('+7 days')); // J-7 fermeture ventes golf
+
+        $push_type_dest = static function (array &$type_dest, string $type, string $dest_val) {
+            if ($type === '' || $dest_val === '') {
+                return;
+            }
+            if (!isset($type_dest[$type])) {
+                $type_dest[$type] = [];
+            }
+            if (!in_array($dest_val, $type_dest[$type], true)) {
+                $type_dest[$type][] = $dest_val;
+            }
+        };
+
+        $push_air_dest = static function (array &$airport_dest, string $code, string $dest_val) {
+            if ($code === '' || $dest_val === '') {
+                return;
+            }
+            if (!isset($airport_dest[$code])) {
+                $airport_dest[$code] = [];
+            }
+            if (!in_array($dest_val, $airport_dest[$code], true)) {
+                $airport_dest[$code][] = $dest_val;
+            }
+        };
 
         $posts = get_posts([
             'post_type'      => 'vs08_voyage',
@@ -48,29 +85,26 @@ class VS08V_Search {
             'fields'         => 'ids',
         ]);
 
-        $types        = [];
-        $destinations = [];
-        $airports     = [];
-        $durees       = [];
-        $dates        = [];
-        $today        = date('Y-m-d');
-        $cutoff_golf  = date('Y-m-d', strtotime('+7 days')); // J-7 fermeture ventes golf
-
         foreach ($posts as $pid) {
             $m = VS08V_MetaBoxes::get($pid);
             $statut = $m['statut'] ?? 'actif';
-            if ($statut === 'archive') continue;
+            if ($statut === 'archive') {
+                continue;
+            }
 
-            $tv = $m['type_voyage'] ?? '';
-            if ($tv && isset(self::TYPE_LABELS[$tv])) {
+            $tv = trim((string) ($m['type_voyage'] ?? ''));
+            if ($tv !== '' && isset(self::TYPE_LABELS[$tv])) {
                 $types[$tv] = self::TYPE_LABELS[$tv];
+            }
+            if ($tv === '' && self::is_catalog_golf($m)) {
+                $types['sejour_golf'] = self::TYPE_LABELS['sejour_golf'];
             }
 
             $dest = trim($m['destination'] ?? '');
             $pays = trim($m['pays'] ?? '');
             $flag = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : trim($m['flag'] ?? '');
-            if ($dest) {
-                $key = $pays ?: $dest;
+            if ($dest !== '') {
+                $key = $pays !== '' ? $pays : $dest;
                 if (!isset($destinations[$key])) {
                     $img = get_the_post_thumbnail_url($pid, 'large');
                     if (!$img) {
@@ -78,15 +112,23 @@ class VS08V_Search {
                         $img = !empty($gal[0]) ? $gal[0] : '';
                     }
                     $destinations[$key] = [
-                        'value'    => $dest,
-                        'pays'     => $pays,
-                        'flag'     => $flag,
-                        'label'    => mb_convert_case($dest, MB_CASE_TITLE, 'UTF-8'),
-                        'image'    => $img ?: '',
-                        'count'    => 1,
+                        'value' => $dest,
+                        'pays'  => $pays,
+                        'flag'  => $flag,
+                        'label' => mb_convert_case($dest, MB_CASE_TITLE, 'UTF-8'),
+                        'image' => $img ?: '',
+                        'count' => 1,
                     ];
                 } else {
                     $destinations[$key]['count'] = ($destinations[$key]['count'] ?? 1) + 1;
+                }
+
+                $map_type = $tv;
+                if ($map_type === '' && self::is_catalog_golf($m)) {
+                    $map_type = 'sejour_golf';
+                }
+                if ($map_type !== '' && isset(self::TYPE_LABELS[$map_type])) {
+                    $push_type_dest($type_dest, $map_type, $dest);
                 }
             }
 
@@ -94,12 +136,15 @@ class VS08V_Search {
                 foreach ($m['aeroports'] as $a) {
                     $code  = strtoupper(trim($a['code'] ?? ''));
                     $ville = trim($a['ville'] ?? '');
-                    if ($code && !isset($airports[$code])) {
+                    if ($code !== '' && !isset($airports[$code])) {
                         $airports[$code] = [
                             'code'  => $code,
                             'ville' => $ville,
                             'label' => $code . ' — ' . $ville,
                         ];
+                    }
+                    if ($code !== '' && $dest !== '') {
+                        $push_air_dest($airport_dest, $code, $dest);
                     }
                 }
             }
@@ -113,15 +158,135 @@ class VS08V_Search {
                 foreach ($m['dates_depart'] as $dd) {
                     $dt = $dd['date'] ?? '';
                     $st = $dd['statut'] ?? 'dispo';
-                    if ($dt && $dt >= $cutoff_golf && $st !== 'complet') {
+                    if ($dt !== '' && $dt >= $cutoff_golf && $st !== 'complet') {
                         $dates[] = $dt;
                     }
                 }
             }
         }
 
+        // Séjours all inclusive
+        if (class_exists('VS08S_Meta')) {
+            $sejours = get_posts([
+                'post_type'      => 'vs08_sejour',
+                'post_status'    => 'publish',
+                'posts_per_page' => -1,
+                'fields'         => 'ids',
+            ]);
+            foreach ($sejours as $pid) {
+                $m = VS08S_Meta::get($pid);
+                if (($m['statut'] ?? 'actif') === 'archive') {
+                    continue;
+                }
+                $types['sejour'] = self::TYPE_LABELS['sejour'] ?? 'Séjours';
+
+                $dest = trim($m['destination'] ?? '');
+                $pays = trim($m['pays'] ?? '');
+                $flag = trim($m['flag'] ?? '');
+                if ($dest !== '') {
+                    $key = $pays !== '' ? $pays : $dest;
+                    if (!isset($destinations[$key])) {
+                        $img = get_the_post_thumbnail_url($pid, 'large');
+                        $destinations[$key] = [
+                            'value' => $dest,
+                            'pays'  => $pays,
+                            'flag'  => $flag,
+                            'label' => mb_convert_case($dest, MB_CASE_TITLE, 'UTF-8'),
+                            'image' => $img ?: '',
+                            'count' => 1,
+                        ];
+                    } else {
+                        $destinations[$key]['count'] = ($destinations[$key]['count'] ?? 1) + 1;
+                    }
+                    $push_type_dest($type_dest, 'sejour', $dest);
+                }
+
+                if (!empty($m['aeroports']) && is_array($m['aeroports'])) {
+                    foreach ($m['aeroports'] as $a) {
+                        $code  = strtoupper(trim($a['code'] ?? ''));
+                        $ville = trim($a['ville'] ?? '');
+                        if ($code !== '' && !isset($airports[$code])) {
+                            $airports[$code] = [
+                                'code'  => $code,
+                                'ville' => $ville,
+                                'label' => $code . ' — ' . $ville,
+                            ];
+                        }
+                        if ($code !== '' && $dest !== '') {
+                            $push_air_dest($airport_dest, $code, $dest);
+                        }
+                    }
+                }
+
+                $d = intval($m['duree'] ?? 0);
+                if ($d > 0) {
+                    $durees[$d] = $d;
+                }
+            }
+        }
+
+        // Circuits
+        if (class_exists('VS08C_Meta')) {
+            $circuits = get_posts([
+                'post_type'      => 'vs08_circuit',
+                'post_status'    => 'publish',
+                'posts_per_page' => -1,
+                'fields'         => 'ids',
+            ]);
+            foreach ($circuits as $pid) {
+                $m = VS08C_Meta::get($pid);
+                if (($m['statut'] ?? '') === 'archive') {
+                    continue;
+                }
+                $types['circuit'] = self::TYPE_LABELS['circuit'] ?? 'Circuits';
+
+                $dest = trim($m['destination'] ?? '');
+                $pays = trim($m['pays'] ?? '');
+                $flag = class_exists('VS08C_Meta') ? VS08C_Meta::resolve_flag($m) : trim($m['flag'] ?? '');
+                if ($dest !== '') {
+                    $key = $pays !== '' ? $pays : $dest;
+                    if (!isset($destinations[$key])) {
+                        $img = get_the_post_thumbnail_url($pid, 'large');
+                        $destinations[$key] = [
+                            'value' => $dest,
+                            'pays'  => $pays,
+                            'flag'  => $flag,
+                            'label' => mb_convert_case($dest, MB_CASE_TITLE, 'UTF-8'),
+                            'image' => $img ?: '',
+                            'count' => 1,
+                        ];
+                    } else {
+                        $destinations[$key]['count'] = ($destinations[$key]['count'] ?? 1) + 1;
+                    }
+                    $push_type_dest($type_dest, 'circuit', $dest);
+                }
+
+                if (!empty($m['aeroports']) && is_array($m['aeroports'])) {
+                    foreach ($m['aeroports'] as $a) {
+                        $code  = strtoupper(trim($a['code'] ?? ''));
+                        $ville = trim($a['label'] ?? ($a['ville'] ?? ''));
+                        if ($code !== '' && !isset($airports[$code])) {
+                            $airports[$code] = [
+                                'code'  => $code,
+                                'ville' => $ville,
+                                'label' => $code . ' — ' . $ville,
+                            ];
+                        }
+                        if ($code !== '' && $dest !== '') {
+                            $push_air_dest($airport_dest, $code, $dest);
+                        }
+                    }
+                }
+
+                $d = intval($m['duree'] ?? 0);
+                if ($d > 0) {
+                    $durees[$d] = $d;
+                }
+            }
+        }
+
         ksort($types);
-        uasort($destinations, function($a, $b) {
+        uasort($destinations, function ($a, $b) {
             return strcmp($a['label'], $b['label']);
         });
         ksort($airports);
@@ -130,11 +295,13 @@ class VS08V_Search {
         sort($dates);
 
         $result = [
-            'types'        => $types,
-            'destinations' => array_values($destinations),
-            'aeroports'    => array_values($airports),
-            'durees'       => array_values($durees),
-            'dates'        => array_values($dates),
+            'types'            => $types,
+            'destinations'     => array_values($destinations),
+            'aeroports'        => array_values($airports),
+            'durees'           => array_values($durees),
+            'dates'            => array_values($dates),
+            'airport_dest_map' => $airport_dest,
+            'type_dest_map'    => $type_dest,
         ];
 
         set_transient(self::TRANSIENT_KEY, $result, HOUR_IN_SECONDS);
