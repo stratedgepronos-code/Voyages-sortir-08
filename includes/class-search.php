@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) exit;
 
 class VS08V_Search {
 
-    const TRANSIENT_KEY = 'vs08v_search_agg_v5';
+    const TRANSIENT_KEY = 'vs08v_search_agg_v6';
 
     const TYPE_LABELS = [
         'sejour_golf'   => 'Séjours Golf',

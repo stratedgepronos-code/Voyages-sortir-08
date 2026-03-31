@@ -747,25 +747,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
         destSel.disabled = false;
 
-        var typeDests = typeDestMap[type] || null;
+        // Toujours filtrer par type : si la clé manque (cache ancien), tableau vide = aucune destination parasite
+        var typeDests = Array.isArray(typeDestMap[type]) ? typeDestMap[type] : [];
         var airDests  = (code && airportDestMap[code]) ? airportDestMap[code] : null;
 
         var ph = document.createElement('option');
         ph.value = '';
-        if (typeDests && airDests) {
+        if (typeDests.length && airDests) {
             ph.textContent = 'Destinations disponibles';
-        } else if (typeDests) {
-            ph.textContent = 'Toutes les destinations';
+        } else if (typeDests.length) {
+            ph.textContent = 'Choisissez une destination';
         } else if (airDests) {
             ph.textContent = 'Destinations au départ de ' + code;
         } else {
-            ph.textContent = 'Toutes les destinations';
+            ph.textContent = 'Choisissez une destination';
         }
         destSel.appendChild(ph);
 
         allDestOptions.forEach(function(o) {
             if (!o.value) return;
-            if (typeDests && typeDests.indexOf(o.value) === -1) return;
+            if (typeDests.indexOf(o.value) === -1) return;
             if (airDests && airDests.indexOf(o.value) === -1) return;
 
             var opt = document.createElement('option');
@@ -775,9 +776,10 @@ document.addEventListener('DOMContentLoaded', function() {
             destSel.appendChild(opt);
         });
 
-        if (destSel.options.length <= 1 && (typeDests || airDests)) {
-            var pool = typeDests || [];
-            if (airDests) pool = pool.length ? pool.filter(function(d){ return airDests.indexOf(d) !== -1; }) : airDests;
+        // N'ajouter des options « brutes » que si le type impose déjà une liste (ne jamais élargir via l'aéroport seul)
+        if (destSel.options.length <= 1 && typeDests.length) {
+            var pool = typeDests.slice();
+            if (airDests) pool = pool.filter(function(d){ return airDests.indexOf(d) !== -1; });
             pool.forEach(function(d) {
                 var exists = false;
                 for (var i = 0; i < destSel.options.length; i++) {
