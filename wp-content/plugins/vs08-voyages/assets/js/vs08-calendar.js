@@ -17,7 +17,9 @@ function VS08Calendar(opts) {
         minDate: null, maxDate: null,
         yearRange: [1940, new Date().getFullYear()],
         prices: {}, available: null,
-        onSelect: null, onConfirm: null
+        onSelect: null, onConfirm: null,
+        /** true = calendrier dans document.body (évite overflow:hidden des parents, ex. sidebar résultats) */
+        appendDropdownToBody: false
     }, opts);
 
     this.today = new Date();
@@ -101,8 +103,19 @@ VS08Calendar.prototype.build = function() {
         var overlay = document.createElement('div');
         overlay.className = 'vs-cal-overlay';
         overlay.appendChild(wrap);
-        this.container.appendChild(overlay);
         this.overlay = overlay;
+        this._dropdownBody = !!this.opts.appendDropdownToBody;
+        if (this._dropdownBody) {
+            overlay.classList.add('vs-cal-overlay--body');
+            document.body.appendChild(overlay);
+            this._scrollParents = [];
+            this._reposBound = function() {
+                if (!cal._isOpen || !cal._dropdownBody) return;
+                cal._positionBodyDropdown();
+            };
+        } else {
+            this.container.appendChild(overlay);
+        }
 
         // Mode BULLE : les enfants reçoivent le clic, puis overlay stoppe la remontée
         overlay.addEventListener('mousedown', function(e) { e.stopPropagation(); });
@@ -427,12 +440,78 @@ VS08Calendar.prototype.updateFooter = function() {
 // ══════════════════════════════════════════════
 // DROPDOWN : OPEN / CLOSE / TOGGLE
 // ══════════════════════════════════════════════
+VS08Calendar.prototype._positionBodyDropdown = function() {
+    if (!this.overlay || !this.container || !this._dropdownBody) return;
+    var rect = this.container.getBoundingClientRect();
+    var pad = 8;
+    var gap = 6;
+    this.overlay.style.position = 'fixed';
+    this.overlay.style.margin = '0';
+    this.overlay.style.right = 'auto';
+    var ow = this.overlay.offsetWidth || 340;
+    var oh = this.overlay.offsetHeight || 400;
+    var top = rect.bottom + gap;
+    if (top + oh > window.innerHeight - pad && rect.top - oh - gap >= pad) {
+        top = rect.top - oh - gap;
+    }
+    if (top + oh > window.innerHeight - pad) {
+        top = Math.max(pad, window.innerHeight - oh - pad);
+    }
+    if (top < pad) top = pad;
+    var left = rect.left;
+    if (left + ow > window.innerWidth - pad) {
+        left = window.innerWidth - ow - pad;
+    }
+    if (left < pad) left = pad;
+    this.overlay.style.top = top + 'px';
+    this.overlay.style.left = left + 'px';
+    this.overlay.style.maxHeight = (window.innerHeight - 2 * pad) + 'px';
+};
+
+VS08Calendar.prototype._attachDropdownRepos = function() {
+    if (!this._dropdownBody || !this._reposBound) return;
+    window.addEventListener('resize', this._reposBound, { passive: true });
+    window.addEventListener('scroll', this._reposBound, true);
+    var el = this.container;
+    while (el && el !== document.body && el !== document.documentElement) {
+        var st = window.getComputedStyle(el);
+        var oy = st.overflowY;
+        var ox = st.overflowX;
+        if (oy === 'auto' || oy === 'scroll' || ox === 'auto' || ox === 'scroll') {
+            el.addEventListener('scroll', this._reposBound, { passive: true });
+            this._scrollParents.push(el);
+        }
+        el = el.parentElement;
+    }
+};
+
+VS08Calendar.prototype._detachDropdownRepos = function() {
+    if (!this._reposBound) return;
+    var cal = this;
+    window.removeEventListener('resize', this._reposBound);
+    window.removeEventListener('scroll', this._reposBound, true);
+    if (this._scrollParents && this._scrollParents.length) {
+        this._scrollParents.forEach(function(el) {
+            el.removeEventListener('scroll', cal._reposBound);
+        });
+        this._scrollParents = [];
+    }
+};
+
 VS08Calendar.prototype.open = function() {
     if (!this.overlay) return;
     this.overlay.classList.add('open');
     this._isOpen = true;
-    this._skipClose = true;
     var cal = this;
+    if (this._dropdownBody) {
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+                cal._positionBodyDropdown();
+                cal._attachDropdownRepos();
+            });
+        });
+    }
+    this._skipClose = true;
     setTimeout(function() { cal._skipClose = false; }, 350);
 };
 
@@ -440,6 +519,9 @@ VS08Calendar.prototype.close = function() {
     if (!this.overlay) return;
     // Appliquer la sélection même si le client n'a pas cliqué sur Confirmer/Valider
     this._applySelectionOnClose();
+    if (this._dropdownBody) {
+        this._detachDropdownRepos();
+    }
     this.overlay.classList.remove('open');
     this._isOpen = false;
 };

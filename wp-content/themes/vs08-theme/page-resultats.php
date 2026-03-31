@@ -14,13 +14,24 @@ $f_duree   = intval($_GET['duree'] ?? 0);
 $f_niveau  = sanitize_key($_GET['niveau'] ?? '');
 
 $opts  = class_exists('VS08V_Search') ? VS08V_Search::get_aggregated_options() : ['types'=>[],'destinations'=>[],'aeroports'=>[],'durees'=>[],'dates'=>[]];
-$types_labels = VS08V_Search::TYPE_LABELS;
-// Toujours afficher tous les types dans le filtre (même sans produits)
-foreach ($types_labels as $tk => $tl) {
-    if (!isset($opts['types'][$tk])) {
-        $opts['types'][$tk] = $tl;
+$types_labels = class_exists('VS08V_Search') ? VS08V_Search::TYPE_LABELS : [];
+// Même périmètre que la page d'accueil : golf + circuits uniquement (pour l'instant)
+$sr_search_types = [
+    'sejour_golf' => 'Séjours golfique',
+    'circuit'     => 'Circuits',
+];
+foreach ($sr_search_types as $k => $default_label) {
+    if (!isset($opts['types'][$k])) {
+        $opts['types'][$k] = $default_label;
     }
 }
+$sr_types_ordered = [];
+foreach (array_keys($sr_search_types) as $k) {
+    if (isset($opts['types'][$k])) {
+        $sr_types_ordered[$k] = $opts['types'][$k];
+    }
+}
+$opts['types'] = $sr_types_ordered;
 $niveau_labels = ['tous'=>'Tous niveaux','debutant'=>'Débutant','intermediaire'=>'Intermédiaire','confirme'=>'Confirmé','champion'=>'Compétition / championnat'];
 $badge_labels  = ['new'=>'Nouveauté','promo'=>'Promo','best'=>'Best-seller','derniere'=>'Dernières places'];
 
@@ -362,6 +373,7 @@ usort($results, function ($a, $b) {
 .vs08-sr-sidebar .vs08-sr-field label{display:block;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-family:'Outfit',sans-serif}
 .vs08-sr-sidebar .vs08-sr-field select,.vs08-sr-sidebar .vs08-sr-field input[type=text]{width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;font-family:'Outfit',sans-serif;color:#0f2424;background:#fff}
 .vs08-sr-sidebar .vs08-sr-field select:focus,.vs08-sr-sidebar .vs08-sr-field input:focus{outline:none;border-color:#59b7b7}
+.vs08-sr-sidebar .vs08-sr-field select:disabled{opacity:.65;color:#9ca3af;cursor:not-allowed;background:#f9fafb}
 .vs08-sr-sidebar .vs08-sr-date-trigger{width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;font-family:'Outfit',sans-serif;color:#6b7280;background:#fff;cursor:pointer;text-align:left}
 .vs08-sr-sidebar .vs08-sr-date-trigger:hover{border-color:#59b7b7}
 .vs08-sr-sidebar-btns{display:flex;flex-direction:column;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid #f0f2f4}
@@ -451,17 +463,21 @@ $hero_video_url = get_theme_file_uri('assets/video/hero.mp4');
         <form action="<?php echo esc_url(home_url('/resultats-recherche')); ?>" method="get" id="vs08-sr-sidebar-form">
             <div class="vs08-sr-field">
                 <label>Type de voyage</label>
-                <select name="type">
+                <select name="type" id="sr-sel-type">
                     <option value="">Tous les types</option>
                     <?php foreach ($opts['types'] as $tv => $tl): ?>
                     <option value="<?php echo esc_attr($tv); ?>" <?php selected($f_type, $tv); ?>><?php echo esc_html($tl); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="vs08-sr-field">
+            <div class="vs08-sr-field" id="sr-dest-wrap" style="position:relative">
                 <label>Destination</label>
-                <select name="dest">
-                    <option value="">Toutes les destinations</option>
+                <select name="dest" id="sr-sel-dest"<?php echo $f_type ? '' : ' disabled'; ?>>
+                    <?php if (!$f_type): ?>
+                    <option value="">— Choisissez un type d'abord —</option>
+                    <?php else: ?>
+                    <option value="">Choisissez une destination</option>
+                    <?php endif; ?>
                     <?php foreach ($opts['destinations'] as $d): ?>
                     <option value="<?php echo esc_attr($d['value']); ?>" <?php selected($f_dest, $d['value']); ?>><?php echo esc_html($d['label']); ?></option>
                     <?php endforeach; ?>
@@ -469,7 +485,7 @@ $hero_video_url = get_theme_file_uri('assets/video/hero.mp4');
             </div>
             <div class="vs08-sr-field">
                 <label>Aéroport de départ</label>
-                <select name="airport">
+                <select name="airport" id="sr-sel-airport">
                     <option value="">Tous les aéroports</option>
                     <?php foreach ($opts['aeroports'] as $a): ?>
                     <option value="<?php echo esc_attr($a['code']); ?>" <?php selected($f_airport, $a['code']); ?>><?php echo esc_html($a['label']); ?></option>
@@ -643,6 +659,7 @@ document.addEventListener('DOMContentLoaded', function() {
             el:       '#sr-date-wrap',
             mode:     'range',
             inline:   false,
+            appendDropdownToBody: true,
             input:    '#sr-date-start',
             inputEnd: '#sr-date-end',
             title:    '📅 Période de départ',
@@ -660,6 +677,112 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+/* Filtres type + aéroport → destinations (même logique que la page d'accueil) */
+(function(){
+    var typeSel    = document.getElementById('sr-sel-type');
+    var airportSel = document.getElementById('sr-sel-airport');
+    var destSel    = document.getElementById('sr-sel-dest');
+    var destWrap   = document.getElementById('sr-dest-wrap');
+    if (!typeSel || !airportSel || !destSel || !destWrap) return;
+
+    var airportDestMap = <?php echo wp_json_encode($opts['airport_dest_map'] ?? new stdClass()); ?>;
+    var typeDestMap    = <?php echo wp_json_encode($opts['type_dest_map'] ?? new stdClass()); ?>;
+
+    var allDestOptions = <?php echo wp_json_encode(array_map(function($d) {
+        return ['value' => $d['value'], 'text' => $d['label']];
+    }, $opts['destinations'])); ?>;
+
+    var tooltip = null;
+
+    destWrap.addEventListener('click', function(e) {
+        if (!destSel.disabled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (tooltip) return;
+        tooltip = document.createElement('div');
+        tooltip.textContent = 'Sélectionnez d\'abord un type de voyage';
+        tooltip.style.cssText = 'position:absolute;top:-38px;left:0;right:0;margin:0 auto;width:max-content;max-width:100%;background:#1e3a3a;color:#fff;padding:8px 14px;border-radius:8px;font-size:12px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.15);pointer-events:none';
+        destWrap.appendChild(tooltip);
+        setTimeout(function() { if (tooltip) { tooltip.remove(); tooltip = null; } }, 2500);
+    });
+
+    function rebuildDest() {
+        var type = typeSel.value;
+        var code = airportSel.value;
+        var currentDest = destSel.value;
+
+        destSel.innerHTML = '';
+
+        if (!type) {
+            destSel.disabled = true;
+            var ph = document.createElement('option');
+            ph.value = '';
+            ph.textContent = '— Choisissez un type d\'abord —';
+            destSel.appendChild(ph);
+            return;
+        }
+
+        destSel.disabled = false;
+
+        var typeDests = Array.isArray(typeDestMap[type]) ? typeDestMap[type] : [];
+        var airDests  = (code && airportDestMap[code]) ? airportDestMap[code] : null;
+
+        var ph = document.createElement('option');
+        ph.value = '';
+        if (typeDests.length && airDests) {
+            ph.textContent = 'Destinations disponibles';
+        } else if (typeDests.length) {
+            ph.textContent = 'Choisissez une destination';
+        } else if (airDests) {
+            ph.textContent = 'Destinations au départ de ' + code;
+        } else {
+            ph.textContent = 'Choisissez une destination';
+        }
+        destSel.appendChild(ph);
+
+        allDestOptions.forEach(function(o) {
+            if (!o.value) return;
+            if (typeDests.indexOf(o.value) === -1) return;
+            if (airDests && airDests.indexOf(o.value) === -1) return;
+
+            var opt = document.createElement('option');
+            opt.value = o.value;
+            opt.textContent = o.text;
+            if (o.value === currentDest) opt.selected = true;
+            destSel.appendChild(opt);
+        });
+
+        if (destSel.options.length <= 1 && typeDests.length) {
+            var pool = typeDests.slice();
+            if (airDests) pool = pool.filter(function(d){ return airDests.indexOf(d) !== -1; });
+            pool.forEach(function(d) {
+                var exists = false;
+                for (var i = 0; i < destSel.options.length; i++) {
+                    if (destSel.options[i].value === d) { exists = true; break; }
+                }
+                if (!exists) {
+                    var opt = document.createElement('option');
+                    opt.value = d;
+                    opt.textContent = d.charAt(0).toUpperCase() + d.slice(1);
+                    if (d === currentDest) opt.selected = true;
+                    destSel.appendChild(opt);
+                }
+            });
+        }
+    }
+
+    typeSel.addEventListener('change', function() {
+        if (tooltip) { tooltip.remove(); tooltip = null; }
+        rebuildDest();
+    });
+
+    airportSel.addEventListener('change', rebuildDest);
+
+    if (typeSel.value) {
+        rebuildDest();
+    }
+})();
 function vs08RemoveFilter(keys) {
     var url = new URL(window.location.href);
     keys.split(',').forEach(function(k){ url.searchParams.delete(k.trim()); });
