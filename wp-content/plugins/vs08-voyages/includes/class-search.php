@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) exit;
 
 class VS08V_Search {
 
-    const TRANSIENT_KEY = 'vs08v_search_agg_v7';
+    const TRANSIENT_KEY = 'vs08v_search_agg_v8';
 
     const TYPE_LABELS = [
         'sejour_golf' => 'Séjours Golfique',
@@ -37,6 +37,27 @@ class VS08V_Search {
 
     public static function invalidate_cache() {
         delete_transient(self::TRANSIENT_KEY);
+    }
+
+    /**
+     * Clé d'agrégation : une entrée par lieu (pays + destination), pas une seule par pays.
+     * Sinon toutes les régions d'un même pays (ex. Portugal) fusionnent et le select ne contient
+     * qu'une option alors que type_dest_map liste chaque destination.
+     */
+    private static function destination_aggregate_key(string $pays, string $dest): string {
+        $d = trim($dest);
+        if ($d === '') {
+            return '';
+        }
+        $p = trim($pays);
+        if (function_exists('mb_strtolower')) {
+            $d_low = mb_strtolower($d, 'UTF-8');
+            $p_low = $p !== '' ? mb_strtolower($p, 'UTF-8') : '';
+        } else {
+            $d_low = strtolower($d);
+            $p_low = $p !== '' ? strtolower($p) : '';
+        }
+        return ($p_low !== '' ? $p_low . "\x1e" : "_\x1e") . $d_low;
     }
 
     public static function get_aggregated_options() {
@@ -104,8 +125,8 @@ class VS08V_Search {
             $pays = trim($m['pays'] ?? '');
             $flag = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : trim($m['flag'] ?? '');
             if ($dest !== '') {
-                $key = $pays !== '' ? $pays : $dest;
-                if (!isset($destinations[$key])) {
+                $key = self::destination_aggregate_key($pays, $dest);
+                if ($key !== '' && !isset($destinations[$key])) {
                     $img = get_the_post_thumbnail_url($pid, 'large');
                     if (!$img) {
                         $gal = $m['galerie'] ?? [];
@@ -119,7 +140,7 @@ class VS08V_Search {
                         'image' => $img ?: '',
                         'count' => 1,
                     ];
-                } else {
+                } elseif ($key !== '') {
                     $destinations[$key]['count'] = ($destinations[$key]['count'] ?? 1) + 1;
                 }
 
@@ -184,8 +205,8 @@ class VS08V_Search {
                 $pays = trim($m['pays'] ?? '');
                 $flag = trim($m['flag'] ?? '');
                 if ($dest !== '') {
-                    $key = $pays !== '' ? $pays : $dest;
-                    if (!isset($destinations[$key])) {
+                    $key = self::destination_aggregate_key($pays, $dest);
+                    if ($key !== '' && !isset($destinations[$key])) {
                         $img = get_the_post_thumbnail_url($pid, 'large');
                         $destinations[$key] = [
                             'value' => $dest,
@@ -195,7 +216,7 @@ class VS08V_Search {
                             'image' => $img ?: '',
                             'count' => 1,
                         ];
-                    } else {
+                    } elseif ($key !== '') {
                         $destinations[$key]['count'] = ($destinations[$key]['count'] ?? 1) + 1;
                     }
                     $push_type_dest($type_dest, 'sejour', $dest);
@@ -244,8 +265,8 @@ class VS08V_Search {
                 $pays = trim($m['pays'] ?? '');
                 $flag = class_exists('VS08C_Meta') ? VS08C_Meta::resolve_flag($m) : trim($m['flag'] ?? '');
                 if ($dest !== '') {
-                    $key = $pays !== '' ? $pays : $dest;
-                    if (!isset($destinations[$key])) {
+                    $key = self::destination_aggregate_key($pays, $dest);
+                    if ($key !== '' && !isset($destinations[$key])) {
                         $img = get_the_post_thumbnail_url($pid, 'large');
                         $destinations[$key] = [
                             'value' => $dest,
@@ -255,7 +276,7 @@ class VS08V_Search {
                             'image' => $img ?: '',
                             'count' => 1,
                         ];
-                    } else {
+                    } elseif ($key !== '') {
                         $destinations[$key]['count'] = ($destinations[$key]['count'] ?? 1) + 1;
                     }
                     $push_type_dest($type_dest, 'circuit', $dest);
