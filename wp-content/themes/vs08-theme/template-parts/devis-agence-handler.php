@@ -15,25 +15,28 @@ if (empty($_POST['vs08_consent_rgpd'])) {
     return;
 }
 
-$civilite       = sanitize_text_field(wp_unslash($_POST['civilite'] ?? ''));
 $nom            = sanitize_text_field(wp_unslash($_POST['nom'] ?? ''));
 $prenom         = sanitize_text_field(wp_unslash($_POST['prenom'] ?? ''));
 $email          = sanitize_email(wp_unslash($_POST['email'] ?? ''));
 $tel            = sanitize_text_field(wp_unslash($_POST['tel'] ?? ''));
-$ville          = sanitize_text_field(wp_unslash($_POST['ville'] ?? ''));
-$cp             = sanitize_text_field(wp_unslash($_POST['cp'] ?? ''));
-$pays_res       = sanitize_text_field(wp_unslash($_POST['pays_res'] ?? ''));
 $destination    = sanitize_text_field(wp_unslash($_POST['destination'] ?? ''));
 $date_debut     = sanitize_text_field(wp_unslash($_POST['date_debut'] ?? ''));
 $date_fin       = sanitize_text_field(wp_unslash($_POST['date_fin'] ?? ''));
 $dates_flex     = sanitize_text_field(wp_unslash($_POST['dates_flex'] ?? ''));
 $nb_nuits       = sanitize_text_field(wp_unslash($_POST['nb_nuits'] ?? ''));
 $nb_adultes     = sanitize_text_field(wp_unslash($_POST['nb_adultes'] ?? ''));
-$nb_enfants     = sanitize_text_field(wp_unslash($_POST['nb_enfants'] ?? ''));
+$nb_enfants     = intval(wp_unslash($_POST['nb_enfants'] ?? '0'));
 $hebergement    = sanitize_text_field(wp_unslash($_POST['hebergement'] ?? ''));
 $budget         = sanitize_text_field(wp_unslash($_POST['budget'] ?? ''));
-$comment_connu  = sanitize_text_field(wp_unslash($_POST['comment_connu'] ?? ''));
 $message        = sanitize_textarea_field(wp_unslash($_POST['message'] ?? ''));
+
+// Collecter les âges des enfants
+$ages_enfants = [];
+for ($i = 1; $i <= $nb_enfants; $i++) {
+    $age = sanitize_text_field(wp_unslash($_POST['age_enfant_' . $i] ?? ''));
+    if ($age !== '') $ages_enfants[] = $age . ' an' . ($age > 1 ? 's' : '');
+}
+$ages_enfants_str = !empty($ages_enfants) ? implode(', ', $ages_enfants) : '';
 
 if (!is_email($email) || $nom === '' || $prenom === '') {
     $devis_error = 'Veuillez remplir au moins le nom, le pr' . "\xc3\xa9" . 'nom et une adresse email valide.';
@@ -64,14 +67,16 @@ $body = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>'
     . '<div style="text-align:center;padding:20px 32px 0"><span style="display:inline-block;background:linear-gradient(135deg,#e8724a,#d4603c);color:#fff;padding:6px 20px;border-radius:100px;font-size:12px;font-weight:700;letter-spacing:1px;font-family:Outfit,Arial,sans-serif">' . $type_emoji . ' DEVIS ' . strtoupper($type_label) . '</span></div>'
     . '<div style="padding:20px 32px 0"><div style="font-size:11px;font-weight:700;color:#59b7b7;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;font-family:Outfit,Arial,sans-serif">👤 Client</div>'
     . '<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse">'
-    . $tr('', 'Civilité', $civilite) . $tr('', 'Nom', strtoupper($nom)) . $tr('', 'Prénom', $prenom)
-    . $tr('📧', 'Email', $email) . $tr('📞', 'Téléphone', $tel) . $tr('🏠', 'Ville', trim($cp . ' ' . $ville)) . $tr('🌐', 'Pays', $pays_res)
+    . $tr('', 'Nom', strtoupper($nom)) . $tr('', 'Prénom', $prenom)
+    . $tr('📧', 'Email', $email) . $tr('📞', 'Téléphone', $tel)
     . '</table></div>'
     . '<div style="padding:20px 32px 0"><div style="font-size:11px;font-weight:700;color:#59b7b7;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;font-family:Outfit,Arial,sans-serif">🗓️ Projet de voyage</div>'
     . '<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse">'
     . $tr('🌍', 'Destination', $destination) . $tr('📅', 'Période départ', $periode_fmt)
-    . $tr('🌙', 'Durée', $nb_nuits ? $nb_nuits . ' nuits' : '') . $tr('👥', 'Adultes', $nb_adultes) . $tr('👶', 'Enfants', $nb_enfants)
-    . $tr('🏨', 'Hébergement', $hebergement) . $tr('💰', 'Budget', $budget) . $tr('📣', 'Connu via', $comment_connu)
+    . $tr('🌙', 'Durée', $nb_nuits ? $nb_nuits . ' nuits' : '') . $tr('🔄', 'Flexibilité', $dates_flex) . $tr('👥', 'Adultes', $nb_adultes)
+    . $tr('👶', 'Enfants', $nb_enfants > 0 ? $nb_enfants : '')
+    . $tr('🎂', 'Âges enfants', $ages_enfants_str)
+    . $tr('🏨', 'Hébergement', $hebergement) . $tr('💰', 'Budget', $budget)
     . '</table></div>'
     . (trim($message) ? '<div style="padding:20px 32px 0"><div style="font-size:11px;font-weight:700;color:#59b7b7;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;font-family:Outfit,Arial,sans-serif">💬 Message</div>'
         . '<div style="background:#f9f6f0;border-radius:12px;padding:16px;font-size:14px;color:#374151;line-height:1.6;font-family:Outfit,Arial,sans-serif;white-space:pre-wrap">' . esc_html($message) . '</div></div>' : '')

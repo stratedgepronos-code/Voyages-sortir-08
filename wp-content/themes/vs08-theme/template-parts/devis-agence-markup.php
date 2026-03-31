@@ -37,7 +37,11 @@ $extra_field = $c['extra_field'] ?? ''; // 'city' | 'road' | 'circuit' | ''
 .vs08-da-error{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:16px;border-radius:12px;margin-bottom:20px;font-family:'Outfit',sans-serif}
 .vs08-da-consent{font-size:13px;color:#4b5563;line-height:1.5}
 .vs08-da-consent input{width:auto;margin-right:8px}
-@media(max-width:640px){.vs08-da-hero{padding:88px 24px 40px}.vs08-da-row{grid-template-columns:1fr}}
+.vs08-da-enfants-ages{margin-top:8px;display:flex;flex-wrap:wrap;gap:10px}
+.vs08-da-enfant-age{background:#f9fffe;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-size:13px;color:#374151}
+.vs08-da-enfant-age select{padding:6px 10px;border:1.5px solid #d1d5db;border-radius:8px;font-size:14px;font-family:'Outfit',sans-serif;background:#fff;min-width:70px}
+.vs08-da-enfant-age select:focus{outline:none;border-color:#59b7b7}
+@media(max-width:640px){.vs08-da-hero{padding:88px 24px 40px}.vs08-da-row{grid-template-columns:1fr}.vs08-da-enfants-ages{flex-direction:column}}
 </style>
 
 <section class="vs08-da-hero" style="background-image:url('<?php echo esc_url($hero_bg); ?>')">
@@ -63,18 +67,7 @@ $extra_field = $c['extra_field'] ?? ''; // 'city' | 'road' | 'circuit' | ''
             <p class="sub">Les champs marqués * sont obligatoires. Ces informations nous permettent de vous préparer une proposition personnalisée (comme sur une fiche « demande de cotation » en agence de voyages).</p>
             <form method="post" action="">
                 <?php wp_nonce_field($nonce_action, $nonce_name); ?>
-                <div class="vs08-da-row">
-                    <div class="vs08-da-field">
-                        <label for="da-civ">Civilité</label>
-                        <select id="da-civ" name="civilite">
-                            <option value="">—</option>
-                            <option value="M." <?php selected(wp_unslash($_POST['civilite'] ?? ''), 'M.'); ?>>M.</option>
-                            <option value="Mme" <?php selected(wp_unslash($_POST['civilite'] ?? ''), 'Mme'); ?>>Mme</option>
-                            <option value="Mx" <?php selected(wp_unslash($_POST['civilite'] ?? ''), 'Mx'); ?>>Mx</option>
-                        </select>
-                    </div>
-                    <div class="vs08-da-field"></div>
-                </div>
+                <!-- Nom + Prénom -->
                 <div class="vs08-da-row">
                     <div class="vs08-da-field">
                         <label for="da-nom">Nom *</label>
@@ -95,20 +88,7 @@ $extra_field = $c['extra_field'] ?? ''; // 'city' | 'road' | 'circuit' | ''
                         <input type="tel" id="da-tel" name="tel" value="<?php echo esc_attr(wp_unslash($_POST['tel'] ?? '')); ?>">
                     </div>
                 </div>
-                <div class="vs08-da-row">
-                    <div class="vs08-da-field">
-                        <label for="da-cp">Code postal</label>
-                        <input type="text" id="da-cp" name="cp" value="<?php echo esc_attr(wp_unslash($_POST['cp'] ?? '')); ?>">
-                    </div>
-                    <div class="vs08-da-field">
-                        <label for="da-ville">Ville</label>
-                        <input type="text" id="da-ville" name="ville" value="<?php echo esc_attr(wp_unslash($_POST['ville'] ?? '')); ?>">
-                    </div>
-                </div>
-                <div class="vs08-da-field">
-                    <label for="da-pays">Pays de résidence</label>
-                    <input type="text" id="da-pays" name="pays_res" placeholder="France" value="<?php echo esc_attr(wp_unslash($_POST['pays_res'] ?? '')); ?>">
-                </div>
+                <!-- Destination -->
                 <?php if ($extra_field === 'city') : ?>
                 <div class="vs08-da-field">
                     <label for="da-ville-trip">Ville ou pays du city trip *</label>
@@ -187,9 +167,33 @@ $extra_field = $c['extra_field'] ?? ''; // 'city' | 'road' | 'circuit' | ''
                     </div>
                     <div class="vs08-da-field">
                         <label for="da-enf">Nombre d’enfants</label>
-                        <input type="number" id="da-enf" name="nb_enfants" min="0" max="20" value="<?php echo esc_attr(wp_unslash($_POST['nb_enfants'] ?? '0')); ?>">
+                        <input type="number" id="da-enf" name="nb_enfants" min="0" max="10" value="<?php echo esc_attr(wp_unslash($_POST['nb_enfants'] ?? '0')); ?>">
                     </div>
                 </div>
+                <!-- Champs âge enfants (dynamiques) -->
+                <div id="da-enfants-wrap"></div>
+                <script>
+                (function(){
+                    var enfInput = document.getElementById('da-enf');
+                    var wrap = document.getElementById('da-enfants-wrap');
+                    if (!enfInput || !wrap) return;
+                    function buildAgeFields() {
+                        var nb = parseInt(enfInput.value) || 0;
+                        if (nb <= 0 || nb > 10) { wrap.innerHTML = ''; return; }
+                        var html = '<div class="vs08-da-field" style="margin-top:0"><label>Âge de chaque enfant au moment du retour</label><div class="vs08-da-enfants-ages">';
+                        for (var i = 1; i <= nb; i++) {
+                            html += '<div class="vs08-da-enfant-age"><span>Enfant ' + i + '</span><select name="age_enfant_' + i + '"><option value="">—</option>';
+                            for (var a = 0; a <= 17; a++) html += '<option value="' + a + '">' + a + ' an' + (a > 1 ? 's' : '') + '</option>';
+                            html += '</select></div>';
+                        }
+                        html += '</div></div>';
+                        wrap.innerHTML = html;
+                    }
+                    enfInput.addEventListener('change', buildAgeFields);
+                    enfInput.addEventListener('input', buildAgeFields);
+                    buildAgeFields();
+                })();
+                </script>
                 <div class="vs08-da-field">
                     <label for="da-heb">Hébergement envisagé</label>
                     <select id="da-heb" name="hebergement">
@@ -206,18 +210,7 @@ $extra_field = $c['extra_field'] ?? ''; // 'city' | 'road' | 'circuit' | ''
                     <label for="da-bud">Budget indicatif (total ou par personne)</label>
                     <input type="text" id="da-bud" name="budget" placeholder="Ex. 2 500 € pour 2 pers." value="<?php echo esc_attr(wp_unslash($_POST['budget'] ?? '')); ?>">
                 </div>
-                <div class="vs08-da-field">
-                    <label for="da-src">Comment nous avez-vous connus ?</label>
-                    <select id="da-src" name="comment_connu">
-                        <option value="">—</option>
-                        <option value="Recherche Google" <?php selected(wp_unslash($_POST['comment_connu'] ?? ''), 'Recherche Google'); ?>>Recherche Google</option>
-                        <option value="Réseaux sociaux" <?php selected(wp_unslash($_POST['comment_connu'] ?? ''), 'Réseaux sociaux'); ?>>Réseaux sociaux</option>
-                        <option value="Bouche à oreille" <?php selected(wp_unslash($_POST['comment_connu'] ?? ''), 'Bouche à oreille'); ?>>Bouche à oreille</option>
-                        <option value="Ancien client" <?php selected(wp_unslash($_POST['comment_connu'] ?? ''), 'Ancien client'); ?>>Ancien client</option>
-                        <option value="Presse / partenaire" <?php selected(wp_unslash($_POST['comment_connu'] ?? ''), 'Presse / partenaire'); ?>>Presse / partenaire</option>
-                        <option value="Autre" <?php selected(wp_unslash($_POST['comment_connu'] ?? ''), 'Autre'); ?>>Autre</option>
-                    </select>
-                </div>
+                <!-- Budget -->
                 <div class="vs08-da-field">
                     <label for="da-msg">Précisions (activités, vols, contraintes…)</label>
                     <textarea id="da-msg" name="message" placeholder="Plus vous êtes précis, plus notre proposition sera adaptée."><?php echo esc_textarea(wp_unslash($_POST['message'] ?? '')); ?></textarea>
