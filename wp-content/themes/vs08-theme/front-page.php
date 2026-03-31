@@ -552,21 +552,24 @@ $hc_slides = [
 <?php
 $vs08_opts = class_exists('VS08V_Search') ? VS08V_Search::get_aggregated_options() : ['types'=>[],'destinations'=>[],'aeroports'=>[],'durees'=>[],'dates'=>[]];
 
-// ── Fallback types (toujours afficher tous les types même sans produits) ──
-$fp_all_types = [
-    'sejour_golf'  => 'Séjours Golf',
-    'sejour'       => 'Séjours All Inclusive',
-    'circuit'      => 'Circuits',
-    'road_trip'    => 'Road Trip',
-    'city_trip'    => 'City Trip',
-    'parc'         => 'Billets Parcs',
+// ── Types proposés dans la barre (temporaire : golf + circuits uniquement) ──
+$fp_search_types = [
+    'sejour_golf' => 'Séjours golfique',
+    'circuit'     => 'Circuits',
 ];
-// Fusionner : les types réels + les types manquants
-foreach ($fp_all_types as $k => $v) {
+foreach ($fp_search_types as $k => $default_label) {
     if (!isset($vs08_opts['types'][$k])) {
-        $vs08_opts['types'][$k] = $v;
+        $vs08_opts['types'][$k] = $default_label;
     }
 }
+// N'afficher que ces types, dans cet ordre
+$fp_types_ordered = [];
+foreach (array_keys($fp_search_types) as $k) {
+    if (isset($vs08_opts['types'][$k])) {
+        $fp_types_ordered[$k] = $vs08_opts['types'][$k];
+    }
+}
+$vs08_opts['types'] = $fp_types_ordered;
 
 // ── Fallback destinations (si la BDD en a moins de 5) ──
 if (count($vs08_opts['destinations']) < 5) {
