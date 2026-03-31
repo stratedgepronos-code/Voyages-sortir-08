@@ -131,7 +131,6 @@ $vs08_circuits_url = add_query_arg(['type' => 'circuit'], $vs08_res);
         <nav class="vs08-mm-nav">
             <a href="<?php echo esc_url(home_url('/resultats-recherche?type=sejour_golf')); ?>">⛳ Séjours Golf</a>
             <a href="<?php echo esc_url(home_url('/resultats-recherche?type=circuit')); ?>">🗺️ Circuits</a>
-            <a href="<?php echo esc_url(home_url('/resultats-recherche?type=sejour')); ?>">🏖️ All Inclusive</a>
             <a href="<?php echo esc_url(home_url('/qui-sommes-nous')); ?>">Qui sommes-nous</a>
             <a href="<?php echo esc_url(home_url('/avis-clients')); ?>">Avis clients</a>
             <a href="<?php echo esc_url(home_url('/contact')); ?>">Contact</a>
