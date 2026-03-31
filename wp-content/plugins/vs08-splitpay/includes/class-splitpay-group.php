@@ -52,16 +52,6 @@ class VS08SP_Group {
      *  }
      */
     public static function handle_create_group(WP_REST_Request $request) {
-        // Vérifier le nonce (accepter vs08sp_nonce ou vs08v_nonce pour compatibilité refresh)
-        $nonce = $request->get_param('nonce') ?: '';
-        $nonce_valid = wp_verify_nonce($nonce, 'vs08sp_nonce') || wp_verify_nonce($nonce, 'vs08v_nonce');
-        if (!$nonce_valid) {
-            return new WP_REST_Response(
-                ['success' => false, 'message' => 'Session expirée. Rechargez la page.'],
-                200
-            );
-        }
-
         $booking_data  = $request->get_param('booking_data');
         $participants  = $request->get_param('participants');
 
