@@ -70,6 +70,17 @@ body.home,body.page-template-default{background:#fff!important}
 #fp-date-wrap:focus-within .fp-search-date-trigger{border-bottom-color:var(--teal)}
 .fp-btn-search{background:var(--coral);color:#fff;border:none;padding:18px 32px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-left:20px;flex-shrink:0;white-space:nowrap;transition:all .3s;box-shadow:0 6px 25px rgba(232,114,74,.35);font-family:'Outfit',sans-serif}
 .fp-btn-search:hover{background:var(--coral-dark);transform:translateY(-2px)}
+/* Rappel visuel : clic sur destination sans type → halo vert type de voyage */
+.fp-type-wrap{position:relative;border-radius:14px;padding:2px 0;margin:-2px 0}
+.fp-type-wrap.fp-type-nudge{animation:fp-type-nudge-anim 1.35s ease-out}
+@keyframes fp-type-nudge-anim{
+  0%{box-shadow:0 0 0 0 rgba(89,183,183,0)}
+  14%{box-shadow:0 0 0 3px rgba(89,183,183,.4),0 0 28px rgba(89,183,183,.55),0 0 42px rgba(126,206,206,.4)}
+  32%{box-shadow:0 0 0 1px rgba(89,183,183,.2),0 0 14px rgba(89,183,183,.25)}
+  48%{box-shadow:0 0 0 4px rgba(89,183,183,.45),0 0 36px rgba(89,183,183,.6)}
+  100%{box-shadow:0 0 0 0 rgba(89,183,183,0)}
+}
+.fp-type-wrap.fp-type-nudge .fp-type-label{color:#3d9a9a!important;text-shadow:0 0 12px rgba(89,183,183,.5);transition:color .2s,text-shadow .2s}
 
 /* ═══════════════════════════════════════════════════════════════
    3. SECTION NOS UNIVERS — Bento Grid
@@ -618,9 +629,10 @@ if (count($vs08_opts['aeroports']) < 3) {
 ?>
 <section class="fp-search">
     <form class="fp-search-card" action="<?php echo esc_url(home_url('/resultats-recherche')); ?>" method="get">
-        <div class="fp-search-field"><label>Type de voyage</label>
+        <div class="fp-search-field fp-type-wrap" id="fp-type-wrap">
+            <label class="fp-type-label" for="fp-sel-type">Type de voyage</label>
             <select name="type" id="fp-sel-type">
-                <option value="">Tous les types</option>
+                <option value="">Sélectionner un type</option>
                 <?php foreach ($vs08_opts['types'] as $tv => $tl): ?>
                 <option value="<?php echo esc_attr($tv); ?>"><?php echo esc_html($tl); ?></option>
                 <?php endforeach; ?>
@@ -712,13 +724,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }, $vs08_opts['destinations'])); ?>;
 
     var tooltip = null;
+    var typeWrap = document.getElementById('fp-type-wrap');
 
-    destWrap.addEventListener('click', function(e) {
+    function nudgeTypeField() {
+        if (!typeWrap) return;
+        typeWrap.classList.remove('fp-type-nudge');
+        void typeWrap.offsetWidth;
+        typeWrap.classList.add('fp-type-nudge');
+        var cleared = false;
+        function done() {
+            if (cleared) return;
+            cleared = true;
+            typeWrap.classList.remove('fp-type-nudge');
+            typeWrap.removeEventListener('animationend', done);
+        }
+        typeWrap.addEventListener('animationend', done);
+        setTimeout(done, 1600);
+    }
+
+    function onBlockedDestination(e) {
         if (!destSel.disabled) return;
         e.preventDefault();
-        e.stopPropagation();
         showTooltip();
-    });
+        nudgeTypeField();
+    }
+    /* pointerdown en capture : fonctionne même si le select est disabled */
+    destWrap.addEventListener('pointerdown', onBlockedDestination, true);
 
     function showTooltip() {
         if (tooltip) return;
