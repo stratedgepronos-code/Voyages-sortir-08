@@ -326,10 +326,10 @@ function vs08_mega_departure_airports($limit = 5) {
                 foreach ($m['aeroports'] as $a) {
                     $code = strtoupper(trim($a['code'] ?? ''));
                     // Normaliser le code aéroport (typos, doublons)
-                    if (class_exists('VS08V_Search')) {
+                    if (class_exists('VS08V_Search') && method_exists('VS08V_Search', 'normalize_airport')) {
                         $code = VS08V_Search::normalize_airport($code);
                     }
-                    $ville = class_exists('VS08V_Search') ? VS08V_Search::airport_name($code) : trim($a['ville'] ?? '');
+                    $ville = (class_exists('VS08V_Search') && method_exists('VS08V_Search', 'airport_name')) ? VS08V_Search::airport_name($code) : trim($a['ville'] ?? '');
                     if (!$code) continue;
                     if (!isset($airports[$code])) {
                         $airports[$code] = ['ville' => $ville, 'count' => 0];
