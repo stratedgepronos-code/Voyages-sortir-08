@@ -1,0 +1,453 @@
+/* ══════════════════════════════════════════
+ *  VS08 SplitPay — Styles
+ *  Design system : Playfair Display + Outfit
+ *  Couleurs : turquoise #59b7b7, navy #0b1120, gold #c8a45e, coral #e8734a
+ * ══════════════════════════════════════════ */
+
+/* ── Page wrapper ── */
+.vs08sp-page-wrapper {
+    background: linear-gradient(180deg, #f0f0f0 0%, #f8f5f0 100%);
+    min-height: 80vh;
+    padding: 40px 20px;
+}
+
+.vs08sp-page-container {
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+/* ── Header ── */
+.vs08sp-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #0b1120, #1a2744);
+    color: #c8a45e;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+}
+
+.vs08sp-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #0b1120;
+    margin: 0 0 12px 0;
+    line-height: 1.2;
+}
+
+.vs08sp-subtitle {
+    font-family: 'Outfit', Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    color: #555;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ── Barre de progression ── */
+.vs08sp-progress-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 24px 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.vs08sp-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.vs08sp-progress-pct {
+    font-weight: 700;
+    font-size: 16px;
+    color: #0b1120;
+}
+
+.vs08sp-progress-bar {
+    background: #e0e0e0;
+    border-radius: 8px;
+    height: 12px;
+    overflow: hidden;
+}
+
+.vs08sp-progress-fill {
+    background: linear-gradient(90deg, #59b7b7, #c8a45e);
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.8s ease;
+    min-width: 2px;
+}
+
+.vs08sp-deadline {
+    font-size: 13px;
+    color: #888;
+    margin: 10px 0 0 0;
+}
+
+/* ── Card récap voyage ── */
+.vs08sp-recap-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.vs08sp-recap-card h3 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 18px;
+    color: #0b1120;
+    margin: 0 0 16px 0;
+}
+
+.vs08sp-recap-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.vs08sp-recap-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #333;
+}
+
+.vs08sp-recap-table td:first-child {
+    color: #888;
+    width: 40%;
+    font-weight: 500;
+}
+
+.vs08sp-recap-table td:last-child {
+    font-weight: 600;
+}
+
+.vs08sp-total-row td {
+    font-weight: 700 !important;
+    color: #0b1120 !important;
+    border-top: 2px solid #0b1120;
+    font-size: 16px;
+}
+
+/* ── Card montant à payer ── */
+.vs08sp-amount-card {
+    background: linear-gradient(135deg, #0b1120, #1a2744);
+    border-radius: 16px;
+    padding: 32px;
+    margin: 24px 0;
+    text-align: center;
+    color: #fff;
+}
+
+.vs08sp-amount-label {
+    font-size: 14px;
+    color: #c8a45e;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.vs08sp-amount-value {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 48px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.vs08sp-amount-detail {
+    font-size: 14px;
+    color: rgba(255,255,255,0.6);
+}
+
+/* ── Bouton payer ── */
+.vs08sp-pay-section {
+    text-align: center;
+    margin: 32px 0;
+}
+
+.vs08sp-pay-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #59b7b7, #4a9e9e);
+    color: #fff;
+    border: none;
+    padding: 18px 48px;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Outfit', Helvetica, Arial, sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(89, 183, 183, 0.3);
+    letter-spacing: 0.5px;
+}
+
+.vs08sp-pay-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(89, 183, 183, 0.4);
+    background: linear-gradient(135deg, #4a9e9e, #3d8a8a);
+}
+
+.vs08sp-pay-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.vs08sp-secure-note {
+    font-size: 13px;
+    color: #888;
+    margin-top: 12px;
+}
+
+/* ── Pages succès et erreur ── */
+.vs08sp-success-card,
+.vs08sp-error-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 48px 32px;
+    text-align: center;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+
+.vs08sp-success-icon,
+.vs08sp-error-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.vs08sp-success-card h1,
+.vs08sp-error-card h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 28px;
+    color: #0b1120;
+    margin: 0 0 16px;
+}
+
+.vs08sp-success-card p,
+.vs08sp-error-card p {
+    font-size: 16px;
+    color: #555;
+    line-height: 1.6;
+}
+
+.vs08sp-complete-msg {
+    color: #27ae60 !important;
+    font-weight: 700;
+    font-size: 18px !important;
+}
+
+.vs08sp-back-btn {
+    display: inline-block;
+    background: #0b1120;
+    color: #fff;
+    text-decoration: none;
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-top: 16px;
+    transition: background 0.3s;
+}
+
+.vs08sp-back-btn:hover {
+    background: #1a2744;
+    color: #fff;
+}
+
+/* ══════════════════════════════════════════
+ *  Formulaire de répartition (dans booking-steps)
+ * ══════════════════════════════════════════ */
+.vs08sp-split-section {
+    background: #f8f5f0;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    border: 2px solid #59b7b7;
+}
+
+.vs08sp-split-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 20px;
+    color: #0b1120;
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vs08sp-participant-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.vs08sp-participant-row.is-captain {
+    border-color: #c8a45e;
+    background: #fffef5;
+}
+
+.vs08sp-participant-row label {
+    font-size: 13px;
+    color: #888;
+    min-width: 50px;
+}
+
+.vs08sp-participant-row input[type="email"],
+.vs08sp-participant-row input[type="text"] {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+}
+
+.vs08sp-participant-row input[type="number"] {
+    width: 120px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: right;
+    font-family: 'Outfit', sans-serif;
+}
+
+.vs08sp-captain-badge {
+    display: inline-block;
+    background: #c8a45e;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.vs08sp-total-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    margin-top: 16px;
+    background: #0b1120;
+    color: #fff;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.vs08sp-total-bar .vs08sp-total-remaining {
+    font-size: 13px;
+    color: #c8a45e;
+}
+
+.vs08sp-total-bar.is-valid {
+    background: #27ae60;
+}
+
+.vs08sp-total-bar.is-error {
+    background: #e8734a;
+}
+
+.vs08sp-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.vs08sp-add-btn {
+    background: none;
+    border: 2px dashed #ccc;
+    color: #888;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.vs08sp-add-btn:hover {
+    border-color: #59b7b7;
+    color: #59b7b7;
+}
+
+.vs08sp-submit-btn {
+    flex: 1;
+    background: linear-gradient(135deg, #59b7b7, #4a9e9e);
+    color: #fff;
+    border: none;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    transition: all 0.3s;
+}
+
+.vs08sp-submit-btn:hover {
+    background: linear-gradient(135deg, #4a9e9e, #3d8a8a);
+}
+
+.vs08sp-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.vs08sp-remove-btn {
+    background: none;
+    border: none;
+    color: #e8734a;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.vs08sp-remove-btn:hover {
+    background: #fdecea;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+    .vs08sp-page-wrapper {
+        padding: 20px 12px;
+    }
+
+    .vs08sp-title {
+        font-size: 24px;
+    }
+
+    .vs08sp-amount-value {
+        font-size: 36px;
+    }
+
+    .vs08sp-participant-row {
+        flex-wrap: wrap;
+    }
+
+    .vs08sp-participant-row input[type="email"],
+    .vs08sp-participant-row input[type="text"] {
+        width: 100%;
+    }
+
+    .vs08sp-actions {
+        flex-direction: column;
+    }
+}

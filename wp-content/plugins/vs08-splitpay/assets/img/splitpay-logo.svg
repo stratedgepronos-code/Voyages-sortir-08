@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="400" height="120">
+  <!-- Logo "Paiement Partagé" — VS08 Design System -->
+  <!-- Couleurs : turquoise #59b7b7, navy #0b1120, gold #c8a45e, coral #e8734a -->
+
+  <!-- Cercle central : le voyage (gold) -->
+  <circle cx="200" cy="55" r="28" fill="#c8a45e" opacity="0.15"/>
+  <circle cx="200" cy="55" r="28" fill="none" stroke="#c8a45e" stroke-width="2"/>
+  <!-- Icône avion au centre -->
+  <path d="M192 55l5-8 6 0 -4 8 4 8 -6 0z" fill="#c8a45e"/>
+  <path d="M203 55l5-4 4 0 -3 4 3 4 -4 0z" fill="#c8a45e" opacity="0.7"/>
+  <circle cx="190" cy="55" r="1.5" fill="#c8a45e"/>
+
+  <!-- Participant 1 (turquoise) — gauche haut -->
+  <circle cx="120" cy="30" r="14" fill="#59b7b7" opacity="0.12"/>
+  <circle cx="120" cy="30" r="14" fill="none" stroke="#59b7b7" stroke-width="1.5"/>
+  <circle cx="120" cy="26" r="4" fill="#59b7b7"/>
+  <path d="M112 36 a8 6 0 0 1 16 0" fill="#59b7b7" opacity="0.6"/>
+  <!-- Lien vers centre -->
+  <line x1="134" y1="35" x2="174" y2="50" stroke="#59b7b7" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+
+  <!-- Participant 2 (turquoise) — gauche bas -->
+  <circle cx="120" cy="80" r="14" fill="#59b7b7" opacity="0.12"/>
+  <circle cx="120" cy="80" r="14" fill="none" stroke="#59b7b7" stroke-width="1.5"/>
+  <circle cx="120" cy="76" r="4" fill="#59b7b7"/>
+  <path d="M112 86 a8 6 0 0 1 16 0" fill="#59b7b7" opacity="0.6"/>
+  <line x1="134" y1="75" x2="174" y2="60" stroke="#59b7b7" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+
+  <!-- Participant 3 (turquoise) — droite haut -->
+  <circle cx="280" cy="30" r="14" fill="#59b7b7" opacity="0.12"/>
+  <circle cx="280" cy="30" r="14" fill="none" stroke="#59b7b7" stroke-width="1.5"/>
+  <circle cx="280" cy="26" r="4" fill="#59b7b7"/>
+  <path d="M272 36 a8 6 0 0 1 16 0" fill="#59b7b7" opacity="0.6"/>
+  <line x1="266" y1="35" x2="226" y2="50" stroke="#59b7b7" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+
+  <!-- Participant 4 (gold = capitaine) — droite bas -->
+  <circle cx="280" cy="80" r="14" fill="#c8a45e" opacity="0.12"/>
+  <circle cx="280" cy="80" r="14" fill="none" stroke="#c8a45e" stroke-width="2"/>
+  <circle cx="280" cy="76" r="4" fill="#c8a45e"/>
+  <path d="M272 86 a8 6 0 0 1 16 0" fill="#c8a45e" opacity="0.6"/>
+  <line x1="266" y1="75" x2="226" y2="60" stroke="#c8a45e" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+  <!-- Badge capitaine -->
+  <rect x="267" y="94" width="26" height="11" rx="5.5" fill="#c8a45e"/>
+  <text x="280" y="102" text-anchor="middle" font-family="Outfit,Helvetica,sans-serif" font-size="7" font-weight="600" fill="#fff" letter-spacing="0.5">CAP</text>
+
+  <!-- Checkmarks sur les participants qui ont payé (1 et 3) -->
+  <circle cx="131" cy="19" r="6" fill="#27ae60"/>
+  <path d="M128 19l2 2 4-4" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="291" cy="19" r="6" fill="#27ae60"/>
+  <path d="M288 19l2 2 4-4" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Horloge sur participant 2 (en attente) -->
+  <circle cx="131" cy="69" r="6" fill="#e8734a"/>
+  <path d="M131 67v3l2 1" fill="none" stroke="#fff" stroke-width="1" stroke-linecap="round"/>
+
+  <!-- Texte titre -->
+  <text x="200" y="112" text-anchor="middle" font-family="Playfair Display,Georgia,serif" font-size="13" font-weight="700" fill="#0b1120" letter-spacing="1">PAIEMENT PARTAGÉ</text>
+
+  <!-- Petite barre de progression sous le cercle central -->
+  <rect x="178" y="87" width="44" height="4" rx="2" fill="#e0e0e0"/>
+  <rect x="178" y="87" width="33" height="4" rx="2" fill="url(#progressGrad)"/>
+  <defs>
+    <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#59b7b7"/>
+      <stop offset="100%" stop-color="#c8a45e"/>
+    </linearGradient>
+  </defs>
+</svg>

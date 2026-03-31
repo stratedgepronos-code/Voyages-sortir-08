@@ -1164,6 +1164,8 @@ get_header();
             })();
             </script>
 
+            <?php do_action('vs08_espace_voyageur_after_panels', $current_user, $voyage_orders); ?>
+
             <?php else: ?>
 
             <div class="ev-empty-state">

@@ -169,6 +169,7 @@ if (!is_array($messages_admin)) $messages_admin = [];
     <a href="<?php echo home_url('/espace-admin/clients/'); ?>" class="ea-mn-item <?php echo $admin_view === 'clients' ? 'active' : ''; ?>"><span>👥</span>Clients</a>
     <a href="<?php echo home_url('/espace-admin/messages/'); ?>" class="ea-mn-item <?php echo $admin_view === 'messages' ? 'active' : ''; ?>"><span>💬</span>Messages</a>
     <a href="<?php echo home_url('/espace-admin/produits/'); ?>" class="ea-mn-item <?php echo $admin_view === 'produits' ? 'active' : ''; ?>"><span>🗺️</span>Produits</a>
+    <?php do_action('vs08_espace_admin_mobile_nav', $admin_view); ?>
 </div>
 <aside class="ea-sidebar">
     <div class="ea-sidebar-header">
@@ -189,6 +190,7 @@ if (!is_array($messages_admin)) $messages_admin = [];
         <a href="<?php echo home_url('/espace-admin/clients/'); ?>" class="ea-nav-item <?php echo $admin_view === 'clients' ? 'active' : ''; ?>"><span class="ea-nav-icon">👥</span> Clients</a>
         <a href="<?php echo home_url('/espace-admin/messages/'); ?>" class="ea-nav-item <?php echo $admin_view === 'messages' ? 'active' : ''; ?>"><span class="ea-nav-icon">💬</span> Messages<?php if (count($messages_admin)): ?><span class="ea-nav-badge"><?php echo count($messages_admin); ?></span><?php endif; ?></a>
         <a href="<?php echo home_url('/espace-admin/produits/'); ?>" class="ea-nav-item <?php echo $admin_view === 'produits' ? 'active' : ''; ?>"><span class="ea-nav-icon">🗺️</span> Produits</a>
+        <?php do_action('vs08_espace_admin_nav', $admin_view); ?>
         <a href="<?php echo home_url('/espace-voyageur/'); ?>" class="ea-nav-item" target="_blank"><span class="ea-nav-icon">👁️</span> Vue client</a>
     </nav>
     <div class="ea-sidebar-footer">
@@ -692,6 +694,8 @@ $circuit_posts = get_posts(['post_type'=>'vs08_circuit','posts_per_page'=>-1,'po
 </tbody></table></div>
 
 <?php endif; ?>
+
+<?php do_action('vs08_espace_admin_content', $admin_view); ?>
 
 </main>
 </div>
