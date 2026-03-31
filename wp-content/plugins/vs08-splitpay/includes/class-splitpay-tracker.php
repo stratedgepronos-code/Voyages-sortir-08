@@ -61,6 +61,12 @@ class VS08SP_Tracker {
         $order->update_meta_data('_vs08sp_payment_processed', current_time('mysql'));
         $order->save();
 
+        // ── Supprimer le produit WC temporaire (ménage) ──
+        if ($product_id) {
+            wp_delete_post($product_id, true); // true = force delete, pas de corbeille
+            error_log(sprintf('[VS08SP] Produit WC temporaire #%d supprimé après paiement', $product_id));
+        }
+
         error_log(sprintf('[VS08SP] Part #%d payée (commande #%d, groupe #%d)', $share_id, $order_id, $group_id));
 
         $share = VS08SP_DB::get_share_by_token($token);

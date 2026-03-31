@@ -2,19 +2,22 @@
 /**
  * VS08 SplitPay v2 — Gestion des groupes
  *
- * Approche "2 temps" :
- *   TEMPS 1 (tunnel booking) :
- *     POST /vs08sp/v1/create-booking
- *     → Crée une commande WC "sp-group-wait" + groupe splitpay "draft"
- *     → Redirige vers l'espace voyageur
+ * Approche "2 temps" — WooCommerce MINIMAL :
+ *   WC n'est utilisé QUE pour encaisser via Paybox (dans class-splitpay-page.php).
+ *   Ici, on ne touche PAS à WooCommerce. Tout est dans nos tables custom.
  *
- *   TEMPS 2 (espace voyageur) :
- *     POST /vs08sp/v1/configure-group
- *     → Le capitaine configure les participants (nom/email/montant)
- *     → Crée les comptes WP + parts + envoie les liens
+ *   TEMPS 1 : POST /vs08sp/v1/create-booking
+ *     → Crée un groupe splitpay (table custom) + compte WP capitaine
+ *     → Redirige vers l'espace voyageur
+ *     → AUCUN produit WC, AUCUNE commande WC
+ *
+ *   TEMPS 2 : POST /vs08sp/v1/configure-group
+ *     → Le capitaine configure les participants
+ *     → Crée les comptes WP + shares + envoie les liens
+ *     → AUCUN produit WC
  *
  *   GET /vs08sp/v1/group/{id}
- *     → Récupère les infos d'un groupe (pour le capitaine)
+ *     → Récupère les infos d'un groupe
  */
 if (!defined('ABSPATH')) exit;
 
@@ -22,31 +25,6 @@ class VS08SP_Group {
 
     public static function init() {
         add_action('rest_api_init', [__CLASS__, 'register_routes']);
-        add_action('init', [__CLASS__, 'register_order_status']);
-        add_filter('wc_order_statuses', [__CLASS__, 'add_order_status']);
-    }
-
-    /* ══════════════════════════════════════════
-     *  STATUT WOOCOMMERCE CUSTOM
-     * ══════════════════════════════════════════ */
-    public static function register_order_status() {
-        register_post_status('wc-sp-group-wait', [
-            'label'                     => 'En attente groupe',
-            'public'                    => true,
-            'show_in_admin_status_list' => true,
-            'show_in_admin_all_list'    => true,
-            'exclude_from_search'       => false,
-            'label_count'               => _n_noop(
-                'En attente groupe <span class="count">(%s)</span>',
-                'En attente groupe <span class="count">(%s)</span>',
-                'vs08-splitpay'
-            ),
-        ]);
-    }
-
-    public static function add_order_status($statuses) {
-        $statuses['wc-sp-group-wait'] = 'En attente groupe';
-        return $statuses;
     }
 
     /* ══════════════════════════════════════════
@@ -74,7 +52,13 @@ class VS08SP_Group {
 
     /* ══════════════════════════════════════════
      *  TEMPS 1 : CRÉER LE DOSSIER GROUPE
-     * ══════════════════════════════════════════ */
+     * ══════════════════════════════════════════
+     *
+     *  PAS de WooCommerce ici.
+     *  On stocke tout dans vs08sp_groups (booking_data en JSON).
+     *  WC interviendra SEULEMENT quand un participant clique
+     *  "Payer ma part" (class-splitpay-page.php).
+     */
     public static function handle_create_booking(WP_REST_Request $request) {
         $body = $request->get_json_params();
 
@@ -99,7 +83,7 @@ class VS08SP_Group {
 
         $captain_name = trim(sanitize_text_field($facturation['prenom'] ?? '') . ' ' . sanitize_text_field($facturation['nom'] ?? ''));
 
-        // Calculer l'acompte (même logique que class-booking.php)
+        // ── Calculer l'acompte (même logique que class-booking.php) ──
         $acompte = $total * $acompte_pct / 100;
         $prix_vol_pp = floatval($params['prix_vol'] ?? 0);
         $nb_total = intval($params['nb_golfeurs'] ?? 0) + intval($params['nb_nongolfeurs'] ?? 0);
@@ -113,7 +97,7 @@ class VS08SP_Group {
         $acompte = (int) ceil($acompte);
         if ($payer_tout) $acompte = $total;
 
-        // Créer/trouver le compte WP du capitaine
+        // ── Créer/trouver le compte WP du capitaine ──
         $user_id = email_exists($captain_email);
         if (!$user_id) {
             $password = wp_generate_password(12, true, false);
@@ -132,7 +116,7 @@ class VS08SP_Group {
             error_log(sprintf('[VS08SP] Compte WP créé pour capitaine %s (user #%d)', $captain_email, $user_id));
         }
 
-        // Booking data
+        // ── Stocker TOUTES les données dans notre table custom ──
         $booking_data = [
             'voyage_id'    => $voyage_id,
             'voyage_titre' => $voyage_titre ?: get_the_title($voyage_id),
@@ -147,75 +131,10 @@ class VS08SP_Group {
             'splitpay'     => true,
         ];
 
-        // Produit WooCommerce
-        $product_name = sprintf('Réservation groupe — %s — %s (%d pers.)',
-            $booking_data['voyage_titre'],
-            !empty($params['date_depart']) ? date('d/m/Y', strtotime($params['date_depart'])) : '—',
-            $nb_total ?: 1
-        );
-
-        $product = new WC_Product_Simple();
-        $product->set_name($product_name);
-        $product->set_price($total);
-        $product->set_regular_price($total);
-        $product->set_status('private');
-        $product->set_virtual(true);
-        $product->set_sold_individually(true);
-        $product->set_catalog_visibility('hidden');
-        $product_id = $product->save();
-
-        if (!$product_id) {
-            return new WP_REST_Response(['success' => false, 'message' => 'Erreur création produit.'], 200);
-        }
-
-        update_post_meta($product_id, '_vs08v_booking_data', $booking_data);
-        update_post_meta($product_id, '_vs08v_voyage_id', $voyage_id);
-        update_post_meta($product_id, '_vs08v_total_voyage', $total);
-        update_post_meta($product_id, '_vs08sp_is_group_product', 1);
-
-        // Commande WooCommerce en statut custom
-        try {
-            $order = wc_create_order([
-                'customer_id' => $user_id,
-                'status'      => 'sp-group-wait',
-            ]);
-            if (is_wp_error($order)) {
-                return new WP_REST_Response(['success' => false, 'message' => 'Erreur création commande.'], 200);
-            }
-
-            $order->add_product($product, 1);
-            $order->set_billing_first_name(sanitize_text_field($facturation['prenom'] ?? ''));
-            $order->set_billing_last_name(sanitize_text_field($facturation['nom'] ?? ''));
-            $order->set_billing_email($captain_email);
-            $order->set_billing_phone(sanitize_text_field($facturation['tel'] ?? ''));
-            $order->set_billing_address_1(sanitize_text_field($facturation['adresse'] ?? ''));
-            $order->set_billing_postcode(sanitize_text_field($facturation['cp'] ?? ''));
-            $order->set_billing_city(sanitize_text_field($facturation['ville'] ?? ''));
-            $order->set_billing_country('FR');
-
-            $order->update_meta_data('_vs08v_booking_data', $booking_data);
-            $order->update_meta_data('_vs08v_voyage_id', $voyage_id);
-            $order->update_meta_data('_vs08v_total_voyage', $total);
-            $order->update_meta_data('_vs08sp_is_group_order', true);
-
-            $order->calculate_totals();
-            $order->add_order_note(sprintf(
-                '👥 Dossier paiement groupé créé par %s (%s). En attente de la configuration des participants.',
-                $captain_name, $captain_email
-            ));
-            $order->save();
-            $order_id = $order->get_id();
-
-        } catch (\Throwable $e) {
-            error_log('[VS08SP] Erreur création commande : ' . $e->getMessage());
-            return new WP_REST_Response(['success' => false, 'message' => 'Erreur serveur. Réessayez.'], 200);
-        }
-
-        // Groupe splitpay en statut "draft"
         $group_id = VS08SP_DB::create_group([
             'voyage_id'       => $voyage_id,
             'voyage_titre'    => $booking_data['voyage_titre'],
-            'booking_data'    => array_merge($booking_data, ['order_id' => $order_id]),
+            'booking_data'    => $booking_data,
             'captain_email'   => $captain_email,
             'captain_name'    => $captain_name,
             'total_amount'    => $payer_tout ? $total : $acompte,
@@ -223,28 +142,30 @@ class VS08SP_Group {
             'nb_participants' => 2,
         ]);
 
-        if ($group_id) {
-            VS08SP_DB::update_group_status($group_id, 'draft');
-            $order->update_meta_data('_vs08sp_group_id', $group_id);
-            $order->save();
-            error_log(sprintf('[VS08SP] Groupe #%d (draft) — commande #%d — capitaine %s', $group_id, $order_id, $captain_email));
+        if (!$group_id) {
+            return new WP_REST_Response(['success' => false, 'message' => 'Erreur lors de la création du dossier.'], 200);
         }
 
-        // Connecter le capitaine automatiquement
+        // Passer en "draft" (en attente de configuration des participants)
+        VS08SP_DB::update_group_status($group_id, 'draft');
+
+        error_log(sprintf('[VS08SP] Groupe #%d (draft) créé — capitaine %s — %s €',
+            $group_id, $captain_email, number_format($payer_tout ? $total : $acompte, 0, ',', ' ')
+        ));
+
+        // ── Connecter automatiquement le capitaine ──
         if (!is_user_logged_in()) {
             wp_set_current_user($user_id);
             wp_set_auth_cookie($user_id, true);
         }
 
+        // ── Redirection vers l'espace voyageur ──
         $redirect_url = home_url('/espace-voyageur/');
-        if ($group_id) {
-            $redirect_url = add_query_arg('splitpay_group', $group_id, $redirect_url);
-        }
+        $redirect_url = add_query_arg('splitpay_group', $group_id, $redirect_url);
 
         return new WP_REST_Response([
             'success'  => true,
             'group_id' => $group_id,
-            'order_id' => $order_id,
             'redirect' => $redirect_url,
             'message'  => 'Dossier groupe créé !',
         ], 200);
@@ -252,7 +173,13 @@ class VS08SP_Group {
 
     /* ══════════════════════════════════════════
      *  TEMPS 2 : CONFIGURER LES PARTICIPANTS
-     * ══════════════════════════════════════════ */
+     * ══════════════════════════════════════════
+     *
+     *  Toujours PAS de WooCommerce.
+     *  On crée les comptes WP + les shares dans notre table.
+     *  Les produits WC seront créés à la volée quand
+     *  chaque participant clique "Payer" (class-splitpay-page.php).
+     */
     public static function handle_configure_group(WP_REST_Request $request) {
         $body = $request->get_json_params();
         $group_id     = intval($body['group_id'] ?? 0);
@@ -285,7 +212,7 @@ class VS08SP_Group {
 
         $amount_to_split = floatval($group['total_amount']);
 
-        // Validation
+        // ── Validation ──
         $sum = 0;
         $emails_seen = [];
         foreach ($participants as $i => $p) {
@@ -311,7 +238,7 @@ class VS08SP_Group {
             )], 200);
         }
 
-        // Minimum par part
+        // ── Minimum par part ──
         $nb = count($participants);
         $booking_data = $group['booking_data'];
         $prix_vol_pp = floatval($booking_data['params']['prix_vol'] ?? 0);
@@ -323,7 +250,7 @@ class VS08SP_Group {
             }
         }
 
-        // Créer les comptes WP + shares
+        // ── Créer les comptes WP + shares ──
         $created_shares = [];
         foreach ($participants as $p) {
             $email  = sanitize_email($p['email']);
@@ -352,7 +279,7 @@ class VS08SP_Group {
                 ]);
             }
 
-            // Share en BDD
+            // Share dans notre table custom (PAS de produit WC ici)
             $share_id = VS08SP_DB::create_share([
                 'group_id'   => $group_id,
                 'email'      => $email,
@@ -362,7 +289,7 @@ class VS08SP_Group {
             ]);
 
             if ($share_id) {
-                // Relire pour avoir le token
+                // Relire pour avoir le token auto-généré
                 $all_shares = VS08SP_DB::get_shares($group_id);
                 $token = '';
                 foreach ($all_shares as $s) {
@@ -382,7 +309,7 @@ class VS08SP_Group {
             }
         }
 
-        // Mettre à jour le groupe → "pending"
+        // ── Mettre à jour le groupe → "pending" ──
         global $wpdb;
         $wpdb->update(
             $wpdb->prefix . 'vs08sp_groups',
@@ -392,7 +319,7 @@ class VS08SP_Group {
             ['%d']
         );
 
-        // Envoyer les emails
+        // ── Envoyer les emails ──
         foreach ($created_shares as $cs) {
             $payment_url = VS08SP_DB::get_payment_url($cs['token']);
             if ($cs['is_captain']) {
