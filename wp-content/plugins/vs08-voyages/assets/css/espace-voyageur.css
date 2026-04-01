@@ -1001,12 +1001,30 @@
 .ev-voyageur-fields {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
     gap: 1rem 1.25rem;
     margin-bottom: 1rem;
+    align-items: start;
 }
 .ev-voyageur-fields .ev-field-full { grid-column: 1 / -1; }
+/* Ligne 1 : prénom | nom — Ligne 2 : date de naissance | passeport (évite le saut de colonne dû à min-width:auto) */
+.ev-voyageur-fields > .ev-field:nth-child(1) { grid-column: 1; grid-row: 1; min-width: 0; }
+.ev-voyageur-fields > .ev-field:nth-child(2) { grid-column: 2; grid-row: 1; min-width: 0; }
+.ev-voyageur-fields > .ev-field:nth-child(3) { grid-column: 1; grid-row: 2; min-width: 0; }
+.ev-voyageur-fields > .ev-field:nth-child(4) { grid-column: 2; grid-row: 2; min-width: 0; }
+.ev-voyageur-fields .ev-field {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0;
+}
 /* Trigger calendrier DDN (voyageurs réguliers) */
 .ev-ddn-wrap { margin-top: .25rem; }
+.ev-voyageur-fields .ev-field .ev-ddn-wrap {
+    margin-top: 0;
+    flex: 0 0 auto;
+    width: 100%;
+}
 .ev-ddn-trigger {
     padding: .65rem .9rem;
     border: 1.5px solid var(--ev-border);
@@ -1017,9 +1035,19 @@
     color: var(--ev-gray);
     background: var(--ev-white);
     transition: border-color .2s, box-shadow .2s;
+    width: 100%;
+    box-sizing: border-box;
 }
 .ev-ddn-trigger:hover { border-color: var(--ev-teal); box-shadow: 0 0 0 2px rgba(42,127,127,.1); }
-.ev-voyageur-fields .ev-field label { display: block; font-weight: 600; font-size: .88rem; margin-bottom: .35rem; color: var(--ev-dark); }
+.ev-voyageur-fields .ev-field label {
+    display: block;
+    float: none;
+    width: auto;
+    font-weight: 600;
+    font-size: .88rem;
+    margin: 0 0 .35rem;
+    color: var(--ev-dark);
+}
 .ev-voyageur-fields .ev-field input[type="text"] {
     width: 100%;
     padding: .65rem .85rem;
@@ -1040,6 +1068,13 @@
 }
 @media (max-width: 560px) {
     .ev-voyageur-fields { grid-template-columns: 1fr; }
+    .ev-voyageur-fields > .ev-field:nth-child(1),
+    .ev-voyageur-fields > .ev-field:nth-child(2),
+    .ev-voyageur-fields > .ev-field:nth-child(3),
+    .ev-voyageur-fields > .ev-field:nth-child(4) {
+        grid-column: 1;
+        grid-row: auto;
+    }
 }
 
 /* ── Checklist pré-départ ── */
