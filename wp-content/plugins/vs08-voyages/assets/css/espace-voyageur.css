@@ -28,43 +28,45 @@
 }
 
 /* ── Page layout ── */
-/* Décalage sous le header fixe du thème (sinon titres / texte masqués derrière la barre) */
+/* Pas de padding-top sur .ev-page : sinon bande grise entre header fixe et sidebar sombre */
 .ev-page {
     display: flex;
-    min-height: calc(100vh - var(--ev-header-offset));
-    padding-top: var(--ev-header-offset);
+    min-height: 100vh;
+    padding-top: 0;
     font-family: var(--ev-font);
     color: var(--ev-dark);
     background: var(--ev-gray-light);
     box-sizing: border-box;
 }
 
-/* Barre admin WP + header thème */
-body.admin-bar .ev-page {
-    padding-top: calc(var(--wp-admin--admin-bar--height, 32px) + var(--ev-header-offset));
-    min-height: calc(100vh - var(--ev-header-offset) - var(--wp-admin--admin-bar--height, 32px));
-}
-body.admin-bar .ev-sidebar {
-    top: calc(var(--wp-admin--admin-bar--height, 32px) + var(--ev-header-offset));
-    min-height: calc(100vh - var(--ev-header-offset) - var(--wp-admin--admin-bar--height, 32px));
-}
-body.admin-bar .ev-main {
-    padding-top: 3.5rem;
-}
-
-/* ── Sidebar ── */
+/* ── Sidebar (desktop ≥961px : fixed, collée sous le header — pas d’écart) ── */
 .ev-sidebar {
     width: var(--ev-sidebar-w);
-    min-height: calc(100vh - var(--ev-header-offset));
     background: var(--ev-dark);
     color: #fff;
     display: flex;
     flex-direction: column;
     padding: 2rem 1.25rem;
-    position: sticky;
-    top: var(--ev-header-offset);
     flex-shrink: 0;
-    align-self: flex-start;
+}
+
+@media (min-width: 961px) {
+    .ev-sidebar {
+        position: fixed;
+        left: 0;
+        top: var(--ev-header-offset);
+        width: var(--ev-sidebar-w);
+        height: calc(100vh - var(--ev-header-offset));
+        max-height: calc(100vh - var(--ev-header-offset));
+        overflow-y: auto;
+        z-index: 9990;
+        -webkit-overflow-scrolling: touch;
+    }
+    body.admin-bar .ev-sidebar {
+        top: calc(var(--wp-admin--admin-bar--height, 32px) + var(--ev-header-offset));
+        height: calc(100vh - var(--wp-admin--admin-bar--height, 32px) - var(--ev-header-offset));
+        max-height: calc(100vh - var(--wp-admin--admin-bar--height, 32px) - var(--ev-header-offset));
+    }
 }
 
 .ev-sidebar-user {
@@ -157,10 +159,25 @@ body.admin-bar .ev-main {
 /* ── Main content ── */
 .ev-main {
     flex: 1;
-    padding: 3.5rem 2.5rem 2.5rem;
+    padding: 1.5rem;
     max-width: 1000px;
     margin: 0 auto;
     box-sizing: border-box;
+}
+@media (min-width: 961px) {
+    .ev-main {
+        max-width: none;
+        width: calc(100% - var(--ev-sidebar-w));
+        margin-left: var(--ev-sidebar-w);
+        margin-right: 0;
+        padding-top: calc(var(--ev-header-offset) + 2.5rem);
+        padding-left: 2.5rem;
+        padding-right: 2.5rem;
+        padding-bottom: 2.5rem;
+    }
+    body.admin-bar .ev-main {
+        padding-top: calc(var(--wp-admin--admin-bar--height, 32px) + var(--ev-header-offset) + 2.5rem);
+    }
 }
 @media (min-width: 1200px) {
     .ev-main { padding-left: 3.5rem; padding-right: 3.5rem; }
@@ -1210,7 +1227,11 @@ body.admin-bar .ev-main {
     }
     .ev-page{
         flex-direction:column;
-        /* padding-top : déjà géré par --ev-header-offset sur .ev-page (base) */
+        /* Sous le header fixe (desktop : sidebar fixed, pas de padding ici) */
+        padding-top: var(--ev-header-offset);
+    }
+    body.admin-bar .ev-page {
+        padding-top: calc(var(--wp-admin--admin-bar--height, 32px) + var(--ev-header-offset));
     }
     .ev-mobile-nav{
         display:flex;position:sticky;
