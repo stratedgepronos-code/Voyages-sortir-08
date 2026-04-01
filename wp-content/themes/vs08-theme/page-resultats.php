@@ -272,10 +272,6 @@ foreach ($all_posts as $p) {
             continue;
         }
         [$d_start, $d_end] = $range;
-        // Élargir la plage de ±7 jours pour couvrir les départs hebdomadaires (ex. chaque samedi)
-        // Exemple : recherche "10-12 juin" → cherche aussi le samedi 7 et samedi 14 juin
-        $d_start_ext = date('Y-m-d', strtotime($d_start . ' -7 days'));
-        $d_end_ext   = date('Y-m-d', strtotime($d_end   . ' +7 days'));
         $aero_for_day = null;
         if ($f_airport !== '') {
             foreach (($m['aeroports'] ?? []) as $a) {
@@ -285,21 +281,20 @@ foreach ($all_posts as $p) {
                 }
             }
         }
-        $date_match = false;
+        $date_match  = false;
         $dates_depart = $m['dates_depart'] ?? [];
 
         if (!empty($dates_depart)) {
-            // Produit avec des dates de départ explicites : chercher dans la plage élargie
+            // Produit avec dates de départ explicites : chercher dans la plage stricte.
+            // Le filtre aéroport est déjà appliqué (code présent) — pas besoin de re-vérifier
+            // les jours_direct ici : les dates_depart sont les vraies dates fixées par l'agence.
             foreach ($dates_depart as $dd) {
                 $dt = $dd['date'] ?? '';
                 $st = $dd['statut'] ?? 'dispo';
                 if (!$dt || $st === 'complet') {
                     continue;
                 }
-                if ($dt < $d_start_ext || $dt > $d_end_ext) {
-                    continue;
-                }
-                if ($aero_for_day && !vs08_sr_aeroport_allows_date($dt, $aero_for_day)) {
+                if ($dt < $d_start || $dt > $d_end) {
                     continue;
                 }
                 $date_match = true;
@@ -307,13 +302,12 @@ foreach ($all_posts as $p) {
             }
         }
 
-        // Fallback : si pas de dates_depart (ou aucune trouvée), vérifier via les périodes/jours de l'aéroport
-        if (!$date_match) {
+        // Fallback : produit sans dates_depart → vérifier disponibilité via periodes_vol / jours_direct
+        if (!$date_match && empty($dates_depart)) {
             if ($aero_for_day) {
-                // Vérifier qu'au moins un jour de la plage élargie est autorisé par l'aéroport
-                $date_match = vs08_sr_sejour_matches_date_airport($m, $d_start_ext, $d_end_ext, $f_airport);
-            } elseif (empty($dates_depart)) {
-                // Pas de dates_depart et pas d'aéroport sélectionné → afficher le produit
+                $date_match = vs08_sr_sejour_matches_date_airport($m, $d_start, $d_end, $f_airport);
+            } else {
+                // Aucune date explicite et aucun aéroport filtré → afficher le produit
                 $date_match = true;
             }
         }
