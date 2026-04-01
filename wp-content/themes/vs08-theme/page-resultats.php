@@ -272,6 +272,10 @@ foreach ($all_posts as $p) {
             continue;
         }
         [$d_start, $d_end] = $range;
+        // Élargir la plage de ±7 jours pour couvrir les départs hebdomadaires (ex. chaque samedi)
+        // Exemple : recherche "10-12 juin" → cherche aussi le samedi 7 et samedi 14 juin
+        $d_start_ext = date('Y-m-d', strtotime($d_start . ' -7 days'));
+        $d_end_ext   = date('Y-m-d', strtotime($d_end   . ' +7 days'));
         $aero_for_day = null;
         if ($f_airport !== '') {
             foreach (($m['aeroports'] ?? []) as $a) {
@@ -282,21 +286,38 @@ foreach ($all_posts as $p) {
             }
         }
         $date_match = false;
-        foreach (($m['dates_depart'] ?? []) as $dd) {
-            $dt = $dd['date'] ?? '';
-            $st = $dd['statut'] ?? 'dispo';
-            if (!$dt || $st === 'complet') {
-                continue;
+        $dates_depart = $m['dates_depart'] ?? [];
+
+        if (!empty($dates_depart)) {
+            // Produit avec des dates de départ explicites : chercher dans la plage élargie
+            foreach ($dates_depart as $dd) {
+                $dt = $dd['date'] ?? '';
+                $st = $dd['statut'] ?? 'dispo';
+                if (!$dt || $st === 'complet') {
+                    continue;
+                }
+                if ($dt < $d_start_ext || $dt > $d_end_ext) {
+                    continue;
+                }
+                if ($aero_for_day && !vs08_sr_aeroport_allows_date($dt, $aero_for_day)) {
+                    continue;
+                }
+                $date_match = true;
+                break;
             }
-            if ($dt < $d_start || $dt > $d_end) {
-                continue;
-            }
-            if ($aero_for_day && !vs08_sr_aeroport_allows_date($dt, $aero_for_day)) {
-                continue;
-            }
-            $date_match = true;
-            break;
         }
+
+        // Fallback : si pas de dates_depart (ou aucune trouvée), vérifier via les périodes/jours de l'aéroport
+        if (!$date_match) {
+            if ($aero_for_day) {
+                // Vérifier qu'au moins un jour de la plage élargie est autorisé par l'aéroport
+                $date_match = vs08_sr_sejour_matches_date_airport($m, $d_start_ext, $d_end_ext, $f_airport);
+            } elseif (empty($dates_depart)) {
+                // Pas de dates_depart et pas d'aéroport sélectionné → afficher le produit
+                $date_match = true;
+            }
+        }
+
         if (!$date_match) {
             continue;
         }
