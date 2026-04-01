@@ -998,24 +998,70 @@
     padding-top: 1.25rem;
     border-top: 1px solid var(--ev-border);
 }
-/* Voyageurs réguliers — même grille + styles que le bloc profil (.ev-profile-grid + .ev-profile-form sur le form) */
-.ev-voyageur-form.ev-profile-form {
-    margin-bottom: 0;
+/* Voyageurs réguliers — grille 2 colonnes dédiée (ev-voy-grid) */
+.ev-voyageur-form .ev-voy-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1rem 1.25rem !important;
+    margin-bottom: 1rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
-.ev-voyageur-form.ev-profile-form .ev-profile-grid {
-    margin-bottom: 1rem;
+.ev-voyageur-form .ev-voy-grid > .ev-field {
+    display: flex !important;
+    flex-direction: column !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    float: none !important;
+    clear: none !important;
 }
-.ev-voyageur-form.ev-profile-form .ev-ddn-wrap {
-    margin: 0;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
+.ev-voyageur-form .ev-voy-grid > .ev-field > label {
+    display: block !important;
+    float: none !important;
+    clear: none !important;
+    width: auto !important;
+    max-width: 100% !important;
+    font-weight: 600 !important;
+    font-size: .88rem !important;
+    margin: 0 0 .35rem !important;
+    color: var(--ev-dark) !important;
 }
-.ev-voyageur-form.ev-profile-form .ev-ddn-trigger {
+.ev-voyageur-form .ev-voy-grid > .ev-field > input[type="text"],
+.ev-voyageur-form .ev-voy-grid > .ev-field > input[type="email"] {
+    width: 100% !important;
+    padding: .65rem .85rem !important;
+    border: 1px solid var(--ev-border) !important;
+    border-radius: var(--ev-radius-sm) !important;
+    font-family: var(--ev-font) !important;
+    font-size: .95rem !important;
+    box-sizing: border-box !important;
+    background: var(--ev-white) !important;
+}
+.ev-voyageur-form .ev-voy-grid > .ev-field > input:focus {
+    outline: none !important;
+    border-color: var(--ev-teal) !important;
+    box-shadow: 0 0 0 3px rgba(42,127,127,.12) !important;
+}
+@media (max-width: 560px) {
+    .ev-voyageur-form .ev-voy-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+/* Trigger DDN dans la grille voyageurs */
+.ev-ddn-wrap { margin-top: 0; }
+.ev-voyageur-form .ev-voy-grid .ev-ddn-wrap {
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+.ev-ddn-trigger {
     display: block;
     width: 100%;
     max-width: 100%;
-    margin: 0;
     padding: .65rem .85rem;
     border: 1px solid var(--ev-border);
     border-radius: var(--ev-radius-sm);
@@ -1024,18 +1070,11 @@
     font-family: var(--ev-font);
     color: var(--ev-gray);
     background: var(--ev-white);
-    box-sizing: border-box;
     transition: border-color .2s, box-shadow .2s;
+    box-sizing: border-box;
     line-height: 1.35;
 }
-.ev-voyageur-form.ev-profile-form .ev-ddn-trigger:hover {
-    border-color: var(--ev-teal);
-}
-.ev-voyageur-form.ev-profile-form .ev-ddn-trigger:focus {
-    outline: none;
-    border-color: var(--ev-teal);
-    box-shadow: 0 0 0 3px rgba(42,127,127,.12);
-}
+.ev-ddn-trigger:hover { border-color: var(--ev-teal); box-shadow: 0 0 0 2px rgba(42,127,127,.1); }
 .ev-radio-label {
     display: inline-flex;
     align-items: center;

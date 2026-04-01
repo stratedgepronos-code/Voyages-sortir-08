@@ -1281,26 +1281,26 @@ get_header();
                 </ul>
                 <form id="ev-voyageur-form" class="ev-voyageur-form ev-profile-form">
                     <input type="hidden" name="index" id="ev-voyageur-index" value="-1">
-                    <div class="ev-profile-grid">
-                        <p class="ev-field">
+                    <div class="ev-voy-grid">
+                        <div class="ev-field">
                             <label for="ev-voy-prenom">Prénom *</label>
                             <input type="text" id="ev-voy-prenom" name="prenom" required placeholder="Jean">
-                        </p>
-                        <p class="ev-field">
+                        </div>
+                        <div class="ev-field">
                             <label for="ev-voy-nom">Nom *</label>
                             <input type="text" id="ev-voy-nom" name="nom" required placeholder="Dupont">
-                        </p>
-                        <p class="ev-field">
+                        </div>
+                        <div class="ev-field">
                             <label for="ev-voy-ddn-trigger">Date de naissance</label>
                             <div id="ev-voy-ddn-wrap" class="ev-ddn-wrap" style="position:relative">
                                 <div id="ev-voy-ddn-trigger" class="ev-ddn-trigger" role="button" tabindex="0" aria-label="Choisir la date de naissance" onclick="if(window.evCalDDN) window.evCalDDN.toggle()">🎂 JJ/MM/AAAA</div>
                                 <input type="hidden" id="ev-voy-ddn" name="ddn" value="">
                             </div>
-                        </p>
-                        <p class="ev-field">
+                        </div>
+                        <div class="ev-field">
                             <label for="ev-voy-passeport">N° Passeport</label>
                             <input type="text" id="ev-voy-passeport" name="passeport" placeholder="XX000000">
-                        </p>
+                        </div>
                     </div>
                     <div class="ev-form-actions">
                         <button type="submit" class="ev-btn ev-btn-primary">Ajouter ce voyageur</button>
