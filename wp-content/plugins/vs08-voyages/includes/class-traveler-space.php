@@ -466,6 +466,15 @@ class VS08V_Traveler_Space {
         add_action('wp_ajax_vs08v_auth_register', [__CLASS__, 'ajax_auth_register']);
         add_filter('login_url', [__CLASS__, 'filter_login_url'], 20, 3);
         add_filter('lostpassword_url', [__CLASS__, 'filter_lostpassword_url'], 20, 2);
+        add_filter('body_class', [__CLASS__, 'filter_body_class_espace']);
+    }
+
+    /** Classe body pour cibler le footer sous la sidebar fixe. */
+    public static function filter_body_class_espace(array $classes): array {
+        if (get_query_var('vs08_espace')) {
+            $classes[] = 'vs08-ev-layout';
+        }
+        return $classes;
     }
 
     public static function auth_url() {

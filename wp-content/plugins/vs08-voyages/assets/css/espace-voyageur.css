@@ -64,6 +64,19 @@
     }
 }
 
+/* Footer thème (.ft-wrap) : ne pas passer sous la sidebar — même largeur utile que .ev-main */
+@media (min-width: 961px) {
+    body.vs08-ev-layout .ft-wrap {
+        left: auto;
+        right: auto;
+        transform: none;
+        margin-left: var(--ev-sidebar-w);
+        width: calc(100% - var(--ev-sidebar-w));
+        max-width: none;
+        box-sizing: border-box;
+    }
+}
+
 .ev-sidebar-user {
     display: flex;
     align-items: center;
