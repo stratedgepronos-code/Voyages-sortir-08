@@ -23,41 +23,48 @@
     --ev-shadow: 0 4px 24px rgba(15, 36, 36, .07);
     --ev-shadow-hover: 0 12px 40px rgba(15, 36, 36, .12);
     --ev-sidebar-w: 280px;
+    /* Hauteur zone sous le header fixe thème (header-mega : .announce + .nav-bar ~56px) */
+    --ev-header-offset: 7.25rem;
 }
 
 /* ── Page layout ── */
+/* Décalage sous le header fixe du thème (sinon titres / texte masqués derrière la barre) */
 .ev-page {
     display: flex;
-    min-height: calc(100vh - 80px);
+    min-height: calc(100vh - var(--ev-header-offset));
+    padding-top: var(--ev-header-offset);
     font-family: var(--ev-font);
     color: var(--ev-dark);
     background: var(--ev-gray-light);
+    box-sizing: border-box;
 }
 
-/* Barre admin WordPress : descendre tout l'espace membre pour éviter le chevauchement */
+/* Barre admin WP + header thème */
 body.admin-bar .ev-page {
-    padding-top: 32px;
-    min-height: calc(100vh - 80px - 32px);
+    padding-top: calc(var(--wp-admin--admin-bar--height, 32px) + var(--ev-header-offset));
+    min-height: calc(100vh - var(--ev-header-offset) - var(--wp-admin--admin-bar--height, 32px));
 }
 body.admin-bar .ev-sidebar {
-    top: 112px; /* 80px header + 32px admin bar */
+    top: calc(var(--wp-admin--admin-bar--height, 32px) + var(--ev-header-offset));
+    min-height: calc(100vh - var(--ev-header-offset) - var(--wp-admin--admin-bar--height, 32px));
 }
 body.admin-bar .ev-main {
-    padding-top: calc(3.5rem + 32px);
+    padding-top: 3.5rem;
 }
 
 /* ── Sidebar ── */
 .ev-sidebar {
     width: var(--ev-sidebar-w);
-    min-height: calc(100vh - 80px);
+    min-height: calc(100vh - var(--ev-header-offset));
     background: var(--ev-dark);
     color: #fff;
     display: flex;
     flex-direction: column;
     padding: 2rem 1.25rem;
     position: sticky;
-    top: 80px;
+    top: var(--ev-header-offset);
     flex-shrink: 0;
+    align-self: flex-start;
 }
 
 .ev-sidebar-user {
@@ -1198,24 +1205,23 @@ body.admin-bar .ev-main {
 /* ── Mobile nav bar (espace membre) ── */
 .ev-mobile-nav{display:none}
 @media(max-width:960px){
-    /* Contenu sous le header fixe du thème (~80px) ; sticky au même offset */
+    :root {
+        --ev-header-offset: 6.5rem; /* bandeau + nav un peu plus compact en tablette */
+    }
     .ev-page{
         flex-direction:column;
-        padding-top:80px;
-    }
-    body.admin-bar .ev-page{
-        padding-top:112px; /* 32px admin + ~80px header (aligné .ev-sidebar admin) */
+        /* padding-top : déjà géré par --ev-header-offset sur .ev-page (base) */
     }
     .ev-mobile-nav{
         display:flex;position:sticky;
-        top:80px;
+        top:var(--ev-header-offset);
         z-index:9998; /* sous #wpadminbar / header thème */
         background:#0f2424;padding:0;overflow-x:auto;
         -webkit-overflow-scrolling:touch;scrollbar-width:none;
         border-bottom:1px solid rgba(89,183,183,.15)
     }
     body.admin-bar .ev-mobile-nav{
-        top:112px;
+        top:calc(var(--wp-admin--admin-bar--height, 32px) + var(--ev-header-offset));
     }
     .ev-mobile-nav::-webkit-scrollbar{display:none}
     .ev-mn-item{
@@ -1230,13 +1236,16 @@ body.admin-bar .ev-main {
     .ev-mn-item:hover{color:#fff}
     .ev-main{padding-top:1rem}
 }
-/* ≤782px : barre admin WP plus haute + header nav ~56px (cf. header-mega) */
+/* ≤782px : barre admin WP + nav seule (~56px) souvent sans bandeau annonce visible */
 @media(max-width:782px){
+    :root {
+        --ev-header-offset: 5.75rem;
+    }
     body.admin-bar .ev-page{
-        padding-top:calc(var(--wp-admin--admin-bar--height, 46px) + 56px);
+        padding-top:calc(var(--wp-admin--admin-bar--height, 46px) + var(--ev-header-offset));
     }
     body.admin-bar .ev-mobile-nav{
-        top:calc(var(--wp-admin--admin-bar--height, 46px) + 56px);
+        top:calc(var(--wp-admin--admin-bar--height, 46px) + var(--ev-header-offset));
     }
 }
 
