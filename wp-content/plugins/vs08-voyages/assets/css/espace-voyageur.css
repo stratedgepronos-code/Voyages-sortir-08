@@ -1359,6 +1359,9 @@
 .ev-dash-qna-row .ev-dash-loyalty {
     margin-top: 0;
 }
+.ev-dash-qna-row .ev-dash-loyalty .ev-dash-h3 {
+    margin-top: 0;
+}
 .ev-dash-loyalty {
     margin-top: 1.25rem;
     padding: 1rem 1.1rem;
