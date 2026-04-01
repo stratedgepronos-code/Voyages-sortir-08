@@ -927,6 +927,36 @@ get_header();
             ]);
 
             $vs08_res_url = function_exists('vs08_mega_resultats_url') ? vs08_mega_resultats_url() : home_url('/resultats-recherche');
+
+            /** Première image utile : à la une WP puis galerie métier (souvent pas de featured image sur les CPT). */
+            $ev_dash_cover = function (int $post_id): string {
+                $thumb = get_the_post_thumbnail_url($post_id, 'medium');
+                if ($thumb) {
+                    return $thumb;
+                }
+                $pt = get_post_type($post_id);
+                if ($pt === 'vs08_circuit' && class_exists('VS08C_Meta')) {
+                    $m = VS08C_Meta::get($post_id);
+                    foreach ($m['galerie'] ?? [] as $u) {
+                        $u = is_string($u) ? trim($u) : '';
+                        if ($u !== '') {
+                            return $u;
+                        }
+                    }
+                }
+                if ($pt === 'vs08_voyage' && class_exists('VS08V_MetaBoxes')) {
+                    $m = VS08V_MetaBoxes::get($post_id);
+                    foreach ($m['galerie'] ?? [] as $u) {
+                        if (is_string($u) && trim($u) !== '') {
+                            return trim($u);
+                        }
+                        if (is_array($u) && !empty($u['url'])) {
+                            return (string) $u['url'];
+                        }
+                    }
+                }
+                return '';
+            };
             ?>
 
             <div class="ev-list-header ev-dash-header">
@@ -1062,7 +1092,7 @@ get_header();
                             $dash_latest->the_post();
                             $pid = get_the_ID();
                             $pt  = get_post_type($pid);
-                            $thumb = get_the_post_thumbnail_url($pid, 'medium');
+                            $thumb = $ev_dash_cover($pid);
                             $is_circ = ($pt === 'vs08_circuit');
                             $badge = $is_circ ? 'Circuit' : 'Séjour';
                             ?>
@@ -1081,49 +1111,50 @@ get_header();
                     <?php else : ?>
                     <p class="ev-dash-muted">Les prochaines offres seront affichées ici.</p>
                     <?php endif; ?>
-
-                    <div class="ev-dash-loyalty">
-                        <h3 class="ev-dash-h3">💡 Pour vous accompagner</h3>
-                        <ul class="ev-dash-loyalty-list">
-                            <li><a href="<?php echo esc_url(VS08V_Traveler_Space::favoris_url()); ?>">Vos favoris</a> — retrouvez les formules enregistrées.</li>
-                            <li><a href="<?php echo esc_url(home_url('/espace-voyageur/contact/')); ?>">Contact complet</a> — historique des messages et coordonnées.</li>
-                            <li>Pensez à finaliser tôt votre dossier pour les meilleures disponibilités vols et hébergements.</li>
-                        </ul>
-                    </div>
                 </section>
             </div>
 
-            <section class="ev-dash-section ev-dash-ask">
-                <h2 class="ev-dash-h2">💬 Une question ?</h2>
-                <p class="ev-dash-muted">Envoyez-nous un message — nous répondons sous 24–48h ouvrées.</p>
-                <form id="ev-dash-contact-form" class="ev-dash-form">
-                    <?php $dash_user_orders = VS08V_Traveler_Space::get_voyage_orders(); ?>
-                    <div class="ev-dash-form-row">
-                        <label for="ev-dash-msg-order">Concerne (optionnel)</label>
-                        <select id="ev-dash-msg-order" name="order_id">
-                            <option value="">— Question générale —</option>
-                            <?php foreach ($dash_user_orders as $uo) : ?>
-                                <?php
-                                $uo_d = $uo['booking_data'];
-                                $uo_titre = $uo_d['voyage_titre'] ?? ($uo_d['circuit_titre'] ?? 'Voyage');
-                                $uo_date = !empty($uo_d['params']['date_depart']) ? date('d/m/Y', strtotime($uo_d['params']['date_depart'])) : '';
-                                ?>
-                            <option value="<?php echo $uo['order']->get_id(); ?>">VS08-<?php echo $uo['order']->get_id(); ?> — <?php echo esc_html($uo_titre); ?><?php if ($uo_date) : ?> (<?php echo esc_html($uo_date); ?>)<?php endif; ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="ev-dash-form-row">
-                        <label for="ev-dash-msg-sujet">Sujet *</label>
-                        <input type="text" id="ev-dash-msg-sujet" name="sujet" required placeholder="Ex. : modification, question sur mon dossier…">
-                    </div>
-                    <div class="ev-dash-form-row">
-                        <label for="ev-dash-msg-body">Message *</label>
-                        <textarea id="ev-dash-msg-body" name="message" rows="4" required placeholder="Votre message…"></textarea>
-                    </div>
-                    <button type="submit" class="ev-btn ev-btn-primary" id="ev-dash-msg-submit">Envoyer</button>
-                    <p class="ev-dash-msg-feedback" id="ev-dash-msg-feedback" hidden></p>
-                </form>
-            </section>
+            <div class="ev-dash-qna-row">
+                <section class="ev-dash-section ev-dash-ask">
+                    <h2 class="ev-dash-h2">💬 Une question ?</h2>
+                    <p class="ev-dash-muted">Envoyez-nous un message — nous répondons sous 24–48h ouvrées.</p>
+                    <form id="ev-dash-contact-form" class="ev-dash-form">
+                        <?php $dash_user_orders = VS08V_Traveler_Space::get_voyage_orders(); ?>
+                        <div class="ev-dash-form-row">
+                            <label for="ev-dash-msg-order">Concerne (optionnel)</label>
+                            <select id="ev-dash-msg-order" name="order_id">
+                                <option value="">— Question générale —</option>
+                                <?php foreach ($dash_user_orders as $uo) : ?>
+                                    <?php
+                                    $uo_d = $uo['booking_data'];
+                                    $uo_titre = $uo_d['voyage_titre'] ?? ($uo_d['circuit_titre'] ?? 'Voyage');
+                                    $uo_date = !empty($uo_d['params']['date_depart']) ? date('d/m/Y', strtotime($uo_d['params']['date_depart'])) : '';
+                                    ?>
+                                <option value="<?php echo $uo['order']->get_id(); ?>">VS08-<?php echo $uo['order']->get_id(); ?> — <?php echo esc_html($uo_titre); ?><?php if ($uo_date) : ?> (<?php echo esc_html($uo_date); ?>)<?php endif; ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="ev-dash-form-row">
+                            <label for="ev-dash-msg-sujet">Sujet *</label>
+                            <input type="text" id="ev-dash-msg-sujet" name="sujet" required placeholder="Ex. : modification, question sur mon dossier…">
+                        </div>
+                        <div class="ev-dash-form-row">
+                            <label for="ev-dash-msg-body">Message *</label>
+                            <textarea id="ev-dash-msg-body" name="message" rows="4" required placeholder="Votre message…"></textarea>
+                        </div>
+                        <button type="submit" class="ev-btn ev-btn-primary" id="ev-dash-msg-submit">Envoyer</button>
+                        <p class="ev-dash-msg-feedback" id="ev-dash-msg-feedback" hidden></p>
+                    </form>
+                </section>
+                <aside class="ev-dash-section ev-dash-loyalty" aria-label="Conseils">
+                    <h3 class="ev-dash-h3">💡 Pour vous accompagner</h3>
+                    <ul class="ev-dash-loyalty-list">
+                        <li><a href="<?php echo esc_url(VS08V_Traveler_Space::favoris_url()); ?>">Vos favoris</a> — retrouvez les formules enregistrées.</li>
+                        <li><a href="<?php echo esc_url(home_url('/espace-voyageur/contact/')); ?>">Contact complet</a> — historique des messages et coordonnées.</li>
+                        <li>Pensez à finaliser tôt votre dossier pour les meilleures disponibilités vols et hébergements.</li>
+                    </ul>
+                </aside>
+            </div>
 
             <script>
             (function(){
@@ -1936,4 +1967,26 @@ get_header();
 
 </div>
 
+<script>
+(function () {
+    var hdr = document.getElementById('header');
+    if (!hdr || !hdr.getBoundingClientRect) return;
+    function syncEvHeaderBottom() {
+        var bottom = Math.round(hdr.getBoundingClientRect().bottom);
+        if (bottom < 32) return;
+        document.documentElement.style.setProperty('--ev-header-bottom-px', bottom + 'px');
+    }
+    syncEvHeaderBottom();
+    window.addEventListener('resize', syncEvHeaderBottom);
+    window.addEventListener('scroll', syncEvHeaderBottom, { passive: true });
+    if (typeof ResizeObserver !== 'undefined') {
+        try { new ResizeObserver(syncEvHeaderBottom).observe(hdr); } catch (e) {}
+    }
+    var n = 0;
+    var tick = setInterval(function () {
+        syncEvHeaderBottom();
+        if (++n >= 25) clearInterval(tick);
+    }, 120);
+})();
+</script>
 <?php get_footer(); ?>

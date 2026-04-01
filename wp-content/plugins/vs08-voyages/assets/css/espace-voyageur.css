@@ -23,7 +23,7 @@
     --ev-shadow: 0 4px 24px rgba(15, 36, 36, .07);
     --ev-shadow-hover: 0 12px 40px rgba(15, 36, 36, .12);
     --ev-sidebar-w: 280px;
-    /* Hauteur sous le header fixe (#header : .announce + .nav-bar ~56px) — éviter bande claire au-dessus de la sidebar */
+    /* Fallback si JS désactivé ; avec JS : --ev-header-bottom-px = bas du #header (viewport), suit le scroll (.scrolled) */
     --ev-header-offset: 5.875rem;
 }
 
@@ -54,18 +54,13 @@
     .ev-sidebar {
         position: fixed;
         left: 0;
-        top: var(--ev-header-offset);
+        top: var(--ev-header-bottom-px, var(--ev-header-offset));
         width: var(--ev-sidebar-w);
-        height: calc(100vh - var(--ev-header-offset));
-        max-height: calc(100vh - var(--ev-header-offset));
+        height: calc(100vh - var(--ev-header-bottom-px, var(--ev-header-offset)));
+        max-height: calc(100vh - var(--ev-header-bottom-px, var(--ev-header-offset)));
         overflow-y: auto;
         z-index: 9990;
         -webkit-overflow-scrolling: touch;
-    }
-    body.admin-bar .ev-sidebar {
-        top: calc(var(--wp-admin--admin-bar--height, 32px) + var(--ev-header-offset));
-        height: calc(100vh - var(--wp-admin--admin-bar--height, 32px) - var(--ev-header-offset));
-        max-height: calc(100vh - var(--wp-admin--admin-bar--height, 32px) - var(--ev-header-offset));
     }
 }
 
@@ -170,13 +165,10 @@
         width: calc(100% - var(--ev-sidebar-w));
         margin-left: var(--ev-sidebar-w);
         margin-right: 0;
-        padding-top: calc(var(--ev-header-offset) + 2.5rem);
+        padding-top: calc(var(--ev-header-bottom-px, var(--ev-header-offset)) + 2.5rem);
         padding-left: 2.5rem;
         padding-right: 2.5rem;
         padding-bottom: 2.5rem;
-    }
-    body.admin-bar .ev-main {
-        padding-top: calc(var(--wp-admin--admin-bar--height, 32px) + var(--ev-header-offset) + 2.5rem);
     }
 }
 @media (min-width: 1200px) {
@@ -1323,7 +1315,10 @@
 }
 .ev-dash-new-img {
     aspect-ratio: 16/10;
-    background: var(--ev-teal-pale) center/cover;
+    background-color: var(--ev-teal-pale);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
     position: relative;
     display: flex;
     align-items: center;
@@ -1354,6 +1349,16 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+.ev-dash-qna-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.75rem;
+    align-items: start;
+    margin-bottom: 2rem;
+}
+.ev-dash-qna-row .ev-dash-loyalty {
+    margin-top: 0;
+}
 .ev-dash-loyalty {
     margin-top: 1.25rem;
     padding: 1rem 1.1rem;
@@ -1376,8 +1381,9 @@
     border-radius: var(--ev-radius);
     border: 1px solid var(--ev-border);
     box-shadow: var(--ev-shadow);
+    margin-bottom: 0;
 }
-.ev-dash-form { max-width: 520px; margin-top: .5rem; }
+.ev-dash-form { max-width: none; width: 100%; margin-top: .5rem; }
 .ev-dash-form-row { margin-bottom: 1rem; }
 .ev-dash-form-row label {
     display: block;
@@ -1424,6 +1430,7 @@
 @media (max-width: 960px) {
     .ev-dash-two { grid-template-columns: 1fr; }
     .ev-dash-new-grid { grid-template-columns: repeat(2, 1fr); }
+    .ev-dash-qna-row { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
     .ev-dash-new-grid { grid-template-columns: 1fr; }
@@ -1477,22 +1484,15 @@
     }
     .ev-page{
         flex-direction:column;
-        /* Sous le header fixe (desktop : sidebar fixed, pas de padding ici) */
-        padding-top: var(--ev-header-offset);
-    }
-    body.admin-bar .ev-page {
-        padding-top: calc(var(--wp-admin--admin-bar--height, 32px) + var(--ev-header-offset));
+        padding-top: var(--ev-header-bottom-px, var(--ev-header-offset));
     }
     .ev-mobile-nav{
         display:flex;position:sticky;
-        top:var(--ev-header-offset);
+        top:var(--ev-header-bottom-px, var(--ev-header-offset));
         z-index:9998; /* sous #wpadminbar / header thème */
         background:#0f2424;padding:0;overflow-x:auto;
         -webkit-overflow-scrolling:touch;scrollbar-width:none;
         border-bottom:1px solid rgba(89,183,183,.15)
-    }
-    body.admin-bar .ev-mobile-nav{
-        top:calc(var(--wp-admin--admin-bar--height, 32px) + var(--ev-header-offset));
     }
     .ev-mobile-nav::-webkit-scrollbar{display:none}
     .ev-mn-item{
@@ -1507,16 +1507,10 @@
     .ev-mn-item:hover{color:#fff}
     .ev-main{padding-top:1rem}
 }
-/* ≤782px : barre admin WP + nav seule (~56px) souvent sans bandeau annonce visible */
+/* ≤782px : fallback rem si pas de JS ; avec JS --ev-header-bottom-px suit le header réel */
 @media(max-width:782px){
     :root {
         --ev-header-offset: 5.75rem;
-    }
-    body.admin-bar .ev-page{
-        padding-top:calc(var(--wp-admin--admin-bar--height, 46px) + var(--ev-header-offset));
-    }
-    body.admin-bar .ev-mobile-nav{
-        top:calc(var(--wp-admin--admin-bar--height, 46px) + var(--ev-header-offset));
     }
 }
 
