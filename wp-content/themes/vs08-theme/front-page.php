@@ -1490,6 +1490,7 @@ document.addEventListener('DOMContentLoaded', function() {
 $fp_map_destinations = [];
 $fp_map_airports_used = [];
 $fp_map_coords = [
+    // Méditerranée & Proche-Orient
     'Portugal'=>['lat'=>37.02,'lon'=>-7.93,'city'=>'Algarve','iata'=>'FAO','region'=>'PORTUGAL'],
     'Espagne'=>['lat'=>36.72,'lon'=>-4.42,'city'=>'Marbella','iata'=>'AGP','region'=>'ESPAGNE'],
     'France'=>['lat'=>44.8,'lon'=>2.0,'city'=>'Biarritz','iata'=>'BOD','region'=>'FRANCE'],
@@ -1510,61 +1511,135 @@ $fp_map_coords = [
     'Costa Rica'=>['lat'=>9.93,'lon'=>-84.08,'city'=>'San José','iata'=>'SJO','region'=>'COSTA RICA'],
     'Malte'=>['lat'=>35.9,'lon'=>14.5,'city'=>'La Valette','iata'=>'MLA','region'=>'MALTE'],
     'Écosse'=>['lat'=>56.5,'lon'=>-3.5,'city'=>'St Andrews','iata'=>'EDI','region'=>'ÉCOSSE'],
+    // Europe du Nord & de l'Ouest
+    'Royaume-Uni'=>['lat'=>51.5,'lon'=>-0.12,'city'=>'Londres','iata'=>'LHR','region'=>'ROYAUME-UNI'],
+    'Angleterre'=>['lat'=>51.5,'lon'=>-0.12,'city'=>'Londres','iata'=>'LHR','region'=>'ANGLETERRE'],
+    'Pays de Galles'=>['lat'=>51.5,'lon'=>-3.2,'city'=>'Cardiff','iata'=>'CWL','region'=>'PAYS DE GALLES'],
+    'Allemagne'=>['lat'=>48.14,'lon'=>11.58,'city'=>'Munich','iata'=>'MUC','region'=>'ALLEMAGNE'],
+    'Autriche'=>['lat'=>47.48,'lon'=>13.12,'city'=>'Salzbourg','iata'=>'SZG','region'=>'AUTRICHE'],
+    'Suisse'=>['lat'=>46.95,'lon'=>7.45,'city'=>'Berne','iata'=>'ZRH','region'=>'SUISSE'],
+    'Belgique'=>['lat'=>50.9,'lon'=>4.48,'city'=>'Bruxelles','iata'=>'BRU','region'=>'BELGIQUE'],
+    'Pays-Bas'=>['lat'=>52.37,'lon'=>4.9,'city'=>'Amsterdam','iata'=>'AMS','region'=>'PAYS-BAS'],
+    'Danemark'=>['lat'=>55.68,'lon'=>12.57,'city'=>'Copenhague','iata'=>'CPH','region'=>'DANEMARK'],
+    'Suède'=>['lat'=>59.33,'lon'=>18.07,'city'=>'Stockholm','iata'=>'ARN','region'=>'SUÈDE'],
+    'Finlande'=>['lat'=>60.17,'lon'=>24.94,'city'=>'Helsinki','iata'=>'HEL','region'=>'FINLANDE'],
+    'Estonie'=>['lat'=>59.44,'lon'=>24.75,'city'=>'Tallinn','iata'=>'TLL','region'=>'ESTONIE'],
+    'Lettonie'=>['lat'=>56.95,'lon'=>24.11,'city'=>'Riga','iata'=>'RIX','region'=>'LETTONIE'],
+    'Lituanie'=>['lat'=>54.69,'lon'=>25.28,'city'=>'Vilnius','iata'=>'VNO','region'=>'LITUANIE'],
+    // Europe Centrale & Balkans
+    'Roumanie'=>['lat'=>44.43,'lon'=>26.1,'city'=>'Bucarest','iata'=>'OTP','region'=>'ROUMANIE'],
+    'Pologne'=>['lat'=>52.23,'lon'=>21.0,'city'=>'Varsovie','iata'=>'WAW','region'=>'POLOGNE'],
+    'République Tchèque'=>['lat'=>50.08,'lon'=>14.43,'city'=>'Prague','iata'=>'PRG','region'=>'RÉP. TCHÈQUE'],
+    'Slovaquie'=>['lat'=>48.15,'lon'=>17.1,'city'=>'Bratislava','iata'=>'BTS','region'=>'SLOVAQUIE'],
+    'Hongrie'=>['lat'=>47.5,'lon'=>19.05,'city'=>'Budapest','iata'=>'BUD','region'=>'HONGRIE'],
+    'Slovénie'=>['lat'=>46.05,'lon'=>14.5,'city'=>'Ljubljana','iata'=>'LJU','region'=>'SLOVÉNIE'],
 ];
 // Alias : destination → pays (pour regrouper les produits par pays sur la carte)
 $fp_dest_to_pays = [
     // Portugal
-    'Algarve'=>'Portugal','Lisbonne'=>'Portugal','Madère'=>'Portugal','Madeira'=>'Portugal','Porto'=>'Portugal','Faro'=>'Portugal',
+    'Algarve'=>'Portugal','Lisbonne'=>'Portugal','Madère'=>'Portugal','Madeira'=>'Portugal','Porto'=>'Portugal','Faro'=>'Portugal','Cascais'=>'Portugal','Vilamoura'=>'Portugal',
     // Espagne
     'Marbella'=>'Espagne','Costa del Sol'=>'Espagne','Majorque'=>'Espagne','Mallorca'=>'Espagne','Tenerife'=>'Espagne',
     'Lanzarote'=>'Espagne','Fuerteventura'=>'Espagne','Gran Canaria'=>'Espagne','Andalousie'=>'Espagne','Ibiza'=>'Espagne',
     'Minorque'=>'Espagne','Valence'=>'Espagne','Barcelone'=>'Espagne','Séville'=>'Espagne','Malaga'=>'Espagne',
-    'Îles Canaries'=>'Canaries','Iles Canaries'=>'Canaries',
+    'Costa Brava'=>'Espagne','Costa Blanca'=>'Espagne','Costa Dorada'=>'Espagne','Madrid'=>'Espagne','Bilbao'=>'Espagne',
+    'Îles Canaries'=>'Canaries','Iles Canaries'=>'Canaries','La Palma'=>'Canaries','La Gomera'=>'Canaries',
     // Maroc
-    'Marrakech'=>'Maroc','Agadir'=>'Maroc','Saidia'=>'Maroc','Tanger'=>'Maroc','El Jadida'=>'Maroc','Essaouira'=>'Maroc','Rabat'=>'Maroc',
+    'Marrakech'=>'Maroc','Agadir'=>'Maroc','Saidia'=>'Maroc','Tanger'=>'Maroc','El Jadida'=>'Maroc','Essaouira'=>'Maroc','Rabat'=>'Maroc','Casablanca'=>'Maroc','Fès'=>'Maroc','Ouarzazate'=>'Maroc',
     // Turquie
-    'Antalya'=>'Turquie','Belek'=>'Turquie','Istanbul'=>'Turquie','Bodrum'=>'Turquie','Side'=>'Turquie',
+    'Antalya'=>'Turquie','Belek'=>'Turquie','Istanbul'=>'Turquie','Bodrum'=>'Turquie','Side'=>'Turquie','Alanya'=>'Turquie','Izmir'=>'Turquie','Cappadoce'=>'Turquie',
     // Tunisie
-    'Djerba'=>'Tunisie','Hammamet'=>'Tunisie','Sousse'=>'Tunisie','Monastir'=>'Tunisie',
+    'Djerba'=>'Tunisie','Hammamet'=>'Tunisie','Sousse'=>'Tunisie','Monastir'=>'Tunisie','Tabarka'=>'Tunisie','Tunis'=>'Tunisie',
     // Grèce
-    'Crète'=>'Grèce','Rhodes'=>'Grèce','Corfou'=>'Grèce','Santorin'=>'Grèce','Athènes'=>'Grèce','Costa Navarino'=>'Grèce','Mykonos'=>'Grèce',
+    'Crète'=>'Grèce','Rhodes'=>'Grèce','Corfou'=>'Grèce','Santorin'=>'Grèce','Athènes'=>'Grèce','Costa Navarino'=>'Grèce','Mykonos'=>'Grèce','Kos'=>'Grèce','Zakynthos'=>'Grèce','Céphalonie'=>'Grèce','Thessalonique'=>'Grèce',
     // Italie
-    'Sicile'=>'Italie','Sardaigne'=>'Italie','Rome'=>'Italie','Toscane'=>'Italie','Pouilles'=>'Italie','Naples'=>'Italie','Venise'=>'Italie',
+    'Sicile'=>'Italie','Sardaigne'=>'Italie','Rome'=>'Italie','Toscane'=>'Italie','Pouilles'=>'Italie','Naples'=>'Italie','Venise'=>'Italie','Milan'=>'Italie','Florence'=>'Italie','Calabre'=>'Italie','Bologna'=>'Italie',
     // Irlande
-    'Dublin'=>'Irlande','Kerry'=>'Irlande','Cork'=>'Irlande',
+    'Dublin'=>'Irlande','Kerry'=>'Irlande','Cork'=>'Irlande','Galway'=>'Irlande','Killarney'=>'Irlande',
+    // Écosse
+    'St Andrews'=>'Écosse','Édimbourg'=>'Écosse','Glasgow'=>'Écosse','Highlands'=>'Écosse','Inverness'=>'Écosse',
+    // Royaume-Uni / Angleterre
+    'Londres'=>'Royaume-Uni','Angleterre'=>'Angleterre','Lake District'=>'Angleterre','Cornwall'=>'Angleterre',
+    // Pays de Galles
+    'Cardiff'=>'Pays de Galles','Pays de Galles'=>'Pays de Galles',
     // Égypte
-    'Hurghada'=>'Égypte','Sharm el Sheikh'=>'Égypte','Soma Bay'=>'Égypte','El Gouna'=>'Égypte','Louxor'=>'Égypte',
+    'Hurghada'=>'Égypte','Sharm el Sheikh'=>'Égypte','Soma Bay'=>'Égypte','El Gouna'=>'Égypte','Louxor'=>'Égypte','Le Caire'=>'Égypte','Marsa Alam'=>'Égypte',
     // Thaïlande
-    'Phuket'=>'Thaïlande','Bangkok'=>'Thaïlande','Hua Hin'=>'Thaïlande','Chiang Mai'=>'Thaïlande','Koh Samui'=>'Thaïlande',
+    'Phuket'=>'Thaïlande','Bangkok'=>'Thaïlande','Hua Hin'=>'Thaïlande','Chiang Mai'=>'Thaïlande','Koh Samui'=>'Thaïlande','Pattaya'=>'Thaïlande','Krabi'=>'Thaïlande',
     // Croatie
-    'Split'=>'Croatie','Dubrovnik'=>'Croatie','Zagreb'=>'Croatie',
+    'Split'=>'Croatie','Dubrovnik'=>'Croatie','Zagreb'=>'Croatie','Zadar'=>'Croatie','Pula'=>'Croatie',
     // Rép. Dominicaine
-    'Punta Cana'=>'République Dominicaine',
+    'Punta Cana'=>'République Dominicaine','Saint-Domingue'=>'République Dominicaine','La Romana'=>'République Dominicaine',
     // Maurice
     'Île Maurice'=>'Maurice','Ile Maurice'=>'Maurice',
     // Chypre
-    'Paphos'=>'Chypre','Limassol'=>'Chypre',
+    'Paphos'=>'Chypre','Limassol'=>'Chypre','Larnaca'=>'Chypre',
     // Vietnam
-    'Da Nang'=>'Vietnam','Hanoï'=>'Vietnam','Ho Chi Minh'=>'Vietnam',
-    // Écosse
-    'St Andrews'=>'Écosse','Édimbourg'=>'Écosse',
+    'Da Nang'=>'Vietnam','Hanoï'=>'Vietnam','Ho Chi Minh'=>'Vietnam','Hoi An'=>'Vietnam','Nha Trang'=>'Vietnam',
+    // Costa Rica
+    'San José'=>'Costa Rica','Liberia'=>'Costa Rica',
     // France
-    'Biarritz'=>'France','Côte d\'Azur'=>'France','Provence'=>'France','Normandie'=>'France','Corse'=>'France',
+    'Biarritz'=>'France','Côte d\'Azur'=>'France','Provence'=>'France','Normandie'=>'France','Corse'=>'France','Pays Basque'=>'France','Bretagne'=>'France','Alsace'=>'France',
     // DOM-TOM
-    'Pointe-à-Pitre'=>'Guadeloupe','Guadeloupe'=>'Guadeloupe','Sainte-Anne'=>'Guadeloupe','Saint-François'=>'Guadeloupe',
-    'Fort-de-France'=>'Martinique','Martinique'=>'Martinique','Les Trois-Îlets'=>'Martinique',
+    'Pointe-à-Pitre'=>'Guadeloupe','Guadeloupe'=>'Guadeloupe','Sainte-Anne'=>'Guadeloupe','Saint-François'=>'Guadeloupe','Gosier'=>'Guadeloupe',
+    'Fort-de-France'=>'Martinique','Martinique'=>'Martinique','Les Trois-Îlets'=>'Martinique','Sainte-Lucie'=>'Martinique',
     'Réunion'=>'Réunion','Saint-Denis'=>'Réunion','Saint-Gilles'=>'Réunion',
     // Afrique & Océan Indien
-    'Zanzibar'=>'Tanzanie','Nosy Be'=>'Madagascar','Antananarivo'=>'Madagascar',
-    'Mombasa'=>'Kenya','Nairobi'=>'Kenya',
+    'Zanzibar'=>'Tanzanie','Dar es Salaam'=>'Tanzanie','Kilimandjaro'=>'Tanzanie',
+    'Nosy Be'=>'Madagascar','Antananarivo'=>'Madagascar','Majunga'=>'Madagascar',
+    'Mombasa'=>'Kenya','Nairobi'=>'Kenya','Malindi'=>'Kenya',
+    'Dakar'=>'Sénégal','Saly'=>'Sénégal',
+    'Sal'=>'Cap-Vert','Boa Vista'=>'Cap-Vert',
     // Asie
-    'Bali'=>'Indonésie','Siem Reap'=>'Cambodge','Phnom Penh'=>'Cambodge',
-    'Cancún'=>'Mexique','Playa del Carmen'=>'Mexique',
-    // Amérique du Sud
-    'Cusco'=>'Pérou','Lima'=>'Pérou',
-    // Divers
+    'Bali'=>'Indonésie','Jakarta'=>'Indonésie','Lombok'=>'Indonésie',
+    'Siem Reap'=>'Cambodge','Phnom Penh'=>'Cambodge','Angkor'=>'Cambodge',
+    'Manille'=>'Philippines','Cebu'=>'Philippines','Palawan'=>'Philippines','Boracay'=>'Philippines',
+    'Singapour'=>'Singapour',
+    'Kuala Lumpur'=>'Malaisie','Penang'=>'Malaisie','Langkawi'=>'Malaisie',
+    'Tokyo'=>'Japon','Osaka'=>'Japon','Kyoto'=>'Japon',
+    'Séoul'=>'Corée du Sud',
+    'Mumbai'=>'Inde','Goa'=>'Inde','New Delhi'=>'Inde','Jaipur'=>'Inde','Kerala'=>'Inde','Rajasthan'=>'Inde',
+    'Colombo'=>'Sri Lanka','Negombo'=>'Sri Lanka',
+    // Amériques
+    'Cancún'=>'Mexique','Playa del Carmen'=>'Mexique','Los Cabos'=>'Mexique','Puerto Vallarta'=>'Mexique','Riviera Maya'=>'Mexique',
+    'Miami'=>'États-Unis','New York'=>'États-Unis','Las Vegas'=>'États-Unis','Los Angeles'=>'États-Unis','Orlando'=>'États-Unis','Hawaii'=>'États-Unis','San Francisco'=>'États-Unis','Floride'=>'États-Unis',
+    'Montréal'=>'Canada','Québec'=>'Canada','Toronto'=>'Canada','Vancouver'=>'Canada','Colombie-Britannique'=>'Canada',
+    'Nassau'=>'Bahamas','Paradise Island'=>'Bahamas',
+    'La Havane'=>'Cuba','Varadero'=>'Cuba','Trinidad'=>'Cuba','Santiago de Cuba'=>'Cuba',
+    'Cusco'=>'Pérou','Lima'=>'Pérou','Machu Picchu'=>'Pérou',
+    'Buenos Aires'=>'Argentine','Patagonie'=>'Argentine','Mendoza'=>'Argentine',
+    'São Paulo'=>'Brésil','Rio de Janeiro'=>'Brésil','Salvador'=>'Brésil','Fortaleza'=>'Brésil',
+    'Bogotá'=>'Colombie','Carthagène'=>'Colombie','Medellín'=>'Colombie',
+    // Moyen-Orient & Afrique du Nord
     'Dubaï'=>'Émirats arabes unis','Abu Dhabi'=>'Émirats arabes unis',
-    'Bergen'=>'Norvège','Reykjavik'=>'Islande',
+    'Mascate'=>'Oman','Muscat'=>'Oman',
+    'Amman'=>'Jordanie','Pétra'=>'Jordanie','Aqaba'=>'Jordanie',
+    'Le Cap'=>'Afrique du Sud','Johannesburg'=>'Afrique du Sud','Durban'=>'Afrique du Sud','Garden Route'=>'Afrique du Sud',
+    // Europe du Nord
+    'Bergen'=>'Norvège','Oslo'=>'Norvège','Fjords'=>'Norvège',
+    'Reykjavik'=>'Islande',
+    'Stockholm'=>'Suède','Göteborg'=>'Suède','Malmö'=>'Suède',
+    'Helsinki'=>'Finlande','Turku'=>'Finlande',
+    'Copenhague'=>'Danemark','Aarhus'=>'Danemark',
+    // Europe Centrale
+    'Munich'=>'Allemagne','Francfort'=>'Allemagne','Berlin'=>'Allemagne','Hambourg'=>'Allemagne','Düsseldorf'=>'Allemagne',
+    'Vienne'=>'Autriche','Salzbourg'=>'Autriche','Innsbruck'=>'Autriche',
+    'Genève'=>'Suisse','Zurich'=>'Suisse','Berne'=>'Suisse','Interlaken'=>'Suisse',
+    'Amsterdam'=>'Pays-Bas','Rotterdam'=>'Pays-Bas',
+    'Bruxelles'=>'Belgique','Bruges'=>'Belgique','Gand'=>'Belgique',
+    'Prague'=>'République Tchèque',
+    'Budapest'=>'Hongrie',
+    'Bratislava'=>'Slovaquie',
+    'Ljubljana'=>'Slovénie','Lac de Bled'=>'Slovénie',
+    'Varsovie'=>'Pologne','Cracovie'=>'Pologne','Gdansk'=>'Pologne',
+    'Bucarest'=>'Roumanie','Transylvanie'=>'Roumanie','Cluj'=>'Roumanie',
+    'Tallinn'=>'Estonie','Riga'=>'Lettonie','Vilnius'=>'Lituanie',
+    'Tivat'=>'Monténégro','Kotor'=>'Monténégro',
+    'Bourgas'=>'Bulgarie','Sunny Beach'=>'Bulgarie','Varna'=>'Bulgarie',
+    // Océanie
+    'Sydney'=>'Australie','Melbourne'=>'Australie','Cairns'=>'Australie','Gold Coast'=>'Australie','Adélaïde'=>'Australie','Perth'=>'Australie',
+    'Auckland'=>'Nouvelle-Zélande','Queenstown'=>'Nouvelle-Zélande','Wellington'=>'Nouvelle-Zélande',
+    'Tahiti'=>'Polynésie','Moorea'=>'Polynésie','Bora Bora'=>'Polynésie',
 ];
 // IATA destination → pays (fallback ultime : résout via le code aéroport d'arrivée)
 $fp_iata_to_pays = [
@@ -1581,19 +1656,46 @@ $fp_iata_to_pays = [
     // Tunisie
     'DJE'=>'Tunisie','TUN'=>'Tunisie','NBE'=>'Tunisie','MIR'=>'Tunisie','SFA'=>'Tunisie',
     // Grèce
-    'HER'=>'Grèce','ATH'=>'Grèce','RHO'=>'Grèce','CFU'=>'Grèce','JTR'=>'Grèce','JMK'=>'Grèce','CHQ'=>'Grèce','KGS'=>'Grèce','ZTH'=>'Grèce','SKG'=>'Grèce','KLX'=>'Grèce','PVK'=>'Grèce',
+    'HER'=>'Grèce','ATH'=>'Grèce','RHO'=>'Grèce','CFU'=>'Grèce','JTR'=>'Grèce','JMK'=>'Grèce','CHQ'=>'Grèce','KGS'=>'Grèce','ZTH'=>'Grèce','SKG'=>'Grèce','KLX'=>'Grèce','PVK'=>'Grèce','EFL'=>'Grèce',
     // Italie
-    'CTA'=>'Italie','PMO'=>'Italie','FCO'=>'Italie','NAP'=>'Italie','VCE'=>'Italie','MXP'=>'Italie','BLQ'=>'Italie','OLB'=>'Italie','CAG'=>'Italie','PSA'=>'Italie','FLR'=>'Italie','BRI'=>'Italie','SUF'=>'Italie',
+    'CTA'=>'Italie','PMO'=>'Italie','FCO'=>'Italie','NAP'=>'Italie','VCE'=>'Italie','MXP'=>'Italie','BLQ'=>'Italie','OLB'=>'Italie','CAG'=>'Italie','PSA'=>'Italie','FLR'=>'Italie','BRI'=>'Italie','SUF'=>'Italie','TRS'=>'Italie',
     // Croatie
-    'SPU'=>'Croatie','DBV'=>'Croatie','ZAG'=>'Croatie','PUY'=>'Croatie',
+    'SPU'=>'Croatie','DBV'=>'Croatie','ZAG'=>'Croatie','PUY'=>'Croatie','BWK'=>'Croatie',
     // Irlande
     'DUB'=>'Irlande','SNN'=>'Irlande','ORK'=>'Irlande',
     // Écosse
-    'EDI'=>'Écosse','GLA'=>'Écosse',
+    'EDI'=>'Écosse','GLA'=>'Écosse','INV'=>'Écosse','PIK'=>'Écosse',
+    // Royaume-Uni / Angleterre / Pays de Galles
+    'LHR'=>'Royaume-Uni','LGW'=>'Royaume-Uni','STN'=>'Royaume-Uni','LTN'=>'Royaume-Uni','LCY'=>'Royaume-Uni',
+    'MAN'=>'Angleterre','BHX'=>'Angleterre','BRS'=>'Angleterre','NCL'=>'Angleterre','LBA'=>'Angleterre','LPL'=>'Angleterre',
+    'CWL'=>'Pays de Galles',
+    // Allemagne
+    'FRA'=>'Allemagne','MUC'=>'Allemagne','DUS'=>'Allemagne','HAM'=>'Allemagne','BER'=>'Allemagne','STR'=>'Allemagne','CGN'=>'Allemagne','NUE'=>'Allemagne','FKB'=>'Allemagne',
+    // Autriche
+    'VIE'=>'Autriche','SZG'=>'Autriche','INN'=>'Autriche','GRZ'=>'Autriche','LNZ'=>'Autriche',
+    // Suisse
+    'ZRH'=>'Suisse','GVA'=>'Suisse','BSL'=>'Suisse',
+    // Pays-Bas
+    'AMS'=>'Pays-Bas','EIN'=>'Pays-Bas',
+    // Belgique
+    'BRU'=>'Belgique','CRL'=>'Belgique',
+    // Danemark
+    'CPH'=>'Danemark','AAL'=>'Danemark','BLL'=>'Danemark',
+    // Suède
+    'ARN'=>'Suède','NYO'=>'Suède','GOT'=>'Suède','MMX'=>'Suède',
+    // Finlande
+    'HEL'=>'Finlande','TMP'=>'Finlande','TKU'=>'Finlande',
+    // Pays Baltes
+    'TLL'=>'Estonie','RIX'=>'Lettonie','VNO'=>'Lituanie',
+    // Pologne
+    'WAW'=>'Pologne','KRK'=>'Pologne','GDN'=>'Pologne','POZ'=>'Pologne','WRO'=>'Pologne','KTW'=>'Pologne',
+    // Europe Centrale
+    'PRG'=>'République Tchèque','BTS'=>'Slovaquie','BUD'=>'Hongrie','LJU'=>'Slovénie',
+    'OTP'=>'Roumanie','CLJ'=>'Roumanie','TSR'=>'Roumanie','SBZ'=>'Roumanie',
     // Égypte
-    'HRG'=>'Égypte','SSH'=>'Égypte','CAI'=>'Égypte','LXR'=>'Égypte','RMF'=>'Égypte',
+    'HRG'=>'Égypte','SSH'=>'Égypte','CAI'=>'Égypte','LXR'=>'Égypte','RMF'=>'Égypte','HBE'=>'Égypte',
     // Thaïlande
-    'HKT'=>'Thaïlande','BKK'=>'Thaïlande','CNX'=>'Thaïlande','USM'=>'Thaïlande','DMK'=>'Thaïlande',
+    'HKT'=>'Thaïlande','BKK'=>'Thaïlande','CNX'=>'Thaïlande','USM'=>'Thaïlande','DMK'=>'Thaïlande','KBV'=>'Thaïlande',
     // Rép. Dominicaine
     'PUJ'=>'République Dominicaine','SDQ'=>'République Dominicaine',
     // Maurice
@@ -1601,61 +1703,112 @@ $fp_iata_to_pays = [
     // Chypre
     'PFO'=>'Chypre','LCA'=>'Chypre',
     // Vietnam
-    'DAD'=>'Vietnam','HAN'=>'Vietnam','SGN'=>'Vietnam',
+    'DAD'=>'Vietnam','HAN'=>'Vietnam','SGN'=>'Vietnam','CXR'=>'Vietnam',
     // Costa Rica
     'SJO'=>'Costa Rica','LIR'=>'Costa Rica',
     // Malte
     'MLA'=>'Malte',
-    // Autres destinations populaires
-    'CUN'=>'Mexique','NAS'=>'Bahamas','MBJ'=>'Jamaïque','HAV'=>'Cuba',
-    'DPS'=>'Indonésie','KUL'=>'Malaisie','SIN'=>'Singapour','CMB'=>'Sri Lanka',
-    'MLE'=>'Maldives','MCT'=>'Oman','DXB'=>'Émirats arabes unis','AMM'=>'Jordanie',
-    'CPT'=>'Afrique du Sud','DSS'=>'Sénégal','SID'=>'Cap-Vert',
-    'NRT'=>'Japon','ICN'=>'Corée du Sud','AKL'=>'Nouvelle-Zélande','SYD'=>'Australie',
-    'EZE'=>'Argentine','GRU'=>'Brésil','BOG'=>'Colombie','MEX'=>'Mexique',
-    'YUL'=>'Canada','JFK'=>'États-Unis','MIA'=>'États-Unis','LAX'=>'États-Unis',
-    'PPT'=>'Polynésie','NOU'=>'Nouvelle-Calédonie',
-    'TIV'=>'Monténégro','TGD'=>'Monténégro','BOJ'=>'Bulgarie','VAR'=>'Bulgarie',
-    'PRG'=>'République Tchèque','BUD'=>'Hongrie','WAW'=>'Pologne','OTP'=>'Roumanie',
-    'KEF'=>'Islande','OSL'=>'Norvège','BGO'=>'Norvège','ARN'=>'Suède','HEL'=>'Finlande',
-    // DOM-TOM & océan Indien
-    'PTP'=>'Guadeloupe','FDF'=>'Martinique','RUN'=>'Réunion','CAY'=>'Guyane',
-    'TNR'=>'Madagascar','NOS'=>'Madagascar',
-    // Afrique
-    'ZNZ'=>'Tanzanie','MBA'=>'Kenya','NBO'=>'Kenya',
-    // Asie
-    'REP'=>'Cambodge','PNH'=>'Cambodge',
+    // Mexique
+    'CUN'=>'Mexique','SJD'=>'Mexique','PVR'=>'Mexique','MEX'=>'Mexique',
+    // Caraïbes
+    'NAS'=>'Bahamas','MBJ'=>'Jamaïque','HAV'=>'Cuba','VRA'=>'Cuba','SNU'=>'Cuba',
+    // Amérique du Nord
+    'JFK'=>'États-Unis','MIA'=>'États-Unis','LAX'=>'États-Unis','MCO'=>'États-Unis','HNL'=>'États-Unis','SFO'=>'États-Unis','LAS'=>'États-Unis','ORD'=>'États-Unis','ATL'=>'États-Unis','BOS'=>'États-Unis',
+    'YUL'=>'Canada','YYZ'=>'Canada','YVR'=>'Canada','YOW'=>'Canada','YQB'=>'Canada',
     // Amérique du Sud
+    'EZE'=>'Argentine','BUE'=>'Argentine',
+    'GRU'=>'Brésil','GIG'=>'Brésil','FOR'=>'Brésil','REC'=>'Brésil','SSA'=>'Brésil',
+    'BOG'=>'Colombie','MDE'=>'Colombie','CTG'=>'Colombie',
     'CUZ'=>'Pérou','LIM'=>'Pérou',
+    // Asie du Sud-Est
+    'DPS'=>'Indonésie','CGK'=>'Indonésie',
+    'REP'=>'Cambodge','PNH'=>'Cambodge',
+    'MNL'=>'Philippines','CEB'=>'Philippines','PPS'=>'Philippines',
+    'SIN'=>'Singapour',
+    'KUL'=>'Malaisie','PEN'=>'Malaisie','LGK'=>'Malaisie',
+    // Asie du Nord & du Sud
+    'NRT'=>'Japon','HND'=>'Japon','KIX'=>'Japon','CTS'=>'Japon','FUK'=>'Japon',
+    'ICN'=>'Corée du Sud','GMP'=>'Corée du Sud',
+    'PVG'=>'Chine','PEK'=>'Chine','CAN'=>'Chine','CTU'=>'Chine','SHA'=>'Chine',
+    'DEL'=>'Inde','BOM'=>'Inde','GOI'=>'Inde','MAA'=>'Inde','CCU'=>'Inde',
+    'CMB'=>'Sri Lanka',
+    'MLE'=>'Maldives',
+    // Moyen-Orient
+    'MCT'=>'Oman','SLL'=>'Oman',
+    'DXB'=>'Émirats arabes unis','AUH'=>'Émirats arabes unis','SHJ'=>'Émirats arabes unis',
+    'AMM'=>'Jordanie','AQJ'=>'Jordanie',
+    // Afrique
+    'CPT'=>'Afrique du Sud','JNB'=>'Afrique du Sud','DUR'=>'Afrique du Sud',
+    'DSS'=>'Sénégal',
+    'SID'=>'Cap-Vert','BVC'=>'Cap-Vert','RAI'=>'Cap-Vert',
+    'ZNZ'=>'Tanzanie','DAR'=>'Tanzanie','JRO'=>'Tanzanie',
+    'MBA'=>'Kenya','NBO'=>'Kenya','MYD'=>'Kenya',
+    'TNR'=>'Madagascar','NOS'=>'Madagascar','MJN'=>'Madagascar',
+    // DOM-TOM & Océan Indien
+    'PTP'=>'Guadeloupe','FDF'=>'Martinique','RUN'=>'Réunion','CAY'=>'Guyane',
+    // Océanie
+    'SYD'=>'Australie','MEL'=>'Australie','BNE'=>'Australie','CNS'=>'Australie','OOL'=>'Australie','PER'=>'Australie',
+    'AKL'=>'Nouvelle-Zélande','CHC'=>'Nouvelle-Zélande','ZQN'=>'Nouvelle-Zélande',
+    'PPT'=>'Polynésie',
+    // Divers
+    'NOU'=>'Nouvelle-Calédonie',
+    'TIV'=>'Monténégro','TGD'=>'Monténégro',
+    'BOJ'=>'Bulgarie','VAR'=>'Bulgarie',
+    'KEF'=>'Islande',
+    'OSL'=>'Norvège','BGO'=>'Norvège','TRF'=>'Norvège',
 ];
 // Ajouter les coords pour les pays qui ne sont pas encore dans la table
 $fp_map_coords += [
+    // Méditerranée & Moyen-Orient
     'Mexique'=>['lat'=>20.6,'lon'=>-87.1,'city'=>'Cancún','iata'=>'CUN','region'=>'MEXIQUE'],
     'Indonésie'=>['lat'=>-8.65,'lon'=>115.2,'city'=>'Bali','iata'=>'DPS','region'=>'INDONÉSIE'],
     'Maldives'=>['lat'=>4.18,'lon'=>73.5,'city'=>'Malé','iata'=>'MLE','region'=>'MALDIVES'],
     'Émirats arabes unis'=>['lat'=>25.25,'lon'=>55.3,'city'=>'Dubaï','iata'=>'DXB','region'=>'ÉMIRATS'],
     'Jordanie'=>['lat'=>31.95,'lon'=>35.9,'city'=>'Amman','iata'=>'AMM','region'=>'JORDANIE'],
+    'Oman'=>['lat'=>23.6,'lon'=>58.3,'city'=>'Mascate','iata'=>'MCT','region'=>'OMAN'],
+    // Afrique
     'Afrique du Sud'=>['lat'=>-33.97,'lon'=>18.6,'city'=>'Le Cap','iata'=>'CPT','region'=>'AFRIQUE DU SUD'],
     'Sénégal'=>['lat'=>14.74,'lon'=>-17.5,'city'=>'Dakar','iata'=>'DSS','region'=>'SÉNÉGAL'],
     'Cap-Vert'=>['lat'=>16.73,'lon'=>-22.9,'city'=>'Sal','iata'=>'SID','region'=>'CAP-VERT'],
+    'Tanzanie'=>['lat'=>-6.77,'lon'=>39.3,'city'=>'Zanzibar','iata'=>'ZNZ','region'=>'TANZANIE'],
+    'Kenya'=>['lat'=>-4.03,'lon'=>39.6,'city'=>'Mombasa','iata'=>'MBA','region'=>'KENYA'],
+    'Madagascar'=>['lat'=>-18.9,'lon'=>47.5,'city'=>'Antananarivo','iata'=>'TNR','region'=>'MADAGASCAR'],
+    // Asie
     'Sri Lanka'=>['lat'=>7.07,'lon'=>79.9,'city'=>'Colombo','iata'=>'CMB','region'=>'SRI LANKA'],
-    'Oman'=>['lat'=>23.6,'lon'=>58.3,'city'=>'Mascate','iata'=>'MCT','region'=>'OMAN'],
+    'Cambodge'=>['lat'=>13.41,'lon'=>103.87,'city'=>'Siem Reap','iata'=>'REP','region'=>'CAMBODGE'],
+    'Malaisie'=>['lat'=>3.14,'lon'=>101.7,'city'=>'Kuala Lumpur','iata'=>'KUL','region'=>'MALAISIE'],
+    'Vietnam'=>['lat'=>16.05,'lon'=>108.2,'city'=>'Da Nang','iata'=>'DAD','region'=>'VIETNAM'],
+    'Philippines'=>['lat'=>14.51,'lon'=>121.02,'city'=>'Manille','iata'=>'MNL','region'=>'PHILIPPINES'],
+    'Singapour'=>['lat'=>1.36,'lon'=>103.99,'city'=>'Singapour','iata'=>'SIN','region'=>'SINGAPOUR'],
+    'Japon'=>['lat'=>34.69,'lon'=>135.50,'city'=>'Osaka','iata'=>'KIX','region'=>'JAPON'],
+    'Corée du Sud'=>['lat'=>37.56,'lon'=>126.99,'city'=>'Séoul','iata'=>'ICN','region'=>'CORÉE DU SUD'],
+    'Chine'=>['lat'=>31.17,'lon'=>121.48,'city'=>'Shanghai','iata'=>'PVG','region'=>'CHINE'],
+    'Inde'=>['lat'=>28.55,'lon'=>77.1,'city'=>'New Delhi','iata'=>'DEL','region'=>'INDE'],
+    // Amériques
     'Cuba'=>['lat'=>23.0,'lon'=>-82.4,'city'=>'La Havane','iata'=>'HAV','region'=>'CUBA'],
     'Jamaïque'=>['lat'=>18.5,'lon'=>-77.9,'city'=>'Montego Bay','iata'=>'MBJ','region'=>'JAMAÏQUE'],
+    'Bahamas'=>['lat'=>25.03,'lon'=>-77.39,'city'=>'Nassau','iata'=>'NAS','region'=>'BAHAMAS'],
+    'États-Unis'=>['lat'=>25.79,'lon'=>-80.29,'city'=>'Miami','iata'=>'MIA','region'=>'ÉTATS-UNIS'],
+    'Canada'=>['lat'=>45.51,'lon'=>-73.56,'city'=>'Montréal','iata'=>'YUL','region'=>'CANADA'],
+    'Brésil'=>['lat'=>-23.43,'lon'=>-46.47,'city'=>'São Paulo','iata'=>'GRU','region'=>'BRÉSIL'],
+    'Argentine'=>['lat'=>-34.6,'lon'=>-58.38,'city'=>'Buenos Aires','iata'=>'EZE','region'=>'ARGENTINE'],
+    'Colombie'=>['lat'=>4.7,'lon'=>-74.13,'city'=>'Bogotá','iata'=>'BOG','region'=>'COLOMBIE'],
+    'Pérou'=>['lat'=>-13.53,'lon'=>-71.97,'city'=>'Cusco','iata'=>'CUZ','region'=>'PÉROU'],
+    // Europe du Nord
     'Islande'=>['lat'=>63.98,'lon'=>-22.6,'city'=>'Reykjavik','iata'=>'KEF','region'=>'ISLANDE'],
-    'Monténégro'=>['lat'=>42.4,'lon'=>18.8,'city'=>'Tivat','iata'=>'TIV','region'=>'MONTÉNÉGRO'],
-    'Bulgarie'=>['lat'=>42.57,'lon'=>27.5,'city'=>'Bourgas','iata'=>'BOJ','region'=>'BULGARIE'],
-    'Polynésie'=>['lat'=>-17.55,'lon'=>-149.6,'city'=>'Tahiti','iata'=>'PPT','region'=>'POLYNÉSIE'],
+    'Norvège'=>['lat'=>60.2,'lon'=>5.23,'city'=>'Bergen','iata'=>'BGO','region'=>'NORVÈGE'],
+    // DOM-TOM & Océan Indien
     'Guadeloupe'=>['lat'=>16.27,'lon'=>-61.53,'city'=>'Pointe-à-Pitre','iata'=>'PTP','region'=>'GUADELOUPE'],
     'Martinique'=>['lat'=>14.59,'lon'=>-61.0,'city'=>'Fort-de-France','iata'=>'FDF','region'=>'MARTINIQUE'],
     'Réunion'=>['lat'=>-21.32,'lon'=>55.42,'city'=>'Saint-Denis','iata'=>'RUN','region'=>'LA RÉUNION'],
-    'Madagascar'=>['lat'=>-18.9,'lon'=>47.5,'city'=>'Antananarivo','iata'=>'TNR','region'=>'MADAGASCAR'],
-    'Norvège'=>['lat'=>60.2,'lon'=>5.23,'city'=>'Bergen','iata'=>'BGO','region'=>'NORVÈGE'],
-    'Malaisie'=>['lat'=>3.14,'lon'=>101.7,'city'=>'Kuala Lumpur','iata'=>'KUL','region'=>'MALAISIE'],
-    'Cambodge'=>['lat'=>13.41,'lon'=>103.87,'city'=>'Siem Reap','iata'=>'REP','region'=>'CAMBODGE'],
-    'Pérou'=>['lat'=>-13.53,'lon'=>-71.97,'city'=>'Cusco','iata'=>'CUZ','region'=>'PÉROU'],
-    'Tanzanie'=>['lat'=>-6.77,'lon'=>39.3,'city'=>'Zanzibar','iata'=>'ZNZ','region'=>'TANZANIE'],
-    'Kenya'=>['lat'=>-4.03,'lon'=>39.6,'city'=>'Mombasa','iata'=>'MBA','region'=>'KENYA'],
+    // Europe Centrale (déjà dans table principale, ajout ici si absent)
+    'Monténégro'=>['lat'=>42.4,'lon'=>18.8,'city'=>'Tivat','iata'=>'TIV','region'=>'MONTÉNÉGRO'],
+    'Bulgarie'=>['lat'=>42.57,'lon'=>27.5,'city'=>'Bourgas','iata'=>'BOJ','region'=>'BULGARIE'],
+    // Océanie
+    'Australie'=>['lat'=>-33.87,'lon'=>151.21,'city'=>'Sydney','iata'=>'SYD','region'=>'AUSTRALIE'],
+    'Nouvelle-Zélande'=>['lat'=>-36.85,'lon'=>174.77,'city'=>'Auckland','iata'=>'AKL','region'=>'NOUVELLE-ZÉLANDE'],
+    'Polynésie'=>['lat'=>-17.55,'lon'=>-149.6,'city'=>'Tahiti','iata'=>'PPT','region'=>'POLYNÉSIE'],
+    'Nouvelle-Calédonie'=>['lat'=>-22.27,'lon'=>166.46,'city'=>'Nouméa','iata'=>'NOU','region'=>'NOUVELLE-CALÉDONIE'],
 ];
 $fp_type_colors = ['sejour_golf'=>'#c9a84c','circuit'=>'#e55d3a','sejour'=>'#59b7b7','road_trip'=>'#8e44ad','city_trip'=>'#3498db','parc'=>'#e74c3c'];
 
@@ -1780,8 +1933,12 @@ foreach (($fp_dest_agg ?? []) as $k => $v) {
         {code:'LUX',name:'Luxembourg',lat:49.63,lon:6.20},
         {code:'ETZ',name:'Metz-Nancy',lat:48.98,lon:6.25},
         {code:'RNS',name:'Rennes',lat:48.07,lon:-1.73},
-        {code:'CFE',name:'Clermont-Fd',lat:45.79,lon:3.16}
-    ];
+        {code:'CFE',name:'Clermont-Fd',lat:45.79,lon:3.16},
+        {code:'MPL',name:'Montpellier',lat:43.58,lon:3.96},
+        {code:'BES',name:'Brest',lat:48.45,lon:-4.42},
+        {code:'REI',name:'Reims',lat:49.31,lon:4.05},
+        {code:'CDG',name:'Paris CDG',lat:49.01,lon:2.55}
+    ].filter(function(a,i,arr){ return arr.findIndex(function(b){return b.code===a.code;})=== i; });
     var TYPE_LABELS = {sejour_golf:'Séjours Golf',circuit:'Circuits',sejour:'All Inclusive',road_trip:'Road Trip',city_trip:'City Trip',parc:'Parcs'};
     var APT_MAP = {}; APTS.forEach(function(a){ APT_MAP[a.code]=a; });
 
