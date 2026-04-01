@@ -1279,9 +1279,9 @@ get_header();
                     </li>
                     <?php endforeach; ?>
                 </ul>
-                <form id="ev-voyageur-form" class="ev-voyageur-form">
+                <form id="ev-voyageur-form" class="ev-voyageur-form ev-profile-form">
                     <input type="hidden" name="index" id="ev-voyageur-index" value="-1">
-                    <div class="ev-voyageur-fields">
+                    <div class="ev-profile-grid">
                         <p class="ev-field">
                             <label for="ev-voy-prenom">Prénom *</label>
                             <input type="text" id="ev-voy-prenom" name="prenom" required placeholder="Jean">
@@ -1290,8 +1290,8 @@ get_header();
                             <label for="ev-voy-nom">Nom *</label>
                             <input type="text" id="ev-voy-nom" name="nom" required placeholder="Dupont">
                         </p>
-                        <p class="ev-field ev-field-ddn">
-                            <label>Date de naissance</label>
+                        <p class="ev-field">
+                            <label for="ev-voy-ddn-trigger">Date de naissance</label>
                             <div id="ev-voy-ddn-wrap" class="ev-ddn-wrap" style="position:relative">
                                 <div id="ev-voy-ddn-trigger" class="ev-ddn-trigger" role="button" tabindex="0" aria-label="Choisir la date de naissance" onclick="if(window.evCalDDN) window.evCalDDN.toggle()">🎂 JJ/MM/AAAA</div>
                                 <input type="hidden" id="ev-voy-ddn" name="ddn" value="">
