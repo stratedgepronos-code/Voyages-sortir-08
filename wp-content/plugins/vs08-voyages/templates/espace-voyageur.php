@@ -16,7 +16,8 @@ get_header();
 
     <!-- ─── Mobile nav bar (visible < 960px) ─── -->
     <div class="ev-mobile-nav">
-        <a href="<?php echo esc_url(VS08V_Traveler_Space::base_url()); ?>" class="ev-mn-item <?php echo $view === 'list' ? 'active' : ''; ?>"><span>✈</span>Voyages</a>
+        <a href="<?php echo esc_url(VS08V_Traveler_Space::base_url()); ?>" class="ev-mn-item <?php echo $view === 'dashboard' ? 'active' : ''; ?>"><span>🏠</span>Accueil</a>
+        <a href="<?php echo esc_url(VS08V_Traveler_Space::list_url()); ?>" class="ev-mn-item <?php echo $view === 'list' ? 'active' : ''; ?>"><span>✈</span>Voyages</a>
         <a href="<?php echo esc_url(VS08V_Traveler_Space::profile_url()); ?>" class="ev-mn-item <?php echo $view === 'profil' ? 'active' : ''; ?>"><span>👤</span>Profil</a>
         <a href="<?php echo esc_url(VS08V_Traveler_Space::favoris_url()); ?>" class="ev-mn-item <?php echo $view === 'favoris' ? 'active' : ''; ?>"><span>❤</span>Favoris</a>
         <a href="<?php echo esc_url(home_url('/espace-voyageur/contact/')); ?>" class="ev-mn-item <?php echo $view === 'contact' ? 'active' : ''; ?>"><span>✉</span>Contact</a>
@@ -40,7 +41,10 @@ get_header();
         </div>
 
         <nav class="ev-nav">
-            <a href="<?php echo esc_url(VS08V_Traveler_Space::base_url()); ?>" class="ev-nav-item <?php echo $view === 'list' ? 'active' : ''; ?>">
+            <a href="<?php echo esc_url(VS08V_Traveler_Space::base_url()); ?>" class="ev-nav-item <?php echo $view === 'dashboard' ? 'active' : ''; ?>">
+                <span class="ev-nav-icon">🏠</span> Tableau de bord
+            </a>
+            <a href="<?php echo esc_url(VS08V_Traveler_Space::list_url()); ?>" class="ev-nav-item <?php echo $view === 'list' ? 'active' : ''; ?>">
                 <span class="ev-nav-icon">✈</span> Mes voyages
             </a>
             <a href="<?php echo esc_url(VS08V_Traveler_Space::profile_url()); ?>" class="ev-nav-item <?php echo $view === 'profil' ? 'active' : ''; ?>">
@@ -111,7 +115,7 @@ get_header();
                     $company = VS08V_Contract::COMPANY;
                     $nb_etapes = is_array($m['jours'] ?? null) ? count($m['jours']) : 0;
             ?>
-            <a href="<?php echo esc_url(VS08V_Traveler_Space::base_url()); ?>" class="ev-back">&larr; Retour à mes voyages</a>
+            <a href="<?php echo esc_url(VS08V_Traveler_Space::list_url()); ?>" class="ev-back">&larr; Retour à mes voyages</a>
 
             <!-- Hero -->
             <div class="ev-detail-hero" <?php if ($cover): ?>style="background-image:linear-gradient(180deg,rgba(26,58,58,.45) 0%,rgba(26,58,58,.7) 100%),url(<?php echo esc_url($cover); ?>)"<?php endif; ?>>
@@ -384,12 +388,12 @@ get_header();
                 $aeroport_dest = $m['iata_dest'] ?? '';
             ?>
 
-            <a href="<?php echo esc_url(VS08V_Traveler_Space::base_url()); ?>" class="ev-back">&larr; Retour à mes voyages</a>
+            <a href="<?php echo esc_url(VS08V_Traveler_Space::list_url()); ?>" class="ev-back">&larr; Retour à mes voyages</a>
 
             <!-- Hero -->
             <div class="ev-detail-hero" <?php if ($cover): ?>style="background-image:linear-gradient(180deg,rgba(26,58,58,.45) 0%,rgba(26,58,58,.7) 100%),url(<?php echo esc_url($cover); ?>)"<?php endif; ?>>
                 <div class="ev-detail-hero-content">
-                    <h1><?php echo esc_html((string)($data['voyage_titre'] ?? 'Séjour golf')); ?></h1>
+                    <h1><?php echo esc_html((string)($data['voyage_titre'] ?? 'Votre séjour')); ?></h1>
                     <p>N° VS08-<?php echo $order_id; ?> · Départ le <?php echo $params['date_depart'] ? esc_html(date('d/m/Y', strtotime($params['date_depart']))) : '—'; ?></p>
                 </div>
                 <?php if ($can_pay_solde): ?>
@@ -883,6 +887,297 @@ get_header();
             <?php endif; ?>
             <?php } ?>
 
+        <?php elseif ($view === 'dashboard'): ?>
+
+            <?php
+            $dash_orders = VS08V_Traveler_Space::get_voyage_orders();
+            $dash_upcoming = array_values(array_filter($dash_orders, function ($v) { return $v['is_upcoming']; }));
+            $dash_past     = array_values(array_filter($dash_orders, function ($v) { return !$v['is_upcoming']; }));
+            $dash_reminders = [];
+            foreach ($dash_upcoming as $item) {
+                $oid = $item['order']->get_id();
+                $si  = VS08V_Traveler_Space::get_solde_info($oid);
+                if (!$si || empty($si['solde_due'])) {
+                    continue;
+                }
+                $d = $item['booking_data'];
+                $is_circuit = isset($item['type']) && $item['type'] === 'circuit';
+                $titre_rem  = $is_circuit ? ($d['circuit_titre'] ?? 'Circuit') : ($d['voyage_titre'] ?? 'Votre voyage');
+                $dash_reminders[] = [
+                    'order_id' => $oid,
+                    'titre'    => $titre_rem,
+                    'solde'    => $si['solde'],
+                    'date_lim' => $si['solde_date'] ?? '',
+                    'url'      => VS08V_Traveler_Space::voyage_url($oid),
+                ];
+            }
+            $dash_upcoming_slice = array_slice($dash_upcoming, 0, 3);
+
+            $post_types_new = ['vs08_voyage'];
+            if (post_type_exists('vs08_circuit')) {
+                $post_types_new[] = 'vs08_circuit';
+            }
+            $dash_latest = new WP_Query([
+                'post_type'      => $post_types_new,
+                'post_status'    => 'publish',
+                'posts_per_page' => 6,
+                'orderby'        => 'date',
+                'order'          => 'DESC',
+                'no_found_rows'  => true,
+            ]);
+
+            $vs08_res_url = function_exists('vs08_mega_resultats_url') ? vs08_mega_resultats_url() : home_url('/resultats-recherche');
+            ?>
+
+            <div class="ev-list-header ev-dash-header">
+                <h1>Bonjour <?php echo esc_html($current_user->first_name ?: $current_user->display_name); ?></h1>
+                <p>Votre espace Voyages Sortir 08 : rappels, dossiers, idées de voyages et message direct à l’équipe.</p>
+            </div>
+
+            <?php if (!empty($dash_reminders)) : ?>
+            <section class="ev-dash-section ev-dash-alerts" aria-label="Rappels importants">
+                <h2 class="ev-dash-h2">📌 Rappels</h2>
+                <div class="ev-dash-alert-list">
+                    <?php foreach ($dash_reminders as $dr) : ?>
+                    <a href="<?php echo esc_url($dr['url']); ?>" class="ev-dash-alert-card">
+                        <div class="ev-dash-alert-body">
+                            <strong><?php echo esc_html($dr['titre']); ?></strong>
+                            <span class="ev-dash-alert-meta">Dossier VS08-<?php echo (int) $dr['order_id']; ?> · Solde <?php echo number_format((float) $dr['solde'], 0, ',', ' '); ?> €<?php if (!empty($dr['date_lim'])) : ?> à régler avant le <?php echo esc_html($dr['date_lim']); ?><?php endif; ?></span>
+                        </div>
+                        <span class="ev-dash-alert-cta">Ouvrir le dossier →</span>
+                    </a>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+            <?php endif; ?>
+
+            <div class="ev-dash-two">
+                <section class="ev-dash-section">
+                    <div class="ev-dash-section-head">
+                        <h2 class="ev-dash-h2">✈️ Vos voyages</h2>
+                        <a href="<?php echo esc_url(VS08V_Traveler_Space::list_url()); ?>" class="ev-dash-link-all">Tout voir →</a>
+                    </div>
+                    <?php if (empty($dash_orders)) : ?>
+                    <div class="ev-dash-empty-inline">
+                        <span class="ev-dash-empty-ic" aria-hidden="true">🧳</span>
+                        <p><strong>Aucun dossier pour l’instant</strong></p>
+                        <p class="ev-dash-muted">Dès votre première réservation (séjour, circuit…), elle apparaîtra ici avec le suivi et les échéances.</p>
+                        <a href="<?php echo esc_url($vs08_res_url); ?>" class="ev-btn ev-btn-primary ev-dash-btn-inline">Parcourir nos voyages</a>
+                    </div>
+                    <?php else : ?>
+                    <?php if (!empty($dash_upcoming_slice)) : ?>
+                    <p class="ev-dash-sub">À venir</p>
+                    <div class="ev-dash-trip-mini">
+                        <?php
+                        foreach ($dash_upcoming_slice as $item) :
+                            $ord = $item['order'];
+                            $d   = $item['booking_data'];
+                            $p   = $d['params'] ?? [];
+                            $is_circuit = isset($item['type']) && $item['type'] === 'circuit';
+                            if ($is_circuit) {
+                                $cid = (int) ($d['circuit_id'] ?? 0);
+                                $mm  = class_exists('VS08C_Meta') ? VS08C_Meta::get($cid) : [];
+                                $gal = $mm['galerie'] ?? [];
+                                $img = !empty($gal[0]) ? (is_array($gal[0]) ? ($gal[0]['url'] ?? '') : $gal[0]) : '';
+                                if (!$img) {
+                                    $img = get_the_post_thumbnail_url($cid, 'medium') ?: '';
+                                }
+                                $titre = $d['circuit_titre'] ?? 'Circuit';
+                                $dest  = $mm['destination'] ?? '';
+                            } else {
+                                $vid = (int) ($d['voyage_id'] ?? 0);
+                                $mm  = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($vid) : [];
+                                $gal = $mm['galerie'] ?? [];
+                                $img = !empty($gal[0]) ? $gal[0] : '';
+                                $titre = $d['voyage_titre'] ?? 'Votre voyage';
+                                $dest  = $mm['destination'] ?? '';
+                            }
+                            $lnk = VS08V_Traveler_Space::voyage_url($ord->get_id());
+                            ?>
+                        <a href="<?php echo esc_url($lnk); ?>" class="ev-dash-trip-card">
+                            <div class="ev-dash-trip-img" <?php if ($img) : ?>style="background-image:url(<?php echo esc_url($img); ?>)"<?php endif; ?>><?php if (!$img) : ?><span><?php echo $is_circuit ? '🗺️' : '🌍'; ?></span><?php endif; ?></div>
+                            <div>
+                                <strong><?php echo esc_html($titre); ?></strong>
+                                <span><?php echo !empty($p['date_depart']) ? esc_html(date('d/m/Y', strtotime($p['date_depart']))) : '—'; ?><?php if ($dest) : ?> · <?php echo esc_html($dest); ?><?php endif; ?></span>
+                            </div>
+                        </a>
+                            <?php
+                        endforeach;
+                        ?>
+                    </div>
+                    <?php endif; ?>
+                    <?php
+                    $dash_past_slice = array_slice($dash_past, 0, 2);
+                    if (!empty($dash_past_slice)) :
+                        ?>
+                    <p class="ev-dash-sub">Récemment</p>
+                    <div class="ev-dash-trip-mini">
+                        <?php
+                        foreach ($dash_past_slice as $item) :
+                            $ord = $item['order'];
+                            $d   = $item['booking_data'];
+                            $p   = $d['params'] ?? [];
+                            $is_circuit = isset($item['type']) && $item['type'] === 'circuit';
+                            if ($is_circuit) {
+                                $cid = (int) ($d['circuit_id'] ?? 0);
+                                $mm  = class_exists('VS08C_Meta') ? VS08C_Meta::get($cid) : [];
+                                $gal = $mm['galerie'] ?? [];
+                                $img = !empty($gal[0]) ? (is_array($gal[0]) ? ($gal[0]['url'] ?? '') : $gal[0]) : '';
+                                if (!$img) {
+                                    $img = get_the_post_thumbnail_url($cid, 'medium') ?: '';
+                                }
+                                $titre = $d['circuit_titre'] ?? 'Circuit';
+                                $dest  = $mm['destination'] ?? '';
+                            } else {
+                                $vid = (int) ($d['voyage_id'] ?? 0);
+                                $mm  = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($vid) : [];
+                                $gal = $mm['galerie'] ?? [];
+                                $img = !empty($gal[0]) ? $gal[0] : '';
+                                $titre = $d['voyage_titre'] ?? 'Votre voyage';
+                                $dest  = $mm['destination'] ?? '';
+                            }
+                            $lnk = VS08V_Traveler_Space::voyage_url($ord->get_id());
+                            ?>
+                        <a href="<?php echo esc_url($lnk); ?>" class="ev-dash-trip-card ev-dash-trip-card--past">
+                            <div class="ev-dash-trip-img" <?php if ($img) : ?>style="background-image:url(<?php echo esc_url($img); ?>)"<?php endif; ?>><?php if (!$img) : ?><span><?php echo $is_circuit ? '🗺️' : '🌍'; ?></span><?php endif; ?></div>
+                            <div>
+                                <strong><?php echo esc_html($titre); ?></strong>
+                                <span><?php echo !empty($p['date_depart']) ? esc_html(date('d/m/Y', strtotime($p['date_depart']))) : '—'; ?><?php if ($dest) : ?> · <?php echo esc_html($dest); ?><?php endif; ?></span>
+                            </div>
+                        </a>
+                            <?php
+                        endforeach;
+                        ?>
+                    </div>
+                    <?php endif; ?>
+                    <?php endif; ?>
+                </section>
+
+                <section class="ev-dash-section">
+                    <h2 class="ev-dash-h2">✨ Nouveautés sur le site</h2>
+                    <?php if ($dash_latest->have_posts()) : ?>
+                    <div class="ev-dash-new-grid">
+                        <?php
+                        while ($dash_latest->have_posts()) :
+                            $dash_latest->the_post();
+                            $pid = get_the_ID();
+                            $pt  = get_post_type($pid);
+                            $thumb = get_the_post_thumbnail_url($pid, 'medium');
+                            $is_circ = ($pt === 'vs08_circuit');
+                            $badge = $is_circ ? 'Circuit' : 'Séjour';
+                            ?>
+                        <a href="<?php echo esc_url(get_permalink()); ?>" class="ev-dash-new-card">
+                            <div class="ev-dash-new-img" <?php if ($thumb) : ?>style="background-image:url(<?php echo esc_url($thumb); ?>)"<?php endif; ?>><?php if (!$thumb) : ?><span><?php echo $is_circ ? '🗺️' : '🌍'; ?></span><?php endif; ?>
+                                <span class="ev-dash-new-badge"><?php echo esc_html($badge); ?></span>
+                            </div>
+                            <span class="ev-dash-new-title"><?php echo esc_html(get_the_title()); ?></span>
+                        </a>
+                            <?php
+                        endwhile;
+                        wp_reset_postdata();
+                        ?>
+                    </div>
+                    <a href="<?php echo esc_url($vs08_res_url); ?>" class="ev-dash-link-all">Rechercher un voyage →</a>
+                    <?php else : ?>
+                    <p class="ev-dash-muted">Les prochaines offres seront affichées ici.</p>
+                    <?php endif; ?>
+
+                    <div class="ev-dash-loyalty">
+                        <h3 class="ev-dash-h3">💡 Pour vous accompagner</h3>
+                        <ul class="ev-dash-loyalty-list">
+                            <li><a href="<?php echo esc_url(VS08V_Traveler_Space::favoris_url()); ?>">Vos favoris</a> — retrouvez les formules enregistrées.</li>
+                            <li><a href="<?php echo esc_url(home_url('/espace-voyageur/contact/')); ?>">Contact complet</a> — historique des messages et coordonnées.</li>
+                            <li>Pensez à finaliser tôt votre dossier pour les meilleures disponibilités vols et hébergements.</li>
+                        </ul>
+                    </div>
+                </section>
+            </div>
+
+            <section class="ev-dash-section ev-dash-ask">
+                <h2 class="ev-dash-h2">💬 Une question ?</h2>
+                <p class="ev-dash-muted">Envoyez-nous un message — nous répondons sous 24–48h ouvrées.</p>
+                <form id="ev-dash-contact-form" class="ev-dash-form">
+                    <?php $dash_user_orders = VS08V_Traveler_Space::get_voyage_orders(); ?>
+                    <div class="ev-dash-form-row">
+                        <label for="ev-dash-msg-order">Concerne (optionnel)</label>
+                        <select id="ev-dash-msg-order" name="order_id">
+                            <option value="">— Question générale —</option>
+                            <?php foreach ($dash_user_orders as $uo) : ?>
+                                <?php
+                                $uo_d = $uo['booking_data'];
+                                $uo_titre = $uo_d['voyage_titre'] ?? ($uo_d['circuit_titre'] ?? 'Voyage');
+                                $uo_date = !empty($uo_d['params']['date_depart']) ? date('d/m/Y', strtotime($uo_d['params']['date_depart'])) : '';
+                                ?>
+                            <option value="<?php echo $uo['order']->get_id(); ?>">VS08-<?php echo $uo['order']->get_id(); ?> — <?php echo esc_html($uo_titre); ?><?php if ($uo_date) : ?> (<?php echo esc_html($uo_date); ?>)<?php endif; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="ev-dash-form-row">
+                        <label for="ev-dash-msg-sujet">Sujet *</label>
+                        <input type="text" id="ev-dash-msg-sujet" name="sujet" required placeholder="Ex. : modification, question sur mon dossier…">
+                    </div>
+                    <div class="ev-dash-form-row">
+                        <label for="ev-dash-msg-body">Message *</label>
+                        <textarea id="ev-dash-msg-body" name="message" rows="4" required placeholder="Votre message…"></textarea>
+                    </div>
+                    <button type="submit" class="ev-btn ev-btn-primary" id="ev-dash-msg-submit">Envoyer</button>
+                    <p class="ev-dash-msg-feedback" id="ev-dash-msg-feedback" hidden></p>
+                </form>
+            </section>
+
+            <script>
+            (function(){
+                var form = document.getElementById('ev-dash-contact-form');
+                var fb = document.getElementById('ev-dash-msg-feedback');
+                var btn = document.getElementById('ev-dash-msg-submit');
+                if (!form || !fb || !btn) return;
+                form.addEventListener('submit', function(e){
+                    e.preventDefault();
+                    var sujet = document.getElementById('ev-dash-msg-sujet').value.trim();
+                    var message = document.getElementById('ev-dash-msg-body').value.trim();
+                    var orderId = document.getElementById('ev-dash-msg-order').value;
+                    if (!sujet || !message) {
+                        fb.hidden = false;
+                        fb.className = 'ev-dash-msg-feedback error';
+                        fb.textContent = 'Veuillez remplir le sujet et le message.';
+                        return;
+                    }
+                    btn.disabled = true;
+                    var prev = btn.textContent;
+                    btn.textContent = 'Envoi…';
+                    fb.hidden = true;
+                    var fd = new FormData();
+                    fd.append('action', 'vs08v_member_contact');
+                    fd.append('nonce', '<?php echo esc_js(wp_create_nonce('vs08v_member_contact')); ?>');
+                    fd.append('sujet', sujet);
+                    fd.append('message', message);
+                    fd.append('order_id', orderId);
+                    fetch('<?php echo esc_url(admin_url('admin-ajax.php')); ?>', { method: 'POST', body: fd, credentials: 'same-origin' })
+                        .then(function(r){ return r.json(); })
+                        .then(function(res){
+                            btn.disabled = false;
+                            btn.textContent = prev;
+                            fb.hidden = false;
+                            if (res.success) {
+                                fb.className = 'ev-dash-msg-feedback success';
+                                fb.textContent = typeof res.data === 'string' ? res.data : 'Message envoyé !';
+                                form.reset();
+                            } else {
+                                fb.className = 'ev-dash-msg-feedback error';
+                                fb.textContent = (typeof res.data === 'string' ? res.data : (res.data && res.data.message)) || 'Erreur lors de l’envoi.';
+                            }
+                        })
+                        .catch(function(){
+                            btn.disabled = false;
+                            btn.textContent = prev;
+                            fb.hidden = false;
+                            fb.className = 'ev-dash-msg-feedback error';
+                            fb.textContent = 'Erreur réseau. Réessayez.';
+                        });
+                });
+            })();
+            </script>
+
         <?php elseif ($view === 'profil'): ?>
 
             <div class="ev-list-header">
@@ -1222,7 +1517,7 @@ get_header();
                 <article class="ev-trip-card ev-trip-card-favori">
                     <a href="<?php echo esc_url($lnk); ?>" class="ev-card-link">
                         <div class="ev-trip-img" <?php if ($img): ?>style="background-image:url(<?php echo esc_url($img); ?>)"<?php endif; ?>>
-                            <?php if (!$img): ?><span class="ev-trip-placeholder">⛳</span><?php endif; ?>
+                            <?php if (!$img): ?><span class="ev-trip-placeholder">🌍</span><?php endif; ?>
                         </div>
                         <div class="ev-trip-body">
                             <h3><?php echo esc_html($p->post_title); ?></h3>
@@ -1445,7 +1740,7 @@ get_header();
 
             <div class="ev-list-header">
                 <h1>Mes voyages</h1>
-                <p>Bienvenue <?php echo esc_html($current_user->first_name ?: $current_user->display_name); ?>. Retrouvez ici vos réservations, réglez un solde ou posez-nous une question.</p>
+                <p>Bienvenue <?php echo esc_html($current_user->first_name ?: $current_user->display_name); ?>. Vos dossiers séjours et circuits : détails, soldes et documents.</p>
             </div>
 
             <?php if ($has_any): ?>
@@ -1481,7 +1776,7 @@ get_header();
                             $mm = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($vid) : [];
                             $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : '';
                             $dest = $mm['destination'] ?? ''; $hnom = $mm['hotel_nom'] ?? ($mm['hotel']['nom'] ?? '');
-                            $titre = $d['voyage_titre'] ?? 'Séjour golf';
+                            $titre = $d['voyage_titre'] ?? 'Votre voyage';
                             $si = VS08V_Traveler_Space::get_solde_info($ord->get_id());
                         endif;
                         $lnk = VS08V_Traveler_Space::voyage_url($ord->get_id());
@@ -1489,7 +1784,7 @@ get_header();
                     <a href="<?php echo esc_url($lnk); ?>" class="ev-card-link">
                         <article class="ev-trip-card">
                             <div class="ev-trip-img" <?php if($img): ?>style="background-image:url(<?php echo esc_url($img); ?>)"<?php endif; ?>>
-                                <?php if(!$img): ?><span class="ev-trip-placeholder"><?php echo $is_circuit ? '🗺️' : '⛳'; ?></span><?php endif; ?>
+                                <?php if(!$img): ?><span class="ev-trip-placeholder"><?php echo $is_circuit ? '🗺️' : '🌍'; ?></span><?php endif; ?>
                                 <span class="ev-badge ev-badge-upcoming">À venir</span>
                                 <?php if ($is_circuit): ?><span class="ev-badge ev-badge-circuit">Circuit</span><?php endif; ?>
                                 <?php if ($si && $si['solde_due']): ?>
@@ -1531,14 +1826,14 @@ get_header();
                             $dest = $mm['destination'] ?? ''; $hnom = ''; $titre = $d['circuit_titre'] ?? 'Circuit';
                         else:
                             $vid = (int)($d['voyage_id'] ?? 0); $mm = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($vid) : [];
-                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : ''; $dest = $mm['destination'] ?? ''; $hnom = $mm['hotel_nom'] ?? ($mm['hotel']['nom'] ?? ''); $titre = $d['voyage_titre'] ?? 'Séjour golf';
+                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : ''; $dest = $mm['destination'] ?? ''; $hnom = $mm['hotel_nom'] ?? ($mm['hotel']['nom'] ?? ''); $titre = $d['voyage_titre'] ?? 'Votre voyage';
                         endif;
                         $lnk = VS08V_Traveler_Space::voyage_url($ord->get_id());
                     ?>
                     <a href="<?php echo esc_url($lnk); ?>" class="ev-card-link">
                         <article class="ev-trip-card">
                             <div class="ev-trip-img" <?php if($img): ?>style="background-image:url(<?php echo esc_url($img); ?>)"<?php endif; ?>>
-                                <?php if(!$img): ?><span class="ev-trip-placeholder"><?php echo $is_circuit ? '🗺️' : '⛳'; ?></span><?php endif; ?>
+                                <?php if(!$img): ?><span class="ev-trip-placeholder"><?php echo $is_circuit ? '🗺️' : '🌍'; ?></span><?php endif; ?>
                                 <span class="ev-badge ev-badge-past">Passé</span>
                                 <?php if ($is_circuit): ?><span class="ev-badge ev-badge-circuit">Circuit</span><?php endif; ?>
                                 <?php
@@ -1578,7 +1873,7 @@ get_header();
                             $si = VS08V_Traveler_Space::get_solde_info($ord->get_id());
                         else:
                             $vid = (int)($d['voyage_id'] ?? 0); $mm = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::get($vid) : [];
-                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : ''; $dest = $mm['destination'] ?? ''; $hnom = $mm['hotel_nom'] ?? ($mm['hotel']['nom'] ?? ''); $titre = $d['voyage_titre'] ?? 'Séjour golf';
+                            $gal = $mm['galerie'] ?? []; $img = !empty($gal[0]) ? $gal[0] : ''; $dest = $mm['destination'] ?? ''; $hnom = $mm['hotel_nom'] ?? ($mm['hotel']['nom'] ?? ''); $titre = $d['voyage_titre'] ?? 'Votre voyage';
                             $si = $item['is_upcoming'] ? VS08V_Traveler_Space::get_solde_info($ord->get_id()) : null;
                         endif;
                         $lnk = VS08V_Traveler_Space::voyage_url($ord->get_id());
@@ -1586,7 +1881,7 @@ get_header();
                     <a href="<?php echo esc_url($lnk); ?>" class="ev-card-link">
                         <article class="ev-trip-card">
                             <div class="ev-trip-img" <?php if($img): ?>style="background-image:url(<?php echo esc_url($img); ?>)"<?php endif; ?>>
-                                <?php if(!$img): ?><span class="ev-trip-placeholder"><?php echo $is_circuit ? '🗺️' : '⛳'; ?></span><?php endif; ?>
+                                <?php if(!$img): ?><span class="ev-trip-placeholder"><?php echo $is_circuit ? '🗺️' : '🌍'; ?></span><?php endif; ?>
                                 <span class="ev-badge <?php echo $item['is_upcoming'] ? 'ev-badge-upcoming' : 'ev-badge-past'; ?>"><?php echo $item['is_upcoming'] ? 'À venir' : 'Passé'; ?></span>
                                 <?php if ($is_circuit): ?><span class="ev-badge ev-badge-circuit">Circuit</span><?php endif; ?>
                                 <?php if ($si && $si['solde_due']): ?>
@@ -1627,10 +1922,10 @@ get_header();
             <?php else: ?>
 
             <div class="ev-empty-state">
-                <div class="ev-empty-icon">⛳</div>
-                <h2>Vous n'avez pas encore de réservation</h2>
-                <p>Dès que vous aurez réservé un séjour golf avec nous, vos voyages apparaîtront ici.<br>Vous pourrez consulter vos détails, régler un solde ou nous poser une question.</p>
-                <a href="<?php echo esc_url(home_url('/golf')); ?>" class="ev-btn ev-btn-primary">Découvrir nos séjours golf</a>
+                <div class="ev-empty-icon" aria-hidden="true">🧳</div>
+                <h2>Pas encore de voyage dans votre espace</h2>
+                <p>Dès que vous réservez un séjour, un circuit ou une formule avec nous, votre dossier apparaît ici.<br>Vous y retrouverez les détails, les échéances de solde et pourrez nous écrire en un clic.</p>
+                <a href="<?php echo esc_url(function_exists('vs08_mega_resultats_url') ? vs08_mega_resultats_url() : home_url('/resultats-recherche')); ?>" class="ev-btn ev-btn-primary">Découvrir nos voyages</a>
             </div>
 
             <?php endif; ?>

@@ -430,6 +430,11 @@ class VS08V_Traveler_Space {
         return home_url('/espace-voyageur/');
     }
 
+    /** Liste « Mes voyages » (réservations), distinct du tableau de bord. */
+    public static function list_url() {
+        return home_url('/espace-voyageur/voyages/');
+    }
+
     public static function voyage_url($order_id) {
         return home_url('/espace-voyageur/voyage/' . (int) $order_id . '/');
     }
@@ -598,7 +603,8 @@ class VS08V_Traveler_Space {
     }
 
     public static function register_routes() {
-        add_rewrite_rule('^espace-voyageur/?$', 'index.php?vs08_espace=list', 'top');
+        add_rewrite_rule('^espace-voyageur/voyages/?$', 'index.php?vs08_espace=list', 'top');
+        add_rewrite_rule('^espace-voyageur/?$', 'index.php?vs08_espace=dashboard', 'top');
         add_rewrite_rule('^espace-voyageur/profil/?$', 'index.php?vs08_espace=profil', 'top');
         add_rewrite_rule('^espace-voyageur/favoris/?$', 'index.php?vs08_espace=favoris', 'top');
         add_rewrite_rule('^espace-voyageur/contact/?$', 'index.php?vs08_espace=contact', 'top');
@@ -616,9 +622,9 @@ class VS08V_Traveler_Space {
         add_rewrite_tag('%vs08_admin%', '([a-z]+)');
         add_rewrite_tag('%vs08_admin_order%', '([0-9]+)');
 
-        if (get_option('vs08v_espace_rewrite_v', '') !== '3.1') {
+        if (get_option('vs08v_espace_rewrite_v', '') !== '3.2') {
             flush_rewrite_rules(false);
-            update_option('vs08v_espace_rewrite_v', '3.1');
+            update_option('vs08v_espace_rewrite_v', '3.2');
         }
     }
 
