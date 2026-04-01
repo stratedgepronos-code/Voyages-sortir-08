@@ -131,33 +131,36 @@ if (!function_exists('vs08_sr_circuit_matches_date_airport')) {
         }
         [$start, $end] = $range;
         $periods = $cm['dates_depart'] ?? [];
-        $aero    = null;
+
+        // Vérifier que l'aéroport existe sur ce circuit (si filtre aéroport actif)
         if ($f_airport !== '') {
+            $aero_match = false;
             foreach (($cm['aeroports'] ?? []) as $a) {
                 if (strtoupper(trim($a['code'] ?? '')) === $f_airport) {
-                    $aero = $a;
+                    $aero_match = true;
                     break;
                 }
             }
-            if (!$aero) {
+            if (!$aero_match) {
                 return false;
             }
         }
 
-        $cur = strtotime($start . ' 12:00:00');
-        $end_ts = strtotime($end . ' 12:00:00');
+        // Pas de périodes définies → aucune contrainte de date, le circuit s'affiche
+        if (empty($periods)) {
+            return true;
+        }
+
+        // Parcourir chaque jour de la plage et vérifier si le circuit part ce jour-là
+        $cur    = strtotime($start . ' 12:00:00');
+        $end_ts = strtotime($end   . ' 12:00:00');
         $i = 0;
         while ($cur <= $end_ts && $i++ < 800) {
             $ymd = date('Y-m-d', $cur);
-            if (!vs08_sr_circuit_tour_allows_date($ymd, $periods)) {
-                $cur = strtotime('+1 day', $cur);
-                continue;
+            if (vs08_sr_circuit_tour_allows_date($ymd, $periods)) {
+                return true;
             }
-            if ($aero && !vs08_sr_aeroport_allows_date($ymd, $aero)) {
-                $cur = strtotime('+1 day', $cur);
-                continue;
-            }
-            return true;
+            $cur = strtotime('+1 day', $cur);
         }
         return false;
     }
