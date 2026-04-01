@@ -302,6 +302,19 @@ body.home,body.page-template-default{background:#fff!important}
    12. DESTINATIONS — CARTE DU MONDE INTERACTIVE
    ═══════════════════════════════════════════════════════════════ */
 .fp-dest{padding:80px 0 100px;background:#fff}
+.fp-dest-update-note{
+    font-family:'Outfit',sans-serif;
+    font-size:14px;
+    color:var(--gray);
+    line-height:1.65;
+    max-width:46rem;
+    margin:0 0 24px;
+    padding:12px 18px 12px 14px;
+    background:linear-gradient(90deg,rgba(89,183,183,.1),transparent);
+    border-radius:12px;
+    border-left:3px solid var(--teal);
+}
+.fp-dest-update-note strong{color:var(--dark);font-weight:600}
 .fp-map-box{background:#0b1120;border-radius:24px;overflow:hidden;position:relative;margin:0 auto;max-width:1400px}
 .fp-map-box::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 40% at 50% 40%,rgba(89,183,183,.03),transparent);pointer-events:none}
 .fp-map-airports{display:flex;justify-content:center;align-items:center;gap:5px;flex-wrap:wrap;padding:20px 24px 10px;position:relative;z-index:2}
@@ -497,6 +510,8 @@ body.home,body.page-template-default{background:#fff!important}
     .fp-univers{padding:3.5rem 0 4.5rem}
     .fp-univers-header{margin-bottom:2.5rem}
     .fp-univers-subtitle{font-size:1rem}
+    /* Carte interactive : peu lisible sur petit écran */
+    .fp-dest{display:none!important}
 }
 @media(max-width:480px){
     .sh-grid{grid-template-columns:1fr}
@@ -1441,6 +1456,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div><p class="fp-section-label">🌍 Nos destinations</p><h2 class="fp-section-title">Partir <em>partout dans le monde</em></h2></div>
             <a href="<?php echo esc_url($fp_url_destinations); ?>" class="fp-section-link">Toutes les destinations →</a>
         </div>
+        <p class="fp-dest-update-note" role="note">Notre site est <strong>actualisé quotidiennement</strong> : de nouveaux voyages (séjours, circuits, formules…) sont publiés et <strong>ajoutés au fil du temps</strong>. Revenez régulièrement pour découvrir nos dernières offres — ou contactez-nous pour un projet sur mesure.</p>
         <div class="fp-map-box">
             <div class="fp-map-airports" id="fp-map-airports">
                 <span class="fp-map-apl">Aéroport de départ :</span>
