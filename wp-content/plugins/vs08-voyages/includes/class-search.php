@@ -26,6 +26,11 @@ class VS08V_Search {
         if (get_option('_vs08v_vol_cache_reset') !== 'v3') {
             add_action('init', [__CLASS__, 'reset_vol_cache_once']);
         }
+        // Force recalcul du cache search (agrégation par pays v4)
+        if (get_option('_vs08v_search_cache_v') !== 'v4') {
+            delete_transient(self::TRANSIENT_KEY);
+            update_option('_vs08v_search_cache_v', 'v4');
+        }
     }
 
     public static function reset_vol_cache_once() {
@@ -40,24 +45,18 @@ class VS08V_Search {
     }
 
     /**
-     * Clé d'agrégation : une entrée par lieu (pays + destination), pas une seule par pays.
-     * Sinon toutes les régions d'un même pays (ex. Portugal) fusionnent et le select ne contient
-     * qu'une option alors que type_dest_map liste chaque destination.
+     * Clé d'agrégation : une entrée par PAYS — le dropdown affiche les pays, pas les villes.
+     * Si pays vide, repli sur la destination (legacy).
      */
     private static function destination_aggregate_key(string $pays, string $dest): string {
+        $p = trim($pays);
         $d = trim($dest);
-        if ($d === '') {
+        // Si les deux sont vides, rien à afficher
+        if ($p === '' && $d === '') {
             return '';
         }
-        $p = trim($pays);
-        if (function_exists('mb_strtolower')) {
-            $d_low = mb_strtolower($d, 'UTF-8');
-            $p_low = $p !== '' ? mb_strtolower($p, 'UTF-8') : '';
-        } else {
-            $d_low = strtolower($d);
-            $p_low = $p !== '' ? strtolower($p) : '';
-        }
-        return ($p_low !== '' ? $p_low . "\x1e" : "_\x1e") . $d_low;
+        $base = $p !== '' ? $p : $d; // pays en priorité, sinon destination
+        return function_exists('mb_strtolower') ? mb_strtolower($base, 'UTF-8') : strtolower($base);
     }
 
     public static function get_aggregated_options() {
@@ -124,7 +123,10 @@ class VS08V_Search {
             $dest = trim($m['destination'] ?? '');
             $pays = trim($m['pays'] ?? '');
             $flag = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : trim($m['flag'] ?? '');
-            if ($dest !== '') {
+            // label = pays (priorité) ou destination si pays vide
+            $display_val   = $pays !== '' ? $pays : $dest;
+            $display_label = ($flag !== '' ? $flag . ' ' : '') . mb_convert_case($display_val, MB_CASE_TITLE, 'UTF-8');
+            if ($dest !== '' || $pays !== '') {
                 $key = self::destination_aggregate_key($pays, $dest);
                 if ($key !== '' && !isset($destinations[$key])) {
                     $img = get_the_post_thumbnail_url($pid, 'large');
@@ -133,10 +135,10 @@ class VS08V_Search {
                         $img = !empty($gal[0]) ? $gal[0] : '';
                     }
                     $destinations[$key] = [
-                        'value' => $dest,
+                        'value' => $display_val,
                         'pays'  => $pays,
                         'flag'  => $flag,
-                        'label' => mb_convert_case($dest, MB_CASE_TITLE, 'UTF-8'),
+                        'label' => $display_label,
                         'image' => $img ?: '',
                         'count' => 1,
                     ];
@@ -149,7 +151,7 @@ class VS08V_Search {
                     $map_type = 'sejour_golf';
                 }
                 if ($map_type !== '' && isset(self::TYPE_LABELS[$map_type])) {
-                    $push_type_dest($type_dest, $map_type, $dest);
+                    $push_type_dest($type_dest, $map_type, $display_val);
                 }
             }
 
@@ -164,8 +166,8 @@ class VS08V_Search {
                             'label' => $code . ' — ' . $ville,
                         ];
                     }
-                    if ($code !== '' && $dest !== '') {
-                        $push_air_dest($airport_dest, $code, $dest);
+                    if ($code !== '' && $display_val !== '') {
+                        $push_air_dest($airport_dest, $code, $display_val);
                     }
                 }
             }
@@ -204,22 +206,24 @@ class VS08V_Search {
                 $dest = trim($m['destination'] ?? '');
                 $pays = trim($m['pays'] ?? '');
                 $flag = trim($m['flag'] ?? '');
-                if ($dest !== '') {
+                $display_val   = $pays !== '' ? $pays : $dest;
+                $display_label = ($flag !== '' ? $flag . ' ' : '') . mb_convert_case($display_val, MB_CASE_TITLE, 'UTF-8');
+                if ($dest !== '' || $pays !== '') {
                     $key = self::destination_aggregate_key($pays, $dest);
                     if ($key !== '' && !isset($destinations[$key])) {
                         $img = get_the_post_thumbnail_url($pid, 'large');
                         $destinations[$key] = [
-                            'value' => $dest,
+                            'value' => $display_val,
                             'pays'  => $pays,
                             'flag'  => $flag,
-                            'label' => mb_convert_case($dest, MB_CASE_TITLE, 'UTF-8'),
+                            'label' => $display_label,
                             'image' => $img ?: '',
                             'count' => 1,
                         ];
                     } elseif ($key !== '') {
                         $destinations[$key]['count'] = ($destinations[$key]['count'] ?? 1) + 1;
                     }
-                    $push_type_dest($type_dest, 'sejour', $dest);
+                    $push_type_dest($type_dest, 'sejour', $display_val);
                 }
 
                 if (!empty($m['aeroports']) && is_array($m['aeroports'])) {
@@ -233,8 +237,8 @@ class VS08V_Search {
                                 'label' => $code . ' — ' . $ville,
                             ];
                         }
-                        if ($code !== '' && $dest !== '') {
-                            $push_air_dest($airport_dest, $code, $dest);
+                        if ($code !== '' && $display_val !== '') {
+                            $push_air_dest($airport_dest, $code, $display_val);
                         }
                     }
                 }
@@ -264,22 +268,24 @@ class VS08V_Search {
                 $dest = trim($m['destination'] ?? '');
                 $pays = trim($m['pays'] ?? '');
                 $flag = class_exists('VS08C_Meta') ? VS08C_Meta::resolve_flag($m) : trim($m['flag'] ?? '');
-                if ($dest !== '') {
+                $display_val   = $pays !== '' ? $pays : $dest;
+                $display_label = ($flag !== '' ? $flag . ' ' : '') . mb_convert_case($display_val, MB_CASE_TITLE, 'UTF-8');
+                if ($dest !== '' || $pays !== '') {
                     $key = self::destination_aggregate_key($pays, $dest);
                     if ($key !== '' && !isset($destinations[$key])) {
                         $img = get_the_post_thumbnail_url($pid, 'large');
                         $destinations[$key] = [
-                            'value' => $dest,
+                            'value' => $display_val,
                             'pays'  => $pays,
                             'flag'  => $flag,
-                            'label' => mb_convert_case($dest, MB_CASE_TITLE, 'UTF-8'),
+                            'label' => $display_label,
                             'image' => $img ?: '',
                             'count' => 1,
                         ];
                     } elseif ($key !== '') {
                         $destinations[$key]['count'] = ($destinations[$key]['count'] ?? 1) + 1;
                     }
-                    $push_type_dest($type_dest, 'circuit', $dest);
+                    $push_type_dest($type_dest, 'circuit', $display_val);
                 }
 
                 if (!empty($m['aeroports']) && is_array($m['aeroports'])) {
@@ -293,8 +299,8 @@ class VS08V_Search {
                                 'label' => $code . ' — ' . $ville,
                             ];
                         }
-                        if ($code !== '' && $dest !== '') {
-                            $push_air_dest($airport_dest, $code, $dest);
+                        if ($code !== '' && $display_val !== '') {
+                            $push_air_dest($airport_dest, $code, $display_val);
                         }
                     }
                 }
