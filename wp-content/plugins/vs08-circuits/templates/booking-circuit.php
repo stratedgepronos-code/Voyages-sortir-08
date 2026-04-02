@@ -196,8 +196,8 @@ var BK_CIRCUIT = <?php echo json_encode([
 .bkc-route-header{display:flex;align-items:center;justify-content:center;gap:14px;background:#0f2424;border-radius:14px;padding:14px 20px;margin-bottom:20px}
 .bkc-route-iata{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase}
 .bkc-route-arrow{font-size:22px;color:#59b7b7}
-.bkc-route-city{font-size:10px;color:rgba(255,255,255,.5);font-family:'Outfit',sans-serif;text-transform:uppercase;letter-spacing:1px}
-.bkc-route-dates{font-size:11px;color:rgba(255,255,255,.45);font-family:'Outfit',sans-serif;margin-top:3px}
+.bkc-route-city{font-size:11px;color:rgba(255,255,255,.85);font-family:'Outfit',sans-serif;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;font-weight:500}
+.bkc-route-dates{font-size:12px;color:rgba(255,255,255,.9);font-family:'Outfit',sans-serif;margin-top:4px;font-weight:600;background:rgba(89,183,183,.18);padding:3px 10px;border-radius:20px;white-space:nowrap}
 /* ── Combo cards ── */
 .bkc-combo-loading{display:flex;align-items:center;gap:10px;font-size:15px;color:#9ca3af;font-family:'Outfit',sans-serif;padding:20px 0}
 .bkc-flights-spinner{width:20px;height:20px;border:3px solid #e5e7eb;border-top-color:#59b7b7;border-radius:50%;animation:bkc-spin .7s linear infinite;flex-shrink:0}
@@ -344,11 +344,21 @@ var BK_CIRCUIT = <?php echo json_encode([
             $d_aller  = $params['date_depart'] ? date('d/m/Y', strtotime($params['date_depart'])) : '—';
             $d_retour_fmt = $params['date_depart'] ? date('d/m/Y', strtotime($params['date_depart'].' +'.$duree.' days')) : '—';
             $iata_dest = strtoupper($m['iata_dest'] ?? '');
+            // Nom de la ville de départ (depuis la liste des aéroports du produit)
+            $city_depart = $params['aeroport'];
+            foreach (($m['aeroports'] ?? []) as $_a) {
+                if (strtoupper($_a['code'] ?? '') === $params['aeroport'] && !empty($_a['label'])) {
+                    $city_depart = $_a['label'];
+                    break;
+                }
+            }
+            // Nom de la ville destination (champ destination du produit)
+            $city_dest = !empty($m['destination']) ? $m['destination'] : $iata_dest;
             ?>
             <div class="bkc-route-header">
                 <div style="text-align:center">
                     <div class="bkc-route-iata"><?php echo esc_html($params['aeroport'] ?: '—'); ?></div>
-                    <div class="bkc-route-city"><?php echo esc_html($params['aeroport']); ?></div>
+                    <div class="bkc-route-city"><?php echo esc_html($city_depart); ?></div>
                 </div>
                 <div style="text-align:center">
                     <div class="bkc-route-arrow">✈️ ⟷</div>
@@ -356,7 +366,7 @@ var BK_CIRCUIT = <?php echo json_encode([
                 </div>
                 <div style="text-align:center">
                     <div class="bkc-route-iata"><?php echo esc_html($iata_dest ?: '—'); ?></div>
-                    <div class="bkc-route-city"><?php echo esc_html($iata_dest); ?></div>
+                    <div class="bkc-route-city"><?php echo esc_html($city_dest); ?></div>
                 </div>
             </div>
 
