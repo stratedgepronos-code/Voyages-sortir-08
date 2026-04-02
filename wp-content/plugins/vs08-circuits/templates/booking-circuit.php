@@ -344,16 +344,47 @@ var BK_CIRCUIT = <?php echo json_encode([
             $d_aller  = $params['date_depart'] ? date('d/m/Y', strtotime($params['date_depart'])) : '—';
             $d_retour_fmt = $params['date_depart'] ? date('d/m/Y', strtotime($params['date_depart'].' +'.$duree.' days')) : '—';
             $iata_dest = strtoupper($m['iata_dest'] ?? '');
-            // Nom de la ville de départ (depuis la liste des aéroports du produit)
-            $city_depart = $params['aeroport'];
+            // Table IATA → nom ville/aéroport
+            $iata_cities = [
+                'CDG'=>'Paris CDG','ORY'=>'Paris Orly','BVA'=>'Paris Beauvais',
+                'LYS'=>'Lyon','MRS'=>'Marseille','NCE'=>'Nice','TLS'=>'Toulouse',
+                'BOD'=>'Bordeaux','NTE'=>'Nantes','LIL'=>'Lille','SXB'=>'Strasbourg',
+                'RNS'=>'Rennes','BES'=>'Brest','MPL'=>'Montpellier','RHE'=>'Reims',
+                'LHR'=>'Londres Heathrow','LGW'=>'Londres Gatwick','STN'=>'Londres Stansted',
+                'AMS'=>'Amsterdam','BRU'=>'Bruxelles','GVA'=>'Genève','ZRH'=>'Zurich',
+                'FCO'=>'Rome','MXP'=>'Milan','BCN'=>'Barcelone','MAD'=>'Madrid',
+                'LIS'=>'Lisbonne','ATH'=>'Athènes','IST'=>'Istanbul','DXB'=>'Dubaï',
+                'CMN'=>'Casablanca','RAK'=>'Marrakech','AGA'=>'Agadir','FEZ'=>'Fès',
+                'TNG'=>'Tanger','OUD'=>'Oujda',
+                'TUN'=>'Tunis','MIR'=>'Monastir','DJE'=>'Djerba',
+                'ALG'=>'Alger','ORN'=>'Oran','CZL'=>'Constantine',
+                'CAI'=>'Le Caire','HRG'=>'Hurghada','SSH'=>'Sharm el-Sheikh','LXR'=>'Louxor',
+                'RBA'=>'Rabat','NKC'=>'Nouakchott',
+                'JFK'=>'New York JFK','MIA'=>'Miami','LAX'=>'Los Angeles','YUL'=>'Montréal',
+                'CUN'=>'Cancún','MEX'=>'Mexico','BOG'=>'Bogota','GRU'=>'São Paulo',
+                'NBO'=>'Nairobi','ADD'=>'Addis-Abeba','DAR'=>'Dar es Salaam','JNB'=>'Johannesburg',
+                'CMB'=>'Colombo','BKK'=>'Bangkok','SIN'=>'Singapour','KUL'=>'Kuala Lumpur',
+                'HKG'=>'Hong Kong','PEK'=>'Pékin','PVG'=>'Shanghai','NRT'=>'Tokyo',
+                'SYD'=>'Sydney','AKL'=>'Auckland',
+                'LCA'=>'Larnaca (Chypre)','HER'=>'Héraklion','SKG'=>'Thessalonique',
+                'OPO'=>'Porto','AGP'=>'Malaga','PMI'=>'Palma de Majorque',
+                'VCE'=>'Venise','NAP'=>'Naples','BUD'=>'Budapest','PRG'=>'Prague',
+                'WAW'=>'Varsovie','VIE'=>'Vienne','ZAG'=>'Zagreb','BEG'=>'Belgrade',
+                'SVO'=>'Moscou','LED'=>'Saint-Pétersbourg',
+                'BEY'=>'Beyrouth','AMM'=>'Amman','TLV'=>'Tel Aviv','DOH'=>'Doha','AUH'=>'Abu Dhabi',
+                'MLE'=>'Malé (Maldives)','SEZ'=>'Mahé (Seychelles)',
+                'RUN'=>'La Réunion','TNR'=>'Antananarivo','MRU'=>'Maurice',
+            ];
+            // Nom de la ville de départ
+            $city_depart = $iata_cities[$params['aeroport']] ?? $params['aeroport'];
             foreach (($m['aeroports'] ?? []) as $_a) {
                 if (strtoupper($_a['code'] ?? '') === $params['aeroport'] && !empty($_a['label'])) {
                     $city_depart = $_a['label'];
                     break;
                 }
             }
-            // Nom de la ville destination (champ destination du produit)
-            $city_dest = !empty($m['destination']) ? $m['destination'] : $iata_dest;
+            // Nom de la ville destination
+            $city_dest = !empty($m['destination']) ? $m['destination'] : ($iata_cities[$iata_dest] ?? $iata_dest);
             ?>
             <div class="bkc-route-header">
                 <div style="text-align:center">
