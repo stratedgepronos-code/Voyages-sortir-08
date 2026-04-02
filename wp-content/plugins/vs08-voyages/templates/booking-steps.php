@@ -565,6 +565,14 @@ get_header();
                 <?php endif; ?>
 
                 <?php
+                $has_loc_voiture = in_array('location_vehicule', $m['compris']['oui'] ?? []);
+                if ($has_loc_voiture): ?>
+                <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:10px 16px;margin-bottom:14px;font-size:12px;color:#166534;font-family:'Outfit',sans-serif">
+                    🚗 <strong>Location de véhicule incluse</strong> — Sélectionnez le conducteur principal en cochant la case sous son nom.
+                </div>
+                <?php endif; ?>
+
+                <?php
                 $voy_index = 0;
                 for ($chambre = 1; $chambre <= $nb_chambres; $chambre++):
                     // Répartir les voyageurs par chambre
@@ -628,45 +636,28 @@ get_header();
                         </div>
                         <input type="hidden" name="voyageurs[<?php echo $voy_index;?>][type]" value="<?php echo $type_label;?>">
                         <input type="hidden" name="voyageurs[<?php echo $voy_index;?>][chambre]" value="<?php echo $chambre;?>">
+                        <?php if ($has_loc_voiture): ?>
+                        <label class="bk-conducteur-radio-lbl" id="bk-conducteur-lbl-<?php echo $voy_index; ?>">
+                            <input type="radio" name="conducteur_principal" value="<?php echo $voy_index; ?>"
+                                   id="bk-conducteur-<?php echo $voy_index; ?>"
+                                   onchange="bkUpdateConducteur(<?php echo $voy_index; ?>)">
+                            <span class="bk-conducteur-radio-txt">🚗 Ce passager sera le conducteur principal du véhicule</span>
+                        </label>
+                        <?php endif; ?>
                     </div>
                     <?php endfor; ?>
                 </div>
                 <?php endfor; ?>
 
-                <?php
-                // Bloc location de voiture — affiché seulement si incluse dans le forfait
-                $has_loc_voiture = in_array('location_vehicule', $m['compris']['oui'] ?? []);
-                if ($has_loc_voiture): ?>
-                <div class="bk-loc-voiture-block" id="bk-loc-voiture-block">
-                    <div class="bk-loc-voiture-title">🚗 Location de véhicule incluse dans votre forfait</div>
-                    <p class="bk-loc-voiture-intro">Votre séjour comprend la mise à disposition d'un véhicule. Lisez attentivement la condition obligatoire ci-dessous et cochez la case pour confirmer.</p>
-                    <label class="bk-loc-conducteur-lbl" id="bk-loc-conducteur-wrap">
-                        <input type="checkbox" id="bk-loc-conducteur-check" name="loc_conducteur_ok" value="1"
-                               onchange="bkUpdateLocCheck(this)">
-                        <span class="bk-loc-conducteur-txt">
-                            Je certifie que le conducteur principal disposera d'une
-                            <strong>carte de CRÉDIT (Visa ou Mastercard) à son propre nom</strong>
-                            à présenter <strong>obligatoirement au loueur</strong> lors de la prise en charge du véhicule.
-                            <em>Sans cette carte de crédit au nom du conducteur, le véhicule ne pourra pas être remis.</em>
-                        </span>
-                    </label>
-                    <input type="hidden" id="bk-loc-conducteur-val" class="bk-required" value="">
-                    <div class="bk-loc-notice" id="bk-loc-notice" style="display:none">
-                        ✅ Confirmé — La carte de crédit du conducteur sera présentée au loueur.
-                    </div>
-                </div>
+                <?php if ($has_loc_voiture): ?>
+                <input type="hidden" id="bk-conducteur-val" class="bk-required" value="">
                 <style>
-                .bk-loc-voiture-block{background:#fff9f0;border:2px solid #f59e0b;border-radius:14px;padding:18px 20px;margin:18px 0}
-                .bk-loc-voiture-title{font-size:14px;font-weight:700;color:#0f2424;margin-bottom:6px}
-                .bk-loc-voiture-intro{font-size:12px;color:#6b7280;font-family:'Outfit',sans-serif;margin:0 0 14px;line-height:1.55}
-                .bk-loc-conducteur-lbl{display:flex;align-items:flex-start;gap:12px;cursor:pointer;padding:14px 16px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;transition:all .2s;user-select:none}
-                .bk-loc-conducteur-lbl:hover{border-color:#f59e0b;background:#fffbeb}
-                .bk-loc-conducteur-lbl input[type=checkbox]{width:20px;height:20px;flex-shrink:0;margin-top:2px;accent-color:#59b7b7;cursor:pointer}
-                .bk-loc-conducteur-txt{font-size:13px;color:#374151;font-family:'Outfit',sans-serif;line-height:1.6}
-                .bk-loc-conducteur-txt strong{color:#0f2424}
-                .bk-loc-conducteur-txt em{display:block;margin-top:6px;color:#b45309;font-style:normal;font-size:12px;font-weight:600}
-                .bk-loc-notice{background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:10px 14px;margin-top:12px;font-size:13px;color:#166534;font-family:'Outfit',sans-serif;font-weight:600}
-                .bk-loc-conducteur-lbl.confirmed{border-color:#22c55e;background:#f0fdf4}
+                .bk-conducteur-radio-lbl{display:flex;align-items:center;gap:10px;cursor:pointer;margin-top:10px;padding:8px 12px;border:1.5px solid #e5e7eb;border-radius:8px;background:#f9fafb;transition:all .2s;user-select:none}
+                .bk-conducteur-radio-lbl:hover{border-color:#59b7b7;background:#f0fafa}
+                .bk-conducteur-radio-lbl input[type=radio]{width:18px;height:18px;accent-color:#59b7b7;flex-shrink:0;cursor:pointer}
+                .bk-conducteur-radio-txt{font-size:12px;color:#374151;font-family:'Outfit',sans-serif;font-weight:500}
+                .bk-conducteur-radio-lbl.selected{border-color:#59b7b7;background:#e0f7f7}
+                .bk-conducteur-radio-lbl.selected .bk-conducteur-radio-txt{color:#0f2424;font-weight:700}
                 </style>
                 <?php endif; ?>
 
@@ -1514,16 +1505,16 @@ function bkSelectCombo(idx) {
 // NAVIGATION ENTRE ÉTAPES
 // ══════════════════════════════════════════════════════════════════════════════
 
-function bkUpdateLocCheck(chk) {
-    var val    = document.getElementById('bk-loc-conducteur-val');
-    var notice = document.getElementById('bk-loc-notice');
-    var lbl    = document.getElementById('bk-loc-conducteur-wrap');
-    if (val)    val.value = chk.checked ? '1' : '';
-    if (notice) notice.style.display = chk.checked ? 'block' : 'none';
-    if (lbl) {
-        if (chk.checked) lbl.classList.add('confirmed');
-        else             lbl.classList.remove('confirmed');
-    }
+function bkUpdateConducteur(idx) {
+    // Mettre à jour le champ hidden requis
+    var val = document.getElementById('bk-conducteur-val');
+    if (val) val.value = String(idx);
+    // Mettre en surbrillance la case sélectionnée, retirer les autres
+    document.querySelectorAll('.bk-conducteur-radio-lbl').forEach(function(lbl) {
+        lbl.classList.remove('selected');
+    });
+    var sel = document.getElementById('bk-conducteur-lbl-' + idx);
+    if (sel) sel.classList.add('selected');
 }
 
 function bkGo(step) {
