@@ -168,6 +168,16 @@ function doCalc(){
 }
 function renderPrice(d){
     var $r=$('#vc-price-result'),h='';
+    if(d.lines&&d.lines.length){
+        h+='<div class="vc-debug-lines">';
+        for(var i=0;i<d.lines.length;i++){
+            var l=d.lines[i];
+            h+='<div class="vc-debug-line"><span class="vc-debug-label">'+l.label+'</span>';
+            if(l.detail) h+='<span class="vc-debug-detail">'+l.detail+'</span>';
+            h+='<span class="vc-debug-val">'+fmt(l.montant)+' €</span></div>';
+        }
+        h+='</div>';
+    }
     h+='<div class="vc-price-total"><span class="vc-price-total-label">Total estimé tout compris</span><span class="vc-price-total-val">'+fmt(d.total)+' €</span></div>';
     if(d.nb_total>0) h+='<div class="vc-price-pp">'+fmt(d.par_pers)+' € / pers.</div>';
     if(d.acompte&&d.acompte<d.total) h+='<div class="vc-acompte-line"><span>Acompte '+Math.round(d.acompte_pct)+'%</span><span>='+fmt(d.acompte)+' €</span></div>';

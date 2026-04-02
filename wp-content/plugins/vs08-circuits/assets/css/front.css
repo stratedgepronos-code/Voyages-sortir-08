@@ -119,6 +119,13 @@
 .vc-price-lines { margin-bottom:12px; }
 .vc-price-line { display:flex; justify-content:space-between; padding:4px 0; font-size:12px; font-family:'Outfit',sans-serif; color:#4a5568; border-bottom:1px solid #ede9e0; }
 .vc-price-line:last-child { border-bottom:none; }
+/* Détail des lignes tarifaires dans la calc card */
+.vc-debug-lines { margin-bottom:8px; border:1px solid #e8e4dc; border-radius:10px; padding:8px 10px; background:#fafaf8; }
+.vc-debug-line { display:flex; justify-content:space-between; align-items:baseline; padding:4px 0; font-size:11px; font-family:'Outfit',sans-serif; color:#4a5568; border-bottom:1px solid #ede9e0; gap:8px; }
+.vc-debug-line:last-child { border-bottom:none; }
+.vc-debug-label { flex:1; color:#374151; font-size:11px; }
+.vc-debug-detail { color:#9ca3af; font-size:10px; display:block; }
+.vc-debug-val { font-weight:600; color:#0f2424; white-space:nowrap; font-size:12px; }
 .vc-price-total { display:flex; justify-content:space-between; align-items:baseline; padding:12px 0 0; border-top:2px solid #0f2424; }
 .vc-price-total-label { font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:1px; font-family:'Outfit',sans-serif; }
 .vc-price-total-val { font-family:'Playfair Display',serif; font-size:28px; font-weight:700; color:#0f2424; }

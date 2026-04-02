@@ -40,6 +40,16 @@ if (class_exists('VS08V_Insurance')) {
     try { $insurance_price = VS08V_Insurance::get_price($devis['par_pers'] ?? 0); } catch (\Throwable $e) {}
 }
 
+// URL de retour après connexion/inscription (conserve tous les paramètres circuits)
+$bk_redirect_back = home_url('/reservation-circuit/' . $circuit_id . '/?'
+    . 'date='     . urlencode($params['date_depart'])
+    . '&aeroport=' . urlencode($params['aeroport'])
+    . '&nadultes=' . intval($params['nb_adultes'])
+    . '&nchamb='   . intval($params['nb_chambres'])
+    . '&vol='      . floatval($params['prix_vol'])
+    . (!empty($params['rooms'])   ? '&rooms='   . urlencode($params['rooms'])   : '')
+    . (!empty($params['options']) ? '&options=' . urlencode($params['options']) : ''));
+
 $bk_saved_fact = [];
 $bk_saved_voy  = [];
 if (is_user_logged_in() && class_exists('VS08V_Traveler_Space')) {
@@ -408,6 +418,21 @@ var BK_CIRCUIT = <?php echo json_encode([
             <h3 class="bkc-section-title"><span class="bkc-step-num">2</span> Bulletin d'inscription — Informations voyageurs et coordonnées de facturation</h3>
             <p class="bkc-section-sub"><?php echo $nb_total; ?> voyageur(s) — <?php echo $nb_chambres; ?> chambre(s) — Départ le <?php echo esc_html($date_fmt); ?></p>
 
+                <?php if (!is_user_logged_in()): ?>
+                <div class="bk-account-nudge" id="bk-account-nudge">
+                    <div class="bk-account-nudge-icon">🌍</div>
+                    <div class="bk-account-nudge-body">
+                        <p class="bk-account-nudge-title">Créez votre espace voyageur — gratuit</p>
+                        <p class="bk-account-nudge-desc">Retrouvez vos dossiers, contrats et voyageurs enregistrés. En créant votre compte maintenant, vous serez automatiquement redirigé ici au même stade.</p>
+                        <div class="bk-account-nudge-btns">
+                            <a href="<?php echo esc_url(home_url('/connexion/') . '?tab=register&redirect_to=' . urlencode($bk_redirect_back)); ?>" class="bk-account-nudge-btn-primary">✨ Créer mon compte</a>
+                            <a href="<?php echo esc_url(home_url('/connexion/') . '?redirect_to=' . urlencode($bk_redirect_back)); ?>" class="bk-account-nudge-btn-secondary">J'ai déjà un compte →</a>
+                        </div>
+                    </div>
+                    <button class="bk-account-nudge-close" onclick="document.getElementById('bk-account-nudge').style.display='none'" title="Fermer">×</button>
+                </div>
+                <?php endif; ?>
+
             <?php
             $voy_index = 0;
             for ($chambre = 1; $chambre <= $nb_chambres; $chambre++):
@@ -568,8 +593,9 @@ var BK_CIRCUIT = <?php echo json_encode([
         <div class="bkc-recap-line" style="font-size:12px;color:#6b7280"><span>🎁 Options</span><span><?php echo esc_html(implode(', ', array_map(function($o){ return $o['label']; }, $options_recap))); ?></span></div>
         <?php endif; ?>
         <div class="bkc-recap-line" id="bkc-recap-row-insurance" style="display:none"><span>🛡️ Assurance Multirisques</span><span id="bkc-recap-insurance-val">—</span></div>
-        <div style="height:12px"></div>
-        <!-- Détail tarif masqué côté client (réservé admin) -->
+        <div style="height:4px"></div>
+        <!-- Détail lignes de tarif -->
+        <div id="bkc-recap-detail-lines"></div>
         <div class="bkc-recap-sep"></div>
         <div class="bkc-recap-total">
             <span class="bkc-recap-total-lbl">Total circuit</span>
@@ -602,12 +628,25 @@ var BK_CIRCUIT = <?php echo json_encode([
         var addIns = (bkc_insurance_check && (parseFloat(BK.insurance_total) || 0)) ? parseFloat(BK.insurance_total) : 0;
         var newTotal = base + addVol + addIns;
         var totalValEl = document.getElementById('bkc-recap-total-val');
-        if (totalValEl) totalValEl.textContent = bkcFmt(newTotal) + ' €';
+        if (totalValEl) totalValEl.textContent = bkcFmt(newTotal);
         // Acompte
         var acompteEl = document.querySelector('.bkc-recap-acompte span:last-child');
         if (acompteEl && BK.acompte_pct) {
             var acompte = Math.ceil(newTotal * parseFloat(BK.acompte_pct) / 100);
-            acompteEl.textContent = bkcFmt(acompte) + ' €';
+            acompteEl.textContent = bkcFmt(acompte);
+        }
+        // Détail des lignes tarifaires
+        var detailEl = document.getElementById('bkc-recap-detail-lines');
+        if (detailEl && BK.devis && BK.devis.lines && BK.devis.lines.length) {
+            var dh = '';
+            for (var i = 0; i < BK.devis.lines.length; i++) {
+                var l = BK.devis.lines[i];
+                dh += '<div class="bkc-recap-line" style="font-size:11px;color:#6b7280">'
+                    + '<span>' + l.label + (l.detail ? '<br><em style="font-size:10px;opacity:.75">' + l.detail + '</em>' : '') + '</span>'
+                    + '<span style="font-weight:600;white-space:nowrap">' + bkcFmt(l.montant) + '</span>'
+                    + '</div>';
+            }
+            detailEl.innerHTML = dh;
         }
     }
 
@@ -660,6 +699,10 @@ var BK_CIRCUIT = <?php echo json_encode([
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initDDNCalendars);
     else initDDNCalendars();
+
+    // Afficher les lignes de tarif dès le chargement
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bkcUpdateTotal);
+    else bkcUpdateTotal();
 
     /* ═══════════════════════════════════════════════════════
        RECHERCHE VOLS — aller + retour → combos (comme golf)
