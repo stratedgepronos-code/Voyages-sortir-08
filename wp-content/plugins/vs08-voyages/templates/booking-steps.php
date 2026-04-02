@@ -33,6 +33,18 @@ $insurance_price = VS08V_Insurance::get_price($devis['par_pers']);
 $bk_saved_fact = (is_user_logged_in() && class_exists('VS08V_Traveler_Space')) ? VS08V_Traveler_Space::get_saved_facturation() : [];
 $bk_saved_voyageurs = (is_user_logged_in() && class_exists('VS08V_Traveler_Space')) ? VS08V_Traveler_Space::get_saved_voyageurs() : [];
 
+// URL de retour après connexion/inscription (conserve tous les paramètres + step=2)
+$bk_redirect_back = home_url('/reservation/' . $voyage_id . '/?'
+    . 'date='    . urlencode($params['date_depart'])
+    . '&aeroport=' . urlencode($params['aeroport'])
+    . '&ngolf='  . intval($params['nb_golfeurs'])
+    . '&nngolf=' . intval($params['nb_nongolfeurs'])
+    . '&chambre=' . urlencode($params['type_chambre'])
+    . '&nchamb=' . intval($params['nb_chambres'])
+    . '&vol='    . floatval($params['prix_vol'])
+    . '&airline=' . urlencode($params['airline_iata'])
+    . '&step=2');
+
 get_header();
 ?>
 <style>
@@ -245,6 +257,21 @@ get_header();
 .bk-success-ref strong{color:#3d9a9a;font-size:19px}
 @media(max-width:900px){.bk-inner{grid-template-columns:1fr;padding:0 20px}.bk-recap-col{position:static}.bk-field-row{grid-template-columns:1fr 1fr}.bk-field-row.cols-4{grid-template-columns:1fr 1fr}.bk-filters-sidebar{display:none!important}}
 @media(max-width:480px){.bk-field-row{grid-template-columns:1fr}.bk-field-row.cols-4{grid-template-columns:1fr}.combo-header{flex-direction:column;gap:8px;align-items:flex-start}.combo-leg-times{gap:6px}.combo-time{font-size:16px}.combo-airline{gap:6px}.combo-airline img{width:28px;height:28px}.bk-nav{flex-direction:column;gap:10px}.bk-btn-next,.bk-btn-prev{width:100%;text-align:center}}
+/* ── Encart création de compte dans le tunnel ── */
+.bk-account-nudge{background:linear-gradient(135deg,#f0f9f9 0%,#e4f3f3 100%);border:1.5px solid #a8d8d8;border-radius:16px;padding:20px 24px;margin-bottom:26px;display:flex;align-items:center;gap:20px;position:relative;overflow:hidden}
+.bk-account-nudge::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(61,154,154,.12),transparent 70%);pointer-events:none}
+.bk-account-nudge-icon{width:50px;height:50px;background:linear-gradient(135deg,#3d9a9a,#2d7a7a);border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:24px;box-shadow:0 4px 12px rgba(61,154,154,.3)}
+.bk-account-nudge-body{flex:1;min-width:0}
+.bk-account-nudge-title{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;color:#1a3a3a;margin:0 0 5px;line-height:1.3}
+.bk-account-nudge-desc{font-family:'Outfit',sans-serif;font-size:13px;color:#4a7070;margin:0 0 14px;line-height:1.55}
+.bk-account-nudge-btns{display:flex;gap:10px;flex-wrap:wrap}
+.bk-account-nudge-btn-primary{background:linear-gradient(135deg,#3d9a9a,#2a8080);color:#fff!important;border:none;border-radius:10px;padding:9px 18px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:transform .15s,box-shadow .15s;box-shadow:0 3px 10px rgba(61,154,154,.35)}
+.bk-account-nudge-btn-primary:hover{transform:translateY(-1px);box-shadow:0 5px 15px rgba(61,154,154,.4);color:#fff!important}
+.bk-account-nudge-btn-secondary{background:transparent;color:#2d8080!important;border:1.5px solid #3d9a9a;border-radius:10px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+.bk-account-nudge-btn-secondary:hover{background:#3d9a9a;color:#fff!important}
+.bk-account-nudge-close{position:absolute;top:10px;right:12px;background:none;border:none;cursor:pointer;color:#9cb8b8;font-size:20px;line-height:1;padding:2px 6px;border-radius:6px;transition:color .2s;font-weight:400}
+.bk-account-nudge-close:hover{color:#2d7a7a}
+@media(max-width:600px){.bk-account-nudge{flex-direction:column;gap:14px;align-items:flex-start}.bk-account-nudge-btns{flex-direction:column}.bk-account-nudge-btn-primary,.bk-account-nudge-btn-secondary{justify-content:center}}
 </style>
 
 <div class="bk-wrap">
@@ -484,6 +511,21 @@ get_header();
             <div class="bk-card">
                 <h2 class="bk-card-title">Informations voyageurs</h2>
                 <p class="bk-card-sub"><?php echo $nb_total; ?> voyageur(s) — <?php echo $nb_chambres; ?> chambre(s) <?php echo ucfirst($params['type_chambre']); ?> — Départ le <?php echo date('d/m/Y', strtotime($params['date_depart'])); ?></p>
+
+                <?php if (!is_user_logged_in()): ?>
+                <div class="bk-account-nudge" id="bk-account-nudge">
+                    <div class="bk-account-nudge-icon">🏌️</div>
+                    <div class="bk-account-nudge-body">
+                        <p class="bk-account-nudge-title">Créez votre espace voyageur — gratuit</p>
+                        <p class="bk-account-nudge-desc">Retrouvez vos dossiers, contrats et voyageurs enregistrés. En créant votre compte maintenant, vous serez automatiquement redirigé ici au même stade.</p>
+                        <div class="bk-account-nudge-btns">
+                            <a href="<?php echo esc_url(home_url('/connexion/') . '?tab=register&redirect_to=' . urlencode($bk_redirect_back)); ?>" class="bk-account-nudge-btn-primary">✨ Créer mon compte</a>
+                            <a href="<?php echo esc_url(home_url('/connexion/') . '?redirect_to=' . urlencode($bk_redirect_back)); ?>" class="bk-account-nudge-btn-secondary">J'ai déjà un compte →</a>
+                        </div>
+                    </div>
+                    <button class="bk-account-nudge-close" onclick="document.getElementById('bk-account-nudge').style.display='none'" title="Fermer">×</button>
+                </div>
+                <?php endif; ?>
 
                 <?php
                 $voy_index = 0;
@@ -2117,6 +2159,35 @@ function bkPositionSidebar() {
 }
 window.addEventListener('scroll', bkPositionSidebar, {passive: true});
 window.addEventListener('resize', bkPositionSidebar);
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AUTO-NAVIGATION — retour après connexion/inscription (?step=X dans l'URL)
+// ══════════════════════════════════════════════════════════════════════════════
+(function() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var targetStep = parseInt(urlParams.get('step'), 10);
+    if (targetStep >= 2 && targetStep <= 4) {
+        // Navigation directe sans validation (l'utilisateur revient juste de l'inscription)
+        for (var i = 1; i <= 4; i++) {
+            var el = document.getElementById('bk-step-' + i);
+            if (el) el.style.display = (i === targetStep) ? 'block' : 'none';
+        }
+        for (var i = 1; i <= 4; i++) {
+            var ind  = document.getElementById('bk-ind-' + i);
+            var line = document.getElementById('bk-line-' + (i - 1));
+            if (ind) {
+                ind.className = 'bk-step';
+                if (i < targetStep) ind.classList.add('done');
+                if (i === targetStep) ind.classList.add('active');
+            }
+            if (line) {
+                line.className = 'bk-step-line';
+                if (i <= targetStep) line.classList.add('done');
+            }
+        }
+        window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+})();
 
 // ══════════════════════════════════════════════════════════════════════════════
 // BOUTON RECAP — s'adapte à l'étape en cours

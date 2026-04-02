@@ -288,6 +288,15 @@ if (function_exists('wc_lostpassword_url')) {
         inp.addEventListener('blur', check);
         check();
     });
+
+    /* ── Ouverture automatique de l'onglet inscription si ?tab=register ── */
+    (function() {
+        var urlP = new URLSearchParams(window.location.search);
+        if (urlP.get('tab') === 'register') {
+            var tabRegister = document.querySelector('[data-tab="register"]');
+            if (tabRegister) switchTab(tabRegister);
+        }
+    })();
 })();
 </script>
 
