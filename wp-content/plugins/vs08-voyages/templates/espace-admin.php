@@ -93,6 +93,9 @@ if (!is_array($messages_admin)) $messages_admin = [];
 .ea-badge-golf{background:#edf8f8;color:#3d9a9a}.ea-badge-circuit{background:#fef3e8;color:#b85c1a}
 .ea-badge-upcoming{background:#ecfdf5;color:#059669}.ea-badge-past{background:#f3f4f6;color:#6b7280}
 .ea-badge-solde{background:#fef2f2;color:#dc2626}.ea-badge-paid{background:#ecfdf5;color:#059669}
+.ea-badge-seo-ok{background:#ecfdf5;color:#059669;border:1px solid #6ee7b7}.ea-badge-seo-no{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+.ea-th-seo{width:72px;text-align:center!important}
+.ea-td-seo{text-align:center}
 .ea-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
 .ea-detail-card{background:#fff;border-radius:16px;padding:22px 24px;box-shadow:0 2px 12px rgba(0,0,0,.04)}
 .ea-detail-card h3{font-size:14px;font-weight:700;color:#0f2424;margin:0 0 14px;display:flex;align-items:center;gap:8px}
@@ -675,6 +678,15 @@ function eaAddPayment(oid,btn){
 <?php
 $golf_posts = get_posts(['post_type'=>'vs08_voyage','posts_per_page'=>-1,'post_status'=>'any','orderby'=>'title','order'=>'ASC']);
 $circuit_posts = get_posts(['post_type'=>'vs08_circuit','posts_per_page'=>-1,'post_status'=>'any','orderby'=>'title','order'=>'ASC']);
+$vs08_ea_seo_badge = static function (int $pid): string {
+    if (!function_exists('vs08_seo_product_is_complete')) {
+        return '<span class="ea-badge ea-badge-past" title="Plugin VS08 SEO">—</span>';
+    }
+    if (vs08_seo_product_is_complete($pid)) {
+        return '<span class="ea-badge ea-badge-seo-ok">OK</span>';
+    }
+    return '<span class="ea-badge ea-badge-seo-no" title="Ouvrez la fiche → meta box SEO Booster">Non</span>';
+};
 ?>
 <h1 class="ea-page-title">Produits</h1>
 <p class="ea-page-sub">⛳ <?php echo count($golf_posts); ?> séjour(s) · 🗺️ <?php echo count($circuit_posts); ?> circuit(s)</p>
@@ -682,14 +694,14 @@ $circuit_posts = get_posts(['post_type'=>'vs08_circuit','posts_per_page'=>-1,'po
     <button class="ea-tab active" id="ea-pt-golf" onclick="document.getElementById('ea-pg').style.display='';document.getElementById('ea-pc').style.display='none';this.classList.add('active');document.getElementById('ea-pt-circ').classList.remove('active')">⛳ Golf</button>
     <button class="ea-tab" id="ea-pt-circ" onclick="document.getElementById('ea-pc').style.display='';document.getElementById('ea-pg').style.display='none';this.classList.add('active');document.getElementById('ea-pt-golf').classList.remove('active')">🗺️ Circuits</button>
 </div>
-<div class="ea-table-card" id="ea-pg"><table class="ea-table"><thead><tr><th>Titre</th><th>Destination</th><th>Durée</th><th>Prix</th><th>Statut</th><th></th></tr></thead><tbody>
+<div class="ea-table-card" id="ea-pg"><table class="ea-table"><thead><tr><th>Titre</th><th>Destination</th><th>Durée</th><th>Prix</th><th class="ea-th-seo">SEO</th><th>Statut</th><th></th></tr></thead><tbody>
 <?php foreach ($golf_posts as $gp): $gm=class_exists('VS08V_MetaBoxes')?VS08V_MetaBoxes::get($gp->ID):[]; ?>
-<tr><td><strong><?php echo esc_html($gp->post_title); ?></strong></td><td><?php echo esc_html($gm['destination']??'—'); ?></td><td><?php echo (int)($gm['duree']??0); ?>n</td><td><?php echo isset($gm['prix_double'])?number_format((float)$gm['prix_double'],0,',',' ').' €':'—'; ?></td><td><span class="ea-badge <?php echo $gp->post_status==='publish'?'ea-badge-paid':'ea-badge-past'; ?>"><?php echo $gp->post_status==='publish'?'Publié':ucfirst($gp->post_status); ?></span></td><td><a href="<?php echo admin_url('post.php?post='.$gp->ID.'&action=edit'); ?>" target="_blank" class="ea-btn ea-btn-outline" style="padding:5px 12px;font-size:11px">Modifier</a> <?php if($gp->post_status==='publish'): ?><a href="<?php echo get_permalink($gp->ID); ?>" target="_blank" class="ea-btn ea-btn-outline" style="padding:5px 12px;font-size:11px">Voir</a><?php endif; ?></td></tr>
+<tr><td><strong><?php echo esc_html($gp->post_title); ?></strong></td><td><?php echo esc_html($gm['destination']??'—'); ?></td><td><?php echo (int)($gm['duree']??0); ?>n</td><td><?php echo isset($gm['prix_double'])?number_format((float)$gm['prix_double'],0,',',' ').' €':'—'; ?></td><td class="ea-td-seo"><?php echo $vs08_ea_seo_badge($gp->ID); ?></td><td><span class="ea-badge <?php echo $gp->post_status==='publish'?'ea-badge-paid':'ea-badge-past'; ?>"><?php echo $gp->post_status==='publish'?'Publié':ucfirst($gp->post_status); ?></span></td><td><a href="<?php echo esc_url(admin_url('post.php?post=' . (int) $gp->ID . '&action=edit#vs08_seo_box')); ?>" target="_blank" class="ea-btn ea-btn-outline" style="padding:5px 12px;font-size:11px">Modifier</a> <?php if($gp->post_status==='publish'): ?><a href="<?php echo esc_url(get_permalink($gp->ID)); ?>" target="_blank" class="ea-btn ea-btn-outline" style="padding:5px 12px;font-size:11px">Voir</a><?php endif; ?></td></tr>
 <?php endforeach; ?>
 </tbody></table></div>
-<div class="ea-table-card" id="ea-pc" style="display:none"><table class="ea-table"><thead><tr><th>Titre</th><th>Destination</th><th>Durée</th><th>Prix</th><th>Statut</th><th></th></tr></thead><tbody>
+<div class="ea-table-card" id="ea-pc" style="display:none"><table class="ea-table"><thead><tr><th>Titre</th><th>Destination</th><th>Durée</th><th>Prix</th><th class="ea-th-seo">SEO</th><th>Statut</th><th></th></tr></thead><tbody>
 <?php foreach ($circuit_posts as $cp): $cm=class_exists('VS08C_Meta')?VS08C_Meta::get($cp->ID):[]; ?>
-<tr><td><strong><?php echo esc_html($cp->post_title); ?></strong></td><td><?php echo esc_html($cm['destination']??'—'); ?></td><td><?php echo (int)($cm['duree']??0); ?>n</td><td><?php echo isset($cm['prix_double'])?number_format((float)$cm['prix_double'],0,',',' ').' €':'—'; ?></td><td><span class="ea-badge <?php echo $cp->post_status==='publish'?'ea-badge-paid':'ea-badge-past'; ?>"><?php echo $cp->post_status==='publish'?'Publié':ucfirst($cp->post_status); ?></span></td><td><a href="<?php echo admin_url('post.php?post='.$cp->ID.'&action=edit'); ?>" target="_blank" class="ea-btn ea-btn-outline" style="padding:5px 12px;font-size:11px">Modifier</a> <?php if($cp->post_status==='publish'): ?><a href="<?php echo get_permalink($cp->ID); ?>" target="_blank" class="ea-btn ea-btn-outline" style="padding:5px 12px;font-size:11px">Voir</a><?php endif; ?></td></tr>
+<tr><td><strong><?php echo esc_html($cp->post_title); ?></strong></td><td><?php echo esc_html($cm['destination']??'—'); ?></td><td><?php echo (int)($cm['duree']??0); ?>n</td><td><?php echo isset($cm['prix_double'])?number_format((float)$cm['prix_double'],0,',',' ').' €':'—'; ?></td><td class="ea-td-seo"><?php echo $vs08_ea_seo_badge($cp->ID); ?></td><td><span class="ea-badge <?php echo $cp->post_status==='publish'?'ea-badge-paid':'ea-badge-past'; ?>"><?php echo $cp->post_status==='publish'?'Publié':ucfirst($cp->post_status); ?></span></td><td><a href="<?php echo esc_url(admin_url('post.php?post=' . (int) $cp->ID . '&action=edit#vs08_seo_box')); ?>" target="_blank" class="ea-btn ea-btn-outline" style="padding:5px 12px;font-size:11px">Modifier</a> <?php if($cp->post_status==='publish'): ?><a href="<?php echo esc_url(get_permalink($cp->ID)); ?>" target="_blank" class="ea-btn ea-btn-outline" style="padding:5px 12px;font-size:11px">Voir</a><?php endif; ?></td></tr>
 <?php endforeach; ?>
 </tbody></table></div>
 

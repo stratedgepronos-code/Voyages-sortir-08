@@ -2,14 +2,14 @@
 /**
  * Plugin Name: VS08 SEO — Booster IA
  * Description: Génère automatiquement titres SEO, meta descriptions, balises Open Graph et JSON-LD pour les séjours golf et circuits via Claude IA.
- * Version: 1.1.1
+ * Version: 1.1.2
  * Author: Voyages Sortir 08
  */
 if (!defined('ABSPATH')) exit;
 
 define('VS08_SEO_PATH', plugin_dir_path(__FILE__));
 define('VS08_SEO_URL',  plugin_dir_url(__FILE__));
-define('VS08_SEO_VER',  '1.1.1');
+define('VS08_SEO_VER',  '1.1.2');
 
 // Post types ciblés
 define('VS08_SEO_POST_TYPES', ['vs08_voyage', 'vs08_circuit']);
@@ -19,6 +19,25 @@ require_once VS08_SEO_PATH . 'includes/class-vs08-seo-meta-box.php';
 require_once VS08_SEO_PATH . 'includes/class-vs08-seo-head.php';
 require_once VS08_SEO_PATH . 'includes/class-vs08-seo-front.php';
 require_once VS08_SEO_PATH . 'includes/class-vs08-seo-admin-columns.php';
+
+if (!function_exists('vs08_seo_product_is_complete')) {
+    /**
+     * Indique si la fiche a un SEO exploitable (titre + meta description).
+     * Utilisable depuis les templates (ex. espace admin produits).
+     */
+    function vs08_seo_product_is_complete(int $post_id): bool {
+        $seo = get_post_meta($post_id, '_vs08_seo_data', true);
+        if (class_exists('VS08_SEO_Admin_Columns')) {
+            return VS08_SEO_Admin_Columns::is_seo_complete($seo);
+        }
+        if (!is_array($seo)) {
+            return false;
+        }
+        $t = trim((string) ($seo['seo_title'] ?? ''));
+        $d = trim((string) ($seo['seo_desc'] ?? ''));
+        return $t !== '' && $d !== '';
+    }
+}
 
 // ── Init
 add_action('init', function() {
