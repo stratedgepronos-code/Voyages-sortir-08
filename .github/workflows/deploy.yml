@@ -94,6 +94,22 @@ jobs:
           done
           [ "$ok" -eq 1 ] || echo "SplitPay deploy failed (non-blocking)"
 
+      - name: Deploy plugin vs08-seo (with retry)
+        run: |
+          ok=0
+          for attempt in 1 2 3; do
+            echo "=== Attempt $attempt/3 — Deploy SEO ==="
+            if sshpass -p "${{ secrets.SSH_PASSWORD }}" rsync -avz --delete \
+              -e "ssh ${{ env.SSH_OPTS }}" \
+              wp-content/plugins/vs08-seo/ \
+              ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }}:${{ env.WEBROOT }}/wp-content/plugins/vs08-seo/; then
+              echo "Plugin SEO deployed OK" && ok=1 && break
+            fi
+            echo "Attempt $attempt failed, waiting 10s..."
+            sleep 10
+          done
+          [ "$ok" -eq 1 ] || echo "SEO deploy failed (non-blocking)"
+
       - name: Deploy mu-plugins (with retry)
         run: |
           ok=0
@@ -139,6 +155,7 @@ jobs:
             find ${{ env.WEBROOT }}/wp-content/plugins/vs08-circuits -name '*.php' -exec touch {} +
             find ${{ env.WEBROOT }}/wp-content/plugins/vs08-sejours -name '*.php' -exec touch {} +
             find ${{ env.WEBROOT }}/wp-content/plugins/vs08-splitpay -name '*.php' -exec touch {} +
+            find ${{ env.WEBROOT }}/wp-content/plugins/vs08-seo -name '*.php' -exec touch {} +
             find ${{ env.WEBROOT }}/wp-content/mu-plugins -name '*.php' -exec touch {} +
             echo 'Files touched + paybox removed'
           " || echo "Touch/remove skipped (non-blocking)"
