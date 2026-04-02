@@ -10,14 +10,10 @@ $vs08_circuits_url = add_query_arg(['type' => 'circuit'], $vs08_res);
 <!-- SITE HEADER — MEGA MENU -->
 <header class="header" id="header">
 <?php if (vs08_opt('vs08_show_annonce', '1') === '1') : ?>
-<div class="announce announce--ticker">
-    <div class="announce-track">
-        <span class="announce-msg">🏠 Agence physique à Châlons-en-Champagne &nbsp;·&nbsp; ✈️ Départ de votre région &nbsp;·&nbsp; ⛳ Forfait golf 100&nbsp;% sur mesure, tout inclus &nbsp;·&nbsp; 🔴 Prix vols en temps réel &nbsp;·&nbsp; Réservation instantanée en ligne !</span>
-        <span class="announce-sep" aria-hidden="true">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-        <span class="announce-msg" aria-hidden="true">🏠 Agence physique à Châlons-en-Champagne &nbsp;·&nbsp; ✈️ Départ de votre région &nbsp;·&nbsp; ⛳ Forfait golf 100&nbsp;% sur mesure, tout inclus &nbsp;·&nbsp; 🔴 Prix vols en temps réel &nbsp;·&nbsp; Réservation instantanée en ligne !</span>
-        <span class="announce-sep" aria-hidden="true">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-    </div>
+<div class="announce announce--ticker" id="vs08Announce">
+    <div id="vs08Track" style="display:inline-block;white-space:nowrap;will-change:transform;">🏠 Agence physique à Châlons-en-Champagne &nbsp;·&nbsp; ✈️ Départ de votre région &nbsp;·&nbsp; ⛳ Forfait golf 100&nbsp;% sur mesure, tout inclus &nbsp;·&nbsp; 🔴 Prix vols en temps réel &nbsp;·&nbsp; Réservation instantanée en ligne !&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🏠 Agence physique à Châlons-en-Champagne &nbsp;·&nbsp; ✈️ Départ de votre région &nbsp;·&nbsp; ⛳ Forfait golf 100&nbsp;% sur mesure, tout inclus &nbsp;·&nbsp; 🔴 Prix vols en temps réel &nbsp;·&nbsp; Réservation instantanée en ligne !&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
 </div>
+<script>(function(){var t=document.getElementById('vs08Track');if(!t)return;var x=0,h=0;function s(){if(!h)h=t.scrollWidth/2;x-=0.5;if(Math.abs(x)>=h)x=0;t.style.transform='translateX('+x+'px)';requestAnimationFrame(s);}requestAnimationFrame(s);})();</script>
 <?php endif; ?>
 <nav class="nav-bar">
     <div class="logo-wrap">

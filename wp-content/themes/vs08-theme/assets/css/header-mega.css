@@ -7,11 +7,7 @@
 }
 
 .announce{background:#0b1120;color:#fff;font-size:13px;font-weight:500;height:38px;overflow:hidden;display:block;white-space:nowrap;line-height:38px}
-.announce--ticker{padding:0;position:relative}
-.announce-track{display:inline-block;white-space:nowrap;will-change:transform;animation:vs08ticker 40s linear infinite}
-.announce-msg{color:var(--gold-light);letter-spacing:.01em}
-.announce-sep{display:inline-block;width:80px}
-@keyframes vs08ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.announce--ticker{padding:0}
 .announce strong{color:var(--gold-light)}
 .announce a{color:var(--gold-light);font-weight:700;margin-left:8px;border-bottom:1px solid var(--gold-light);transition:opacity .2s}
 .announce a:hover{opacity:.8}
