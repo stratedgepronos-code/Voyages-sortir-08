@@ -10,14 +10,13 @@ $vs08_circuits_url = add_query_arg(['type' => 'circuit'], $vs08_res);
 <!-- SITE HEADER — MEGA MENU -->
 <header class="header" id="header">
 <?php if (vs08_opt('vs08_show_annonce', '1') === '1') : ?>
-<div class="announce">
-    <?php
-    $annonce = vs08_opt('vs08_annonce_text', 'Offre Flash : -15% sur l\'Algarve jusqu\'au 15 mars.');
-    $link = vs08_opt('vs08_annonce_link');
-    $link_text = vs08_opt('vs08_annonce_link_text', 'En profiter →');
-    echo wp_kses($annonce, ['strong' => []]);
-    if ($link) echo ' <a href="' . esc_url($link) . '">' . esc_html($link_text) . '</a>';
-    ?>
+<div class="announce announce--ticker">
+    <div class="announce-track">
+        <span class="announce-msg">🏠 Agence physique à Châlons-en-Champagne &nbsp;·&nbsp; ✈️ Départ de votre région &nbsp;·&nbsp; ⛳ Forfait golf 100&nbsp;% sur mesure, tout inclus &nbsp;·&nbsp; 🔴 Prix vols en temps réel &nbsp;·&nbsp; Réservation instantanée en ligne !</span>
+        <span class="announce-sep" aria-hidden="true">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        <span class="announce-msg" aria-hidden="true">🏠 Agence physique à Châlons-en-Champagne &nbsp;·&nbsp; ✈️ Départ de votre région &nbsp;·&nbsp; ⛳ Forfait golf 100&nbsp;% sur mesure, tout inclus &nbsp;·&nbsp; 🔴 Prix vols en temps réel &nbsp;·&nbsp; Réservation instantanée en ligne !</span>
+        <span class="announce-sep" aria-hidden="true">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+    </div>
 </div>
 <?php endif; ?>
 <nav class="nav-bar">
