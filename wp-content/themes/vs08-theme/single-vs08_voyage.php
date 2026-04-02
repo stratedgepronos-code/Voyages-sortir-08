@@ -401,7 +401,7 @@ $periodes_fermees_vente_js = array_values(array_map(function($p) {
                 <?php endif;?>
                 <div class="sv-hl"><div class="sv-hl-icon">🌙</div><div class="sv-hl-val" style="font-size:18px;line-height:1.2"><?php echo $duree_jours;?>j / <?php echo $duree;?>n</div><div class="sv-hl-lbl">Durée</div></div>
                 <?php if(!empty($transfert_type)):?>
-                <div class="sv-hl"><div class="sv-hl-icon"><?php echo ['groupes'=>'🚌','prives'=>'🚐','voiture'=>'🚗'][$transfert_type]??'🚌';?></div><div class="sv-hl-val" style="font-size:13px;line-height:1.2"><?php $tl=['groupes'=>'Transferts groupés','prives'=>'Transferts privés','voiture'=>'Loc. voiture']; echo esc_html($tl[$transfert_type]??'');?></div><div class="sv-hl-lbl">Transferts</div></div>
+                <div class="sv-hl"><div class="sv-hl-icon"><?php echo ['groupes'=>'🚌','prives'=>'🚐','voiture'=>'🚗'][$transfert_type]??'🚌';?></div><div class="sv-hl-val" style="font-size:13px;line-height:1.2"><?php $tl=['groupes'=>'Transferts groupés','prives'=>'Transferts privés','voiture'=>'Loc. voiture']; echo esc_html($tl[$transfert_type]??'');?></div><div class="sv-hl-lbl"><?php echo $transfert_type==='voiture' ? 'Inclus' : 'Transferts';?></div></div>
                 <?php elseif(!empty($hotel['etoiles'])):?>
                 <div class="sv-hl"><div class="sv-hl-icon">🏨</div><div class="sv-hl-val"><?php echo esc_html($hotel['etoiles']);?>★</div><div class="sv-hl-lbl">Hôtel</div></div>
                 <?php endif;?>
