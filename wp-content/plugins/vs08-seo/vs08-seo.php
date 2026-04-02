@@ -2,14 +2,14 @@
 /**
  * Plugin Name: VS08 SEO — Booster IA
  * Description: Génère automatiquement titres SEO, meta descriptions, balises Open Graph et JSON-LD pour les séjours golf et circuits via Claude IA.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Voyages Sortir 08
  */
 if (!defined('ABSPATH')) exit;
 
 define('VS08_SEO_PATH', plugin_dir_path(__FILE__));
 define('VS08_SEO_URL',  plugin_dir_url(__FILE__));
-define('VS08_SEO_VER',  '1.0.0');
+define('VS08_SEO_VER',  '1.1.0');
 
 // Post types ciblés
 define('VS08_SEO_POST_TYPES', ['vs08_voyage', 'vs08_circuit']);
@@ -17,11 +17,13 @@ define('VS08_SEO_POST_TYPES', ['vs08_voyage', 'vs08_circuit']);
 require_once VS08_SEO_PATH . 'includes/class-vs08-seo-generator.php';
 require_once VS08_SEO_PATH . 'includes/class-vs08-seo-meta-box.php';
 require_once VS08_SEO_PATH . 'includes/class-vs08-seo-head.php';
+require_once VS08_SEO_PATH . 'includes/class-vs08-seo-front.php';
 
 // ── Init
 add_action('init', function() {
     VS08_SEO_MetaBox::register();
     VS08_SEO_Head::register();
+    VS08_SEO_Front::register();
 });
 
 // ── Génération automatique à la publication / mise à jour d'un produit

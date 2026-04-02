@@ -97,6 +97,7 @@ var VS08C_CIRCUIT = <?php echo json_encode([
                 <div class="vc-desc">
                     <?php echo wp_kses_post(wpautop($m['description'] ?? get_the_excerpt())); ?>
                 </div>
+                <?php do_action('vs08_seo_faq'); ?>
                 <?php
                 $points = array_filter(array_map('trim', explode("\n", $m['points_forts'] ?? '')));
                 if (!empty($points)):

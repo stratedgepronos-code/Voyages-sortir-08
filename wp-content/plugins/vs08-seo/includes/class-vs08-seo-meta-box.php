@@ -40,6 +40,7 @@ class VS08_SEO_MetaBox {
         $api_ok    = defined('VS08V_CLAUDE_KEY') && !empty(VS08V_CLAUDE_KEY);
         $char_seo_title = mb_strlen($seo['seo_title'] ?? '');
         $char_seo_desc  = mb_strlen($seo['seo_desc']  ?? '');
+        $faq_n          = isset($seo['faq']) && is_array($seo['faq']) ? count($seo['faq']) : 0;
         ?>
         <style>
         .vs08seo-box{font-family:'Outfit',sans-serif}
@@ -93,26 +94,30 @@ class VS08_SEO_MetaBox {
             </div>
             <div class="vs08seo-error" id="vs08seo-error"></div>
 
+            <?php if ($faq_n > 0): ?>
+            <p class="vs08seo-status ok" style="margin:0 0 12px">📋 <?php echo (int) $faq_n; ?> question(s) FAQ affichées sur la fiche + schema FAQPage (rich results).</p>
+            <?php endif; ?>
+
             <!-- Titre SEO -->
             <div class="vs08seo-field">
-                <label>Titre SEO <em style="font-weight:400;text-transform:none">(max 60 car.)</em></label>
+                <label>Titre SEO <em style="font-weight:400;text-transform:none">(optimal ≤ 58 car., mobile SERP)</em></label>
                 <input type="text" name="vs08_seo[seo_title]" id="vs08seo-title"
                        value="<?php echo esc_attr($seo['seo_title'] ?? ''); ?>"
-                       maxlength="70" placeholder="Titre accrocheur pour Google…"
-                       oninput="vs08seoCount(this,'vs08seo-chars-title',60)">
-                <div class="vs08seo-chars <?php echo $char_seo_title <= 60 ? 'ok' : 'over'; ?>" id="vs08seo-chars-title">
-                    <?php echo $char_seo_title; ?>/60 caractères
+                       maxlength="64" placeholder="Mot-clé principal en tête (destination + golf)…"
+                       oninput="vs08seoCount(this,'vs08seo-chars-title',58)">
+                <div class="vs08seo-chars <?php echo $char_seo_title <= 58 ? 'ok' : 'over'; ?>" id="vs08seo-chars-title">
+                    <?php echo $char_seo_title; ?>/58 caractères
                 </div>
             </div>
 
             <!-- Meta description -->
             <div class="vs08seo-field">
-                <label>Meta description <em style="font-weight:400;text-transform:none">(max 155 car.)</em></label>
+                <label>Meta description <em style="font-weight:400;text-transform:none">(optimal ≤ 152 car.)</em></label>
                 <textarea name="vs08_seo[seo_desc]" id="vs08seo-desc" rows="3"
-                          maxlength="170" placeholder="Description persuasive pour les résultats de recherche…"
-                          oninput="vs08seoCount(this,'vs08seo-chars-desc',155)"><?php echo esc_textarea($seo['seo_desc'] ?? ''); ?></textarea>
-                <div class="vs08seo-chars <?php echo $char_seo_desc <= 155 ? 'ok' : 'over'; ?>" id="vs08seo-chars-desc">
-                    <?php echo $char_seo_desc; ?>/155 caractères
+                          maxlength="160" placeholder="Bénéfice + durée + CTA…"
+                          oninput="vs08seoCount(this,'vs08seo-chars-desc',152)"><?php echo esc_textarea($seo['seo_desc'] ?? ''); ?></textarea>
+                <div class="vs08seo-chars <?php echo $char_seo_desc <= 152 ? 'ok' : 'over'; ?>" id="vs08seo-chars-desc">
+                    <?php echo $char_seo_desc; ?>/152 caractères
                 </div>
             </div>
 
@@ -121,7 +126,7 @@ class VS08_SEO_MetaBox {
                 <div class="vs08seo-field">
                     <label>OG Title (réseaux sociaux)</label>
                     <input type="text" name="vs08_seo[og_title]" id="vs08seo-og-title"
-                           value="<?php echo esc_attr($seo['og_title'] ?? ''); ?>" maxlength="80"
+                           value="<?php echo esc_attr($seo['og_title'] ?? ''); ?>" maxlength="72"
                            placeholder="Titre pour Facebook/Twitter…">
                 </div>
                 <div class="vs08seo-field">
@@ -136,7 +141,7 @@ class VS08_SEO_MetaBox {
             <div class="vs08seo-field">
                 <label>OG Description (réseaux sociaux)</label>
                 <textarea name="vs08_seo[og_desc]" id="vs08seo-og-desc" rows="2"
-                          maxlength="210"><?php echo esc_textarea($seo['og_desc'] ?? ''); ?></textarea>
+                          maxlength="195"><?php echo esc_textarea($seo['og_desc'] ?? ''); ?></textarea>
             </div>
 
             <!-- Mots-clés visuels -->
@@ -149,7 +154,7 @@ class VS08_SEO_MetaBox {
             <!-- Prévisualisation Google -->
             <?php if (!empty($seo['seo_title'])): ?>
             <div class="vs08seo-preview" id="vs08seo-preview">
-                <p class="vs08seo-preview-title" id="vs08seo-prev-title"><?php echo esc_html($seo['seo_title']); ?> — Voyages Sortir 08</p>
+                <p class="vs08seo-preview-title" id="vs08seo-prev-title"><?php echo esc_html($seo['seo_title']); ?> | Voyages Sortir 08</p>
                 <p class="vs08seo-preview-url"><?php echo esc_html(str_replace(['https://', 'http://'], '', get_permalink($post->ID))); ?></p>
                 <p class="vs08seo-preview-desc" id="vs08seo-prev-desc"><?php echo esc_html($seo['seo_desc'] ?? ''); ?></p>
             </div>
@@ -172,7 +177,7 @@ class VS08_SEO_MetaBox {
             // Mise à jour prévisualisation
             if (el.id === 'vs08seo-title') {
                 var prev = document.getElementById('vs08seo-prev-title');
-                if (prev) prev.textContent = el.value + ' — Voyages Sortir 08';
+                if (prev) prev.textContent = el.value + ' | Voyages Sortir 08';
             }
             if (el.id === 'vs08seo-desc') {
                 var prev = document.getElementById('vs08seo-prev-desc');
@@ -212,10 +217,10 @@ class VS08_SEO_MetaBox {
         $existing = get_post_meta($post_id, '_vs08_seo_data', true) ?: [];
 
         $updated = array_merge($existing, [
-            'seo_title' => mb_substr(sanitize_text_field($input['seo_title'] ?? ''), 0, 60),
-            'seo_desc'  => mb_substr(sanitize_text_field($input['seo_desc']  ?? ''), 0, 155),
-            'og_title'  => mb_substr(sanitize_text_field($input['og_title']  ?? ''), 0, 70),
-            'og_desc'   => mb_substr(sanitize_text_field($input['og_desc']   ?? ''), 0, 200),
+            'seo_title' => mb_substr(sanitize_text_field($input['seo_title'] ?? ''), 0, 58),
+            'seo_desc'  => mb_substr(sanitize_text_field($input['seo_desc']  ?? ''), 0, 152),
+            'og_title'  => mb_substr(sanitize_text_field($input['og_title']  ?? ''), 0, 68),
+            'og_desc'   => mb_substr(sanitize_text_field($input['og_desc']   ?? ''), 0, 190),
             'keywords'  => sanitize_text_field($input['keywords'] ?? ''),
         ]);
 

@@ -37,13 +37,13 @@
             vs08seoUpdateKeywords(d.keywords || '');
 
             // Mise à jour prévisualisation
-            $('#vs08seo-prev-title').text((d.seo_title || '') + ' — Voyages Sortir 08');
+            $('#vs08seo-prev-title').text((d.seo_title || '') + ' | Voyages Sortir 08');
             $('#vs08seo-prev-desc').text(d.seo_desc || '');
             $('#vs08seo-preview').show();
 
             // Compteurs
-            vs08seoCount(document.getElementById('vs08seo-title'), 'vs08seo-chars-title', 60);
-            vs08seoCount(document.getElementById('vs08seo-desc'), 'vs08seo-chars-desc', 155);
+            vs08seoCount(document.getElementById('vs08seo-title'), 'vs08seo-chars-title', 58);
+            vs08seoCount(document.getElementById('vs08seo-desc'), 'vs08seo-chars-desc', 152);
 
             // Flash succès
             var $box = $('.vs08seo-box');
