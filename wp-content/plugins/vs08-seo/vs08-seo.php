@@ -2,14 +2,14 @@
 /**
  * Plugin Name: VS08 SEO — Booster IA
  * Description: Génère automatiquement titres SEO, meta descriptions, balises Open Graph et JSON-LD pour les séjours golf et circuits via Claude IA.
- * Version: 1.1.2
+ * Version: 1.2.0
  * Author: Voyages Sortir 08
  */
 if (!defined('ABSPATH')) exit;
 
 define('VS08_SEO_PATH', plugin_dir_path(__FILE__));
 define('VS08_SEO_URL',  plugin_dir_url(__FILE__));
-define('VS08_SEO_VER',  '1.1.2');
+define('VS08_SEO_VER',  '1.2.0');
 
 // Post types ciblés
 define('VS08_SEO_POST_TYPES', ['vs08_voyage', 'vs08_circuit']);
@@ -19,6 +19,11 @@ require_once VS08_SEO_PATH . 'includes/class-vs08-seo-meta-box.php';
 require_once VS08_SEO_PATH . 'includes/class-vs08-seo-head.php';
 require_once VS08_SEO_PATH . 'includes/class-vs08-seo-front.php';
 require_once VS08_SEO_PATH . 'includes/class-vs08-seo-admin-columns.php';
+
+if (class_exists('WP_CLI')) {
+    require_once VS08_SEO_PATH . 'includes/class-vs08-seo-cli.php';
+    WP_CLI::add_command('vs08-seo', 'VS08_SEO_CLI_Command');
+}
 
 if (!function_exists('vs08_seo_product_is_complete')) {
     /**
@@ -157,6 +162,7 @@ function vs08_seo_batch_page() {
     <div class="wrap vs08seo-wrap">
         <h1>🚀 VS08 SEO Booster IA</h1>
         <p style="color:#6b7280;font-size:14px">Génération automatique des titres SEO, meta descriptions et données structurées pour tous vos produits, via Claude IA.</p>
+        <p style="color:#9ca3af;font-size:12px;margin-top:-6px">Serveur avec WP-CLI : <code>wp vs08-seo generate-all</code> (produits sans SEO) ou <code>wp vs08-seo generate-all --force</code> (tout régénérer). Pause API : <code>--sleep=2</code>.</p>
 
         <div class="vs08seo-stats">
             <div class="vs08seo-stat vs08seo-stat-total"><span class="vs08seo-stat-n"><?php echo $total_all; ?></span><span class="vs08seo-stat-lbl">Produits total</span></div>

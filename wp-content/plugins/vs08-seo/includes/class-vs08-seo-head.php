@@ -126,12 +126,13 @@ class VS08_SEO_Head {
         $bc_id   = $url . '#breadcrumb';
 
         $tourist_trip = [
-            '@type'       => 'TouristTrip',
-            '@id'         => $trip_id,
-            'name'        => $seo['schema_name'] ?? get_the_title(),
-            'description' => $seo['schema_desc'] ?? ($seo['seo_desc'] ?? get_the_title()),
-            'url'         => get_permalink(),
-            'provider'    => [
+            '@type'        => 'TouristTrip',
+            '@id'          => $trip_id,
+            'name'         => $seo['schema_name'] ?? get_the_title(),
+            'description'  => $seo['schema_desc'] ?? ($seo['seo_desc'] ?? get_the_title()),
+            'url'          => get_permalink(),
+            'inLanguage'   => 'fr-FR',
+            'provider'     => [
                 '@type' => 'TravelAgency',
                 'name'  => $site,
                 'url'   => home_url('/'),
@@ -155,12 +156,20 @@ class VS08_SEO_Head {
 
         if ($prix > 0) {
             $tourist_trip['offers'] = [
-                '@type'           => 'Offer',
-                'priceCurrency'   => 'EUR',
-                'price'           => $prix,
-                'availability'    => 'https://schema.org/InStock',
-                'url'             => get_permalink(),
-                'priceValidUntil' => gmdate('Y-m-d', strtotime('+1 year')),
+                '@type'             => 'Offer',
+                'name'              => $seo['schema_name'] ?? get_the_title(),
+                'description'       => mb_substr($seo['schema_desc'] ?? ($seo['seo_desc'] ?? ''), 0, 320),
+                'priceCurrency'     => 'EUR',
+                'price'             => $prix,
+                'availability'      => 'https://schema.org/InStock',
+                'url'               => get_permalink(),
+                'priceValidUntil'   => gmdate('Y-m-d', strtotime('+1 year')),
+                'itemCondition'     => 'https://schema.org/NewCondition',
+                'seller'            => [
+                    '@type' => 'TravelAgency',
+                    'name'  => $site,
+                    'url'   => home_url('/'),
+                ],
             ];
         }
 

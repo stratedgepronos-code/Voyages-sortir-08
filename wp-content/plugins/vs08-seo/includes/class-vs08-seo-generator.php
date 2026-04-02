@@ -69,11 +69,35 @@ class VS08_SEO_Generator {
      */
     private static function build_product_data(\WP_Post $post): array {
         $type = $post->post_type;
-        $data = [
+        $body    = trim(wp_strip_all_tags($post->post_content));
+        $excerpt = trim(wp_strip_all_tags($post->post_excerpt ?? ''));
+        $chunks  = array_filter([$body, ($excerpt !== '' && $excerpt !== $body) ? $excerpt : '']);
+
+        if ($type === 'vs08_circuit' && class_exists('VS08C_Meta')) {
+            $mc = VS08C_Meta::get($post->ID);
+            $md = trim(wp_strip_all_tags($mc['description'] ?? ''));
+            if ($md !== '') {
+                $chunks[] = $md;
+            }
+            $pf = array_filter(array_map('trim', explode("\n", $mc['points_forts'] ?? '')));
+            if (!empty($pf)) {
+                $chunks[] = 'Points forts : ' . implode(' · ', array_slice($pf, 0, 6));
+            }
+        }
+
+        $merged_desc = implode("\n\n", array_unique($chunks));
+        if ($merged_desc === '') {
+            $merged_desc = $post->post_title;
+        }
+
+        $site_name = get_bloginfo('name') ?: 'Voyages Sortir 08';
+        $data      = [
             'titre'       => $post->post_title,
-            'description' => mb_substr(wp_strip_all_tags($post->post_content), 0, 3500),
+            'description' => mb_substr($merged_desc, 0, 3500),
             'url'         => get_permalink($post->ID),
             'image'       => get_the_post_thumbnail_url($post->ID, 'large') ?: '',
+            'site_name'   => $site_name,
+            'site_url'    => home_url('/'),
         ];
 
         if ($type === 'vs08_voyage' && class_exists('VS08V_MetaBoxes')) {
@@ -143,7 +167,9 @@ class VS08_SEO_Generator {
             return new WP_Error('no_api_key', 'Clé Claude API non configurée (VS08V_CLAUDE_KEY).');
         }
 
-        $prix_txt = !empty($data['prix_appel']) ? 'À partir de ' . $data['prix_appel'] . ' € par personne (indicatif).' : '';
+        $prix_txt   = !empty($data['prix_appel']) ? 'À partir de ' . $data['prix_appel'] . ' € par personne (indicatif).' : '';
+        $brand      = $data['site_name'] ?? 'Voyages Sortir 08';
+        $brand_url  = $data['site_url'] ?? '';
 
         if ($post_type === 'vs08_voyage') {
             $parcours_txt = !empty($data['nb_parcours']) ? $data['nb_parcours'] . ' parcours' : 'non précisé';
@@ -151,12 +177,20 @@ class VS08_SEO_Generator {
             $licence_txt  = !empty($data['licence_ffgolf']) ? 'Licence FFGolf : ' . $data['licence_ffgolf'] . '.' : '';
 
             $prompt = <<<PROMPT
-Tu es le meilleur consultant SEO français spécialisé dans le voyage golf et les séjours sportifs haut de gamme (marché FR, Google.fr).
+Tu es consultant SEO senior (marché France, Google.fr) spécialisé voyage golf et agences réceptives.
 
-CONTEXTE BUSINESS
-- Agence : Voyages Sortir 08 — spécialiste séjours golf en Europe et au-delà.
-- Objectif : devenir LA référence sur les requêtes type « séjour golf [destination] », « voyage golf [pays] », « package golf tout compris », « green fees [région] », « golf vacances [ville] ».
-- Le contenu doit inspirer confiance (expertise, clarté), sans promesses mensongères ni superlatifs creux interdits par Google.
+CADRE QUALITÉ (2025–2026) — à respecter strictement
+- **Contenu utile** : répondre à l’intention réelle (partir en séjour golf, comprendre le forfait, le niveau requis, ce qui est inclus). Pas de texte générique interchangeable entre deux destinations.
+- **E-E-A-T** : ton expert, précis, transparent sur ce qui est factuel (données fournies) vs ce qui est à confirmer. Pas de faux témoignages ni d’avis inventés.
+- **Interdit** : « meilleur », « n°1 », « miracle », garanties absolues, prix trompeurs, répétitions mécaniques du même mot-clé, MAJUSCULES agressives, emoji dans seo_title/seo_desc/schema.
+- **IA** : le texte doit sembler rédigé par un humain de métier ; varier la syntaxe ; intégrer des entités (nom du pays, de la destination, de l’hôtel si fourni, parcours, vols).
+
+MARQUE (pour contexte — ne pas mettre le nom commercial dans seo_title)
+- Agence : {$brand}
+- Site : {$brand_url}
+
+OBJECTIF RÉFÉRENCEMENT
+- Capter les intentions : « séjour golf [destination/pays] », « voyage golf organisé », « package golf vols + hôtel », « green fees [zone] », golfeurs France partant de [aéroports indiqués].
 
 DONNÉES PRODUIT (séjour)
 - Titre catalogue : {$data['titre']}
@@ -175,13 +209,14 @@ DONNÉES PRODUIT (séjour)
 """{$data['description']}"""
 
 RÈGLES SEO (obligatoires)
-1) Titre SEO (seo_title) : MAX 58 caractères (pas 60 — marge mobile). Le mot-clé principal (destination OU pays + golf) doit apparaître dans les **28 premiers caractères**. Formulation naturelle, une seule barre verticale ou tiret si utile. Pas le nom de l’agence. Pas de CAPS LOCK.
-2) Meta description (seo_desc) : MAX 152 caractères. **Phrase 1** = bénéfice + précision (durée, type de séjour golf). **Fin** = CTA clair (Réservez, Découvrez ce séjour, etc.). Intégrer 1 variation sémantique (ex. green fee, parcours, package) sans bourrage.
-3) og_title : MAX 68 car., ton légèrement plus émotionnel / social que seo_title.
-4) og_desc : MAX 190 car., mettre en avant l’expérience et la sérénité (vols, transferts, parcours selon données).
-5) keywords : 8 à 14 expressions **courtes**, séparées par des virgules, en français : mélange mot-clé tête (séjour golf + pays/destination) + longue traîne (vol inclus, green fees, golf [destination], voyage organisé golf…). Pas de doublons inutiles.
-6) schema_name / schema_desc : pour JSON-LD, factuels, sans superlatifs marketing.
-7) FAQ : exactement **3** paires question/réponse en français, pertinentes pour un golfeur qui compare les offres (ex. ce qui est inclus, niveau requis, bagages golf, flexibilité des dates si tu peux l’inférer du texte — sinon rester générique et honnête). Réponses **concises** (2–3 phrases max chacune). Si une info manque, répondre de façon prudente (« contactez-nous pour précisions »).
+1) **seo_title** (≤58 car.) : requête principale en tête — dans les **28 premiers caractères**, inclure **« golf »** ou **« séjour golf »** + **destination ou pays**. Forme naturelle (tiret ou « · » possible). Zéro nom d’agence / marque.
+2) **seo_desc** (≤152 car.) : ligne 1 = **valeur concrète** tirée des données (durée, ce qui est compris si pertinent, prix indicatif si fourni). Ligne 2 courte ou fin de phrase = **CTA** (Réserver, Voir les dates, Demander un devis). **1 entité** supplémentaire (ex. parcours, vol, transfert) sans keyword stuffing.
+3) **og_title** (≤68 car.) : plus engageant pour le partage social, sans clickbait mensonger.
+4) **og_desc** (≤190 car.) : ambiance + réassurance (organisation, étapes clés du séjour golf).
+5) **keywords** : 10 à 16 termes FR, séparés par des virgules — mix **tête de requête** + **longue traîne** + **variantes** (séjour golf, voyage golf, forfait, green fee, destination, pays, départ BVA/CDG si aéroports listés). Pas de doublons.
+6) **schema_name** : titre produit factuel (peut reprendre le titre catalogue légèrement épuré).
+7) **schema_desc** : 2 à 4 phrases, factuelles, utiles au moteur (résumé du produit + public cible golfeurs/accompagnants). Pas de superlatifs vides.
+8) **FAQ** : exactement **3** Q/R en français. Questions qu’un golfeur tape vraiment (inclus / non inclus, handicap, matériel, assurance, départs aéroports). Réponses ≤3 phrases ; si donnée absente : orienter vers l’agence sans inventer.
 
 FORMAT DE SORTIE
 Réponds UNIQUEMENT par un JSON valide UTF-8, sans markdown, sans commentaires :
@@ -189,11 +224,18 @@ Réponds UNIQUEMENT par un JSON valide UTF-8, sans markdown, sans commentaires :
 PROMPT;
         } else {
             $prompt = <<<PROMPT
-Tu es le meilleur consultant SEO français spécialisé circuits et voyages organisés (marché FR, Google.fr).
+Tu es consultant SEO senior (France, Google.fr) spécialisé circuits et voyages organisés.
 
-CONTEXTE BUSINESS
-- Agence : Voyages Sortir 08.
-- Objectif : capter les intentions « circuit [destination] », « voyage organisé [pays] », « séjour découverte tout compris », etc.
+CADRE QUALITÉ (2025–2026)
+- Contenu **utile et spécifique** à l’itinéraire / pays (pas un texte générique « beau voyage »).
+- **E-E-A-T** : précis, honnête, pas de promesses impossibles ; pas d’avis ou notes inventés.
+- **Interdit** : meilleur, n°1, miracle, prix trompeurs, bourrage de mots-clés, CAPS abusives, emoji dans seo_title/seo_desc/schema.
+
+MARQUE (contexte — pas dans seo_title)
+- {$brand} — {$brand_url}
+
+OBJECTIF
+- Intentions : « circuit [destination/pays] », « voyage organisé », « séjour avec guide », « tout compris » (seulement si cohérent avec les données).
 
 DONNÉES PRODUIT (circuit)
 - Titre : {$data['titre']}
@@ -208,13 +250,12 @@ DONNÉES PRODUIT (circuit)
 """{$data['description']}"""
 
 RÈGLES SEO
-1) seo_title : MAX 58 car., mot-clé principal (destination ou pays + « circuit » ou « voyage ») dans les **28 premiers caractères**. Pas le nom du site.
-2) seo_desc : MAX 152 car., bénéfice + durée + CTA final.
-3) og_title : MAX 68 car.
-4) og_desc : MAX 190 car.
-5) keywords : 8 à 14 termes, français, circuit + destination + voyage organisé + variantes.
-6) schema_name / schema_desc : factuels pour données structurées.
-7) FAQ : **3** Q/R utiles pour un voyageur hésitant (pension, vols, encadrement, etc.), réponses courtes et honnêtes.
+1) **seo_title** (≤58 car.) : dans les **28 premiers caractères**, « circuit » ou « voyage » + **destination ou pays**. Pas de nom d’agence.
+2) **seo_desc** (≤152 car.) : durée + expérience concrète (transport, pension si connue) + CTA.
+3) **og_title** / **og_desc** : même esprit, ton partage social.
+4) **keywords** : 10 à 16 termes FR (circuit, voyage organisé, destination, pays, guide, vol, pension…).
+5) **schema_name** / **schema_desc** : factuels, 2–4 phrases pour schema_desc.
+6) **FAQ** : **3** Q/R (niveau physique, bagages, visa/formalités si pays exotique, repas, taille du groupe…) — réponses courtes ; pas d’invention.
 
 FORMAT : JSON seul, sans markdown :
 {"seo_title":"...","seo_desc":"...","og_title":"...","og_desc":"...","keywords":"...","schema_name":"...","schema_desc":"...","faq":[{"question":"...","answer":"..."},{"question":"...","answer":"..."},{"question":"...","answer":"..."}]}
