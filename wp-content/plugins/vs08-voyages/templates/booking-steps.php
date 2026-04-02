@@ -728,6 +728,20 @@ get_header();
                     </label>
                 </div>
 
+                <!-- Conditions d'entrée — obligation légale de vérification (art. L211-16 Code du Tourisme) -->
+                <div style="background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:16px;margin-bottom:16px">
+                    <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start">
+                        <input type="checkbox" id="bk-confirm-entree" style="margin-top:3px;flex-shrink:0">
+                        <span style="font-size:12px;color:#1e3a5f;font-family:'Outfit',sans-serif;line-height:1.6">
+                            Je déclare m'être renseigné(e) sur les <strong>conditions d'entrée dans le(s) pays de destination</strong>
+                            (validité du passeport, visa, vaccinations obligatoires ou recommandées, restrictions sanitaires, etc.)
+                            auprès des autorités compétentes (<a href="https://www.diplomatie.gouv.fr/fr/conseils-aux-voyageurs/" target="_blank" rel="noopener" style="color:#2563eb">France Diplomatie</a>)
+                            et je reconnais être <strong>seul(e) responsable</strong> du respect de ces formalités.
+                            Voyages Sortir 08 ne saurait être tenu responsable d'un refus d'entrée sur le territoire pour non-respect des conditions requises.
+                        </span>
+                    </label>
+                </div>
+
                 <label class="bk-cgu">
                     <input type="checkbox" id="bk-cgu">
                     <span class="bk-cgu-text">
@@ -1954,6 +1968,13 @@ function bkSubmit() {
     var confirmInfo = document.getElementById('bk-confirm-info');
     if (!confirmInfo || !confirmInfo.checked) {
         alert('Veuillez certifier l\'exactitude des informations voyageurs (noms, dates de naissance, passeports).');
+        confirmInfo && confirmInfo.closest('label') && (confirmInfo.closest('label').style.outline = '2px solid #dc2626');
+        return;
+    }
+    var confirmEntree = document.getElementById('bk-confirm-entree');
+    if (!confirmEntree || !confirmEntree.checked) {
+        alert('Veuillez confirmer que vous avez vérifié les conditions d\'entrée dans le pays de destination.');
+        confirmEntree && confirmEntree.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
     var payModeEl = document.querySelector('input[name="bk-payment-mode"]:checked');

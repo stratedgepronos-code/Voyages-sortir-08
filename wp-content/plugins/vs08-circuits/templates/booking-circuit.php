@@ -646,6 +646,19 @@ var BK_CIRCUIT = <?php echo json_encode([
                 </label>
             </div>
 
+            <div style="background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:16px;margin-bottom:16px">
+                <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start">
+                    <input type="checkbox" id="bkc-confirm-entree" style="margin-top:3px;flex-shrink:0">
+                    <span style="font-size:12px;color:#1e3a5f;font-family:'Outfit',sans-serif;line-height:1.6">
+                        Je déclare m'être renseigné(e) sur les <strong>conditions d'entrée dans le(s) pays de destination</strong>
+                        (validité du passeport, visa, vaccinations obligatoires ou recommandées, restrictions sanitaires, etc.)
+                        auprès des autorités compétentes (<a href="https://www.diplomatie.gouv.fr/fr/conseils-aux-voyageurs/" target="_blank" rel="noopener" style="color:#2563eb">France Diplomatie</a>)
+                        et je reconnais être <strong>seul(e) responsable</strong> du respect de ces formalités.
+                        Voyages Sortir 08 ne saurait être tenu responsable d'un refus d'entrée sur le territoire pour non-respect des conditions requises.
+                    </span>
+                </label>
+            </div>
+
             <label style="display:flex;gap:10px;align-items:flex-start;font-size:12px;font-family:'Outfit',sans-serif;color:#1a3a3a;cursor:pointer;line-height:1.5">
                 <input type="checkbox" id="bkc-cgu" style="margin-top:3px;flex-shrink:0">
                 <span>
@@ -1386,6 +1399,7 @@ var BK_CIRCUIT = <?php echo json_encode([
     window.bkcSubmit = function() {
         var errEl = document.getElementById('bkc-error');
         if (!document.getElementById('bkc-confirm-info').checked) { alert("Veuillez certifier l'exactitude des informations voyageurs."); return; }
+        if (!document.getElementById('bkc-confirm-entree').checked) { alert("Veuillez confirmer que vous avez vérifié les conditions d'entrée dans le pays de destination."); document.getElementById('bkc-confirm-entree').scrollIntoView({behavior:'smooth',block:'center'}); return; }
         var pm = (document.querySelector('input[name="bkc-payment-mode"]:checked')||{}).value || 'card';
         if (pm === 'agency') {
             var ac = document.getElementById('bkc-agence-confirm');
