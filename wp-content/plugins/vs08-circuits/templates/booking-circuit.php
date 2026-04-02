@@ -107,6 +107,16 @@ if ($params['date_depart']) {
     if ((strtotime($params['date_depart']) - time()) / 86400 <= $delai_solde) $payer_tout = true;
 }
 
+// Plancher vol (règle : acompte ≥ vols + bagages) — calculé au niveau template pour le JS
+$_prix_vol_pax = ($params['prix_vol'] > 0) ? floatval($params['prix_vol']) : floatval($m['prix_vol_base'] ?? 0);
+$_supp_aero_tpl = 0;
+foreach ($m['aeroports'] ?? [] as $_a) {
+    if (strtoupper($_a['code'] ?? '') === $params['aeroport']) {
+        $_supp_aero_tpl = floatval($_a['supp'] ?? 0); break;
+    }
+}
+$_plancher_vol_base = ($_prix_vol_pax + $_supp_aero_tpl + floatval($m['prix_bagage'] ?? 0)) * $nb_total;
+
 // Répartition voyageurs par chambre
 $voy_par_chambre = [];
 for ($c = 1; $c <= $nb_chambres; $c++) $voy_par_chambre[$c] = [];
@@ -131,7 +141,9 @@ var BK_CIRCUIT = <?php echo json_encode([
     'nb_chambres'    => $nb_chambres,
     'params'         => $params,
     'devis'          => $devis,
-    'acompte_pct'    => $acompte_pct,
+    'acompte_pct'    => $devis['acompte_pct'],
+    'acompte_pct_raw'=> $acompte_pct,
+    'plancher_vol_base' => $_plancher_vol_base,
     'delai_solde'    => $delai_solde,
     'payer_tout'     => $payer_tout,
     'saved_voyageurs'=> $bk_saved_voy,
@@ -681,7 +693,7 @@ var BK_CIRCUIT = <?php echo json_encode([
         </div>
         <div style="font-size:11px;color:#6b7280;text-align:right;font-family:'Outfit',sans-serif;margin-top:2px">soit <?php echo number_format($devis['par_pers'], 0, ',', ' '); ?> €/pers.</div>
         <?php if (!$payer_tout && ($devis['acompte'] ?? 0) < ($devis['total'] ?? 0)): ?>
-        <div class="bkc-recap-acompte"><span>🔒 Acompte <?php echo intval($acompte_pct); ?>%</span><span><?php echo number_format($devis['acompte'], 0, ',', ' '); ?> €</span></div>
+        <div class="bkc-recap-acompte"><span id="bkc-recap-acompte-lbl">🔒 Acompte <?php echo intval($devis['acompte_pct']); ?>%</span><span id="bkc-recap-acompte-val"><?php echo number_format($devis['acompte'], 0, ',', ' '); ?> €</span></div>
         <div style="font-size:11px;color:#6b7280;font-family:'Outfit',sans-serif;margin-top:4px">Solde à régler <?php echo $delai_solde; ?> jours avant le départ</div>
         <?php endif; ?>
         <div class="bkc-loading" id="bkc-loading"><div class="bkc-spinner"></div><div style="font-size:13px;color:#59b7b7;font-family:'Outfit',sans-serif">Création de votre réservation…</div></div>
@@ -699,7 +711,7 @@ var BK_CIRCUIT = <?php echo json_encode([
     var submitting = false;
     var bkc_insurance_check = false;
 
-    // ═══ Recalcul unifié du total (delta vol + assurance) ═══
+    // ═══ Recalcul unifié du total (delta vol + assurance) avec règle plancher vol ═══
     function bkcUpdateTotal() {
         var base = parseFloat(BK.devis.total) || 0;
         var addVol = bkc_vol_delta_total || 0;
@@ -707,12 +719,25 @@ var BK_CIRCUIT = <?php echo json_encode([
         var newTotal = base + addVol + addIns;
         var totalValEl = document.getElementById('bkc-recap-total-val');
         if (totalValEl) totalValEl.textContent = bkcFmt(newTotal);
-        // Acompte
-        var acompteEl = document.querySelector('.bkc-recap-acompte span:last-child');
-        if (acompteEl && BK.acompte_pct) {
-            var acompte = Math.ceil(newTotal * parseFloat(BK.acompte_pct) / 100);
-            acompteEl.textContent = bkcFmt(acompte);
+
+        // Recalcul acompte avec plancher vol (règle : acompte ≥ vols + bagages)
+        var pctRaw = parseFloat(BK.acompte_pct_raw) || 30;
+        var acompte = Math.ceil(newTotal * pctRaw / 100);
+        var plancher = (parseFloat(BK.plancher_vol_base) || 0) + (addVol > 0 ? addVol : 0);
+        var pctFinal = pctRaw;
+        if (plancher > 0 && acompte < plancher && newTotal > 0) {
+            var pctReel = plancher / newTotal * 100;
+            pctFinal = Math.ceil(pctReel / 5) * 5;
+            acompte = Math.ceil(newTotal * pctFinal / 100);
         }
+        // Stocker pour le récap de confirmation
+        BK._acompte_computed = acompte;
+        BK._acompte_pct_computed = pctFinal;
+
+        var lblEl = document.getElementById('bkc-recap-acompte-lbl');
+        var valEl = document.getElementById('bkc-recap-acompte-val');
+        if (lblEl) lblEl.textContent = '🔒 Acompte ' + pctFinal + '%';
+        if (valEl) valEl.textContent = bkcFmt(acompte);
         // Détail des lignes tarifaires
         var detailEl = document.getElementById('bkc-recap-detail-lines');
         if (detailEl && BK.devis && BK.devis.lines && BK.devis.lines.length) {
@@ -1282,15 +1307,16 @@ var BK_CIRCUIT = <?php echo json_encode([
             html += '<div style="' + rowS + '"><span style="' + lblS + '">🛡️ Assurance Multirisques</span><span style="' + valS + ';color:#e3147a">+' + bkcFmt(BK.insurance_total) + '</span></div>';
         }
 
-        var total = Math.ceil((parseFloat(BK.devis.total) || 0) + (bkc_insurance_check ? (parseFloat(BK.insurance_total) || 0) : 0));
+        var total = Math.ceil((parseFloat(BK.devis.total) || 0) + (bkc_vol_delta_total || 0) + (bkc_insurance_check ? (parseFloat(BK.insurance_total) || 0) : 0));
         html += '<div style="margin-top:18px;padding-top:14px;border-top:2.5px solid #3d9a9a;display:flex;justify-content:space-between;align-items:center">';
-        html += '<span style="font-size:15px;font-weight:700;color:#0f2424">Total circuit</span>';
+        html += '<span style="font-size:15px;font-weight:700;color:#0f2024">Total circuit</span>';
         html += '<span style="font-family:Playfair Display,serif;font-size:28px;font-weight:700;color:#3d9a9a">' + bkcFmt(total) + '</span>';
         html += '</div>';
 
         if (!BK.payer_tout) {
-            var acomptePct = parseFloat(BK.acompte_pct) || 30;
-            var acompte = Math.ceil(total * acomptePct / 100);
+            // Utiliser l'acompte pré-calculé par bkcUpdateTotal (règle plancher vol déjà appliquée)
+            var acomptePct = BK._acompte_pct_computed || parseFloat(BK.acompte_pct) || 30;
+            var acompte = BK._acompte_computed || Math.ceil(total * acomptePct / 100);
             html += '<div style="background:#e8f8f0;border-radius:10px;padding:10px;margin-top:8px;text-align:center">';
             html += '<div style="font-weight:700;font-size:17px;color:#2d8a5a">' + bkcFmt(acompte) + '</div>';
             html += '<div style="font-size:11px;color:#6b7280">Acompte ' + acomptePct + '% à payer maintenant · Solde ' + BK.delai_solde + ' j. avant départ</div>';
