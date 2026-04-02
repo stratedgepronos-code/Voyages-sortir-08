@@ -6,6 +6,43 @@
  */
 if (!defined('ABSPATH')) exit;
 
+if (!function_exists('vs08_iata_city')) {
+    function vs08_iata_city($code) {
+        static $map = [
+            'CDG'=>'Paris CDG','ORY'=>'Paris Orly','BVA'=>'Paris Beauvais',
+            'LYS'=>'Lyon','MRS'=>'Marseille','NCE'=>'Nice','TLS'=>'Toulouse',
+            'BOD'=>'Bordeaux','NTE'=>'Nantes','LIL'=>'Lille','SXB'=>'Strasbourg',
+            'RNS'=>'Rennes','BES'=>'Brest','MPL'=>'Montpellier','RHE'=>'Reims',
+            'LHR'=>'Londres Heathrow','LGW'=>'Londres Gatwick','STN'=>'Londres Stansted',
+            'AMS'=>'Amsterdam','BRU'=>'Bruxelles','GVA'=>'Genève','ZRH'=>'Zurich',
+            'FCO'=>'Rome','MXP'=>'Milan','BCN'=>'Barcelone','MAD'=>'Madrid',
+            'LIS'=>'Lisbonne','ATH'=>'Athènes','IST'=>'Istanbul','DXB'=>'Dubaï',
+            'CMN'=>'Casablanca','RAK'=>'Marrakech','AGA'=>'Agadir','FEZ'=>'Fès',
+            'TNG'=>'Tanger','OUD'=>'Oujda',
+            'TUN'=>'Tunis','MIR'=>'Monastir','DJE'=>'Djerba',
+            'ALG'=>'Alger','ORN'=>'Oran','CZL'=>'Constantine',
+            'CAI'=>'Le Caire','HRG'=>'Hurghada','SSH'=>'Sharm el-Sheikh','LXR'=>'Louxor',
+            'RBA'=>'Rabat','NKC'=>'Nouakchott',
+            'JFK'=>'New York JFK','MIA'=>'Miami','LAX'=>'Los Angeles','YUL'=>'Montréal',
+            'CUN'=>'Cancún','MEX'=>'Mexico City','BOG'=>'Bogota','GRU'=>'São Paulo',
+            'NBO'=>'Nairobi','ADD'=>'Addis-Abeba','DAR'=>'Dar es Salaam','JNB'=>'Johannesburg',
+            'CMB'=>'Colombo','BKK'=>'Bangkok','SIN'=>'Singapour','KUL'=>'Kuala Lumpur',
+            'HKG'=>'Hong Kong','PEK'=>'Pékin','PVG'=>'Shanghai','NRT'=>'Tokyo',
+            'SYD'=>'Sydney','AKL'=>'Auckland',
+            'LCA'=>'Larnaca','PFO'=>'Paphos','HER'=>'Héraklion (Crète)','SKG'=>'Thessalonique',
+            'OPO'=>'Porto','AGP'=>'Málaga','PMI'=>'Palma de Majorque',
+            'VCE'=>'Venise','NAP'=>'Naples','BUD'=>'Budapest','PRG'=>'Prague',
+            'WAW'=>'Varsovie','VIE'=>'Vienne','ZAG'=>'Zagreb','BEG'=>'Belgrade',
+            'SVO'=>'Moscou','LED'=>'Saint-Pétersbourg',
+            'BEY'=>'Beyrouth','AMM'=>'Amman','TLV'=>'Tel Aviv','DOH'=>'Doha','AUH'=>'Abu Dhabi',
+            'MLE'=>'Malé (Maldives)','SEZ'=>'Mahé (Seychelles)',
+            'RUN'=>'La Réunion','TNR'=>'Antananarivo','MRU'=>'Île Maurice',
+        ];
+        $code = strtoupper(trim($code));
+        return $map[$code] ?? $code;
+    }
+}
+
 $circuit_id = intval(get_query_var('vs08c_circuit_id'));
 if (!$circuit_id || get_post_type($circuit_id) !== 'vs08_circuit') { wp_redirect(home_url()); exit; }
 
@@ -196,7 +233,7 @@ var BK_CIRCUIT = <?php echo json_encode([
 .bkc-route-header{display:flex;align-items:center;justify-content:center;gap:14px;background:#0f2424;border-radius:14px;padding:14px 20px;margin-bottom:20px}
 .bkc-route-iata{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase}
 .bkc-route-arrow{font-size:22px;color:#59b7b7}
-.bkc-route-city{font-size:11px;color:rgba(255,255,255,.85);font-family:'Outfit',sans-serif;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;font-weight:500}
+.bkc-route-city{font-size:11px;color:rgba(255,255,255,.85);font-family:'Outfit',sans-serif;letter-spacing:.5px;margin-top:2px;font-weight:500}
 .bkc-route-dates{font-size:12px;color:rgba(255,255,255,.9);font-family:'Outfit',sans-serif;margin-top:4px;font-weight:600;background:rgba(89,183,183,.18);padding:3px 10px;border-radius:20px;white-space:nowrap}
 /* ── Combo cards ── */
 .bkc-combo-loading{display:flex;align-items:center;gap:10px;font-size:15px;color:#9ca3af;font-family:'Outfit',sans-serif;padding:20px 0}
@@ -389,7 +426,7 @@ var BK_CIRCUIT = <?php echo json_encode([
             <div class="bkc-route-header">
                 <div style="text-align:center">
                     <div class="bkc-route-iata"><?php echo esc_html($params['aeroport'] ?: '—'); ?></div>
-                    <div class="bkc-route-city"><?php echo esc_html($city_depart); ?></div>
+                    <div class="bkc-route-city"><?php echo esc_html(vs08_iata_city($params['aeroport'])); ?></div>
                 </div>
                 <div style="text-align:center">
                     <div class="bkc-route-arrow">✈️ ⟷</div>
@@ -397,7 +434,7 @@ var BK_CIRCUIT = <?php echo json_encode([
                 </div>
                 <div style="text-align:center">
                     <div class="bkc-route-iata"><?php echo esc_html($iata_dest ?: '—'); ?></div>
-                    <div class="bkc-route-city"><?php echo esc_html($city_dest); ?></div>
+                    <div class="bkc-route-city"><?php echo esc_html(!empty($m['destination']) ? $m['destination'] : vs08_iata_city($iata_dest)); ?></div>
                 </div>
             </div>
 

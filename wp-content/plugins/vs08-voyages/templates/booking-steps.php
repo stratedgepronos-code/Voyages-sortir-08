@@ -5,6 +5,43 @@
  */
 if (!defined('ABSPATH')) exit;
 
+if (!function_exists('vs08_iata_city')) {
+    function vs08_iata_city($code) {
+        static $map = [
+            'CDG'=>'Paris CDG','ORY'=>'Paris Orly','BVA'=>'Paris Beauvais',
+            'LYS'=>'Lyon','MRS'=>'Marseille','NCE'=>'Nice','TLS'=>'Toulouse',
+            'BOD'=>'Bordeaux','NTE'=>'Nantes','LIL'=>'Lille','SXB'=>'Strasbourg',
+            'RNS'=>'Rennes','BES'=>'Brest','MPL'=>'Montpellier','RHE'=>'Reims',
+            'LHR'=>'Londres Heathrow','LGW'=>'Londres Gatwick','STN'=>'Londres Stansted',
+            'AMS'=>'Amsterdam','BRU'=>'Bruxelles','GVA'=>'Genève','ZRH'=>'Zurich',
+            'FCO'=>'Rome','MXP'=>'Milan','BCN'=>'Barcelone','MAD'=>'Madrid',
+            'LIS'=>'Lisbonne','ATH'=>'Athènes','IST'=>'Istanbul','DXB'=>'Dubaï',
+            'CMN'=>'Casablanca','RAK'=>'Marrakech','AGA'=>'Agadir','FEZ'=>'Fès',
+            'TNG'=>'Tanger','OUD'=>'Oujda',
+            'TUN'=>'Tunis','MIR'=>'Monastir','DJE'=>'Djerba',
+            'ALG'=>'Alger','ORN'=>'Oran','CZL'=>'Constantine',
+            'CAI'=>'Le Caire','HRG'=>'Hurghada','SSH'=>'Sharm el-Sheikh','LXR'=>'Louxor',
+            'RBA'=>'Rabat','NKC'=>'Nouakchott',
+            'JFK'=>'New York JFK','MIA'=>'Miami','LAX'=>'Los Angeles','YUL'=>'Montréal',
+            'CUN'=>'Cancún','MEX'=>'Mexico City','BOG'=>'Bogota','GRU'=>'São Paulo',
+            'NBO'=>'Nairobi','ADD'=>'Addis-Abeba','DAR'=>'Dar es Salaam','JNB'=>'Johannesburg',
+            'CMB'=>'Colombo','BKK'=>'Bangkok','SIN'=>'Singapour','KUL'=>'Kuala Lumpur',
+            'HKG'=>'Hong Kong','PEK'=>'Pékin','PVG'=>'Shanghai','NRT'=>'Tokyo',
+            'SYD'=>'Sydney','AKL'=>'Auckland',
+            'LCA'=>'Larnaca','PFO'=>'Paphos','HER'=>'Héraklion (Crète)','SKG'=>'Thessalonique',
+            'OPO'=>'Porto','AGP'=>'Málaga','PMI'=>'Palma de Majorque',
+            'VCE'=>'Venise','NAP'=>'Naples','BUD'=>'Budapest','PRG'=>'Prague',
+            'WAW'=>'Varsovie','VIE'=>'Vienne','ZAG'=>'Zagreb','BEG'=>'Belgrade',
+            'SVO'=>'Moscou','LED'=>'Saint-Pétersbourg',
+            'BEY'=>'Beyrouth','AMM'=>'Amman','TLV'=>'Tel Aviv','DOH'=>'Doha','AUH'=>'Abu Dhabi',
+            'MLE'=>'Malé (Maldives)','SEZ'=>'Mahé (Seychelles)',
+            'RUN'=>'La Réunion','TNR'=>'Antananarivo','MRU'=>'Île Maurice',
+        ];
+        $code = strtoupper(trim($code));
+        return $map[$code] ?? $code;
+    }
+}
+
 $voyage_id = intval(get_query_var('vs08_voyage_id'));
 if (!$voyage_id) { wp_redirect(home_url()); exit; }
 
@@ -83,9 +120,9 @@ get_header();
 /* ── COMBO VOL ALLER+RETOUR ── */
 .bk-route-header{display:flex;align-items:center;justify-content:center;gap:14px;background:#0f2424;border-radius:14px;padding:14px 20px;margin-bottom:20px}
 .bk-route-iata{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase}
-.bk-route-city{font-size:13px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px;text-align:center}
+.bk-route-city{font-size:11px;color:rgba(255,255,255,.85);letter-spacing:.5px;margin-top:2px;text-align:center;font-family:'Outfit',sans-serif;font-weight:500}
 .bk-route-arrow{color:#59b7b7;font-size:22px}
-.bk-route-dates{font-size:13px;color:rgba(255,255,255,.45);text-align:center;margin-top:2px}
+.bk-route-dates{font-size:12px;color:rgba(255,255,255,.9);text-align:center;margin-top:4px;font-family:'Outfit',sans-serif;font-weight:600;background:rgba(89,183,183,.18);padding:3px 10px;border-radius:20px;white-space:nowrap}
 .combo-card{border:2px solid #e5e7eb;border-radius:16px;overflow:hidden;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .15s;background:#fff;position:relative;margin-bottom:10px}
 .combo-card:hover{border-color:#b7dfdf;box-shadow:0 4px 20px rgba(61,154,154,.1);transform:translateY(-1px)}
 .combo-card.selected{border-color:#3d9a9a;box-shadow:0 0 0 4px rgba(61,154,154,.12)}
@@ -348,7 +385,7 @@ get_header();
                 <div class="bk-route-header">
                     <div>
                         <div class="bk-route-iata"><?php echo esc_html(strtoupper((string)($params['aeroport'] ?? '—'))); ?></div>
-                        <div class="bk-route-city"><?php echo esc_html(strtoupper((string)($params['aeroport'] ?? ''))); ?></div>
+                        <div class="bk-route-city"><?php echo esc_html(vs08_iata_city($params['aeroport'] ?? '')); ?></div>
                     </div>
                     <div style="text-align:center">
                         <div class="bk-route-arrow">⇄</div>
@@ -362,7 +399,7 @@ get_header();
                     </div>
                     <div>
                         <div class="bk-route-iata" style="text-align:right"><?php echo esc_html(strtoupper((string)($m['iata_dest'] ?? '—'))); ?></div>
-                        <div class="bk-route-city"><?php echo esc_html(strtoupper((string)($m['iata_dest'] ?? ''))); ?></div>
+                        <div class="bk-route-city"><?php echo esc_html(!empty($m['destination']) ? $m['destination'] : vs08_iata_city($m['iata_dest'] ?? '')); ?></div>
                     </div>
                 </div>
 
