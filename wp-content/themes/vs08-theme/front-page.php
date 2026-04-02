@@ -292,7 +292,7 @@ body.home,body.page-template-default{background:#fff!important}
 .fp-title-white{color:#fff}
 .fp-title-white em{color:var(--teal-light)}
 .fp-why-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;margin-top:56px}
-.fp-why-item{padding:36px 28px;border:1px solid rgba(89,183,183,.12);border-radius:20px;background:rgba(255,255,255,.02);transition:all .35s;/* PAS de .anim — directement visible */}
+.fp-why-item{padding:36px 28px;border:1px solid rgba(89,183,183,.12);border-radius:20px;background:rgba(255,255,255,.02);transition:all .35s;/* PAS de .anim — directement visible */}.fp-why-item--highlight{border:1.5px solid rgba(89,183,183,.45);background:rgba(89,183,183,.07);position:relative;}.fp-why-item--highlight::before{content:'★ Unique en France';position:absolute;top:-12px;left:24px;font-size:10px;font-weight:700;background:#59b7b7;color:#fff;padding:2px 10px;border-radius:20px;letter-spacing:.04em}
 .fp-why-item:hover{border-color:rgba(89,183,183,.35);background:rgba(89,183,183,.06);transform:translateY(-5px)}
 .fp-why-icon{font-size:28px;margin-bottom:22px}
 .fp-why-item h3{font-size:20px;color:#fff;margin-bottom:12px}
@@ -1438,10 +1438,12 @@ document.addEventListener('DOMContentLoaded', function() {
         <p class="fp-section-label fp-label-light">✦ Notre différence</p>
         <h2 class="fp-section-title fp-title-white">Pourquoi nous <em>faire confiance ?</em></h2>
         <div class="fp-why-grid">
-            <div class="fp-why-item"><div class="fp-why-icon">🌍</div><h3>L'agence qui vous ressemble</h3><p>Golf, circuits, all inclusive, road trips ou parcs d'attractions : quelle que soit votre envie, on monte votre voyage sur mesure, de A à Z.</p></div>
-            <div class="fp-why-item"><div class="fp-why-icon">🏷️</div><h3>Le meilleur prix, toujours</h3><p>Notre slogan, c'est une promesse : "Libre à vous de payer plus cher !" Vols, hôtels, activités — tout est négocié au plus juste pour vous.</p></div>
-            <div class="fp-why-item"><div class="fp-why-icon">📞</div><h3>Un vrai conseiller dédié</h3><p>Pas de chatbot, pas de centre d'appels. Un interlocuteur unique à Châlons-en-Champagne qui vous accompagne avant, pendant et après votre voyage.</p></div>
-            <div class="fp-why-item"><div class="fp-why-icon">🔒</div><h3>Partez l'esprit tranquille</h3><p>Garantie financière APST, immatriculation Atout France, assurance Hiscox, paiement sécurisé 3D Secure. Vos vacances sont entre de bonnes mains.</p></div>
+            <div class="fp-why-item"><div class="fp-why-icon">🏠</div><h3>Agence physique à Châlons</h3><p>Une vraie agence, de vrais conseillers. Venez nous rencontrer ou appelez-nous — nous construisons votre voyage ensemble, sans chatbot ni centre d'appels.</p></div>
+            <div class="fp-why-item fp-why-item--highlight"><div class="fp-why-icon">🔴</div><h3>Prix vols en temps réel</h3><p>Seule agence golf en France connectée en direct aux tarifs des compagnies aériennes. Le prix affiché est le vrai prix du moment — réservable instantanément en ligne, 24h/24.</p></div>
+            <div class="fp-why-item fp-why-item--highlight"><div class="fp-why-icon">⚡</div><h3>Réservation 100 % en ligne</h3><p>Vol + hôtel + green fees + voiture en un seul forfait, réservable en 3 minutes. Aucun concurrent golf ne propose ça. Pas de formulaire de devis, pas d'attente — c'est immédiat.</p></div>
+            <div class="fp-why-item"><div class="fp-why-icon">🏷️</div><h3>Forfait golf sur mesure</h3><p>Départ de votre région, dates libres, hôtel et parcours au choix, green fees inclus. Tout compris, zéro surprise. Votre séjour golf exactement comme vous le voulez.</p></div>
+            <div class="fp-why-item"><div class="fp-why-icon">👥</div><h3>Paiement partagé pour groupes</h3><p>Partez à plusieurs golfeurs ? Chaque participant règle sa part en ligne via son propre lien sécurisé. Idéal pour les clubs, associations et comités d'entreprise.</p></div>
+            <div class="fp-why-item"><div class="fp-why-icon">🔒</div><h3>Partez l'esprit tranquille</h3><p>Garantie financière APST, immatriculation Atout France, assurance Hiscox, paiement 3D Secure. Vos vacances sont entre de bonnes mains.</p></div>
         </div>
     </div>
 </section>
