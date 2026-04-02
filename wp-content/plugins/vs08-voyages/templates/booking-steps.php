@@ -699,10 +699,11 @@ get_header();
 
                 <div style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px;font-family:'Outfit',sans-serif">
                     <div style="font-size:13px;font-weight:700;color:#0f2424;margin-bottom:10px">💳 Mode de règlement</div>
-                    <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start;margin-bottom:12px">
+                    <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start">
                         <input type="radio" name="bk-payment-mode" value="card" checked style="margin-top:4px;flex-shrink:0">
                         <span style="font-size:13px;color:#374151;line-height:1.5"><strong>Payer par carte bancaire</strong> (Paybox sécurisé) — encaissement de l’acompte ou du montant dû en ligne.</span>
                     </label>
+                    <div style="height:1px;background:#e5e7eb;margin:12px 0"></div>
                     <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start">
                         <input type="radio" name="bk-payment-mode" value="agency" id="bk-payment-agency" style="margin-top:4px;flex-shrink:0">
                         <span style="font-size:13px;color:#374151;line-height:1.5"><strong>Paiement en agence</strong> (pré-réservation)</span>
@@ -713,11 +714,10 @@ get_header();
                             <span style="font-size:11px;color:#6b7280;line-height:1.45">Je comprends qu’il s’agit d’une <strong>pré-réservation</strong> : le <strong>prix n’est pas définitivement bloqué</strong> tant que le règlement n’a pas été effectué en agence.</span>
                         </label>
                     </div>
-
-                    <!-- SplitPay v2 -->
-                    <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start;margin-top:8px;padding:12px 14px;background:#fff;border-radius:8px;border:1.5px solid #ddd" id="bk-mode-split-label">
+                    <div style="height:1px;background:#e5e7eb;margin:12px 0"></div>
+                    <label style="display:flex;gap:10px;cursor:pointer;align-items:flex-start" id="bk-mode-split-label">
                         <input type="radio" name="bk-payment-mode" value="splitpay" id="bk-payment-splitpay" style="margin-top:4px;flex-shrink:0;accent-color:#59b7b7">
-                        <span style="font-size:13px;color:#374151;line-height:1.5;font-family:'Outfit',sans-serif">
+                        <span style="font-size:13px;color:#374151;line-height:1.5">
                             <strong>👥 Payer à plusieurs</strong> — Créez un dossier groupe. Chaque participant recevra son lien de paiement sécurisé.<br>
                             <span style="font-size:11px;color:#59b7b7">Idéal pour les groupes de golfeurs · Vous configurerez les parts dans votre espace voyageur</span>
                         </span>
