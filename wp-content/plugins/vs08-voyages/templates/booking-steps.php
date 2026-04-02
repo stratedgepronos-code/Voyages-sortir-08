@@ -633,6 +633,43 @@ get_header();
                 </div>
                 <?php endfor; ?>
 
+                <?php
+                // Bloc location de voiture — affiché seulement si incluse dans le forfait
+                $has_loc_voiture = in_array('location_vehicule', $m['compris']['oui'] ?? []);
+                if ($has_loc_voiture): ?>
+                <div class="bk-loc-voiture-block" id="bk-loc-voiture-block">
+                    <div class="bk-loc-voiture-title">🚗 Location de véhicule incluse dans votre forfait</div>
+                    <p class="bk-loc-voiture-intro">Votre séjour comprend la mise à disposition d'un véhicule. Lisez attentivement la condition obligatoire ci-dessous et cochez la case pour confirmer.</p>
+                    <label class="bk-loc-conducteur-lbl" id="bk-loc-conducteur-wrap">
+                        <input type="checkbox" id="bk-loc-conducteur-check" name="loc_conducteur_ok" value="1"
+                               onchange="bkUpdateLocCheck(this)">
+                        <span class="bk-loc-conducteur-txt">
+                            Je certifie que le conducteur principal disposera d'une
+                            <strong>carte de CRÉDIT (Visa ou Mastercard) à son propre nom</strong>
+                            à présenter <strong>obligatoirement au loueur</strong> lors de la prise en charge du véhicule.
+                            <em>Sans cette carte de crédit au nom du conducteur, le véhicule ne pourra pas être remis.</em>
+                        </span>
+                    </label>
+                    <input type="hidden" id="bk-loc-conducteur-val" class="bk-required" value="">
+                    <div class="bk-loc-notice" id="bk-loc-notice" style="display:none">
+                        ✅ Confirmé — La carte de crédit du conducteur sera présentée au loueur.
+                    </div>
+                </div>
+                <style>
+                .bk-loc-voiture-block{background:#fff9f0;border:2px solid #f59e0b;border-radius:14px;padding:18px 20px;margin:18px 0}
+                .bk-loc-voiture-title{font-size:14px;font-weight:700;color:#0f2424;margin-bottom:6px}
+                .bk-loc-voiture-intro{font-size:12px;color:#6b7280;font-family:'Outfit',sans-serif;margin:0 0 14px;line-height:1.55}
+                .bk-loc-conducteur-lbl{display:flex;align-items:flex-start;gap:12px;cursor:pointer;padding:14px 16px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;transition:all .2s;user-select:none}
+                .bk-loc-conducteur-lbl:hover{border-color:#f59e0b;background:#fffbeb}
+                .bk-loc-conducteur-lbl input[type=checkbox]{width:20px;height:20px;flex-shrink:0;margin-top:2px;accent-color:#59b7b7;cursor:pointer}
+                .bk-loc-conducteur-txt{font-size:13px;color:#374151;font-family:'Outfit',sans-serif;line-height:1.6}
+                .bk-loc-conducteur-txt strong{color:#0f2424}
+                .bk-loc-conducteur-txt em{display:block;margin-top:6px;color:#b45309;font-style:normal;font-size:12px;font-weight:600}
+                .bk-loc-notice{background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:10px 14px;margin-top:12px;font-size:13px;color:#166534;font-family:'Outfit',sans-serif;font-weight:600}
+                .bk-loc-conducteur-lbl.confirmed{border-color:#22c55e;background:#f0fdf4}
+                </style>
+                <?php endif; ?>
+
                 <div class="bk-nav">
                     <button class="bk-btn-prev" onclick="bkGo(1)">← Retour</button>
                     <button class="bk-btn-next" onclick="bkGo(3)">Continuer →</button>
@@ -1477,8 +1514,19 @@ function bkSelectCombo(idx) {
 // NAVIGATION ENTRE ÉTAPES
 // ══════════════════════════════════════════════════════════════════════════════
 
+function bkUpdateLocCheck(chk) {
+    var val    = document.getElementById('bk-loc-conducteur-val');
+    var notice = document.getElementById('bk-loc-notice');
+    var lbl    = document.getElementById('bk-loc-conducteur-wrap');
+    if (val)    val.value = chk.checked ? '1' : '';
+    if (notice) notice.style.display = chk.checked ? 'block' : 'none';
+    if (lbl) {
+        if (chk.checked) lbl.classList.add('confirmed');
+        else             lbl.classList.remove('confirmed');
+    }
+}
+
 function bkGo(step) {
-    // Trouver l'étape courante
     var currentStep = 0;
     for (var s = 1; s <= 4; s++) {
         var el = document.getElementById('bk-step-' + s);
