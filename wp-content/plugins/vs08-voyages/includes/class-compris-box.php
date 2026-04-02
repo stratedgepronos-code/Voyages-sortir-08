@@ -18,7 +18,9 @@ class VS08V_ComprisBox {
             'transfert_prive'   => ['🚐', 'Transferts aéroport / hôtel / aéroport privé'],
             'location_vehicule' => ['🚗', 'Location de véhicule'],  // input type spécial
             'hebergement'       => ['🏨', 'Hébergement'],
-            'pension'           => ['🍽️', 'Restauration (selon formule)'],
+            'petit_dej'         => ['🍳', 'Formule Petits-déjeuners'],
+            'demi_pension'      => ['🍽️', 'Formule Demi-pension'],
+            'tout_inclus'       => ['🌟', 'Formule Tout inclus'],
             'greenfees'         => ['⛳', 'Green fees parcours(s)'],
             'buggy'             => ['🚗', 'Buggy / Chariot'],
             'assurance'         => ['🛡️', 'Assurance annulation/rapatriement'],
@@ -130,7 +132,11 @@ class VS08V_ComprisBox {
             'transfert_prive'=>['🚐','Transferts privés'],
             'location_vehicule'=>['🚗','Location de véhicule'],
             'hebergement'=>['🏨','Hébergement'],
-            'pension'=>['🍽️','Restauration'],'greenfees'=>['⛳','Green fees'],'buggy'=>['🚗','Buggy/Chariot'],
+            'pension'=>['🍽️','Restauration'],          // slug legacy — compatibilité anciens produits
+            'petit_dej'=>['🍳','Formule Petits-déjeuners'],
+            'demi_pension'=>['🍽️','Formule Demi-pension'],
+            'tout_inclus'=>['🌟','Formule Tout inclus'],
+            'greenfees'=>['⛳','Green fees'],'buggy'=>['🚗','Buggy/Chariot'],
             'assurance'=>['🛡️','Assurance'],'encadrement'=>['👨‍🏫','Encadrement francophone'],
             'taxes'=>['🏛️','Taxes incluses'],'welcome'=>['🎁','Cocktail de bienvenue'],'navette_golfs'=>['🚌','Navette hôtel / golfs / hôtel'],
         ];
