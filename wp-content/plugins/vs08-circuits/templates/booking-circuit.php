@@ -366,7 +366,7 @@ var BK_CIRCUIT = <?php echo json_encode([
                 'CMB'=>'Colombo','BKK'=>'Bangkok','SIN'=>'Singapour','KUL'=>'Kuala Lumpur',
                 'HKG'=>'Hong Kong','PEK'=>'Pékin','PVG'=>'Shanghai','NRT'=>'Tokyo',
                 'SYD'=>'Sydney','AKL'=>'Auckland',
-                'LCA'=>'Larnaca (Chypre)','HER'=>'Héraklion','SKG'=>'Thessalonique',
+                'LCA'=>'Larnaca (Chypre)','PFO'=>'Paphos (Chypre)','HER'=>'Héraklion','SKG'=>'Thessalonique',
                 'OPO'=>'Porto','AGP'=>'Malaga','PMI'=>'Palma de Majorque',
                 'VCE'=>'Venise','NAP'=>'Naples','BUD'=>'Budapest','PRG'=>'Prague',
                 'WAW'=>'Varsovie','VIE'=>'Vienne','ZAG'=>'Zagreb','BEG'=>'Belgrade',
