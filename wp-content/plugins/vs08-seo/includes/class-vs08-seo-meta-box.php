@@ -152,9 +152,24 @@ class VS08_SEO_MetaBox {
                 <?php endforeach; ?>
             </div>
 
-            <div class="vs08seo-faq-block">
+            <!-- Prévisualisation Google -->
+            <?php if (!empty($seo['seo_title'])): ?>
+            <div class="vs08seo-preview" id="vs08seo-preview">
+                <p class="vs08seo-preview-title" id="vs08seo-prev-title"><?php echo esc_html($seo['seo_title']); ?> | Voyages Sortir 08</p>
+                <p class="vs08seo-preview-url"><?php echo esc_html(str_replace(['https://', 'http://'], '', get_permalink($post->ID))); ?></p>
+                <p class="vs08seo-preview-desc" id="vs08seo-prev-desc"><?php echo esc_html($seo['seo_desc'] ?? ''); ?></p>
+            </div>
+            <?php else: ?>
+            <div id="vs08seo-preview" style="display:none" class="vs08seo-preview">
+                <p class="vs08seo-preview-title" id="vs08seo-prev-title"></p>
+                <p class="vs08seo-preview-url"><?php echo esc_html(str_replace(['https://', 'http://'], '', get_permalink($post->ID))); ?></p>
+                <p class="vs08seo-preview-desc" id="vs08seo-prev-desc"></p>
+            </div>
+            <?php endif; ?>
+
+            <div class="vs08seo-faq-block" style="margin-top:20px">
                 <h4>FAQ fiche produit + Google (schema FAQPage)</h4>
-                <p style="font-size:11px;color:#64748b;margin:0 0 12px;line-height:1.5">Affichées dans le bloc <code>.vs08-seo-faq</code> sur la fiche. Laisser question + réponse vides pour retirer une entrée. <strong>Titre « Questions fréquentes »</strong> : fichier <code>wp-content/plugins/vs08-seo/includes/class-vs08-seo-front.php</code> (ligne du <code>&lt;h2&gt;</code>).</p>
+                <p style="font-size:11px;color:#64748b;margin:0 0 12px;line-height:1.5">En bas de la meta box pour laisser titre / meta / aperçu en premier. Sur le site : bloc <code>.vs08-seo-faq</code> (titre éditable dans <code>class-vs08-seo-front.php</code>). Laisser Q+R vides pour retirer une entrée.</p>
                 <?php
                 $faq_rows = isset($seo['faq']) && is_array($seo['faq']) ? $seo['faq'] : [];
                 for ($fi = 0; $fi < 3; $fi++) :
@@ -174,21 +189,6 @@ class VS08_SEO_MetaBox {
                 </div>
                 <?php endfor; ?>
             </div>
-
-            <!-- Prévisualisation Google -->
-            <?php if (!empty($seo['seo_title'])): ?>
-            <div class="vs08seo-preview" id="vs08seo-preview">
-                <p class="vs08seo-preview-title" id="vs08seo-prev-title"><?php echo esc_html($seo['seo_title']); ?> | Voyages Sortir 08</p>
-                <p class="vs08seo-preview-url"><?php echo esc_html(str_replace(['https://', 'http://'], '', get_permalink($post->ID))); ?></p>
-                <p class="vs08seo-preview-desc" id="vs08seo-prev-desc"><?php echo esc_html($seo['seo_desc'] ?? ''); ?></p>
-            </div>
-            <?php else: ?>
-            <div id="vs08seo-preview" style="display:none" class="vs08seo-preview">
-                <p class="vs08seo-preview-title" id="vs08seo-prev-title"></p>
-                <p class="vs08seo-preview-url"><?php echo esc_html(str_replace(['https://', 'http://'], '', get_permalink($post->ID))); ?></p>
-                <p class="vs08seo-preview-desc" id="vs08seo-prev-desc"></p>
-            </div>
-            <?php endif; ?>
         </div>
 
         <script>
