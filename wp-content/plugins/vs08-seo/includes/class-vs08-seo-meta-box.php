@@ -68,6 +68,11 @@ class VS08_SEO_MetaBox {
         @keyframes vs08seo-spin{to{transform:rotate(360deg)}}
         .vs08seo-error{color:#dc2626;font-size:12px;margin-top:8px;display:none}
         .vs08seo-no-api{background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;font-size:12px;color:#991b1b;margin-bottom:12px}
+        .vs08seo-faq-block{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin:18px 0}
+        .vs08seo-faq-block>h4{margin:0 0 10px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#475569}
+        .vs08seo-faq-item{border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:10px;background:#fff}
+        .vs08seo-faq-item:last-child{margin-bottom:0}
+        .vs08seo-faq-item label{font-size:10px!important;margin-bottom:4px!important}
         </style>
 
         <div class="vs08seo-box">
@@ -93,10 +98,6 @@ class VS08_SEO_MetaBox {
                 Claude génère le SEO optimal pour ce produit…
             </div>
             <div class="vs08seo-error" id="vs08seo-error"></div>
-
-            <?php if ($faq_n > 0): ?>
-            <p class="vs08seo-status ok" style="margin:0 0 12px">📋 <?php echo (int) $faq_n; ?> question(s) FAQ affichées sur la fiche + schema FAQPage (rich results).</p>
-            <?php endif; ?>
 
             <!-- Titre SEO -->
             <div class="vs08seo-field">
@@ -149,6 +150,29 @@ class VS08_SEO_MetaBox {
                 <?php foreach (array_filter(array_map('trim', explode(',', $seo['keywords'] ?? ''))) as $kw): ?>
                 <span class="vs08seo-keyword"><?php echo esc_html($kw); ?></span>
                 <?php endforeach; ?>
+            </div>
+
+            <div class="vs08seo-faq-block">
+                <h4>FAQ fiche produit + Google (schema FAQPage)</h4>
+                <p style="font-size:11px;color:#64748b;margin:0 0 12px;line-height:1.5">Affichées dans le bloc <code>.vs08-seo-faq</code> sur la fiche. Laisser question + réponse vides pour retirer une entrée. <strong>Titre « Questions fréquentes »</strong> : fichier <code>wp-content/plugins/vs08-seo/includes/class-vs08-seo-front.php</code> (ligne du <code>&lt;h2&gt;</code>).</p>
+                <?php
+                $faq_rows = isset($seo['faq']) && is_array($seo['faq']) ? $seo['faq'] : [];
+                for ($fi = 0; $fi < 3; $fi++) :
+                    $fq = isset($faq_rows[$fi]['question']) ? $faq_rows[$fi]['question'] : '';
+                    $fa = isset($faq_rows[$fi]['answer']) ? $faq_rows[$fi]['answer'] : '';
+                    ?>
+                <div class="vs08seo-faq-item">
+                    <div class="vs08seo-field" style="margin-bottom:8px">
+                        <label>Question <?php echo (int) ($fi + 1); ?></label>
+                        <input type="text" name="vs08_seo[faq][<?php echo (int) $fi; ?>][q]" id="vs08seo-faq-q-<?php echo (int) $fi; ?>"
+                               value="<?php echo esc_attr($fq); ?>" maxlength="200" placeholder="Ex. Les green fees sont-ils inclus ?">
+                    </div>
+                    <div class="vs08seo-field" style="margin-bottom:0">
+                        <label>Réponse <?php echo (int) ($fi + 1); ?></label>
+                        <textarea name="vs08_seo[faq][<?php echo (int) $fi; ?>][a]" id="vs08seo-faq-a-<?php echo (int) $fi; ?>" rows="3" maxlength="520" placeholder="Réponse claire et factuelle…"><?php echo esc_textarea($fa); ?></textarea>
+                    </div>
+                </div>
+                <?php endfor; ?>
             </div>
 
             <!-- Prévisualisation Google -->
@@ -216,12 +240,29 @@ class VS08_SEO_MetaBox {
 
         $existing = get_post_meta($post_id, '_vs08_seo_data', true) ?: [];
 
+        $faq_rows = [];
+        if (!empty($input['faq']) && is_array($input['faq'])) {
+            foreach ($input['faq'] as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $q = sanitize_text_field($row['q'] ?? '');
+                $a = sanitize_textarea_field($row['a'] ?? '');
+                $a = mb_substr(preg_replace('/\s+/u', ' ', trim($a)), 0, 500);
+                if ($q !== '' && $a !== '') {
+                    $faq_rows[] = ['question' => mb_substr($q, 0, 120), 'answer' => $a];
+                }
+            }
+        }
+        $faq_rows = VS08_SEO_Generator::sanitize_faq($faq_rows);
+
         $updated = array_merge($existing, [
             'seo_title' => mb_substr(sanitize_text_field($input['seo_title'] ?? ''), 0, 58),
             'seo_desc'  => mb_substr(sanitize_text_field($input['seo_desc']  ?? ''), 0, 152),
             'og_title'  => mb_substr(sanitize_text_field($input['og_title']  ?? ''), 0, 68),
             'og_desc'   => mb_substr(sanitize_text_field($input['og_desc']   ?? ''), 0, 190),
             'keywords'  => sanitize_text_field($input['keywords'] ?? ''),
+            'faq'       => $faq_rows,
         ]);
 
         update_post_meta($post_id, '_vs08_seo_data', $updated);

@@ -36,6 +36,14 @@
             $('#vs08seo-keywords-input').val(d.keywords || '');
             vs08seoUpdateKeywords(d.keywords || '');
 
+            if (d.faq && Array.isArray(d.faq)) {
+                for (var i = 0; i < 3; i++) {
+                    var it = d.faq[i];
+                    $('#vs08seo-faq-q-' + i).val(it && it.question ? it.question : '');
+                    $('#vs08seo-faq-a-' + i).val(it && it.answer ? it.answer : '');
+                }
+            }
+
             // Mise à jour prévisualisation
             $('#vs08seo-prev-title').text((d.seo_title || '') + ' | Voyages Sortir 08');
             $('#vs08seo-prev-desc').text(d.seo_desc || '');

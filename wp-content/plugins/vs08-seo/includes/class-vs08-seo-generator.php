@@ -322,10 +322,12 @@ PROMPT;
     }
 
     /**
+     * Nettoie une FAQ (formulaire admin ou réponse IA).
+     *
      * @param mixed $faq_raw
      * @return array<int, array{question:string, answer:string}>
      */
-    private static function sanitize_faq($faq_raw): array {
+    public static function sanitize_faq($faq_raw): array {
         if (!is_array($faq_raw)) {
             return [];
         }
