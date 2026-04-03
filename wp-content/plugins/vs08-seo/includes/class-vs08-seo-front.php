@@ -3,13 +3,14 @@ if (!defined('ABSPATH')) exit;
 
 /**
  * Affiche les FAQ SEO en contenu visible (aligné avec le JSON-LD FAQPage).
- * Séjours : ajout après the_content. Circuits : hook vs08_seo_faq dans le template single.
+ * Séjours : hook vs08_seo_faq_voyage_after_title dans single-vs08_voyage (sous le H2, avant le texte).
+ * Circuits : hook vs08_seo_faq dans single-circuit.
  */
 class VS08_SEO_Front {
 
     public static function register() {
         add_action('wp_enqueue_scripts', [__CLASS__, 'enqueue_assets']);
-        add_filter('the_content', [__CLASS__, 'append_faq_voyage'], 18);
+        add_action('vs08_seo_faq_voyage_after_title', [__CLASS__, 'action_render_faq']);
         add_action('vs08_seo_faq', [__CLASS__, 'action_render_faq']);
     }
 
@@ -63,12 +64,5 @@ class VS08_SEO_Front {
         </section>
         <?php
         return (string) ob_get_clean();
-    }
-
-    public static function append_faq_voyage(string $content): string {
-        if (!is_singular('vs08_voyage') || !in_the_loop() || !is_main_query()) {
-            return $content;
-        }
-        return $content . self::render_faq_html(get_the_ID());
     }
 }

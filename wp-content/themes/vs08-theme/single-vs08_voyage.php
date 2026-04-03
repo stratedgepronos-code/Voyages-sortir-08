@@ -394,6 +394,7 @@ $periodes_fermees_vente_js = array_values(array_map(function($p) {
         <!-- PRÉSENTATION -->
         <div class="sv-card" id="sec-presentation">
             <h2 class="sv-section-title">✦ Ce séjour en quelques mots</h2>
+            <?php do_action('vs08_seo_faq_voyage_after_title'); ?>
             <div class="sv-desc"><?php the_content();?></div>
             <div class="sv-highlights">
                 <?php if(!empty($m['nb_parcours'])):?>
