@@ -133,7 +133,7 @@ get_header();
 
             <div class="ev-detail-grid">
 
-                <!-- Récapitulatif -->
+                <!-- 1. Récapitulatif -->
                 <section class="ev-card ev-card-recap">
                     <h2>Récapitulatif du circuit</h2>
                     <div class="ev-recap-rows">
@@ -172,70 +172,7 @@ get_header();
                     </div>
                 </section>
 
-                <div class="ev-cards-pax-docs">
-                <!-- Participants -->
-                <?php if (!empty($voyageurs)): ?>
-                <section class="ev-card ev-card-pax">
-                    <h2>Participants</h2>
-                    <div class="ev-pax-list">
-                        <?php foreach ($voyageurs as $i => $v):
-                            $ddn = $v['ddn'] ?? $v['date_naissance'] ?? '';
-                        ?>
-                        <div class="ev-pax-item">
-                            <div class="ev-pax-num"><?php echo $i + 1; ?></div>
-                            <div class="ev-pax-info">
-                                <strong><?php echo esc_html(($v['prenom'] ?? '') . ' ' . strtoupper($v['nom'] ?? '')); ?></strong>
-                                <span class="ev-pax-type ev-pax-type-golfeur">Voyageur</span>
-                                <?php if ($ddn): ?>
-                                    <span>Né(e) le <?php echo esc_html(date('d/m/Y', strtotime($ddn))); ?></span>
-                                <?php endif; ?>
-                                <?php if (!empty($v['passeport'])): ?>
-                                    <span>Passeport <?php echo esc_html($v['passeport']); ?></span>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                </section>
-                <?php endif; ?>
-
-                <!-- Documents -->
-                <section class="ev-card ev-card-docs">
-                    <h2>Documents</h2>
-                    <a href="<?php echo esc_url($contract_url); ?>" target="_blank" rel="noopener" class="ev-btn ev-btn-outline">Voir / imprimer le contrat de vente</a>
-                    <div class="ev-docs-upload">
-                        <p class="ev-docs-upload-desc">Envoyez des documents à l'agence (photos, pièces…) pour ce voyage.</p>
-                        <form class="ev-form-documents" data-order-id="<?php echo $order_id; ?>" enctype="multipart/form-data" method="post">
-                            <?php wp_nonce_field('vs08v_send_documents', 'vs08v_docs_nonce'); ?>
-                            <input type="file" name="vs08v_docs[]" class="ev-input-files" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx">
-                            <button type="submit" class="ev-btn ev-btn-outline ev-btn-docs-send">Envoyer des documents à l'agence</button>
-                            <span class="ev-docs-feedback" aria-live="polite"></span>
-                        </form>
-                    </div>
-                </section>
-                </div>
-
-                <!-- Paiements en attente de validation -->
-                <?php if (!empty($solde_info['pending_payments'])): ?>
-                <section class="ev-card ev-card-pending">
-                    <h2>Paiements en attente de validation</h2>
-                    <p class="ev-pending-desc">Les paiements ci-dessous ont été enregistrés et sont en attente de confirmation par l'agence.</p>
-                    <div class="ev-pending-list">
-                        <?php foreach ($solde_info['pending_payments'] as $pp): ?>
-                        <div class="ev-pending-item">
-                            <div class="ev-pending-icon">⏳</div>
-                            <div class="ev-pending-info">
-                                <strong><?php echo number_format($pp['amount'], 2, ',', ' '); ?> €</strong>
-                                <span><?php echo esc_html($pp['method']); ?> — <?php echo esc_html($pp['date']); ?></span>
-                            </div>
-                            <span class="ev-badge ev-badge-pending">En attente</span>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                </section>
-                <?php endif; ?>
-
-                <!-- Paiement solde -->
+                <!-- 2. Paiement solde (action urgente) -->
                 <?php if ($can_pay_solde): ?>
                 <section class="ev-card ev-card-payment">
                     <h2>Paiement du solde</h2>
@@ -267,7 +204,27 @@ get_header();
                 </section>
                 <?php endif; ?>
 
-                <!-- À faire avant le départ -->
+                <!-- 3. Paiements en attente -->
+                <?php if (!empty($solde_info['pending_payments'])): ?>
+                <section class="ev-card ev-card-pending">
+                    <h2>Paiements en attente de validation</h2>
+                    <p class="ev-pending-desc">Les paiements ci-dessous ont été enregistrés et sont en attente de confirmation par l'agence.</p>
+                    <div class="ev-pending-list">
+                        <?php foreach ($solde_info['pending_payments'] as $pp): ?>
+                        <div class="ev-pending-item">
+                            <div class="ev-pending-icon">⏳</div>
+                            <div class="ev-pending-info">
+                                <strong><?php echo number_format($pp['amount'], 2, ',', ' '); ?> €</strong>
+                                <span><?php echo esc_html($pp['method']); ?> — <?php echo esc_html($pp['date']); ?></span>
+                            </div>
+                            <span class="ev-badge ev-badge-pending">En attente</span>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+                <?php endif; ?>
+
+                <!-- 4. Checklist avant départ -->
                 <?php
                 $is_upcoming_trip = !empty($params['date_depart']) && $params['date_depart'] >= date('Y-m-d');
                 if ($is_upcoming_trip):
@@ -294,30 +251,49 @@ get_header();
                 </section>
                 <?php endif; ?>
 
-                <!-- Donner son avis (voyages passés) -->
-                <?php
-                $can_review = !$is_upcoming_trip && VS08V_Traveler_Space::can_review($order_id, $current_user->ID);
-                if ($can_review):
-                ?>
-                <section class="ev-card ev-card-review">
-                    <h2>Donner votre avis</h2>
-                    <p>Vous avez effectué ce circuit ? Votre avis aide les futurs voyageurs.</p>
-                    <form class="ev-review-form" data-order-id="<?php echo $order_id; ?>">
-                        <div class="ev-review-stars">
-                            <span class="ev-star-label">Note :</span>
-                            <?php for ($s = 1; $s <= 5; $s++): ?>
-                            <button type="button" class="ev-star" data-star="<?php echo $s; ?>" aria-label="<?php echo $s; ?> étoile(s)">★</button>
-                            <?php endfor; ?>
-                            <input type="hidden" name="rating" value="">
+                <!-- 5. Participants + Documents -->
+                <div class="ev-cards-pax-docs">
+                <?php if (!empty($voyageurs)): ?>
+                <section class="ev-card ev-card-pax">
+                    <h2>Participants</h2>
+                    <div class="ev-pax-list">
+                        <?php foreach ($voyageurs as $i => $v):
+                            $ddn = $v['ddn'] ?? $v['date_naissance'] ?? '';
+                        ?>
+                        <div class="ev-pax-item">
+                            <div class="ev-pax-num"><?php echo $i + 1; ?></div>
+                            <div class="ev-pax-info">
+                                <strong><?php echo esc_html(($v['prenom'] ?? '') . ' ' . strtoupper($v['nom'] ?? '')); ?></strong>
+                                <span class="ev-pax-type ev-pax-type-golfeur">Voyageur</span>
+                                <?php if ($ddn): ?>
+                                    <span>Né(e) le <?php echo esc_html(date('d/m/Y', strtotime($ddn))); ?></span>
+                                <?php endif; ?>
+                                <?php if (!empty($v['passeport'])): ?>
+                                    <span>Passeport <?php echo esc_html($v['passeport']); ?></span>
+                                <?php endif; ?>
+                            </div>
                         </div>
-                        <textarea name="review_text" class="ev-review-textarea" rows="4" placeholder="Racontez votre expérience…"></textarea>
-                        <button type="submit" class="ev-btn ev-btn-primary">Publier mon avis</button>
-                        <span class="ev-review-feedback" aria-live="polite"></span>
-                    </form>
+                        <?php endforeach; ?>
+                    </div>
                 </section>
                 <?php endif; ?>
 
-                <!-- Carnet de voyage (documents admin → client) -->
+                <section class="ev-card ev-card-docs">
+                    <h2>Documents</h2>
+                    <a href="<?php echo esc_url($contract_url); ?>" target="_blank" rel="noopener" class="ev-btn ev-btn-outline">Voir / imprimer le contrat de vente</a>
+                    <div class="ev-docs-upload">
+                        <p class="ev-docs-upload-desc">Envoyez des documents à l'agence (photos, pièces…) pour ce voyage.</p>
+                        <form class="ev-form-documents" data-order-id="<?php echo $order_id; ?>" enctype="multipart/form-data" method="post">
+                            <?php wp_nonce_field('vs08v_send_documents', 'vs08v_docs_nonce'); ?>
+                            <input type="file" name="vs08v_docs[]" class="ev-input-files" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx">
+                            <button type="submit" class="ev-btn ev-btn-outline ev-btn-docs-send">Envoyer des documents à l'agence</button>
+                            <span class="ev-docs-feedback" aria-live="polite"></span>
+                        </form>
+                    </div>
+                </section>
+                </div>
+
+                <!-- 6. Carnet de voyage -->
                 <?php
                 $carnet_files = get_post_meta($order_id, '_vs08_carnet_files', true);
                 if (!is_array($carnet_files)) $carnet_files = [];
@@ -351,12 +327,36 @@ get_header();
                 </section>
                 <?php endif; ?>
 
-                <!-- Question -->
+                <!-- 7. Question -->
                 <section class="ev-card ev-card-question">
                     <h2>Une question ?</h2>
                     <p class="ev-question-intro">Posez-nous une question relative à ce voyage. Nous vous répondrons dans les meilleurs délais.</p>
                     <button type="button" class="ev-btn ev-btn-outline ev-btn-open-question ev-btn-question-spaced" data-order-id="<?php echo $order_id; ?>">Poser une question</button>
                 </section>
+
+                <!-- 8. Avis (après le voyage) -->
+                <?php
+                if (!isset($is_upcoming_trip)) $is_upcoming_trip = !empty($params['date_depart']) && $params['date_depart'] >= date('Y-m-d');
+                $can_review = !$is_upcoming_trip && VS08V_Traveler_Space::can_review($order_id, $current_user->ID);
+                if ($can_review):
+                ?>
+                <section class="ev-card ev-card-review">
+                    <h2>Donner votre avis</h2>
+                    <p>Vous avez effectué ce circuit ? Votre avis aide les futurs voyageurs.</p>
+                    <form class="ev-review-form" data-order-id="<?php echo $order_id; ?>">
+                        <div class="ev-review-stars">
+                            <span class="ev-star-label">Note :</span>
+                            <?php for ($s = 1; $s <= 5; $s++): ?>
+                            <button type="button" class="ev-star" data-star="<?php echo $s; ?>" aria-label="<?php echo $s; ?> étoile(s)">★</button>
+                            <?php endfor; ?>
+                            <input type="hidden" name="rating" value="">
+                        </div>
+                        <textarea name="review_text" class="ev-review-textarea" rows="4" placeholder="Racontez votre expérience…"></textarea>
+                        <button type="submit" class="ev-btn ev-btn-primary">Publier mon avis</button>
+                        <span class="ev-review-feedback" aria-live="polite"></span>
+                    </form>
+                </section>
+                <?php endif; ?>
 
             </div><!-- /ev-detail-grid -->
             <?php else: // ── Détail Golf (existant) ──

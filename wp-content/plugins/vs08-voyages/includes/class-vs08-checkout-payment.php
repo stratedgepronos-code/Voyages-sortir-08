@@ -56,14 +56,15 @@ class VS08_Checkout_Payment {
      * Panier VS08 (golf / circuit / séjour sur produit) : n’afficher que les moyens cohérents avec le choix tunnel.
      */
     public static function filter_gateways($gateways) {
-        if (!is_checkout() || empty($gateways) || !function_exists('WC') || !WC()->cart || WC()->cart->is_empty()) {
-            return $gateways;
-        }
-
-        // Page order-pay (solde) → toujours montrer Paybox CB, jamais filtrer
+        // Page order-pay (solde) → toujours Paybox CB, jamais agence
+        // Doit être AVANT le check cart vide (le panier est vide sur order-pay)
         if (is_wc_endpoint_url('order-pay')) {
             unset($gateways['vs08_agence']);
             foreach (['bacs', 'cheque', 'cod'] as $off) unset($gateways[$off]);
+            return $gateways;
+        }
+
+        if (!is_checkout() || empty($gateways) || !function_exists('WC') || !WC()->cart || WC()->cart->is_empty()) {
             return $gateways;
         }
 

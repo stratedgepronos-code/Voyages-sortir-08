@@ -879,9 +879,14 @@ function sjCalculateTotal(){
         var bar=document.getElementById('sv-sticky-bar');if(bar)bar.classList.add('visible');
         // Auto-scroll vers le prix + bouton réserver
         setTimeout(function(){
-            var calcCard=document.querySelector('.sv-calc-card');
-            if(calcCard){var off=120;window.scrollTo({top:calcCard.getBoundingClientRect().top+window.scrollY-off,behavior:'smooth'})}
-        },300);
+            var priceBox=document.getElementById('sv-price-box');
+            var target=priceBox||document.getElementById('sv-btn-reserver');
+            if(target){
+                var navH=document.getElementById('sv-navbar');
+                var off=navH?(navH.offsetHeight+80):120;
+                target.scrollIntoView({behavior:'smooth',block:'center'});
+            }
+        },400);
     });
 }
 
