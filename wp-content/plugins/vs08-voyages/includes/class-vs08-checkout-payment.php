@@ -60,6 +60,13 @@ class VS08_Checkout_Payment {
             return $gateways;
         }
 
+        // Page order-pay (solde) → toujours montrer Paybox CB, jamais filtrer
+        if (is_wc_endpoint_url('order-pay')) {
+            unset($gateways['vs08_agence']);
+            foreach (['bacs', 'cheque', 'cod'] as $off) unset($gateways[$off]);
+            return $gateways;
+        }
+
         if (!WC()->session) {
             return $gateways;
         }

@@ -658,6 +658,7 @@ get_header();
                 .bk-conducteur-radio-txt{font-size:12px;color:#374151;font-family:'Outfit',sans-serif;font-weight:500}
                 .bk-conducteur-radio-lbl.selected{border-color:#59b7b7;background:#e0f7f7}
                 .bk-conducteur-radio-lbl.selected .bk-conducteur-radio-txt{color:#0f2424;font-weight:700}
+                @keyframes bkShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
                 </style>
                 <?php endif; ?>
 
@@ -1560,18 +1561,47 @@ function bkGo(step) {
                         var trigger = document.getElementById(input.id.replace('bk-ddn-', 'bk-ddn-trigger-'));
                         if (trigger) { trigger.style.borderColor = '#dc2626'; trigger.style.boxShadow = '0 0 0 2px rgba(220,38,38,.15)'; }
                     }
+                    // Conducteur non sélectionné → alerte visuelle
+                    if (input.id === 'bk-conducteur-val') {
+                        document.querySelectorAll('.bk-conducteur-radio-lbl').forEach(function(lbl) {
+                            lbl.style.borderColor = '#dc2626';
+                            lbl.style.boxShadow = '0 0 0 2px rgba(220,38,38,.15)';
+                            lbl.style.animation = 'bkShake .5s ease-in-out';
+                        });
+                        // Afficher un message d'erreur visible
+                        var errBox = document.getElementById('bk-conducteur-error');
+                        if (!errBox) {
+                            errBox = document.createElement('div');
+                            errBox.id = 'bk-conducteur-error';
+                            errBox.style.cssText = 'background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;border-radius:10px;padding:12px 16px;margin:10px 0;font-size:13px;font-weight:600;font-family:Outfit,sans-serif;display:flex;align-items:center;gap:8px';
+                            errBox.innerHTML = '⚠️ Veuillez sélectionner le conducteur principal du véhicule';
+                            input.parentNode.insertBefore(errBox, input);
+                        }
+                        errBox.style.display = 'flex';
+                    }
                 } else {
                     input.classList.remove('required-error');
                     if (input.type === 'hidden' && input.id && input.id.indexOf('bk-ddn-') === 0) {
                         var trigger = document.getElementById(input.id.replace('bk-ddn-', 'bk-ddn-trigger-'));
                         if (trigger) { trigger.style.borderColor = '#3d9a9a'; trigger.style.boxShadow = 'none'; }
                     }
+                    if (input.id === 'bk-conducteur-val') {
+                        document.querySelectorAll('.bk-conducteur-radio-lbl').forEach(function(lbl) {
+                            lbl.style.borderColor = ''; lbl.style.boxShadow = ''; lbl.style.animation = '';
+                        });
+                        var errBox = document.getElementById('bk-conducteur-error');
+                        if (errBox) errBox.style.display = 'none';
+                    }
                 }
             });
             if (invalid) {
                 var firstErr = currentDiv.querySelector('.required-error');
                 if (firstErr) {
-                    if (firstErr.type === 'hidden') {
+                    if (firstErr.id === 'bk-conducteur-val') {
+                        // Scroll vers la première radio conducteur
+                        var firstRadio = document.querySelector('.bk-conducteur-radio-lbl');
+                        if (firstRadio) firstRadio.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (firstErr.type === 'hidden') {
                         var triggerErr = firstErr.closest('.bk-field');
                         if (triggerErr) triggerErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     } else {

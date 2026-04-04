@@ -877,6 +877,11 @@ function sjCalculateTotal(){
         document.getElementById('sv-sticky-price').textContent=sjFmt(devis.total)+' €';
         // Show sticky bar
         var bar=document.getElementById('sv-sticky-bar');if(bar)bar.classList.add('visible');
+        // Auto-scroll vers le prix + bouton réserver
+        setTimeout(function(){
+            var calcCard=document.querySelector('.sv-calc-card');
+            if(calcCard){var off=120;window.scrollTo({top:calcCard.getBoundingClientRect().top+window.scrollY-off,behavior:'smooth'})}
+        },300);
     });
 }
 
