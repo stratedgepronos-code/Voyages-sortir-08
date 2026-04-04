@@ -470,10 +470,11 @@ body.home,body.page-template-default{background:#fff!important}
     .fp-ucard__title{font-size:1.4rem}
 }
 @media(max-width:768px){
-    .hc-wrap{height:68vh;min-height:460px;max-height:620px}
+    .hc-wrap{height:auto;min-height:auto;max-height:none;padding-top:94px;padding-bottom:40px}
     .hc-content{padding:0 24px}
-    .hc-dots{left:24px;bottom:100px}
-    .hc-conf{padding:12px 20px;gap:20px;flex-wrap:wrap}
+    .hc-dots{left:24px;bottom:auto;position:relative;margin-top:24px}
+    .hc-btns{flex-direction:column;gap:12px}
+    .hc-btns a{text-align:center;padding:14px 28px;font-size:15px}
     .hc-stats{display:none}
     .fp-search{margin-top:0;padding:20px 24px}
     .fp-search-card{flex-direction:column;gap:16px}
@@ -484,6 +485,10 @@ body.home,body.page-template-default{background:#fff!important}
     .fp-cards-grid{grid-template-columns:1fr}
     .scard-featured{flex-direction:column;grid-column:span 1}
     .scard-featured .scard-img{width:100%}
+    .scard-footer{flex-wrap:wrap;gap:12px}
+    .scard-price .price-amount{font-size:22px}
+    .scard-price .price-label,.scard-price .price-per{display:inline;font-size:9px}
+    .scard-btn{padding:10px 20px;font-size:13px}
     .fp-why-grid{grid-template-columns:1fr}
     .fp-testi-grid{grid-template-columns:1fr}
     .fp-nl-cta{padding:0 24px 60px}
