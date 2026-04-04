@@ -452,6 +452,8 @@
     grid-template-columns: 1fr 1fr;
     gap: 1rem 1.25rem;
     margin-bottom: 0;
+    grid-auto-flow: dense;
+    align-items: start;
 }
 
 .ev-card {
@@ -469,12 +471,9 @@
     border-bottom: 1px solid var(--ev-border);
 }
 
-.ev-card-recap { grid-column: 1 / -1; max-width: 700px; }
-.ev-card-payment { grid-column: 1 / -1; max-width: 700px; }
-.ev-card-pending { grid-column: 1 / -1; max-width: 700px; }
+.ev-card-recap { grid-column: 1; }
+.ev-card-payment { grid-column: 2; }
 .ev-cards-pax-docs { grid-column: 1 / -1; }
-.ev-card-checklist { grid-column: 1; }
-.ev-card-question { grid-column: 2; }
 
 /* ── Recap rows ── */
 .ev-recap-rows {
@@ -814,7 +813,7 @@
 }
 @media (max-width: 768px) {
     .ev-detail-grid { grid-template-columns: 1fr; }
-    .ev-card-recap, .ev-card-payment, .ev-card-pending, .ev-card-checklist, .ev-card-question { grid-column: 1; max-width: none; }
+    .ev-card-recap, .ev-card-payment, .ev-card-pending, .ev-card-checklist, .ev-card-carnet, .ev-card-question, .ev-card-review { grid-column: 1; grid-row: auto; }
     .ev-cards-pax-docs { grid-template-columns: 1fr; gap: 1rem; }
     .ev-cards-pax-docs .ev-card-pax,
     .ev-cards-pax-docs .ev-card-docs { grid-column: 1; padding: 1.25rem; }
