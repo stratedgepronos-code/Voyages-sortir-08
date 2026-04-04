@@ -450,7 +450,7 @@
 .ev-detail-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem 1.75rem;
+    gap: 1rem 1.25rem;
     margin-bottom: 0;
 }
 
@@ -458,22 +458,23 @@
     background: var(--ev-white);
     border-radius: var(--ev-radius);
     box-shadow: var(--ev-shadow);
-    padding: 1.75rem;
+    padding: 1.25rem;
 }
 .ev-card h2 {
     font-family: var(--ev-font-display);
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     color: var(--ev-dark);
-    margin: 0 0 1.25rem;
-    padding-bottom: .6rem;
+    margin: 0 0 .75rem;
+    padding-bottom: .4rem;
     border-bottom: 1px solid var(--ev-border);
 }
 
-.ev-card-recap { grid-column: 1 / -1; }
-.ev-card-payment { grid-column: 1 / -1; }
+.ev-card-recap { grid-column: 1 / -1; max-width: 700px; }
+.ev-card-payment { grid-column: 1 / -1; max-width: 700px; }
+.ev-card-pending { grid-column: 1 / -1; max-width: 700px; }
 .ev-cards-pax-docs { grid-column: 1 / -1; }
-.ev-card-checklist { grid-column: 1 / -1; }
-.ev-card-question { grid-column: 1 / -1; }
+.ev-card-checklist { grid-column: 1; }
+.ev-card-question { grid-column: 2; }
 
 /* ── Recap rows ── */
 .ev-recap-rows {
@@ -484,9 +485,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: .6rem 0;
+    padding: .35rem 0;
     border-bottom: 1px solid var(--ev-gray-light);
-    font-size: .95rem;
+    font-size: .85rem;
 }
 .ev-recap-row span {
     color: var(--ev-gray);
@@ -497,7 +498,7 @@
 }
 .ev-recap-total {
     border-bottom: none;
-    padding-top: 1rem;
+    padding-top: .6rem;
     margin-top: .5rem;
     border-top: 2px solid var(--ev-teal);
 }
@@ -812,9 +813,11 @@
     padding-right: 0;
 }
 @media (max-width: 768px) {
-    .ev-cards-pax-docs { grid-template-columns: 1fr; gap: 1.5rem; }
+    .ev-detail-grid { grid-template-columns: 1fr; }
+    .ev-card-recap, .ev-card-payment, .ev-card-pending, .ev-card-checklist, .ev-card-question { grid-column: 1; max-width: none; }
+    .ev-cards-pax-docs { grid-template-columns: 1fr; gap: 1rem; }
     .ev-cards-pax-docs .ev-card-pax,
-    .ev-cards-pax-docs .ev-card-docs { grid-column: 1; padding: 1.5rem; }
+    .ev-cards-pax-docs .ev-card-docs { grid-column: 1; padding: 1.25rem; }
 }
 
 /* ── Envoi documents (ev-card-docs) ── */
