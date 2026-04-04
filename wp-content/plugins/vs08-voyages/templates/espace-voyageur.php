@@ -172,86 +172,7 @@ get_header();
                     </div>
                 </section>
 
-                <!-- 2. Paiement solde (action urgente) -->
-                <?php if ($can_pay_solde): ?>
-                <section class="ev-card ev-card-payment">
-                    <h2>Paiement du solde</h2>
-                    <div class="ev-solde-amount">
-                        <span class="ev-solde-label">Solde restant</span>
-                        <span class="ev-solde-value"><?php echo number_format($solde_info['solde'], 2, ',', ' '); ?> €</span>
-                        <?php if ($solde_info['solde_date']): ?>
-                        <span class="ev-solde-deadline">À régler avant le <?php echo esc_html($solde_info['solde_date']); ?></span>
-                        <?php endif; ?>
-                    </div>
-                    <div class="ev-payment-btns">
-                        <button type="button" class="ev-btn ev-btn-primary ev-btn-solde-cb" data-order-id="<?php echo $order_id; ?>" data-solde="<?php echo esc_attr($solde_info['solde']); ?>">Payer le solde entier (<?php echo number_format($solde_info['solde'], 0, ',', ' '); ?> €)</button>
-                        <button type="button" class="ev-btn ev-btn-ghost ev-btn-solde-agence" data-order-id="<?php echo $order_id; ?>">Payer en agence</button>
-                    </div>
-                    <div class="ev-solde-partiel">
-                        <p class="ev-solde-partiel-label">Ou régler une partie du solde par carte :</p>
-                        <div class="ev-solde-partiel-row">
-                            <input type="number" class="ev-solde-partiel-input" step="0.01" min="1" max="<?php echo esc_attr($solde_info['solde']); ?>" placeholder="Montant en €" data-order-id="<?php echo $order_id; ?>" data-solde-max="<?php echo esc_attr($solde_info['solde']); ?>">
-                            <span class="ev-solde-partiel-euro">€</span>
-                            <button type="button" class="ev-btn ev-btn-outline ev-btn-solde-partiel" data-order-id="<?php echo $order_id; ?>" data-solde-max="<?php echo esc_attr($solde_info['solde']); ?>">Payer ce montant</button>
-                        </div>
-                    </div>
-                    <div class="ev-agence-info" id="ev-agence-<?php echo $order_id; ?>" style="display:none">
-                        <p><strong><?php echo esc_html($company['name'] ?? ''); ?></strong></p>
-                        <p><?php echo esc_html($company['address'] ?? ''); ?><br><?php echo esc_html($company['city'] ?? ''); ?></p>
-                        <p>Tél. : <?php echo esc_html($company['tel'] ?? ''); ?></p>
-                        <p>Montant : <strong><?php echo number_format($solde_info['solde'], 2, ',', ' '); ?> €</strong> — Dossier VS08-<?php echo $order_id; ?></p>
-                    </div>
-                </section>
-                <?php endif; ?>
-
-                <!-- 3. Paiements en attente -->
-                <?php if (!empty($solde_info['pending_payments'])): ?>
-                <section class="ev-card ev-card-pending">
-                    <h2>Paiements en attente de validation</h2>
-                    <p class="ev-pending-desc">Les paiements ci-dessous ont été enregistrés et sont en attente de confirmation par l'agence.</p>
-                    <div class="ev-pending-list">
-                        <?php foreach ($solde_info['pending_payments'] as $pp): ?>
-                        <div class="ev-pending-item">
-                            <div class="ev-pending-icon">⏳</div>
-                            <div class="ev-pending-info">
-                                <strong><?php echo number_format($pp['amount'], 2, ',', ' '); ?> €</strong>
-                                <span><?php echo esc_html($pp['method']); ?> — <?php echo esc_html($pp['date']); ?></span>
-                            </div>
-                            <span class="ev-badge ev-badge-pending">En attente</span>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                </section>
-                <?php endif; ?>
-
-                <!-- 4. Checklist avant départ -->
-                <?php
-                $is_upcoming_trip = !empty($params['date_depart']) && $params['date_depart'] >= date('Y-m-d');
-                if ($is_upcoming_trip):
-                    $checklist_items = VS08V_Traveler_Space::get_checklist_items();
-                    $saved_checklist = VS08V_Traveler_Space::get_saved_checklist($order_id, $current_user->ID);
-                ?>
-                <section class="ev-card ev-card-checklist">
-                    <h2>À faire avant le départ</h2>
-                    <p class="ev-checklist-desc">Cochez au fur et à mesure pour ne rien oublier.</p>
-                    <ul class="ev-checklist-list" data-order-id="<?php echo $order_id; ?>">
-                        <?php foreach ($checklist_items as $key => $label): ?>
-                        <li class="ev-checklist-item">
-                            <label class="ev-checklist-label">
-                                <input type="checkbox" class="ev-checklist-cb" value="<?php echo esc_attr($key); ?>" <?php echo in_array($key, $saved_checklist, true) ? ' checked' : ''; ?>>
-                                <span><?php echo esc_html($label); ?></span>
-                            </label>
-                        </li>
-                        <?php endforeach; ?>
-                    </ul>
-                    <p class="ev-checklist-docs">
-                        <a href="<?php echo esc_url($contract_url); ?>" target="_blank" rel="noopener">📄 Télécharger le contrat</a>
-                        · <a href="<?php echo esc_url(home_url('/assurances')); ?>">🛡 Infos assurance voyage</a>
-                    </p>
-                </section>
-                <?php endif; ?>
-
-                <!-- 5. Participants + Documents -->
+                <!-- 2. Participants + Documents -->
                 <div class="ev-cards-pax-docs">
                 <?php if (!empty($voyageurs)): ?>
                 <section class="ev-card ev-card-pax">
@@ -292,6 +213,86 @@ get_header();
                     </div>
                 </section>
                 </div>
+
+
+                <!-- 3. Paiement solde -->
+                <?php if ($can_pay_solde): ?>
+                <section class="ev-card ev-card-payment">
+                    <h2>Paiement du solde</h2>
+                    <div class="ev-solde-amount">
+                        <span class="ev-solde-label">Solde restant</span>
+                        <span class="ev-solde-value"><?php echo number_format($solde_info['solde'], 2, ',', ' '); ?> €</span>
+                        <?php if ($solde_info['solde_date']): ?>
+                        <span class="ev-solde-deadline">À régler avant le <?php echo esc_html($solde_info['solde_date']); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="ev-payment-btns">
+                        <button type="button" class="ev-btn ev-btn-primary ev-btn-solde-cb" data-order-id="<?php echo $order_id; ?>" data-solde="<?php echo esc_attr($solde_info['solde']); ?>">Payer le solde entier (<?php echo number_format($solde_info['solde'], 0, ',', ' '); ?> €)</button>
+                        <button type="button" class="ev-btn ev-btn-ghost ev-btn-solde-agence" data-order-id="<?php echo $order_id; ?>">Payer en agence</button>
+                    </div>
+                    <div class="ev-solde-partiel">
+                        <p class="ev-solde-partiel-label">Ou régler une partie du solde par carte :</p>
+                        <div class="ev-solde-partiel-row">
+                            <input type="number" class="ev-solde-partiel-input" step="0.01" min="1" max="<?php echo esc_attr($solde_info['solde']); ?>" placeholder="Montant en €" data-order-id="<?php echo $order_id; ?>" data-solde-max="<?php echo esc_attr($solde_info['solde']); ?>">
+                            <span class="ev-solde-partiel-euro">€</span>
+                            <button type="button" class="ev-btn ev-btn-outline ev-btn-solde-partiel" data-order-id="<?php echo $order_id; ?>" data-solde-max="<?php echo esc_attr($solde_info['solde']); ?>">Payer ce montant</button>
+                        </div>
+                    </div>
+                    <div class="ev-agence-info" id="ev-agence-<?php echo $order_id; ?>" style="display:none">
+                        <p><strong><?php echo esc_html($company['name'] ?? ''); ?></strong></p>
+                        <p><?php echo esc_html($company['address'] ?? ''); ?><br><?php echo esc_html($company['city'] ?? ''); ?></p>
+                        <p>Tél. : <?php echo esc_html($company['tel'] ?? ''); ?></p>
+                        <p>Montant : <strong><?php echo number_format($solde_info['solde'], 2, ',', ' '); ?> €</strong> — Dossier VS08-<?php echo $order_id; ?></p>
+                    </div>
+                </section>
+                <?php endif; ?>
+
+                <!-- 4. Paiements en attente -->
+                <?php if (!empty($solde_info['pending_payments'])): ?>
+                <section class="ev-card ev-card-pending">
+                    <h2>Paiements en attente de validation</h2>
+                    <p class="ev-pending-desc">Les paiements ci-dessous ont été enregistrés et sont en attente de confirmation par l'agence.</p>
+                    <div class="ev-pending-list">
+                        <?php foreach ($solde_info['pending_payments'] as $pp): ?>
+                        <div class="ev-pending-item">
+                            <div class="ev-pending-icon">⏳</div>
+                            <div class="ev-pending-info">
+                                <strong><?php echo number_format($pp['amount'], 2, ',', ' '); ?> €</strong>
+                                <span><?php echo esc_html($pp['method']); ?> — <?php echo esc_html($pp['date']); ?></span>
+                            </div>
+                            <span class="ev-badge ev-badge-pending">En attente</span>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+                <?php endif; ?>
+
+                <!-- 5. Checklist avant départ -->
+                <?php
+                $is_upcoming_trip = !empty($params['date_depart']) && $params['date_depart'] >= date('Y-m-d');
+                if ($is_upcoming_trip):
+                    $checklist_items = VS08V_Traveler_Space::get_checklist_items();
+                    $saved_checklist = VS08V_Traveler_Space::get_saved_checklist($order_id, $current_user->ID);
+                ?>
+                <section class="ev-card ev-card-checklist">
+                    <h2>À faire avant le départ</h2>
+                    <p class="ev-checklist-desc">Cochez au fur et à mesure pour ne rien oublier.</p>
+                    <ul class="ev-checklist-list" data-order-id="<?php echo $order_id; ?>">
+                        <?php foreach ($checklist_items as $key => $label): ?>
+                        <li class="ev-checklist-item">
+                            <label class="ev-checklist-label">
+                                <input type="checkbox" class="ev-checklist-cb" value="<?php echo esc_attr($key); ?>" <?php echo in_array($key, $saved_checklist, true) ? ' checked' : ''; ?>>
+                                <span><?php echo esc_html($label); ?></span>
+                            </label>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <p class="ev-checklist-docs">
+                        <a href="<?php echo esc_url($contract_url); ?>" target="_blank" rel="noopener">📄 Télécharger le contrat</a>
+                        · <a href="<?php echo esc_url(home_url('/assurances')); ?>">🛡 Infos assurance voyage</a>
+                    </p>
+                </section>
+                <?php endif; ?>
 
                 <!-- 6. Carnet de voyage -->
                 <?php
@@ -437,88 +438,7 @@ get_header();
                     </div>
                 </section>
 
-                <!-- 2. Paiement solde (action urgente) -->
-                <?php if ($can_pay_solde): ?>
-                <section class="ev-card ev-card-payment">
-                    <h2>Paiement du solde</h2>
-                    <div class="ev-solde-amount">
-                        <span class="ev-solde-label">Solde restant</span>
-                        <span class="ev-solde-value"><?php echo number_format($solde_info['solde'], 2, ',', ' '); ?> €</span>
-                        <?php if ($solde_info['solde_date']): ?>
-                        <span class="ev-solde-deadline">À régler avant le <?php echo esc_html($solde_info['solde_date']); ?></span>
-                        <?php endif; ?>
-                    </div>
-                    <div class="ev-payment-btns">
-                        <button type="button" class="ev-btn ev-btn-primary ev-btn-solde-cb" data-order-id="<?php echo $order_id; ?>" data-solde="<?php echo esc_attr($solde_info['solde']); ?>">Payer le solde entier (<?php echo number_format($solde_info['solde'], 0, ',', ' '); ?> €)</button>
-                        <button type="button" class="ev-btn ev-btn-ghost ev-btn-solde-agence" data-order-id="<?php echo $order_id; ?>">Payer en agence</button>
-                    </div>
-                    <div class="ev-solde-partiel">
-                        <p class="ev-solde-partiel-label">Ou régler une partie du solde par carte :</p>
-                        <div class="ev-solde-partiel-row">
-                            <input type="number" class="ev-solde-partiel-input" step="0.01" min="1" max="<?php echo esc_attr($solde_info['solde']); ?>" placeholder="Montant en €" data-order-id="<?php echo $order_id; ?>" data-solde-max="<?php echo esc_attr($solde_info['solde']); ?>">
-                            <span class="ev-solde-partiel-euro">€</span>
-                            <button type="button" class="ev-btn ev-btn-outline ev-btn-solde-partiel" data-order-id="<?php echo $order_id; ?>" data-solde-max="<?php echo esc_attr($solde_info['solde']); ?>">Payer ce montant</button>
-                        </div>
-                    </div>
-                    <div class="ev-agence-info" id="ev-agence-<?php echo $order_id; ?>" style="display:none">
-                        <p><strong><?php echo esc_html((string)($company['name'] ?? '')); ?></strong></p>
-                        <p><?php echo esc_html((string)($company['address'] ?? '')); ?><br><?php echo esc_html((string)($company['city'] ?? '')); ?></p>
-                        <p>Tél. : <?php echo esc_html((string)($company['tel'] ?? '')); ?></p>
-                        <p>Montant : <strong><?php echo number_format($solde_info['solde'], 2, ',', ' '); ?> €</strong> — Dossier VS08-<?php echo $order_id; ?></p>
-                    </div>
-                </section>
-                <?php endif; ?>
-
-                <!-- 3. Paiements en attente -->
-                <?php if (!empty($solde_info['pending_payments'])): ?>
-                <section class="ev-card ev-card-pending">
-                    <h2>Paiements en attente de validation</h2>
-                    <p class="ev-pending-desc">Les paiements ci-dessous ont été enregistrés et sont en attente de confirmation par l'agence.</p>
-                    <div class="ev-pending-list">
-                        <?php foreach ($solde_info['pending_payments'] as $pp): ?>
-                        <div class="ev-pending-item">
-                            <div class="ev-pending-icon">⏳</div>
-                            <div class="ev-pending-info">
-                                <strong><?php echo number_format($pp['amount'], 2, ',', ' '); ?> €</strong>
-                                <span><?php echo esc_html($pp['method']); ?> — <?php echo esc_html($pp['date']); ?></span>
-                            </div>
-                            <span class="ev-badge ev-badge-pending">En attente</span>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                </section>
-                <?php endif; ?>
-
-                <!-- 4. Checklist avant départ -->
-                <?php
-                $is_upcoming_trip = !empty($params['date_depart']) && $params['date_depart'] >= date('Y-m-d');
-                if ($is_upcoming_trip):
-                    $checklist_items = VS08V_Traveler_Space::get_checklist_items();
-                    $saved_checklist = VS08V_Traveler_Space::get_saved_checklist($order_id, $current_user->ID);
-                ?>
-                <section class="ev-card ev-card-checklist">
-                    <h2>À faire avant le départ</h2>
-                    <p class="ev-checklist-desc">Cochez au fur et à mesure pour ne rien oublier.</p>
-                    <ul class="ev-checklist-list" data-order-id="<?php echo $order_id; ?>">
-                        <?php foreach ($checklist_items as $key => $label): ?>
-                        <li class="ev-checklist-item">
-                            <label class="ev-checklist-label">
-                                <input type="checkbox" class="ev-checklist-cb" value="<?php echo esc_attr($key); ?>" <?php echo in_array($key, $saved_checklist, true) ? ' checked' : ''; ?>>
-                                <span><?php echo esc_html($label); ?></span>
-                            </label>
-                        </li>
-                        <?php endforeach; ?>
-                    </ul>
-                    <p class="ev-checklist-docs">
-                        <a href="<?php echo esc_url($contract_url); ?>" target="_blank" rel="noopener">📄 Télécharger le contrat</a>
-                        <?php if (home_url('/assurances')): ?>
-                        · <a href="<?php echo esc_url(home_url('/assurances')); ?>">🛡 Infos assurance voyage</a>
-                        <?php endif; ?>
-                    </p>
-                </section>
-                <?php endif; ?>
-
-                <!-- 5. Participants + Documents -->
+                <!-- 2. Participants + Documents -->
                 <div class="ev-cards-pax-docs">
                 <?php if (!empty($voyageurs)): ?>
                 <section class="ev-card ev-card-pax">
@@ -561,6 +481,88 @@ get_header();
                     </div>
                 </section>
                 </div>
+
+
+                <!-- 3. Paiement solde -->
+                <?php if ($can_pay_solde): ?>
+                <section class="ev-card ev-card-payment">
+                    <h2>Paiement du solde</h2>
+                    <div class="ev-solde-amount">
+                        <span class="ev-solde-label">Solde restant</span>
+                        <span class="ev-solde-value"><?php echo number_format($solde_info['solde'], 2, ',', ' '); ?> €</span>
+                        <?php if ($solde_info['solde_date']): ?>
+                        <span class="ev-solde-deadline">À régler avant le <?php echo esc_html($solde_info['solde_date']); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="ev-payment-btns">
+                        <button type="button" class="ev-btn ev-btn-primary ev-btn-solde-cb" data-order-id="<?php echo $order_id; ?>" data-solde="<?php echo esc_attr($solde_info['solde']); ?>">Payer le solde entier (<?php echo number_format($solde_info['solde'], 0, ',', ' '); ?> €)</button>
+                        <button type="button" class="ev-btn ev-btn-ghost ev-btn-solde-agence" data-order-id="<?php echo $order_id; ?>">Payer en agence</button>
+                    </div>
+                    <div class="ev-solde-partiel">
+                        <p class="ev-solde-partiel-label">Ou régler une partie du solde par carte :</p>
+                        <div class="ev-solde-partiel-row">
+                            <input type="number" class="ev-solde-partiel-input" step="0.01" min="1" max="<?php echo esc_attr($solde_info['solde']); ?>" placeholder="Montant en €" data-order-id="<?php echo $order_id; ?>" data-solde-max="<?php echo esc_attr($solde_info['solde']); ?>">
+                            <span class="ev-solde-partiel-euro">€</span>
+                            <button type="button" class="ev-btn ev-btn-outline ev-btn-solde-partiel" data-order-id="<?php echo $order_id; ?>" data-solde-max="<?php echo esc_attr($solde_info['solde']); ?>">Payer ce montant</button>
+                        </div>
+                    </div>
+                    <div class="ev-agence-info" id="ev-agence-<?php echo $order_id; ?>" style="display:none">
+                        <p><strong><?php echo esc_html((string)($company['name'] ?? '')); ?></strong></p>
+                        <p><?php echo esc_html((string)($company['address'] ?? '')); ?><br><?php echo esc_html((string)($company['city'] ?? '')); ?></p>
+                        <p>Tél. : <?php echo esc_html((string)($company['tel'] ?? '')); ?></p>
+                        <p>Montant : <strong><?php echo number_format($solde_info['solde'], 2, ',', ' '); ?> €</strong> — Dossier VS08-<?php echo $order_id; ?></p>
+                    </div>
+                </section>
+                <?php endif; ?>
+
+                <!-- 4. Paiements en attente -->
+                <?php if (!empty($solde_info['pending_payments'])): ?>
+                <section class="ev-card ev-card-pending">
+                    <h2>Paiements en attente de validation</h2>
+                    <p class="ev-pending-desc">Les paiements ci-dessous ont été enregistrés et sont en attente de confirmation par l'agence.</p>
+                    <div class="ev-pending-list">
+                        <?php foreach ($solde_info['pending_payments'] as $pp): ?>
+                        <div class="ev-pending-item">
+                            <div class="ev-pending-icon">⏳</div>
+                            <div class="ev-pending-info">
+                                <strong><?php echo number_format($pp['amount'], 2, ',', ' '); ?> €</strong>
+                                <span><?php echo esc_html($pp['method']); ?> — <?php echo esc_html($pp['date']); ?></span>
+                            </div>
+                            <span class="ev-badge ev-badge-pending">En attente</span>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+                <?php endif; ?>
+
+                <!-- 5. Checklist avant départ -->
+                <?php
+                $is_upcoming_trip = !empty($params['date_depart']) && $params['date_depart'] >= date('Y-m-d');
+                if ($is_upcoming_trip):
+                    $checklist_items = VS08V_Traveler_Space::get_checklist_items();
+                    $saved_checklist = VS08V_Traveler_Space::get_saved_checklist($order_id, $current_user->ID);
+                ?>
+                <section class="ev-card ev-card-checklist">
+                    <h2>À faire avant le départ</h2>
+                    <p class="ev-checklist-desc">Cochez au fur et à mesure pour ne rien oublier.</p>
+                    <ul class="ev-checklist-list" data-order-id="<?php echo $order_id; ?>">
+                        <?php foreach ($checklist_items as $key => $label): ?>
+                        <li class="ev-checklist-item">
+                            <label class="ev-checklist-label">
+                                <input type="checkbox" class="ev-checklist-cb" value="<?php echo esc_attr($key); ?>" <?php echo in_array($key, $saved_checklist, true) ? ' checked' : ''; ?>>
+                                <span><?php echo esc_html($label); ?></span>
+                            </label>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <p class="ev-checklist-docs">
+                        <a href="<?php echo esc_url($contract_url); ?>" target="_blank" rel="noopener">📄 Télécharger le contrat</a>
+                        <?php if (home_url('/assurances')): ?>
+                        · <a href="<?php echo esc_url(home_url('/assurances')); ?>">🛡 Infos assurance voyage</a>
+                        <?php endif; ?>
+                    </p>
+                </section>
+                <?php endif; ?>
 
                 <!-- 6. Carnet de voyage -->
                 <?php
