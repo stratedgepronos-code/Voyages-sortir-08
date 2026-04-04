@@ -112,11 +112,12 @@ get_header();
 .bk-step-line.done{border-color:#59b7b7;border-style:solid}
 @media(max-width:480px){.bk-step-pin-body{width:30px;height:30px}.bk-step-pin{width:34px;height:44px}.bk-step-label{font-size:9px}.bk-step-pin-icon{font-size:12px}.bk-step-line{transform:translateY(-22px)}}
 @media(max-width:768px){
-.bk-stepper{padding:20px 12px 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.bk-stepper-track{min-width:0}
+.bk-stepper{padding:20px 12px 16px}
+.bk-stepper-track{min-width:0;width:100%}
 .bk-step{flex-shrink:1;min-width:0}
-.bk-step-label{font-size:9px;letter-spacing:0}
-.bk-step-hint{font-size:8px}
+.bk-step-label{font-size:8px;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px;text-align:center}
+.bk-step-hint{font-size:7px;overflow:hidden;text-overflow:ellipsis;max-width:60px;text-align:center}
+.bk-step-line{margin:0 2px}
 .bk-route-header{padding:10px 14px;gap:8px;flex-wrap:nowrap;overflow:hidden}
 .bk-route-iata{font-size:20px}
 .bk-route-city{font-size:9px}
