@@ -235,6 +235,7 @@ get_header();
 .bks-ins-price-detail{font-family:'Outfit',sans-serif;font-size:11px;color:#6b7280}
 @media(max-width:900px){.bks-container{grid-template-columns:1fr}.bks-recap{position:static}.bks-header{grid-column:span 1}}
 @media(max-width:600px){.bks-container{padding:0 16px}.bks-field-row{grid-template-columns:1fr}.bks-header{padding:16px;flex-direction:column;text-align:center}.bks-chips{justify-content:center}.bks-section{padding:20px}.bks-route-header{padding:10px 14px;gap:10px}.bks-route-iata{font-size:20px}.bks-ins-footer{flex-direction:column;gap:12px;align-items:stretch}.bks-ins-price{text-align:left}}
+@media(max-width:768px){.bks-container{max-width:100%;overflow-x:hidden}.bks-route-header{padding:10px 14px;gap:8px}.bks-route-iata{font-size:22px}.bks-route-city{font-size:9px}.bks-combo-card{overflow:hidden}.bks-combo-leg{padding:10px 12px}.bks-combo-time{font-size:18px}}
 /* Filter sidebar */
 .bks-filters-sidebar{position:fixed;top:160px;width:200px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;font-family:'Outfit',sans-serif;box-shadow:0 2px 12px rgba(0,0,0,.06);z-index:50;transition:opacity .3s}
 .bksf-title{font-size:16px;font-weight:700;color:#0f2424;margin-bottom:14px}
