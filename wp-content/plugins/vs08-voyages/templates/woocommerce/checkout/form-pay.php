@@ -33,7 +33,18 @@ $fact = $data['facturation'] ?? [];
 $prenom = !empty($fact['prenom']) ? $fact['prenom'] : $order->get_billing_first_name();
 $nom = !empty($fact['nom']) ? $fact['nom'] : $order->get_billing_last_name();
 $client_label = trim($prenom . ' ' . $nom);
-$heading = $is_solde ? __('Paiement du solde', 'woocommerce') : __('Paiement de votre séjour', 'woocommerce');
+$heading = __('Paiement de votre séjour', 'woocommerce');
+if ($is_solde) {
+    // Détecter paiement partiel vs solde complet
+    $is_partial = false;
+    foreach ($order->get_items() as $_item) {
+        if (strpos($_item->get_name(), 'Acompte solde') !== false) {
+            $is_partial = true;
+            break;
+        }
+    }
+    $heading = $is_partial ? __('Paiement partiel', 'woocommerce') : __('Paiement du solde', 'woocommerce');
+}
 ?>
 <div class="vs08-pay-page">
     <div class="vs08-solde-page-hero">
@@ -45,7 +56,7 @@ $heading = $is_solde ? __('Paiement du solde', 'woocommerce') : __('Paiement de 
     </div>
 
     <div class="vs08-solde-page-amount-card">
-        <div class="vs08-solde-page-amount-label"><?php esc_html_e('Montant à régler', 'woocommerce'); ?></div>
+        <div class="vs08-solde-page-amount-label"><?php echo $is_solde && $is_partial ? esc_html__('Montant partiel à régler', 'woocommerce') : esc_html__('Montant à régler', 'woocommerce'); ?></div>
         <div class="vs08-solde-page-amount-value"><?php echo number_format((float) $amount, 2, ',', ' '); ?>&nbsp;€</div>
         <?php if ($parent_id || $client_label) : ?>
         <div class="vs08-solde-page-ref">
