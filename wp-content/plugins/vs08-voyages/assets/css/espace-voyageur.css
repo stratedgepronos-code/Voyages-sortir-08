@@ -832,21 +832,21 @@
 .ev-cards-pax-docs {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.75rem 2rem;
-    margin-bottom: 1.5rem;
-    align-items: start;
+    gap: 1rem 1.25rem;
+    margin-bottom: 0;
+    align-items: stretch;
 }
 .ev-cards-pax-docs .ev-card-pax {
     grid-column: 1;
     margin: 0;
-    padding: 1.75rem;
+    padding: 1.25rem;
     box-sizing: border-box;
     min-width: 0;
 }
 .ev-cards-pax-docs .ev-card-docs {
     grid-column: 2;
     margin: 0;
-    padding: 1.75rem;
+    padding: 1.25rem;
     box-sizing: border-box;
     min-width: 0;
 }
