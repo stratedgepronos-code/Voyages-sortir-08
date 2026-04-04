@@ -1,0 +1,123 @@
+diff --git a/wp-content/themes/vs08-theme/front-page.php b/wp-content/themes/vs08-theme/front-page.php
+index d4a748f..d440d8b 100644
+--- a/wp-content/themes/vs08-theme/front-page.php
++++ b/wp-content/themes/vs08-theme/front-page.php
+@@ -223,19 +223,23 @@ body.home,body.page-template-default{background:#fff!important}
+ .sh-link{background:transparent;border:1px solid;padding:12px 28px;border-radius:30px;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block;transition:background .2s}
+ .sh-link:hover{background:rgba(255,255,255,.08)}
+ .sh-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+-.sh-card{border-radius:16px;overflow:hidden;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);cursor:pointer;transition:transform .3s,border-color .3s;text-decoration:none;display:block}
+-.sh-card:hover{transform:translateY(-6px)}
+-.sh-card-img{position:relative;height:180px;overflow:hidden}
++.sh-card{border-radius:16px;overflow:hidden;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);cursor:pointer;transition:transform .3s,border-color .3s,box-shadow .3s;text-decoration:none;display:flex;flex-direction:column}
++.sh-card:hover{transform:translateY(-6px);border-color:rgba(255,255,255,.18);box-shadow:0 12px 40px rgba(0,0,0,.3)}
++.sh-card-img{position:relative;height:200px;overflow:hidden;flex-shrink:0}
+ .sh-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+ .sh-card:hover img{transform:scale(1.06)}
+ .sh-badges{position:absolute;top:12px;right:12px;display:flex;gap:6px}
+ .sh-badge{backdrop-filter:blur(6px);font-size:11px;font-weight:600;padding:4px 10px;border-radius:10px}
+-.sh-card-body{padding:16px 18px}
++.sh-card-body{padding:18px 20px;display:flex;flex-direction:column;flex:1}
+ .sh-country{font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin:0 0 4px}
+-.sh-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#fff;margin:0 0 8px}
+-.sh-foot{display:flex;justify-content:space-between;align-items:center}
+-.sh-price{font-size:14px;font-weight:700}
+-.sh-per{font-size:12px;color:rgba(255,255,255,.4)}
++.sh-name{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#fff;margin:0 0 6px;line-height:1.3}
++.sh-hotel{font-size:11.5px;color:var(--gold);font-weight:600;margin:0 0 6px;display:flex;align-items:center;gap:4px}
++.sh-desc{font-size:12px;color:rgba(255,255,255,.5);line-height:1.5;margin:0 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
++.sh-foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)}
++.sh-price{font-size:15px;font-weight:700}
++.sh-per{font-size:11px;color:rgba(255,255,255,.4)}
++.sh-cta{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--gold);transition:gap .2s}
++.sh-card:hover .sh-cta{gap:8px}
+ 
+ /* ═══════════════════════════════════════════════════════════════
+    9. DUAL SECTION (Circuits + Road-Trips) — préfixe dl-
+@@ -788,7 +792,9 @@ document.addEventListener('DOMContentLoaded', function() {
+             $fp_gprix_data = class_exists('VS08V_Search') ? VS08V_Search::compute_prix_appel($fp_gm, $fp_gid) : ['prix' => 0];
+             $fp_gprix  = $fp_gprix_data['prix'] > 0 ? number_format($fp_gprix_data['prix'], 0, ',', ' ').'€' : (!empty($fp_gm['prix_double']) ? number_format((float)$fp_gm['prix_double'], 0, ',', ' ').'€' : '');
+             $fp_gpays  = trim(($fp_gm['flag'] ?? '').' '.($fp_gm['pays'] ?? ''));
+-            $fp_gnuits = !empty($fp_gm['duree']) ? (int)$fp_gm['duree'].'N' : '';
++            $fp_gnuits = !empty($fp_gm['duree']) ? (int)$fp_gm['duree'].'N' : '7N';
++            $fp_gjours = !empty($fp_gm['duree_jours']) ? (int)$fp_gm['duree_jours'].'J' : '';
++            $fp_gduree = $fp_gjours ? $fp_gjours.'/'.$fp_gnuits : $fp_gnuits;
+             $fp_ggolfs = $fp_gm['golfs'] ?? [];
+             $fp_gnbgolf = !empty($fp_ggolfs) ? count($fp_ggolfs).' parcours' : (!empty($fp_gm['nb_parcours']) ? (int)$fp_gm['nb_parcours'].' parcours' : '');
+             $fp_ghotel = $fp_gm['hotel_nom'] ?? '';
+@@ -796,19 +802,30 @@ document.addEventListener('DOMContentLoaded', function() {
+             $fp_gbadge = $fp_gm['badge'] ?? '';
+             $fp_gpension = isset($fp_pension_map[$fp_gm['pension'] ?? '']) ? $fp_pension_map[$fp_gm['pension']] : '';
+             $fp_gbuggy = ($fp_gm['buggy'] ?? '') === 'inclus';
++            // Fallback description : excerpt > post_content trimé > générique
++            $fp_gdesc = '';
++            if (has_excerpt($fp_gid)) {
++                $fp_gdesc = get_the_excerpt($fp_gid);
++            } elseif (get_the_content()) {
++                $fp_gdesc = wp_trim_words(strip_tags(get_the_content()), 18, '…');
++            }
++            if (!$fp_gdesc && $fp_ghotel) {
++                $fp_gdesc = 'Séjour golf '.($fp_gpension ?: 'tout inclus').' à '.($fp_gm['pays'] ?? 'l\'étranger').'. Hôtel '.$fp_ghotel.'.';
++            }
+         ?>
+             <a href="<?php echo esc_url(get_permalink()); ?>" class="sh-card">
+                 <div class="sh-card-img">
+                     <img src="<?php echo esc_url($fp_gimg); ?>" alt="<?php echo esc_attr(get_the_title()); ?>" loading="lazy">
+                     <div class="sh-badges">
+                         <?php if($fp_gbadge && isset($fp_badge_map[$fp_gbadge])): ?><span class="sh-badge" style="background:rgba(200,164,94,.9);color:#0f2424"><?php echo esc_html($fp_badge_map[$fp_gbadge]); ?></span><?php endif; ?>
+-                        <?php if($fp_gnuits): ?><span class="sh-badge" style="background:rgba(11,17,32,.7);color:#fff"><?php echo esc_html($fp_gnuits); ?></span><?php endif; ?>
++                        <span class="sh-badge" style="background:rgba(11,17,32,.75);color:#fff;backdrop-filter:blur(6px)"><?php echo esc_html($fp_gduree); ?></span>
+                     </div>
+                 </div>
+                 <div class="sh-card-body">
+                     <?php if($fp_gpays): ?><p class="sh-country" style="color:var(--teal)"><?php echo esc_html($fp_gpays); ?></p><?php endif; ?>
+                     <h3 class="sh-name"><?php the_title(); ?></h3>
+-                    <?php if($fp_ghotel): ?><p style="font-size:11px;color:var(--gold);font-weight:600;margin:2px 0 2px">🏨 <?php echo esc_html($fp_ghotel . $fp_gstars); ?></p><?php endif; ?>
++                    <?php if($fp_ghotel): ?><p class="sh-hotel">🏨 <?php echo esc_html($fp_ghotel . $fp_gstars); ?></p><?php endif; ?>
++                    <?php if($fp_gdesc): ?><p class="sh-desc"><?php echo esc_html($fp_gdesc); ?></p><?php endif; ?>
+                     <div class="sh-chips">
+                         <?php if($fp_gnbgolf): ?><span class="sh-chip">⛳ <?php echo esc_html($fp_gnbgolf); ?></span><?php endif; ?>
+                         <?php if($fp_gpension): ?><span class="sh-chip">🍽️ <?php echo esc_html($fp_gpension); ?></span><?php endif; ?>
+@@ -822,13 +839,13 @@ document.addEventListener('DOMContentLoaded', function() {
+                         <?php endforeach; ?>
+                     </div>
+                     <?php endif; ?>
+-                    <div class="sh-foot" style="margin-top:auto">
++                    <div class="sh-foot">
+                         <?php if($fp_gprix): ?>
+-                        <span class="sh-price" style="color:var(--gold)">dès <?php echo esc_html($fp_gprix); ?></span>
+-                        <span class="sh-per">/pers. · tout compris</span>
++                        <div><span class="sh-price" style="color:var(--gold)">dès <?php echo esc_html($fp_gprix); ?></span><br><span class="sh-per">/pers. · tout compris</span></div>
+                         <?php else: ?>
+-                        <span class="sh-per" style="color:rgba(255,255,255,.4)">Prix sur demande</span>
++                        <span class="sh-per" style="color:rgba(255,255,255,.45)">Prix sur demande</span>
+                         <?php endif; ?>
++                        <span class="sh-cta">Voir →</span>
+                     </div>
+                 </div>
+             </a>
+@@ -971,14 +988,19 @@ document.addEventListener('DOMContentLoaded', function() {
+             ['n'=>'Fuerteventura','c'=>'🇪🇸 Canaries','p'=>'729€','img'=>'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80','ni'=>'7N','f'=>'All Inclusive','hotel'=>'Barceló Fuerteventura ★★★★','desc'=>'Printemps éternel, plages infinies, resort au bord du lagon avec spa.','inc'=>'✈️ Vol · 🏨 All Inclusive · 🚌 Transferts'],
+         ] as $d): ?>
+             <a href="<?php echo esc_url(home_url('/resultats-recherche?type=sejour')); ?>" class="sh-card">
+-                <div class="sh-card-img"><img src="<?php echo esc_url($d['img']); ?>" alt="<?php echo esc_attr($d['n']); ?>" loading="lazy"><div class="sh-badges"><span class="sh-badge" style="background:rgba(11,17,32,.7);color:#fff"><?php echo $d['ni']; ?></span><span class="sh-badge" style="background:rgba(89,183,183,.85);color:#fff"><?php echo $d['f']; ?></span></div></div>
++                <div class="sh-card-img"><img src="<?php echo esc_url($d['img']); ?>" alt="<?php echo esc_attr($d['n']); ?>" loading="lazy"><div class="sh-badges"><span class="sh-badge" style="background:rgba(11,17,32,.75);color:#fff;backdrop-filter:blur(6px)"><?php echo $d['ni']; ?></span><span class="sh-badge" style="background:rgba(89,183,183,.85);color:#fff;backdrop-filter:blur(6px)"><?php echo $d['f']; ?></span></div></div>
+                 <div class="sh-card-body">
+                     <p class="sh-country" style="color:var(--teal)"><?php echo esc_html($d['c']); ?></p>
+                     <h3 class="sh-name"><?php echo esc_html($d['n']); ?></h3>
+-                    <p style="font-size:11px;color:var(--teal);font-weight:600;margin:2px 0 4px"><?php echo esc_html($d['hotel']); ?></p>
+-                    <p style="font-size:12.5px;color:#fff;line-height:1.5;margin:0 0 8px"><?php echo esc_html($d['desc']); ?></p>
+-                    <p style="font-size:10.5px;color:rgba(255,255,255,.75);margin:0 0 10px;letter-spacing:.3px"><?php echo $d['inc']; ?></p>
+-                    <div class="sh-foot"><span class="sh-price" style="color:var(--teal)">à partir de <?php echo $d['p']; ?></span><span class="sh-per">par pers.</span></div>
++                    <p class="sh-hotel" style="color:var(--teal)">🏨 <?php echo esc_html($d['hotel']); ?></p>
++                    <p class="sh-desc" style="color:rgba(255,255,255,.6)"><?php echo esc_html($d['desc']); ?></p>
++                    <div class="sh-chips">
++                        <?php foreach(explode(' · ', $d['inc']) as $chip): ?><span class="sh-chip"><?php echo $chip; ?></span><?php endforeach; ?>
++                    </div>
++                    <div class="sh-foot">
++                        <div><span class="sh-price" style="color:var(--teal)">dès <?php echo $d['p']; ?></span><br><span class="sh-per">/pers. · tout compris</span></div>
++                        <span class="sh-cta" style="color:var(--teal)">Voir →</span>
++                    </div>
+                 </div>
+             </a>
+         <?php endforeach; ?>
