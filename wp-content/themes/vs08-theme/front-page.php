@@ -471,10 +471,8 @@ body.home,body.page-template-default{background:#fff!important}
 }
 @media(max-width:768px){
     .hc-wrap{height:75vh;min-height:500px;max-height:650px}
-    .hc-content{padding:100px 24px 0}
+    .hc-content{padding:0 24px}
     .hc-dots{left:24px;bottom:24px}
-    .hc-btns{flex-direction:column;gap:12px}
-    .hc-btns a{text-align:center;padding:14px 28px;font-size:15px}
     .hc-stats{display:none}
     .fp-search{margin-top:0;padding:20px 24px}
     .fp-search-card{flex-direction:column;gap:16px}

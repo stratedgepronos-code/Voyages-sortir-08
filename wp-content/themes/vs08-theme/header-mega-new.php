@@ -218,7 +218,22 @@ $vs08_circuits_url = add_query_arg(['type' => 'circuit'], $vs08_res);
 </div>
 
 <script>
-(function(){var h=document.getElementById('header');if(h){window.addEventListener('scroll',function(){h.classList.toggle('scrolled',window.scrollY>80);},{passive:true});}})();
+(function(){
+    var h=document.getElementById('header');
+    if(h){
+        window.addEventListener('scroll',function(){h.classList.toggle('scrolled',window.scrollY>80);},{passive:true});
+        /* Force padding mobile */
+        if(window.innerWidth<=768){
+            var hH=h.offsetHeight||94;
+            var pad=(hH+20)+'px';
+            var targets=['.hc-content','.bk-wrap','.bks-page'];
+            targets.forEach(function(sel){
+                var el=document.querySelector(sel);
+                if(el) el.style.paddingTop=pad;
+            });
+        }
+    }
+})();
 </script>
 <script>
 (function(){

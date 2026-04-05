@@ -183,3 +183,13 @@ img.custom-logo,.custom-logo{background:transparent!important}
     .vs08-search-results{grid-template-columns:1fr}
     .vs08-search-card-img{height:140px}
 }
+
+/* ── Fix mobile: contenu sous le header fixed ── */
+@media(max-width:768px){
+    /* Home hero */
+    .hc-content{padding-top:120px!important}
+    /* Booking golf */
+    .bk-wrap{padding-top:110px!important}
+    /* Booking séjour */
+    .bks-page{padding-top:110px!important}
+}
