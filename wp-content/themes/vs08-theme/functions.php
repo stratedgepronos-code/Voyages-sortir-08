@@ -44,12 +44,12 @@ add_action('wp_enqueue_scripts', function() {
     wp_register_style('vs08-fonts', 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700&display=swap', [], '1.1');
     wp_enqueue_style('vs08-fonts');
     wp_enqueue_style('vs08-main', get_template_directory_uri() . '/assets/css/main.css', ['vs08-fonts'], '1.5');
-    wp_enqueue_style('vs08-header-mega', get_template_directory_uri() . '/assets/css/header-mega.css', ['vs08-main'], '1.5');
+    wp_enqueue_style('vs08-header-mega', get_template_directory_uri() . '/assets/css/header-mega.css', ['vs08-main'], '1.6');
     wp_enqueue_style('vs08-footer-terminal', get_template_directory_uri() . '/assets/css/footer-terminal.css', ['vs08-main'], '1.0');
     if (is_front_page()) {
         /* Déploiement #373 — feat(homepage) : homepage-v3 + front-page-v2 (cartes dynamiques BDD) */
         wp_enqueue_style('vs08-homepage-v3', get_template_directory_uri() . '/assets/css/homepage-v3.css', ['vs08-main', 'vs08-header-mega'], '1.0');
-        wp_enqueue_style('vs08-front-page-v2', get_template_directory_uri() . '/assets/css/front-page-v2.css', ['vs08-homepage-v3'], '2.0');
+        wp_enqueue_style('vs08-front-page-v2', get_template_directory_uri() . '/assets/css/front-page-v2.css', ['vs08-homepage-v3'], '2.1');
     }
     if (function_exists('is_checkout') && is_checkout() && !is_wc_endpoint_url('order-received')) {
         wp_enqueue_style('vs08-checkout', get_template_directory_uri() . '/assets/css/checkout.css', ['vs08-main'], '4.7');

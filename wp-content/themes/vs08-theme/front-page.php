@@ -470,10 +470,15 @@ body.home,body.page-template-default{background:#fff!important}
     .fp-ucard__title{font-size:1.4rem}
 }
 @media(max-width:768px){
-    .hc-wrap{height:75vh;min-height:500px;max-height:650px}
-    .hc-content{padding:120px 24px 0}
-    .hc-dots{left:24px;bottom:24px}
+    .hc-wrap{height:auto;min-height:100vh;max-height:none}
+    .hc-content{padding:110px 24px 0}
+    .hc-wrap h1{font-size:clamp(28px,8vw,42px);margin-bottom:10px}
+    .hc-sub{font-size:15px;margin-bottom:16px}
+    .hc-btns{flex-direction:column;gap:10px}
+    .hc-btns a{text-align:center;padding:14px 24px;font-size:15px}
+    .hc-dots{position:relative;left:0;bottom:0;justify-content:center;margin:16px 0 0;z-index:15}
     .hc-stats{display:none}
+    .hc-conf{padding:10px 20px;gap:12px;flex-wrap:wrap;font-size:11px}
     .fp-search{margin-top:0;padding:20px 24px}
     .fp-search-card{flex-direction:column;gap:16px}
     .fp-search-field{padding:0;border-right:none;border-bottom:1px solid var(--gray-light);padding-bottom:16px}
