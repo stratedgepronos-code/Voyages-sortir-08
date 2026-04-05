@@ -303,7 +303,7 @@ get_header();
 .bk-success-ref strong{color:#3d9a9a;font-size:19px}
 @media(max-width:900px){.bk-inner{grid-template-columns:1fr;padding:0 20px}.bk-recap-col{position:static}.bk-field-row{grid-template-columns:1fr 1fr}.bk-field-row.cols-4{grid-template-columns:1fr 1fr}.bk-filters-sidebar{display:none!important}}
 @media(max-width:480px){.bk-field-row{grid-template-columns:1fr}.bk-field-row.cols-4{grid-template-columns:1fr}.combo-header{flex-direction:column;gap:8px;align-items:flex-start}.combo-leg-times{gap:6px}.combo-time{font-size:16px}.combo-airline{gap:6px}.combo-airline img{width:28px;height:28px}.bk-nav{flex-direction:column;gap:10px}.bk-btn-next,.bk-btn-prev{width:100%;text-align:center}}
-@media(max-width:768px){.combo-leg{padding:10px 12px}.combo-leg-times{margin:0 6px;gap:6px}.combo-leg-meta{gap:4px;font-size:12px}.combo-leg-badge{font-size:11px;width:52px;padding:2px 5px}.combo-time{font-size:18px}.bk-card{padding:16px}
+@media(max-width:768px){.combo-leg{padding:10px 12px}.combo-leg-times{margin:0 6px;gap:6px}.combo-leg-meta{gap:4px;font-size:12px;flex-shrink:1;overflow:hidden}.combo-leg-badge{font-size:10px;width:auto;padding:2px 5px}.combo-time{font-size:16px}.bk-card{padding:16px;overflow:hidden}
 .bk-route-header{padding:10px 12px;gap:6px;margin-bottom:14px;border-radius:10px}
 .bk-route-iata{font-size:18px;letter-spacing:0}
 .bk-route-city{font-size:8px}
@@ -312,6 +312,15 @@ get_header();
 .combo-header{padding:10px 12px 8px}
 .combo-airline-name{font-size:13px}
 .combo-airline img{width:32px;height:32px}
+.combo-leg-dur{font-size:11px}
+.combo-leg-num{font-size:11px}
+.combo-card{border-radius:12px}
+.bk-inner{padding:0 12px!important}
+.bk-option-row{flex-wrap:wrap;gap:8px}
+.bk-option-card{padding:14px}
+.bk-ins-wrap{overflow:hidden}
+.bk-ins-header{flex-wrap:wrap;gap:8px;padding:14px}
+.bk-ins-badge{font-size:10px;padding:4px 10px}
 }
 /* ── Encart création de compte dans le tunnel ── */
 .bk-account-nudge{background:linear-gradient(135deg,#f0f9f9 0%,#e4f3f3 100%);border:1.5px solid #a8d8d8;border-radius:16px;padding:20px 24px;margin-bottom:26px;display:flex;align-items:center;gap:20px;position:relative;overflow:hidden}
