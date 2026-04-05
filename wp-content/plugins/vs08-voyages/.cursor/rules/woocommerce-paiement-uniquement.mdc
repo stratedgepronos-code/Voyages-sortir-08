@@ -1,0 +1,11 @@
+---
+description: WooCommerce utilisé uniquement pour le paiement — tout le reste est développé en interne
+alwaysApply: true
+---
+
+# WooCommerce = paiement uniquement
+
+**Règle projet** : Nous utilisons **WooCommerce uniquement pour le paiement**. Tout le reste (tunnel de réservation, espace membre, contrats, emails, dossiers, formulaires, etc.) est **développé en interne** (plugins VS08 Voyages / VS08 Circuits, thème, templates).
+
+- Ne pas s’appuyer sur les templates ou flux WooCommerce pour l’UX (checkout, remerciement, compte) : nous les surchargeons ou redirigeons (ex. vers l’espace membre).
+- L’espace membre et les dossiers (golf + circuit) doivent avoir **exactement la même mise en page** : bloc hero (titre, N° VS08-xxx, date de départ, badge), puis Récapitulatif (table), Participants (liste), Contrat de vente (bouton principal). Le reste (documents, solde, question) peut suivre en dessous pour le golf.

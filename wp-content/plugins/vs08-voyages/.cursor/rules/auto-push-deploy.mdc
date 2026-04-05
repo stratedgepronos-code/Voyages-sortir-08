@@ -1,0 +1,24 @@
+---
+description: Push Git automatique après CHAQUE requête (déploiement Sortirmonde)
+alwaysApply: true
+---
+
+# Push auto après chaque request — Sortirmonde
+
+**Règle impérative** : À la fin de **chaque** requête où tu as modifié des fichiers, exécute un commit + push. **PUSH AUTO APRÈS CHAQUE REQUEST** — l'utilisateur ne doit jamais avoir à demander « push ».
+
+Après toute modification, création ou suppression de fichiers :
+
+1. **En toute fin de réponse** (après le résumé), exécute **systématiquement** :
+   - `git status` puis `git add .` (ou les chemins concernés)
+   - `git commit -m "Description courte et claire en français"`
+   - `git push`
+   - Working directory = racine du workspace (projet Sortirmonde).
+
+2. **Objectif** : push déclenche le déploiement (workflow GitHub). Aucune action manuelle.
+
+3. **Environnement** : PowerShell. Chaîner avec `;` (pas `&&`).
+
+4. **Ne pas pousser** seulement si l'utilisateur demande explicitement de ne pas commit/push, ou si push impossible (expliquer brièvement).
+
+5. **Message de commit** : en français, descriptif (ex. "Circuits: options sous itinéraire + calcul calc card").

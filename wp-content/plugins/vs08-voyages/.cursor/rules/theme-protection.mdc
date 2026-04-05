@@ -1,0 +1,31 @@
+---
+description: Protection du thème WordPress — fichiers critiques et déploiement
+alwaysApply: true
+---
+
+# Protection du thème vs08-theme
+
+## ⛔ RÈGLES ABSOLUES — NE JAMAIS ENFREINDRE
+
+### 1. Ne JAMAIS créer `front-page.php` dans le thème
+- Le fichier `front-page.php` dans un thème WordPress ÉCRASE automatiquement la page d'accueil existante.
+- La page d'accueil est gérée via WordPress (page statique + éditeur), PAS via un template PHP.
+- Si on veut ajouter des fonctionnalités à la page d'accueil, utiliser des **shortcodes** ou des **hooks** depuis le plugin `vs08-voyages`, jamais un template thème.
+
+### 2. Ne JAMAIS ajouter `--delete` au rsync du thème dans `deploy.yml`
+- Le thème est désormais **complet dans le repo** (restauré depuis sauvegarde). Malgré tout, ne pas ajouter `--delete` au rsync thème sans demande explicite : des fichiers pourraient exister uniquement sur le serveur (uploads, personnalisations).
+- Le `--delete` est autorisé UNIQUEMENT sur le rsync du **plugin**.
+
+### 3. Ne pas remplacer les fichiers thème par des versions vides
+- Ne pas créer de nouveaux `style.css`, `header.php`, `index.php`, `functions.php` qui écraseraient les versions existantes du repo.
+
+### 4. Ne JAMAIS modifier `deploy.yml` sans demande explicite de l'utilisateur
+- Le fichier de déploiement est critique. Toute modification peut casser le site en production.
+- Toujours demander confirmation avant de toucher au workflow de déploiement.
+
+## Résumé de l'architecture
+
+| Emplacement | Géré par | `--delete` rsync |
+|---|---|---|
+| Plugin `vs08-voyages` (racine du repo) | Repo Git | ✅ Oui |
+| Thème `vs08-theme` (complet) | Repo Git | ❌ Non (ne pas ajouter sans demande) |
