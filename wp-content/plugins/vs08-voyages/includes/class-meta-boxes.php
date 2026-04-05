@@ -877,6 +877,10 @@ class VS08V_MetaBoxes {
     public static function resolve_flag($m) {
         if (!is_array($m)) return '';
         $flag = trim((string) ($m['flag'] ?? ''));
+        // Si le flag est un code ISO 2 lettres (ex: "CY", "PT"), le convertir en emoji drapeau
+        if ($flag !== '' && preg_match('/^[A-Z]{2}$/', $flag)) {
+            $flag = mb_chr(0x1F1E6 + ord($flag[0]) - 65, 'UTF-8') . mb_chr(0x1F1E6 + ord($flag[1]) - 65, 'UTF-8');
+        }
         if ($flag !== '') return $flag;
 
         $pays = trim((string) ($m['pays'] ?? ''));
