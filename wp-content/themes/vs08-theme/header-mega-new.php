@@ -220,19 +220,27 @@ $vs08_circuits_url = add_query_arg(['type' => 'circuit'], $vs08_res);
 <script>
 (function(){
     var h=document.getElementById('header');
-    if(h){
-        window.addEventListener('scroll',function(){h.classList.toggle('scrolled',window.scrollY>80);},{passive:true});
-        /* Force padding mobile */
-        if(window.innerWidth<=768){
-            var hH=h.offsetHeight||94;
-            var pad=(hH+20)+'px';
-            var targets=['.hc-content','.bk-wrap','.bks-page'];
-            targets.forEach(function(sel){
-                var el=document.querySelector(sel);
-                if(el) el.style.paddingTop=pad;
-            });
-        }
+    if(!h)return;
+    window.addEventListener('scroll',function(){h.classList.toggle('scrolled',window.scrollY>80);},{passive:true});
+    
+    /* ── Compense le header fixed ── */
+    var hH=h.offsetHeight||94;
+    
+    /* Home page : le hero est full viewport, padding sur .hc-content uniquement */
+    var hc=document.querySelector('.hc-content');
+    if(hc){
+        hc.style.paddingTop=(hH+30)+'px';
+        return;
     }
+    
+    /* Pages booking : ont déjà 140px de padding, pas besoin de spacer */
+    if(document.querySelector('.bk-wrap')||document.querySelector('.bks-page'))return;
+    
+    /* Toutes les autres pages : spacer invisible après le header */
+    var spacer=document.createElement('div');
+    spacer.style.height=hH+'px';
+    spacer.style.flexShrink='0';
+    h.insertAdjacentElement('afterend',spacer);
 })();
 </script>
 <script>

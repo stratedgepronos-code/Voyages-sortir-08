@@ -449,7 +449,7 @@ body.home,body.page-template-default{background:#fff!important}
    ═══════════════════════════════════════════════════════════════ */
 @media(max-width:1024px){
     .fp-container{padding:0 40px}
-    .hc-content{padding:0 40px}
+    .hc-content{padding:100px 40px 0}
     .hc-dots{left:40px}
     .hc-conf{padding:12px 40px;gap:30px}
     .hc-stats{right:40px}
@@ -471,7 +471,7 @@ body.home,body.page-template-default{background:#fff!important}
 }
 @media(max-width:768px){
     .hc-wrap{height:75vh;min-height:500px;max-height:650px}
-    .hc-content{padding:0 24px}
+    .hc-content{padding:120px 24px 0}
     .hc-dots{left:24px;bottom:24px}
     .hc-stats{display:none}
     .fp-search{margin-top:0;padding:20px 24px}
