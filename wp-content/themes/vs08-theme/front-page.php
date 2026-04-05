@@ -471,12 +471,12 @@ body.home,body.page-template-default{background:#fff!important}
 }
 @media(max-width:768px){
     .hc-wrap{height:auto;min-height:100vh;max-height:none}
-    .hc-content{padding:110px 24px 0}
+    .hc-content{padding:110px 24px 100px}
     .hc-wrap h1{font-size:clamp(28px,8vw,42px);margin-bottom:10px}
     .hc-sub{font-size:15px;margin-bottom:16px}
     .hc-btns{flex-direction:column;gap:10px}
     .hc-btns a{text-align:center;padding:14px 24px;font-size:15px}
-    .hc-dots{position:relative;left:0;bottom:0;justify-content:center;margin:16px 0 0;z-index:15}
+    .hc-dots{display:none}
     .hc-stats{display:none}
     .hc-conf{padding:10px 20px;gap:12px;flex-wrap:wrap;font-size:11px}
     .fp-search{margin-top:0;padding:20px 24px}
