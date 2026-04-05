@@ -136,7 +136,17 @@ class VS08S_Rest {
         $p = self::all_params($req);
         $sejour_id = intval(self::p($p, 'sejour_id', 0));
         if (!$sejour_id) return new \WP_Error('no_sejour', 'ID séjour manquant.', ['status' => 400]);
-        return rest_ensure_response(VS08S_Calculator::compute($sejour_id, $p));
+        $result = VS08S_Calculator::compute($sejour_id, $p);
+        // Masquer les détails tarifaires pour les non-admins
+        if (!current_user_can('manage_options')) {
+            unset($result['lines']);
+            unset($result['marge']);
+            unset($result['hotel_net']);
+            unset($result['vol_pax']);
+            unset($result['transfert']);
+            unset($result['assurance']);
+        }
+        return rest_ensure_response($result);
     }
 
     public static function booking(\WP_REST_Request $req) {

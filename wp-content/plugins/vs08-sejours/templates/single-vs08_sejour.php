@@ -102,11 +102,6 @@ $vs08s_payload = [
     'hotel_code'             => $m['hotel_code'] ?? '',
     'hotel_codes'            => $m['hotel_codes'] ?? [],
     'pension'                => $m['pension'] ?? 'ai',
-    'transfert_prix'         => floatval($m['transfert_prix'] ?? 0),
-    'marge_type'             => $m['marge_type'] ?? 'pourcentage',
-    'marge_valeur'           => floatval($m['marge_valeur'] ?? 15),
-    'prix_bagage_soute'      => floatval($m['prix_bagage_soute'] ?? 0),
-    'prix_bagage_cabine'     => floatval($m['prix_bagage_cabine'] ?? 0),
     'acompte_pct'            => floatval($m['acompte_pct'] ?? 30),
     'delai_solde'            => (int) ($m['delai_solde'] ?? 30),
     'booking_url'            => $id ? home_url('/reservation-sejour/' . (int) $id) : '',
@@ -114,6 +109,14 @@ $vs08s_payload = [
     'nonce'                  => wp_create_nonce('wp_rest'),
     'ajax_url'               => admin_url('admin-ajax.php'),
 ];
+// Prix internes : uniquement pour les admins (jamais dans le code source public)
+if (current_user_can('manage_options')) {
+    $vs08s_payload['transfert_prix']      = floatval($m['transfert_prix'] ?? 0);
+    $vs08s_payload['marge_type']          = $m['marge_type'] ?? 'pourcentage';
+    $vs08s_payload['marge_valeur']        = floatval($m['marge_valeur'] ?? 15);
+    $vs08s_payload['prix_bagage_soute']   = floatval($m['prix_bagage_soute'] ?? 0);
+    $vs08s_payload['prix_bagage_cabine']  = floatval($m['prix_bagage_cabine'] ?? 0);
+}
 ?>
 <script>var VS08S_DATA=<?php echo wp_json_encode($vs08s_payload, $vs08s_js_flags); ?>;</script>
 

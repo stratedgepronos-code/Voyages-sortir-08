@@ -364,6 +364,13 @@ function vs08v_calculate_result($input = null) {
         if ($pv > 0) {
             vs08v_maybe_update_vol_min_cache($voyage_id, $pv);
         }
+        // Masquer les détails tarifaires pour les non-admins
+        if (!current_user_can('manage_options')) {
+            unset($devis['lines']);
+            unset($devis['marge']);
+            unset($devis['hotel_net']);
+            unset($devis['vol_pax']);
+        }
         return ['success' => true, 'data' => $devis];
     } catch (\Throwable $e) {
         if (function_exists('error_log')) error_log('[VS08 calculate] ' . $e->getMessage());

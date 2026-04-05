@@ -47,6 +47,13 @@ function vs08c_ajax_calculate() {
     if ($pv > 0) {
         vs08c_maybe_update_vol_min_cache($circuit_id, $pv);
     }
+    // Masquer les détails tarifaires pour les non-admins
+    if (!current_user_can('manage_options')) {
+        unset($devis['lines']);
+        unset($devis['marge']);
+        unset($devis['hotel_net']);
+        unset($devis['vol_pax']);
+    }
     wp_send_json_success($devis);
 }
 

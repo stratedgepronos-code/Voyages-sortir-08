@@ -84,7 +84,43 @@ $periodes_fermees_vente_js = array_values(array_map(function($p) {
     return ['date_debut' => (string)($p['date_debut'] ?? ''), 'date_fin' => (string)($p['date_fin'] ?? '')];
 }, array_filter($m['periodes_fermees_vente'] ?? [], function($p) { return !empty($p['date_debut']) || !empty($p['date_fin']); })));
 ?>
-<script>var VS08V_VOYAGE=<?php echo json_encode(['id'=>$id,'titre'=>get_the_title(),'duree'=>$duree,'prix_double'=>floatval($m['prix_double']??0),'prix_simple_supp'=>floatval($m['prix_simple_supp']??0),'prix_triple'=>floatval($m['prix_triple']??0),'prix_greenfees'=>floatval($m['prix_greenfees']??0),'reduction_nongolf'=>floatval($m['reduction_nongolfeur']??0),'prix_vol_base'=>floatval($m['prix_vol_base']??0),'prix_taxe'=>floatval($m['prix_taxe']??0),'prix_transfert'=>floatval($m['prix_transfert']??0),'acompte_pct'=>floatval($m['acompte_pct']??30),'acompte_mode'=>($m['acompte_mode']??'pct'),'acompte_eur'=>floatval($m['acompte_eur']??0),'delai_solde'=>intval($m['delai_solde']??30),'iata_dest'=>strtoupper((string)($m['iata_dest']??'')),'statut'=>$m['statut']??'actif','aeroports'=>$aeroports_js,'periodes_fermees_vente'=>$periodes_fermees_vente_js,'booking_url'=>home_url('/reservation/'.$id),'transfert_type'=>$transfert_type,'transfert_label'=>$transfert_labels[$transfert_type]??'','voiture_details'=>($transfert_type==='voiture')?($m['voiture_details']??[]):[],'voiture_periodes'=>($transfert_type==='voiture')?array_values($m['voiture_periodes']??[]):[],'chambre_simple_active'=>intval($m['chambre_simple_active']??1),'chambre_triple_active'=>intval($m['chambre_triple_active']??1)]); ?>;</script>
+<script>var VS08V_VOYAGE=<?php
+$is_admin_user = current_user_can('manage_options');
+$voyage_data = [
+    'id'=>$id,
+    'titre'=>get_the_title(),
+    'duree'=>$duree,
+    'acompte_pct'=>floatval($m['acompte_pct']??30),
+    'acompte_mode'=>($m['acompte_mode']??'pct'),
+    'acompte_eur'=>floatval($m['acompte_eur']??0),
+    'delai_solde'=>intval($m['delai_solde']??30),
+    'iata_dest'=>strtoupper((string)($m['iata_dest']??'')),
+    'statut'=>$m['statut']??'actif',
+    'aeroports'=>$aeroports_js,
+    'periodes_fermees_vente'=>$periodes_fermees_vente_js,
+    'booking_url'=>home_url('/reservation/'.$id),
+    'transfert_type'=>$transfert_type,
+    'transfert_label'=>$transfert_labels[$transfert_type]??'',
+    'voiture_details'=>($transfert_type==='voiture')?($m['voiture_details']??[]):[],
+    'voiture_periodes'=>($transfert_type==='voiture')?array_values($m['voiture_periodes']??[]):[],
+    'chambre_simple_active'=>intval($m['chambre_simple_active']??1),
+    'chambre_triple_active'=>intval($m['chambre_triple_active']??1),
+];
+// Prix bruts uniquement pour les admins (pas visibles dans le code source public)
+if ($is_admin_user) {
+    $voyage_data += [
+        'prix_double'=>floatval($m['prix_double']??0),
+        'prix_simple_supp'=>floatval($m['prix_simple_supp']??0),
+        'prix_triple'=>floatval($m['prix_triple']??0),
+        'prix_greenfees'=>floatval($m['prix_greenfees']??0),
+        'reduction_nongolf'=>floatval($m['reduction_nongolfeur']??0),
+        'prix_vol_base'=>floatval($m['prix_vol_base']??0),
+        'prix_taxe'=>floatval($m['prix_taxe']??0),
+        'prix_transfert'=>floatval($m['prix_transfert']??0),
+    ];
+}
+echo json_encode($voyage_data);
+?>;</script>
 
 <style>
 /* ═══════════════════════════════════════════════
