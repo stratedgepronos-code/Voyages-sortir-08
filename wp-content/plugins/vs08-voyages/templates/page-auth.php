@@ -42,7 +42,6 @@ if (function_exists('wc_lostpassword_url')) {
             <div class="auth-visual-slide" style="background-image:url('https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=1400&q=80')"></div>
             <div class="auth-visual-slide" style="background-image:url('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1400&q=80')"></div>
             <div class="auth-visual-slide" style="background-image:url('https://images.unsplash.com/photo-1480796927426-f609979314bd?w=1400&q=80')"></div>
-            <div class="auth-visual-slide" style="background-image:url('https://images.unsplash.com/photo-1540541338287-41700207dee6?w=1400&q=80')"></div>
         </div>
         <div class="auth-visual-overlay"></div>
         <div class="auth-visual-content">
@@ -59,14 +58,12 @@ if (function_exists('wc_lostpassword_url')) {
                 <p class="auth-slogan">🏖️ All inclusive au soleil — Farniente, plage & détente</p>
                 <p class="auth-slogan">🗺️ Circuits sur mesure — Croatie, Malaisie, Scandinavie…</p>
                 <p class="auth-slogan">🏙️ City breaks & escapades — Lisbonne, Prague, Dubaï…</p>
-                <p class="auth-slogan">🎢 Parcs d'attractions — Disneyland, Parc Astérix, Europa-Park…</p>
             </div>
             <div class="auth-visual-pills">
                 <span class="auth-pill">⛳ Golf</span>
                 <span class="auth-pill">🌴 Séjours</span>
                 <span class="auth-pill">🗺️ Circuits</span>
                 <span class="auth-pill">🏙️ City Break</span>
-                <span class="auth-pill">🎢 Parcs</span>
             </div>
             <div class="auth-social-proof">
                 <span class="auth-sp-dot"></span>
