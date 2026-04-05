@@ -18,18 +18,18 @@
 
 /* ─── Container commun ─── */
 body.home,body.page-template-default{background:#fff!important}
-.fp-container{max-width:1400px;margin:0 auto;padding-left:max(80px, env(safe-area-inset-left, 0));padding-right:max(80px, env(safe-area-inset-right, 0))}
+.fp-container{max-width:1400px;margin:0 auto;padding:0 80px}
 
 /* ═══════════════════════════════════════════════════════════════
    1. HERO CAROUSEL — préfixe hc-
    ═══════════════════════════════════════════════════════════════ */
-.hc-wrap{position:relative;height:calc(100vh - 40px);min-height:700px;max-height:1100px;overflow:hidden;display:flex;align-items:center;justify-content:flex-start;background:#0b1120;box-sizing:border-box}
+.hc-wrap{position:relative;height:calc(100vh - 40px);min-height:700px;max-height:1100px;overflow:hidden;display:flex;align-items:center;background:#0b1120}
 .hc-slide{position:absolute;inset:0;opacity:0;transition:opacity 1.2s ease;z-index:0}
 .hc-slide.active{opacity:1;z-index:1}
 .hc-slide-bg{position:absolute;inset:0;background-size:cover;background-position:center center;transition:transform 8s ease-out;transform:scale(1.05);transform-origin:center center}
 .hc-slide.active .hc-slide-bg{transform:scale(1.08)}
 .hc-slide-ov{position:absolute;inset:0}
-.hc-content{position:relative;z-index:10;max-width:800px;width:100%;box-sizing:border-box;padding-left:max(80px, env(safe-area-inset-left, 0));padding-right:max(80px, env(safe-area-inset-right, 0))}
+.hc-content{position:relative;z-index:10;max-width:800px;padding:0 80px}
 .hc-loc{font-size:13px;font-weight:600;color:var(--teal-light);letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:10px}
 .hc-loc::before{content:'';width:40px;height:1px;background:var(--teal-light)}
 .hc-wrap h1{font-family:'Playfair Display',serif;font-size:clamp(40px,5.5vw,72px);font-weight:700;color:#fff;line-height:1.08;margin:0 0 20px;white-space:pre-line;text-shadow:0 2px 40px rgba(0,0,0,.3)}
@@ -56,7 +56,7 @@ body.home,body.page-template-default{background:#fff!important}
 /* ═══════════════════════════════════════════════════════════════
    2. BARRE DE RECHERCHE
    ═══════════════════════════════════════════════════════════════ */
-.fp-search{position:relative;z-index:20;margin-top:-72px;padding:0 0 14px;padding-left:max(80px, env(safe-area-inset-left, 0));padding-right:max(80px, env(safe-area-inset-right, 0))}
+.fp-search{position:relative;z-index:20;margin-top:-72px;padding:0 80px 14px}
 .fp-search-card{background:#fff;border-radius:22px;padding:28px 36px;box-shadow:0 25px 80px rgba(0,0,0,.13);display:flex;align-items:flex-end;gap:0}
 .fp-search-field{flex:1;padding:0 20px;border-right:1px solid var(--gray-light);display:flex;flex-direction:column;justify-content:flex-end}
 .fp-search-field:first-child{padding-left:0}
@@ -64,11 +64,23 @@ body.home,body.page-template-default{background:#fff!important}
 .fp-search-field label{display:block;font-size:10px;font-weight:700;color:var(--teal-dark);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px;flex-shrink:0}
 .fp-search-field input,.fp-search-field select{width:100%;border:none;border-bottom:2px solid var(--gray-light);padding:10px 0;font-size:14px;line-height:20px;color:var(--dark);background:transparent;outline:none;cursor:pointer;transition:border-color .2s;font-family:'Outfit',sans-serif;height:40px;box-sizing:border-box}
 .fp-search-field input:focus,.fp-search-field select:focus{border-bottom-color:var(--teal)}
+.fp-search-field select:disabled{color:#9ca3af;cursor:not-allowed;opacity:.6}
 .fp-search-field #fp-date-wrap{flex-shrink:0;margin:0;padding:0}
 .fp-search-date-trigger{width:100%;border:none;border-bottom:2px solid var(--gray-light);padding:0;font-size:14px;line-height:20px;color:#9ca3af;background:transparent;cursor:pointer;transition:border-color .2s;font-family:'Outfit',sans-serif;height:40px;box-sizing:border-box;display:flex;align-items:center}
 #fp-date-wrap:focus-within .fp-search-date-trigger{border-bottom-color:var(--teal)}
 .fp-btn-search{background:var(--coral);color:#fff;border:none;padding:18px 32px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-left:20px;flex-shrink:0;white-space:nowrap;transition:all .3s;box-shadow:0 6px 25px rgba(232,114,74,.35);font-family:'Outfit',sans-serif}
 .fp-btn-search:hover{background:var(--coral-dark);transform:translateY(-2px)}
+/* Rappel visuel : clic sur destination sans type → halo vert type de voyage */
+.fp-type-wrap{position:relative;border-radius:14px;padding:2px 0;margin:-2px 0}
+.fp-type-wrap.fp-type-nudge{animation:fp-type-nudge-anim 1.35s ease-out}
+@keyframes fp-type-nudge-anim{
+  0%{box-shadow:0 0 0 0 rgba(89,183,183,0)}
+  14%{box-shadow:0 0 0 3px rgba(89,183,183,.4),0 0 28px rgba(89,183,183,.55),0 0 42px rgba(126,206,206,.4)}
+  32%{box-shadow:0 0 0 1px rgba(89,183,183,.2),0 0 14px rgba(89,183,183,.25)}
+  48%{box-shadow:0 0 0 4px rgba(89,183,183,.45),0 0 36px rgba(89,183,183,.6)}
+  100%{box-shadow:0 0 0 0 rgba(89,183,183,0)}
+}
+.fp-type-wrap.fp-type-nudge .fp-type-label{color:#3d9a9a!important;text-shadow:0 0 12px rgba(89,183,183,.5);transition:color .2s,text-shadow .2s}
 
 /* ═══════════════════════════════════════════════════════════════
    3. SECTION NOS UNIVERS — Bento Grid
@@ -84,7 +96,7 @@ body.home,body.page-template-default{background:#fff!important}
 .fp-univers-subtitle{font-family:'Outfit',sans-serif;font-size:1.1rem;color:#4a5568;max-width:560px;margin:0 auto;line-height:1.7}
 
 /* ─── Bento Grid ─── */
-.fp-bento{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:auto;gap:1.25rem;grid-template-areas:"golf golf golf golf golf golf golf sejour sejour sejour sejour sejour" "circuit circuit circuit circuit road road road road parcs parcs parcs parcs"}
+.fp-bento{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:auto;gap:1.25rem;grid-template-areas:"golf golf golf golf golf golf golf sejour sejour sejour sejour sejour" "circuit circuit circuit circuit road road road road road road road road"}
 
 /* ─── Card base ─── */
 .fp-ucard{position:relative;border-radius:16px;overflow:hidden;cursor:pointer;text-decoration:none;display:flex;flex-direction:column;justify-content:flex-end;min-height:320px;transition:transform .5s cubic-bezier(.23,1,.32,1),box-shadow .5s cubic-bezier(.23,1,.32,1);box-shadow:0 4px 24px rgba(0,0,0,.08);opacity:0;transform:translateY(40px)}
@@ -132,6 +144,7 @@ body.home,body.page-template-default{background:#fff!important}
 .fp-ucard:hover .fp-ucard__count{color:rgba(255,255,255,.8)}
 .fp-ucard__count::before{content:'';width:24px;height:1px;background:rgba(255,255,255,.3);transition:width .4s,background .3s}
 .fp-ucard:hover .fp-ucard__count::before{width:36px;background:#59b7b7}
+.fp-ucard__soon{position:absolute;top:1.2rem;right:1.2rem;z-index:3;font-family:'Outfit',sans-serif;font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:#fff;background:linear-gradient(135deg,#c9a84c,#e8724a);padding:.35rem .9rem;border-radius:100px;box-shadow:0 4px 16px rgba(232,114,74,.3)}
 
 /* ─── Ligne déco bas carte ─── */
 .fp-ucard__line{position:absolute;bottom:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#59b7b7,#c8a45e);z-index:3;transition:width .6s cubic-bezier(.23,1,.32,1);border-radius:0 3px 0 0}
@@ -279,7 +292,7 @@ body.home,body.page-template-default{background:#fff!important}
 .fp-title-white{color:#fff}
 .fp-title-white em{color:var(--teal-light)}
 .fp-why-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;margin-top:56px}
-.fp-why-item{padding:36px 28px;border:1px solid rgba(89,183,183,.12);border-radius:20px;background:rgba(255,255,255,.02);transition:all .35s;/* PAS de .anim — directement visible */}
+.fp-why-item{padding:36px 28px;border:1px solid rgba(89,183,183,.12);border-radius:20px;background:rgba(255,255,255,.02);transition:all .35s;/* PAS de .anim — directement visible */}.fp-why-item--highlight{border:1.5px solid rgba(89,183,183,.45);background:rgba(89,183,183,.07);position:relative;}.fp-why-item--highlight::before{content:'★ Unique en France';position:absolute;top:-12px;left:24px;font-size:10px;font-weight:700;background:#59b7b7;color:#fff;padding:2px 10px;border-radius:20px;letter-spacing:.04em}
 .fp-why-item:hover{border-color:rgba(89,183,183,.35);background:rgba(89,183,183,.06);transform:translateY(-5px)}
 .fp-why-icon{font-size:28px;margin-bottom:22px}
 .fp-why-item h3{font-size:20px;color:#fff;margin-bottom:12px}
@@ -289,6 +302,19 @@ body.home,body.page-template-default{background:#fff!important}
    12. DESTINATIONS — CARTE DU MONDE INTERACTIVE
    ═══════════════════════════════════════════════════════════════ */
 .fp-dest{padding:80px 0 100px;background:#fff}
+.fp-dest-update-note{
+    font-family:'Outfit',sans-serif;
+    font-size:14px;
+    color:var(--gray);
+    line-height:1.65;
+    max-width:46rem;
+    margin:0 0 24px;
+    padding:12px 18px 12px 14px;
+    background:linear-gradient(90deg,rgba(89,183,183,.1),transparent);
+    border-radius:12px;
+    border-left:3px solid var(--teal);
+}
+.fp-dest-update-note strong{color:var(--dark);font-weight:600}
 .fp-map-box{background:#0b1120;border-radius:24px;overflow:hidden;position:relative;margin:0 auto;max-width:1400px}
 .fp-map-box::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 40% at 50% 40%,rgba(89,183,183,.03),transparent);pointer-events:none}
 .fp-map-airports{display:flex;justify-content:center;align-items:center;gap:5px;flex-wrap:wrap;padding:20px 24px 10px;position:relative;z-index:2}
@@ -296,6 +322,9 @@ body.home,body.page-template-default{background:#fff!important}
 .fp-map-ab{padding:5px 12px;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.45);transition:all .2s;font-family:'Outfit',sans-serif}
 .fp-map-ab:hover{border-color:rgba(89,183,183,.3);color:rgba(255,255,255,.7)}
 .fp-map-ab.on{background:rgba(89,183,183,.15);border-color:rgba(89,183,183,.4);color:#7ecece}
+.fp-map-svg-wrap svg{cursor:grab}.fp-map-svg-wrap svg:active{cursor:grabbing}
+.fp-map-zoom-reset{position:absolute;bottom:16px;right:16px;z-index:10;padding:8px 18px;border-radius:100px;border:1px solid rgba(89,183,183,.3);background:rgba(11,17,32,.85);color:#7ecece;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);transition:all .25s}
+.fp-map-zoom-reset:hover{background:rgba(89,183,183,.15);border-color:#59b7b7}
 .fp-map-svg-wrap{position:relative;width:100%;overflow:hidden}
 .fp-map-svg-wrap svg{display:block;width:100%}
 .fp-map-tt{position:absolute;pointer-events:none;opacity:0;transform:translateY(6px) scale(.96);transition:opacity .22s,transform .22s cubic-bezier(.22,1,.36,1);z-index:50;font-family:'Outfit',sans-serif}
@@ -323,16 +352,16 @@ body.home,body.page-template-default{background:#fff!important}
 /* ═══════════════════════════════════════════════════════════════
    13. TRUST BAR
    ═══════════════════════════════════════════════════════════════ */
-.fp-trust{padding:40px 0;background:var(--white);border-top:1px solid var(--gray-light);border-bottom:1px solid var(--gray-light)}
-.fp-trust-row{display:flex;align-items:center;justify-content:center;gap:48px;flex-wrap:nowrap}
-.fp-trust-item{display:flex;align-items:center;gap:14px;white-space:nowrap}
-.fp-trust-logo{height:44px;width:auto;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.fp-trust-logo svg{height:44px;width:auto;object-fit:contain;filter:grayscale(20%);transition:filter .3s}
-.fp-trust-item:hover .fp-trust-logo svg{filter:grayscale(0%)}
+.fp-trust{padding:32px 0;background:var(--white);border-top:1px solid var(--gray-light);border-bottom:1px solid var(--gray-light)}
+.fp-trust-row{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:nowrap}
+.fp-trust-item{display:flex;align-items:center;gap:12px;white-space:nowrap;padding:0 28px}
+.fp-trust-logo{height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.fp-trust-logo svg,.fp-trust-logo img{height:36px;width:auto;max-width:90px;object-fit:contain;opacity:.7;transition:opacity .3s}
+.fp-trust-item:hover .fp-trust-logo svg,.fp-trust-item:hover .fp-trust-logo img{opacity:1}
 .fp-trust-text{display:flex;flex-direction:column}
-.fp-trust-text strong{font-size:13px;color:var(--dark);font-weight:700}
-.fp-trust-text span{font-size:11px;color:var(--gray)}
-.fp-trust-sep{width:1px;height:36px;background:var(--gray-light);flex-shrink:0}
+.fp-trust-text strong{font-size:12px;color:var(--dark);font-weight:700}
+.fp-trust-text span{font-size:10px;color:var(--gray)}
+.fp-trust-sep{width:1px;height:32px;background:var(--gray-light);flex-shrink:0}
 
 /* ═══════════════════════════════════════════════════════════════
    14. TÉMOIGNAGES
@@ -419,65 +448,45 @@ body.home,body.page-template-default{background:#fff!important}
    18. RESPONSIVE
    ═══════════════════════════════════════════════════════════════ */
 @media(max-width:1024px){
-    .fp-container{padding-left:max(40px, env(safe-area-inset-left, 0));padding-right:max(40px, env(safe-area-inset-right, 0))}
-    .hc-content{padding-left:max(40px, env(safe-area-inset-left, 0));padding-right:max(40px, env(safe-area-inset-right, 0))}
+    .fp-container{padding:0 40px}
+    .hc-content{padding:0 40px}
     .hc-dots{left:40px}
     .hc-conf{padding:12px 40px;gap:30px}
     .hc-stats{right:40px}
-    .fp-search{padding-left:max(40px, env(safe-area-inset-left, 0));padding-right:max(40px, env(safe-area-inset-right, 0))}
+    .fp-search{padding:0 40px}
     .fp-bridge{padding:40px 40px}
     .fp-cards-grid{grid-template-columns:1fr 1fr}
     .scard-featured{grid-column:span 2}
     .fp-why-grid{grid-template-columns:repeat(2,1fr)}
     .fp-nl-cta{padding:0 40px 80px}
-    .fp-trust-row{gap:28px;flex-wrap:wrap;justify-content:center}
+    .fp-trust-row{gap:0;flex-wrap:wrap;justify-content:center}
     .fp-trust-sep{display:none}
+    .fp-trust-item{padding:12px 20px}
     .sh-grid{grid-template-columns:1fr 1fr}
-    .fp-bento{grid-template-columns:repeat(2,1fr);grid-template-areas:"golf golf" "sejour circuit" "road parcs";gap:1rem}
+    .fp-bento{grid-template-columns:repeat(2,1fr);grid-template-areas:"golf golf" "sejour circuit" "road road";gap:1rem}
     .fp-ucard--golf{min-height:340px}
     .fp-ucard{min-height:280px}
     .fp-ucard--golf .fp-ucard__title{font-size:1.8rem}
     .fp-ucard__title{font-size:1.4rem}
 }
 @media(max-width:768px){
-    .hc-wrap{
-        height:min(88vh, 780px);
-        min-height:420px;
-        max-height:none;
-        align-items:flex-end;
-        justify-content:flex-start;
-        padding-bottom:max(56px, env(safe-area-inset-bottom, 0));
-    }
-    .hc-content{
-        max-width:none;
-        padding-left:max(20px, env(safe-area-inset-left, 0));
-        padding-right:max(20px, env(safe-area-inset-right, 0));
-        padding-bottom:8px;
-    }
-    .hc-wrap h1{font-size:clamp(1.65rem, 7vw, 2.35rem);line-height:1.12;margin-bottom:14px}
-    .hc-sub{font-size:16px;margin-bottom:22px;max-width:none}
-    .hc-loc{font-size:11px;letter-spacing:.18em;margin-bottom:12px}
-    .hc-loc::before{width:28px}
-    .hc-btns{flex-direction:column;align-items:stretch;gap:12px}
-    .hc-btns a{text-align:center;padding:15px 22px;font-size:15px}
-    .hc-dots{
-        left:50% !important;
-        right:auto;
-        bottom:max(18px, env(safe-area-inset-bottom, 0)) !important;
-        transform:translateX(-50%);
-        gap:10px;
-    }
-    .hc-conf{padding:12px 20px;gap:20px;flex-wrap:wrap}
+    .hc-wrap{height:75vh;min-height:500px;max-height:650px}
+    .hc-content{padding:0 24px}
+    .hc-dots{left:24px;bottom:24px}
     .hc-stats{display:none}
-    .fp-search{margin-top:-18px;padding:12px 0 14px;padding-left:max(20px, env(safe-area-inset-left, 0));padding-right:max(20px, env(safe-area-inset-right, 0))}
+    .fp-search{margin-top:0;padding:20px 24px}
     .fp-search-card{flex-direction:column;gap:16px}
     .fp-search-field{padding:0;border-right:none;border-bottom:1px solid var(--gray-light);padding-bottom:16px}
     .fp-btn-search{margin-left:0;width:100%}
-    .fp-container{padding-left:max(20px, env(safe-area-inset-left, 0));padding-right:max(20px, env(safe-area-inset-right, 0))}
+    .fp-container{padding:0 24px}
     .fp-bridge{padding:32px 24px}
     .fp-cards-grid{grid-template-columns:1fr}
     .scard-featured{flex-direction:column;grid-column:span 1}
     .scard-featured .scard-img{width:100%}
+    .scard-footer{flex-wrap:wrap;gap:12px}
+    .scard-price .price-amount{font-size:22px}
+    .scard-price .price-label,.scard-price .price-per{display:inline;font-size:9px}
+    .scard-btn{padding:10px 20px;font-size:13px}
     .fp-why-grid{grid-template-columns:1fr}
     .fp-testi-grid{grid-template-columns:1fr}
     .fp-nl-cta{padding:0 24px 60px}
@@ -491,7 +500,7 @@ body.home,body.page-template-default{background:#fff!important}
     .sh-grid{grid-template-columns:1fr 1fr}
     .dl-grid{flex-direction:column}
     /* Bento 1 col */
-    .fp-bento{grid-template-columns:1fr;grid-template-areas:"golf" "sejour" "circuit" "road" "parcs";gap:.85rem}
+    .fp-bento{grid-template-columns:1fr;grid-template-areas:"golf" "sejour" "circuit" "road";gap:.85rem}
     .fp-ucard{min-height:240px}
     .fp-ucard--golf{min-height:300px}
     .fp-ucard--golf .fp-ucard__title{font-size:1.7rem}
@@ -504,14 +513,13 @@ body.home,body.page-template-default{background:#fff!important}
     .fp-univers{padding:3.5rem 0 4.5rem}
     .fp-univers-header{margin-bottom:2.5rem}
     .fp-univers-subtitle{font-size:1rem}
+    /* Carte interactive : peu lisible sur petit écran */
+    .fp-dest{display:none!important}
 }
 @media(max-width:480px){
     .sh-grid{grid-template-columns:1fr}
     .fp-ucard{min-height:210px}
     .fp-ucard--golf{min-height:260px}
-    .hc-loc::before{display:none}
-    .hc-loc{letter-spacing:.14em}
-    .hc-wrap h1{font-size:clamp(1.45rem, 8vw, 2rem)}
 }
 </style>
 
@@ -535,9 +543,9 @@ $fp_url_rgpd         = home_url('/rgpd/');
    DONNÉES HERO CAROUSEL
    ═══════════════════════════════════════════════════════════════ */
 $hc_slides = [
-    ['title'=>"Jouez sur les plus beaux parcours du monde",'sub'=>'On s\'occupe de tout. Vous n\'avez qu\'à swinguer.','img'=>'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=1920&q=80','cta'=>'Explorer nos golfs','url'=>home_url('/golf'),'ov'=>'linear-gradient(135deg,rgba(11,17,32,.7),rgba(45,106,79,.4))'],
-    ['title'=>"Chaque étape raconte une histoire",'sub'=>'Circuits guidés en Crète, Thaïlande, Costa Rica… rien à organiser.','img'=>'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1920&q=80','cta'=>'Voir les circuits','url'=>$fp_url_circuits,'ov'=>'linear-gradient(135deg,rgba(11,17,32,.7),rgba(106,76,147,.4))'],
-    ['title'=>"Vous avez le droit de ne rien faire",'sub'=>'Séjours all inclusive, soleil, plage et farniente — tout est inclus.','img'=>'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1920&q=80','cta'=>'Voir les séjours','url'=>home_url('/resultats-recherche?type=sejour'),'ov'=>'linear-gradient(135deg,rgba(11,17,32,.7),rgba(89,183,183,.3))'],
+    ['title'=>"Jouez sur les plus beaux parcours du monde",'sub'=>'On s\'occupe de tout. Vous n\'avez qu\'à swinguer.','img'=>'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=1920&q=80','cta'=>'Explorer nos golfs','url'=>home_url('/resultats-recherche?type=sejour_golf'),'ov'=>'linear-gradient(135deg,rgba(11,17,32,.7),rgba(45,106,79,.4))'],
+    ['title'=>"Chaque étape raconte une histoire",'sub'=>'Circuits guidés en Crète, Thaïlande, Costa Rica… rien à organiser.','img'=>'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1920&q=80','cta'=>'Voir les circuits','url'=>home_url('/resultats-recherche?type=circuit'),'ov'=>'linear-gradient(135deg,rgba(11,17,32,.7),rgba(106,76,147,.4))'],
+    ['title'=>"Vous avez le droit de ne rien faire",'sub'=>'Séjours all inclusive, soleil, plage et farniente — tout est inclus.','img'=>'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1920&q=80','cta'=>'Voir les séjours','url'=>home_url('/bientot-disponible/?univers=sejour'),'ov'=>'linear-gradient(135deg,rgba(11,17,32,.7),rgba(89,183,183,.3))'],
 ];
 ?>
 
@@ -557,9 +565,9 @@ $hc_slides = [
         <a href="<?php echo esc_url(home_url('/contact')); ?>" class="hc-btn-o">Demander un devis</a>
     </div>
 </div>
-<div class="hc-stats"><div class="hc-stat"><b>250+</b><small>Parcours partenaires</small></div><div class="hc-stat"><b>18</b><small>Pays couverts</small></div><div class="hc-stat"><b>4.9★</b><small>Note clients</small></div></div>
+<div class="hc-stats"><div class="hc-stat"><b>2500+</b><small>Voyageurs par an</small></div><div class="hc-stat"><b>50+</b><small>Pays couverts</small></div><div class="hc-stat"><b>4.9★</b><small>Note clients</small></div></div>
 <div class="hc-dots"><?php foreach($hc_slides as $i=>$s): ?><button class="hc-dot <?php echo $i===0?'active':''; ?>" data-i="<?php echo $i; ?>"></button><?php endforeach; ?></div>
-<div class="hc-conf"><div class="hc-conf-i"><span>🏆</span><span>Agence de confiance depuis 2016</span></div><div class="hc-conf-i"><span>⭐</span><span>4.8/5 sur Google (200+ avis)</span></div><div class="hc-conf-i"><span>💰</span><span>Libre à vous de payer plus cher !</span></div><div class="hc-conf-i"><span>✈️</span><span>Vols + Hôtels + Activités inclus</span></div></div>
+<div class="hc-conf"><div class="hc-conf-i"><span>🏆</span><span>Agence de confiance depuis 2001</span></div><div class="hc-conf-i"><span>⭐</span><span>4.8/5 sur Google (200+ avis)</span></div><div class="hc-conf-i"><span>💰</span><span>Libre à vous de payer plus cher !</span></div><div class="hc-conf-i"><span>✈️</span><span>Vols + Hôtels + Activités inclus</span></div></div>
 </section>
 
 <!-- Hero JS -->
@@ -570,27 +578,95 @@ $hc_slides = [
 <!-- ═══════════════════════════════════════════════════════════════
      2. BARRE DE RECHERCHE
      ═══════════════════════════════════════════════════════════════ -->
-<?php $vs08_opts = class_exists('VS08V_Search') ? VS08V_Search::get_aggregated_options() : ['types'=>[],'destinations'=>[],'aeroports'=>[],'durees'=>[],'dates'=>[]]; ?>
+<?php
+$vs08_opts = class_exists('VS08V_Search') ? VS08V_Search::get_aggregated_options() : ['types'=>[],'destinations'=>[],'aeroports'=>[],'durees'=>[],'dates'=>[]];
+
+// ── Types proposés dans la barre (temporaire : golf + circuits uniquement) ──
+$fp_search_types = [
+    'sejour_golf' => 'Séjours golfique',
+    'circuit'     => 'Circuits',
+];
+foreach ($fp_search_types as $k => $default_label) {
+    if (!isset($vs08_opts['types'][$k])) {
+        $vs08_opts['types'][$k] = $default_label;
+    }
+}
+// N'afficher que ces types, dans cet ordre
+$fp_types_ordered = [];
+foreach (array_keys($fp_search_types) as $k) {
+    if (isset($vs08_opts['types'][$k])) {
+        $fp_types_ordered[$k] = $vs08_opts['types'][$k];
+    }
+}
+$vs08_opts['types'] = $fp_types_ordered;
+
+// ── Fallback destinations (si la BDD en a moins de 5) ──
+if (count($vs08_opts['destinations']) < 5) {
+    $fp_fb_dest = [
+        ['value'=>'Portugal','label'=>'Portugal','flag'=>'🇵🇹','pays'=>'Portugal','count'=>0,'image'=>''],
+        ['value'=>'Espagne','label'=>'Espagne','flag'=>'🇪🇸','pays'=>'Espagne','count'=>0,'image'=>''],
+        ['value'=>'Maroc','label'=>'Maroc','flag'=>'🇲🇦','pays'=>'Maroc','count'=>0,'image'=>''],
+        ['value'=>'Tunisie','label'=>'Tunisie','flag'=>'🇹🇳','pays'=>'Tunisie','count'=>0,'image'=>''],
+        ['value'=>'Turquie','label'=>'Turquie','flag'=>'🇹🇷','pays'=>'Turquie','count'=>0,'image'=>''],
+        ['value'=>'Grèce','label'=>'Grèce','flag'=>'🇬🇷','pays'=>'Grèce','count'=>0,'image'=>''],
+        ['value'=>'Italie','label'=>'Italie','flag'=>'🇮🇹','pays'=>'Italie','count'=>0,'image'=>''],
+        ['value'=>'Irlande','label'=>'Irlande','flag'=>'🇮🇪','pays'=>'Irlande','count'=>0,'image'=>''],
+        ['value'=>'Croatie','label'=>'Croatie','flag'=>'🇭🇷','pays'=>'Croatie','count'=>0,'image'=>''],
+        ['value'=>'République Dominicaine','label'=>'Rép. Dominicaine','flag'=>'🇩🇴','pays'=>'République Dominicaine','count'=>0,'image'=>''],
+        ['value'=>'Thaïlande','label'=>'Thaïlande','flag'=>'🇹🇭','pays'=>'Thaïlande','count'=>0,'image'=>''],
+        ['value'=>'Égypte','label'=>'Égypte','flag'=>'🇪🇬','pays'=>'Égypte','count'=>0,'image'=>''],
+        ['value'=>'Maurice','label'=>'Île Maurice','flag'=>'🇲🇺','pays'=>'Maurice','count'=>0,'image'=>''],
+    ];
+    // Ajouter ceux qui n'existent pas déjà
+    $existing_values = array_column($vs08_opts['destinations'], 'value');
+    foreach ($fp_fb_dest as $d) {
+        if (!in_array($d['value'], $existing_values)) {
+            $vs08_opts['destinations'][] = $d;
+        }
+    }
+    // Trier alphabétiquement
+    usort($vs08_opts['destinations'], function($a, $b) { return strcmp($a['label'], $b['label']); });
+}
+
+// ── Fallback aéroports (si la BDD en a moins de 3) ──
+if (count($vs08_opts['aeroports']) < 3) {
+    $fp_fb_aero = [
+        ['code'=>'CDG','ville'=>'Paris Charles de Gaulle','label'=>'CDG — Paris Charles de Gaulle'],
+        ['code'=>'ORY','ville'=>'Paris Orly','label'=>'ORY — Paris Orly'],
+        ['code'=>'XCR','ville'=>'Paris-Vatry','label'=>'XCR — Paris-Vatry'],
+        ['code'=>'LYS','ville'=>'Lyon Saint-Exupéry','label'=>'LYS — Lyon Saint-Exupéry'],
+        ['code'=>'MRS','ville'=>'Marseille Provence','label'=>'MRS — Marseille Provence'],
+    ];
+    $existing_codes = array_column($vs08_opts['aeroports'], 'code');
+    foreach ($fp_fb_aero as $a) {
+        if (!in_array($a['code'], $existing_codes)) {
+            $vs08_opts['aeroports'][] = $a;
+        }
+    }
+}
+?>
 <section class="fp-search">
     <form class="fp-search-card" action="<?php echo esc_url(home_url('/resultats-recherche')); ?>" method="get">
-        <div class="fp-search-field"><label>Type de voyage</label>
-            <select name="type">
-                <option value="">Tous les types</option>
+        <div class="fp-search-field fp-type-wrap" id="fp-type-wrap">
+            <label class="fp-type-label" for="fp-sel-type">Type de voyage</label>
+            <select name="type" id="fp-sel-type">
+                <option value="">Sélectionner un type</option>
                 <?php foreach ($vs08_opts['types'] as $tv => $tl): ?>
                 <option value="<?php echo esc_attr($tv); ?>"><?php echo esc_html($tl); ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
-        <div class="fp-search-field"><label>Destination</label>
-            <select name="dest">
-                <option value="">Toutes les destinations</option>
+        <div class="fp-search-field" id="fp-dest-wrap" style="position:relative">
+            <label>Destination</label>
+            <select name="dest" id="fp-sel-dest" disabled>
+                <option value="">— Choisissez un type d'abord —</option>
                 <?php foreach ($vs08_opts['destinations'] as $d): ?>
                 <option value="<?php echo esc_attr($d['value']); ?>"><?php echo esc_html($d['label']); ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
         <div class="fp-search-field"><label>Aéroport de départ</label>
-            <select name="airport">
+            <select name="airport" id="fp-sel-airport">
                 <option value="">Tous les aéroports</option>
                 <?php foreach ($vs08_opts['aeroports'] as $a): ?>
                 <option value="<?php echo esc_attr($a['code']); ?>"><?php echo esc_html($a['label']); ?></option>
@@ -649,6 +725,137 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<!-- Filtrage dynamique : type + aéroport → destinations -->
+<script>
+(function(){
+    var typeSel    = document.getElementById('fp-sel-type');
+    var airportSel = document.getElementById('fp-sel-airport');
+    var destSel    = document.getElementById('fp-sel-dest');
+    var destWrap   = document.getElementById('fp-dest-wrap');
+    if (!typeSel || !airportSel || !destSel) return;
+
+    var airportDestMap = <?php echo wp_json_encode($vs08_opts['airport_dest_map'] ?? new stdClass()); ?>;
+    var typeDestMap    = <?php echo wp_json_encode($vs08_opts['type_dest_map'] ?? new stdClass()); ?>;
+
+    var allDestOptions = <?php echo wp_json_encode(array_map(function($d) {
+        return ['value' => $d['value'], 'text' => $d['label']];
+    }, $vs08_opts['destinations'])); ?>;
+
+    var tooltip = null;
+    var typeWrap = document.getElementById('fp-type-wrap');
+
+    function nudgeTypeField() {
+        if (!typeWrap) return;
+        typeWrap.classList.remove('fp-type-nudge');
+        void typeWrap.offsetWidth;
+        typeWrap.classList.add('fp-type-nudge');
+        var cleared = false;
+        function done() {
+            if (cleared) return;
+            cleared = true;
+            typeWrap.classList.remove('fp-type-nudge');
+            typeWrap.removeEventListener('animationend', done);
+        }
+        typeWrap.addEventListener('animationend', done);
+        setTimeout(done, 1600);
+    }
+
+    function onBlockedDestination(e) {
+        if (!destSel.disabled) return;
+        e.preventDefault();
+        showTooltip();
+        nudgeTypeField();
+    }
+    /* pointerdown en capture : fonctionne même si le select est disabled */
+    destWrap.addEventListener('pointerdown', onBlockedDestination, true);
+
+    function showTooltip() {
+        if (tooltip) return;
+        tooltip = document.createElement('div');
+        tooltip.textContent = 'Sélectionnez d\'abord un type de voyage';
+        tooltip.style.cssText = 'position:absolute;top:-40px;left:50%;transform:translateX(-50%);background:#1e3a3a;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;white-space:nowrap;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.15);pointer-events:none';
+        var arrow = document.createElement('div');
+        arrow.style.cssText = 'position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:12px;height:12px;background:#1e3a3a;rotate:45deg';
+        tooltip.appendChild(arrow);
+        destWrap.appendChild(tooltip);
+        setTimeout(function() { if (tooltip) { tooltip.remove(); tooltip = null; } }, 2500);
+    }
+
+    function rebuildDest() {
+        var type = typeSel.value;
+        var code = airportSel.value;
+        var currentDest = destSel.value;
+
+        destSel.innerHTML = '';
+
+        if (!type) {
+            destSel.disabled = true;
+            var ph = document.createElement('option');
+            ph.value = '';
+            ph.textContent = '— Choisissez un type d\'abord —';
+            destSel.appendChild(ph);
+            return;
+        }
+
+        destSel.disabled = false;
+
+        // Toujours filtrer par type : si la clé manque (cache ancien), tableau vide = aucune destination parasite
+        var typeDests = Array.isArray(typeDestMap[type]) ? typeDestMap[type] : [];
+        var airDests  = (code && airportDestMap[code]) ? airportDestMap[code] : null;
+
+        var ph = document.createElement('option');
+        ph.value = '';
+        if (typeDests.length && airDests) {
+            ph.textContent = 'Destinations disponibles';
+        } else if (typeDests.length) {
+            ph.textContent = 'Choisissez une destination';
+        } else if (airDests) {
+            ph.textContent = 'Destinations au départ de ' + code;
+        } else {
+            ph.textContent = 'Choisissez une destination';
+        }
+        destSel.appendChild(ph);
+
+        allDestOptions.forEach(function(o) {
+            if (!o.value) return;
+            if (typeDests.indexOf(o.value) === -1) return;
+            if (airDests && airDests.indexOf(o.value) === -1) return;
+
+            var opt = document.createElement('option');
+            opt.value = o.value;
+            opt.textContent = o.text;
+            if (o.value === currentDest) opt.selected = true;
+            destSel.appendChild(opt);
+        });
+
+        // N'ajouter des options « brutes » que si le type impose déjà une liste (ne jamais élargir via l'aéroport seul)
+        if (destSel.options.length <= 1 && typeDests.length) {
+            var pool = typeDests.slice();
+            if (airDests) pool = pool.filter(function(d){ return airDests.indexOf(d) !== -1; });
+            pool.forEach(function(d) {
+                var exists = false;
+                for (var i = 0; i < destSel.options.length; i++) {
+                    if (destSel.options[i].value === d) { exists = true; break; }
+                }
+                if (!exists) {
+                    var opt = document.createElement('option');
+                    opt.value = d;
+                    opt.textContent = d.charAt(0).toUpperCase() + d.slice(1);
+                    destSel.appendChild(opt);
+                }
+            });
+        }
+    }
+
+    typeSel.addEventListener('change', function() {
+        if (tooltip) { tooltip.remove(); tooltip = null; }
+        rebuildDest();
+    });
+
+    airportSel.addEventListener('change', rebuildDest);
+})();
+</script>
+
 <!-- ═══════════════════════════════════════════════════════════════
      3. NOS UNIVERS — Bento Grid
      ═══════════════════════════════════════════════════════════════ -->
@@ -660,31 +867,30 @@ document.addEventListener('DOMContentLoaded', function() {
       <p class="fp-univers-subtitle">Chaque voyage est une histoire. Choisissez le premier chapitre de la vôtre parmi nos univers soigneusement conçus.</p>
     </div>
     <div class="fp-bento">
-      <a href="<?php echo esc_url(home_url('/golf')); ?>" class="fp-ucard fp-ucard--golf fp-anim">
+      <a href="<?php echo esc_url(add_query_arg(['type' => 'sejour_golf'], home_url('/resultats-recherche'))); ?>" class="fp-ucard fp-ucard--golf fp-anim">
         <div class="fp-ucard__img"><img src="<?php echo esc_url(get_template_directory_uri() . '/assets/img/bento/golf-bento.png'); ?>" alt="Séjour golfique" loading="lazy"></div>
         <div class="fp-ucard__overlay"></div>
         <div class="fp-ucard__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
         <div class="fp-ucard__content">
           <span class="fp-ucard__badge">⛳ Séjours golf</span>
-          <h3 class="fp-ucard__title">Séjours Golfique</h3>
+          <h3 class="fp-ucard__title">Séjours Golf</h3>
           <p class="fp-ucard__desc">Parcours d'exception, hôtels de charme, vols &amp; green fees inclus. Vous n'avez qu'à jouer.</p>
         </div>
-        <span class="fp-ucard__count">32 séjours</span>
         <div class="fp-ucard__line"></div>
       </a>
-      <a href="<?php echo esc_url(home_url('/resultats-recherche?type=sejour')); ?>" class="fp-ucard fp-ucard--sejour fp-anim">
-        <div class="fp-ucard__img"><img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=700&q=80" alt="Séjour détente" loading="lazy"></div>
+      <a href="<?php echo esc_url(home_url('/bientot-disponible/?univers=sejour')); ?>" class="fp-ucard fp-ucard--sejour fp-anim">
+        <div class="fp-ucard__img"><img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=700&q=80" alt="Séjour All Inclusive" loading="lazy"></div>
         <div class="fp-ucard__overlay"></div>
         <div class="fp-ucard__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
         <div class="fp-ucard__content">
-          <span class="fp-ucard__badge">☀️ Évasion</span>
-          <h3 class="fp-ucard__title">Séjours</h3>
-          <p class="fp-ucard__desc">Détente &amp; découverte dans les plus beaux hôtels-clubs.</p>
+          <span class="fp-ucard__badge">☀️ All Inclusive</span>
+          <h3 class="fp-ucard__title">Séjours All Inclusive</h3>
+          <p class="fp-ucard__desc">Détente &amp; découverte dans les plus beaux hôtels-clubs, tout compris.</p>
         </div>
-        <span class="fp-ucard__count">18 séjours</span>
+        <span class="fp-ucard__soon">Bientôt</span>
         <div class="fp-ucard__line"></div>
       </a>
-      <a href="<?php echo esc_url($fp_url_circuits); ?>" class="fp-ucard fp-ucard--circuit fp-anim">
+      <a href="<?php echo esc_url(add_query_arg(['type' => 'circuit'], home_url('/resultats-recherche'))); ?>" class="fp-ucard fp-ucard--circuit fp-anim">
         <div class="fp-ucard__img"><img src="<?php echo esc_url(get_template_directory_uri() . '/assets/img/bento/circuit-bento.png'); ?>" alt="Circuit découverte" loading="lazy"></div>
         <div class="fp-ucard__overlay"></div>
         <div class="fp-ucard__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
@@ -693,10 +899,9 @@ document.addEventListener('DOMContentLoaded', function() {
           <h3 class="fp-ucard__title">Circuits</h3>
           <p class="fp-ucard__desc">Itinéraires conçus étape par étape pour ne rien manquer.</p>
         </div>
-        <span class="fp-ucard__count">14 circuits</span>
         <div class="fp-ucard__line"></div>
       </a>
-      <a href="<?php echo esc_url($fp_url_destinations); ?>" class="fp-ucard fp-ucard--road fp-anim">
+      <a href="<?php echo esc_url(home_url('/bientot-disponible/?univers=road_trip')); ?>" class="fp-ucard fp-ucard--road fp-anim">
         <div class="fp-ucard__img"><img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=900&q=80" alt="Road trip" loading="lazy"></div>
         <div class="fp-ucard__overlay"></div>
         <div class="fp-ucard__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
@@ -705,19 +910,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <h3 class="fp-ucard__title">Road-Trip</h3>
           <p class="fp-ucard__desc">Votre voiture, votre rythme, nos meilleures routes.</p>
         </div>
-        <span class="fp-ucard__count">8 itinéraires</span>
-        <div class="fp-ucard__line"></div>
-      </a>
-      <a href="<?php echo esc_url($fp_url_parcs); ?>" class="fp-ucard fp-ucard--parcs fp-anim">
-        <div class="fp-ucard__img"><img src="<?php echo esc_url(get_template_directory_uri() . '/assets/img/bento/parcs-bento.png'); ?>" alt="Parcs d'attractions" loading="lazy"></div>
-        <div class="fp-ucard__overlay"></div>
-        <div class="fp-ucard__arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
-        <div class="fp-ucard__content">
-          <span class="fp-ucard__badge">🎢 Sensations</span>
-          <h3 class="fp-ucard__title">Parcs d'attractions</h3>
-          <p class="fp-ucard__desc">Billets à prix réduit pour Disneyland, Parc Astérix &amp; plus.</p>
-        </div>
-        <span class="fp-ucard__count">5 parcs</span>
+        <span class="fp-ucard__soon">Bientôt</span>
         <div class="fp-ucard__line"></div>
       </a>
     </div>
@@ -743,9 +936,11 @@ document.addEventListener('DOMContentLoaded', function() {
             <a href="<?php echo esc_url(home_url('/golf')); ?>" class="fp-section-link">Tous les séjours golf →</a>
         </div>
         <div class="fp-cards-grid">
-            <?php if (class_exists('VS08V_Homepage_Editor') && VS08V_Homepage_Editor::render_home_cards()) : ?>
-                <?php echo VS08V_Homepage_Editor::render_home_cards(); ?>
-            <?php else :
+            <?php
+            $fp_home_cards_html = class_exists('VS08V_Homepage_Editor') ? VS08V_Homepage_Editor::render_home_cards() : '';
+            if ($fp_home_cards_html) :
+                echo $fp_home_cards_html;
+            else :
                 $fp_cdc_badge_map    = ['new'=>'Nouveauté','promo'=>'Promo','best'=>'Best-seller','derniere'=>'Dernières places'];
                 $fp_cdc_pension_map  = ['bb'=>'Petit-déj.','dp'=>'Demi-pension','pc'=>'Pension complète','ai'=>'All inclusive','mixed'=>'Formule mixte'];
                 $fp_cdc_transf_map   = ['groupes'=>'🚌 Transferts groupés','prives'=>'🚐 Transferts privés','voiture'=>'🚗 Location voiture'];
@@ -767,7 +962,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     } else {
                         $fp_prix = '—';
-                        $fp_price_hint = 'Indicatif après choix des dates et de l’aéroport sur la fiche séjour (vol + hôtel + green fees).';
+                        $fp_price_hint = 'Indicatif après choix des dates et de l’aéroport sur la fiche séjour .';
                     }
                     $fp_pays  = trim(($fp_m['flag'] ?? '').' '.($fp_m['pays'] ?? ''));
                     $fp_golfs = $fp_m['golfs'] ?? [];
@@ -871,54 +1066,152 @@ document.addEventListener('DOMContentLoaded', function() {
         $fp_badge_map = ['new'=>'Nouveauté','promo'=>'Promo','best'=>'Best-seller','derniere'=>'Dernières places'];
         $fp_pension_map = ['bb'=>'Petit-déj.','dp'=>'Demi-pension','pc'=>'Pension comp.','ai'=>'All inclusive','mixed'=>'Selon prog.'];
         $fp_sh_transf_map = ['groupes'=>'🚌 Transferts groupés','prives'=>'🚐 Transferts privés','voiture'=>'🚗 Location voiture'];
-        $fp_golf_q = new WP_Query(['post_type'=>'vs08_voyage','post_status'=>'publish','posts_per_page'=>4,'orderby'=>'date','order'=>'DESC','meta_query'=>[['key'=>'vs08v_data','compare'=>'EXISTS']]]);
-        while ($fp_golf_q->have_posts()) : $fp_golf_q->the_post();
-            $fp_gid    = get_the_ID();
-            $fp_gm     = get_post_meta($fp_gid, 'vs08v_data', true) ?: [];
-            $fp_gimg   = get_the_post_thumbnail_url($fp_gid, 'medium_large') ?: (!empty($fp_gm['galerie'][0]) ? $fp_gm['galerie'][0] : '');
-            $fp_gprix_data = class_exists('VS08V_Search') ? VS08V_Search::compute_prix_appel($fp_gm, $fp_gid) : ['prix' => 0, 'has_vol' => false, 'vol_estimate' => false];
-            $fp_gprix_n = (int) ($fp_gprix_data['prix'] ?? 0);
-            $fp_gprix  = $fp_gprix_n > 0 ? number_format($fp_gprix_n, 0, ',', ' ') . '€' : '';
-            $fp_gprice_hint = '';
-            if ($fp_gprix_n > 0) {
-                if (!empty($fp_gprix_data['has_vol'])) {
-                    $fp_gprice_hint = 'Vol inclus (dernier meilleur tarif vu sur le site).';
-                } elseif (!empty($fp_gprix_data['vol_estimate'])) {
-                    $fp_gprice_hint = 'Vol estimé — actualisé après recherche.';
+        $fp_sh_trans_circuit = ['bus'=>'🚌 Bus clim.','4x4'=>'🚙 4×4','voiture'=>'🚗 Voiture','train'=>'🚄 Train','mixed'=>'🚐 Mixte'];
+        $fp_golf_q_args = null;
+        if (class_exists('VS08V_Homepage_Editor')) {
+            $fp_sh_slots = VS08V_Homepage_Editor::get_section_slots('golf_showcase', 4);
+            $fp_sh_ordered = [];
+            for ($fp_si = 1; $fp_si <= 4; $fp_si++) {
+                $fp_sid = (int) ($fp_sh_slots[$fp_si] ?? 0);
+                if ($fp_sid > 0 && get_post_status($fp_sid) === 'publish') {
+                    $fp_sh_ordered[] = $fp_sid;
                 }
             }
-            $fp_gpays  = trim(($fp_gm['flag'] ?? '').' '.($fp_gm['pays'] ?? ''));
-            $fp_gg_nn = (int) ($fp_gm['duree'] ?? 0);
-            $fp_gg_nj = (int) ($fp_gm['duree_jours'] ?? 0);
-            if ($fp_gg_nj < 1 && $fp_gg_nn > 0) {
-                $fp_gg_nj = $fp_gg_nn + 1;
+            if (!empty($fp_sh_ordered)) {
+                while (count($fp_sh_ordered) < 4) {
+                    $fp_more = get_posts([
+                        'post_type'      => 'vs08_voyage',
+                        'post_status'    => 'publish',
+                        'posts_per_page' => 12,
+                        'orderby'        => 'date',
+                        'order'          => 'DESC',
+                        'post__not_in'   => $fp_sh_ordered,
+                        'meta_query'     => [['key' => 'vs08v_data', 'compare' => 'EXISTS']],
+                        'fields'         => 'ids',
+                    ]);
+                    $fp_added = false;
+                    foreach ($fp_more as $fp_mid) {
+                        $fp_mid = (int) $fp_mid;
+                        if (!in_array($fp_mid, $fp_sh_ordered, true)) {
+                            $fp_sh_ordered[] = $fp_mid;
+                            $fp_added = true;
+                        }
+                        if (count($fp_sh_ordered) >= 4) {
+                            break;
+                        }
+                    }
+                    if (!$fp_added) {
+                        break;
+                    }
+                }
+                $fp_golf_q_args = [
+                    'post_type'      => ['vs08_voyage', 'vs08_circuit'],
+                    'post_status'    => 'publish',
+                    'post__in'       => array_slice($fp_sh_ordered, 0, 4),
+                    'orderby'        => 'post__in',
+                    'posts_per_page' => 4,
+                ];
             }
-            $fp_gdur_badge = ($fp_gg_nj > 0 && $fp_gg_nn > 0) ? ($fp_gg_nj . 'J / ' . $fp_gg_nn . 'N') : ($fp_gg_nn > 0 ? $fp_gg_nn . 'N' : ($fp_gg_nj > 0 ? $fp_gg_nj . 'J' : ''));
-            $fp_ggolfs = $fp_gm['golfs'] ?? [];
-            $fp_gnbparc = 0;
-            if (!empty($fp_ggolfs) && is_array($fp_ggolfs)) {
-                $fp_gnbparc = count($fp_ggolfs);
+        }
+        $fp_golf_q = new WP_Query($fp_golf_q_args !== null ? $fp_golf_q_args : [
+            'post_type'      => 'vs08_voyage',
+            'post_status'    => 'publish',
+            'posts_per_page' => 4,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+            'meta_query'     => [['key' => 'vs08v_data', 'compare' => 'EXISTS']],
+        ]);
+        while ($fp_golf_q->have_posts()) : $fp_golf_q->the_post();
+            $fp_gid     = get_the_ID();
+            $fp_golf_pt = get_post_type($fp_gid);
+            if ($fp_golf_pt === 'vs08_circuit' && class_exists('VS08C_Meta')) {
+                $fp_cm = VS08C_Meta::get($fp_gid);
+                $fp_gm = [];
+                $fp_gimg = get_the_post_thumbnail_url($fp_gid, 'medium_large') ?: (!empty($fp_cm['galerie'][0]) ? $fp_cm['galerie'][0] : '');
+                $fp_gprix_n = 0;
+                if (class_exists('VS08C_Search')) {
+                    $fp_gprix_n = (int) round((float) VS08C_Search::get_prix_min_for_circuit($fp_cm));
+                }
+                if ($fp_gprix_n <= 0) {
+                    $fp_gprix_n = (int) round((float) get_post_meta($fp_gid, 'vs08c_prix_min', true));
+                }
+                if ($fp_gprix_n <= 0 && !empty($fp_cm['prix_double'])) {
+                    $fp_gprix_n = (int) round((float) $fp_cm['prix_double']);
+                }
+                $fp_gprix       = $fp_gprix_n > 0 ? number_format($fp_gprix_n, 0, ',', ' ') . '€' : '';
+                $fp_gprice_hint = '';
+                $fp_fl          = VS08C_Meta::resolve_flag($fp_cm);
+                $fp_gpays       = trim($fp_fl . ' ' . ($fp_cm['pays'] ?? ''));
+                $fp_gg_nn       = 0;
+                $fp_gg_nj       = 0;
+                $fp_dj_c        = (int) ($fp_cm['duree_jours'] ?? 0);
+                $fp_gdur_badge  = $fp_dj_c > 0 ? ($fp_dj_c . ' jours') : '';
+                $fp_ggolfs      = [];
+                $fp_hot_c       = $fp_cm['hotels'] ?? [];
+                if (is_array($fp_hot_c)) {
+                    foreach (array_slice($fp_hot_c, 0, 3) as $fp_th) {
+                        if (!is_array($fp_th)) {
+                            continue;
+                        }
+                        $fp_nm = trim((string) ($fp_th['nom'] ?? $fp_th['name'] ?? ''));
+                        if ($fp_nm !== '') {
+                            $fp_ggolfs[] = ['nom' => $fp_nm, 'trous' => ''];
+                        }
+                    }
+                }
+                $fp_gnbgolf   = '';
+                $fp_gtfl      = $fp_sh_trans_circuit[$fp_cm['transport'] ?? ''] ?? '';
+                $fp_gvol_chip = '✈️ Vol';
+                $fp_gpension  = isset($fp_pension_map[$fp_cm['pension'] ?? '']) ? $fp_pension_map[$fp_cm['pension']] : '';
+                $fp_gbadge    = $fp_cm['badge'] ?? '';
+                $fp_gbuggy    = false;
+            } else {
+                $fp_gm     = get_post_meta($fp_gid, 'vs08v_data', true) ?: [];
+                $fp_gimg   = get_the_post_thumbnail_url($fp_gid, 'medium_large') ?: (!empty($fp_gm['galerie'][0]) ? $fp_gm['galerie'][0] : '');
+                $fp_gprix_data = class_exists('VS08V_Search') ? VS08V_Search::compute_prix_appel($fp_gm, $fp_gid) : ['prix' => 0, 'has_vol' => false, 'vol_estimate' => false];
+                $fp_gprix_n = (int) ($fp_gprix_data['prix'] ?? 0);
+                $fp_gprix  = $fp_gprix_n > 0 ? number_format($fp_gprix_n, 0, ',', ' ') . '€' : '';
+                $fp_gprice_hint = '';
+                if ($fp_gprix_n > 0) {
+                    if (!empty($fp_gprix_data['has_vol'])) {
+                        $fp_gprice_hint = 'Vol inclus (dernier meilleur tarif vu sur le site).';
+                    } elseif (!empty($fp_gprix_data['vol_estimate'])) {
+                        $fp_gprice_hint = 'Vol estimé — actualisé après recherche.';
+                    }
+                }
+                $fp_gpays  = trim(($fp_gm['flag'] ?? '').' '.($fp_gm['pays'] ?? ''));
+                $fp_gg_nn = (int) ($fp_gm['duree'] ?? 0);
+                $fp_gg_nj = (int) ($fp_gm['duree_jours'] ?? 0);
+                if ($fp_gg_nj < 1 && $fp_gg_nn > 0) {
+                    $fp_gg_nj = $fp_gg_nn + 1;
+                }
+                $fp_gdur_badge = ($fp_gg_nj > 0 && $fp_gg_nn > 0) ? ($fp_gg_nj . 'J / ' . $fp_gg_nn . 'N') : ($fp_gg_nn > 0 ? $fp_gg_nn . 'N' : ($fp_gg_nj > 0 ? $fp_gg_nj . 'J' : ''));
+                $fp_ggolfs = $fp_gm['golfs'] ?? [];
+                $fp_gnbparc = 0;
+                if (!empty($fp_ggolfs) && is_array($fp_ggolfs)) {
+                    $fp_gnbparc = count($fp_ggolfs);
+                }
+                if ($fp_gnbparc < 1 && !empty($fp_gm['nb_parcours'])) {
+                    $fp_gnbparc = (int) $fp_gm['nb_parcours'];
+                }
+                $fp_gnbgolf = $fp_gnbparc > 0 ? $fp_gnbparc . ' parcours' : '';
+                $fp_gtf = (string) ($fp_gm['transfert_type'] ?? '');
+                $fp_gtfl = $fp_sh_transf_map[$fp_gtf] ?? '';
+                $fp_gtt = (string) ($fp_gm['transport_type'] ?? 'vol');
+                $fp_gvol_chip = '';
+                if ($fp_gtt === 'vol' || $fp_gtt === '') {
+                    $fp_gvol_chip = '✈️ Vols inclus';
+                } elseif ($fp_gtt === 'vol_option') {
+                    $fp_gvol_chip = '✈️ Vol en option';
+                } elseif ($fp_gtt === 'sans_vol') {
+                    $fp_gvol_chip = '🏨 Sans vol';
+                } elseif ($fp_gtt === 'voiture') {
+                    $fp_gvol_chip = '🚗 Accès voiture';
+                }
+                $fp_gbadge = $fp_gm['badge'] ?? '';
+                $fp_gpension = isset($fp_pension_map[$fp_gm['pension'] ?? '']) ? $fp_pension_map[$fp_gm['pension']] : '';
+                $fp_gbuggy = ($fp_gm['buggy'] ?? '') === 'inclus';
             }
-            if ($fp_gnbparc < 1 && !empty($fp_gm['nb_parcours'])) {
-                $fp_gnbparc = (int) $fp_gm['nb_parcours'];
-            }
-            $fp_gnbgolf = $fp_gnbparc > 0 ? $fp_gnbparc . ' parcours' : '';
-            $fp_gtf = (string) ($fp_gm['transfert_type'] ?? '');
-            $fp_gtfl = $fp_sh_transf_map[$fp_gtf] ?? '';
-            $fp_gtt = (string) ($fp_gm['transport_type'] ?? 'vol');
-            $fp_gvol_chip = '';
-            if ($fp_gtt === 'vol' || $fp_gtt === '') {
-                $fp_gvol_chip = '✈️ Vols inclus';
-            } elseif ($fp_gtt === 'vol_option') {
-                $fp_gvol_chip = '✈️ Vol en option';
-            } elseif ($fp_gtt === 'sans_vol') {
-                $fp_gvol_chip = '🏨 Sans vol';
-            } elseif ($fp_gtt === 'voiture') {
-                $fp_gvol_chip = '🚗 Accès voiture';
-            }
-            $fp_gbadge = $fp_gm['badge'] ?? '';
-            $fp_gpension = isset($fp_pension_map[$fp_gm['pension'] ?? '']) ? $fp_pension_map[$fp_gm['pension']] : '';
-            $fp_gbuggy = ($fp_gm['buggy'] ?? '') === 'inclus';
         ?>
             <a href="<?php echo esc_url(get_permalink()); ?>" class="sh-card">
                 <div class="sh-card-img">
@@ -936,13 +1229,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         <?php if($fp_gtfl !== ''): ?><span class="sh-chip"><?php echo esc_html($fp_gtfl); ?></span><?php endif; ?>
                         <?php if($fp_gpension): ?><span class="sh-chip">🍽️ <?php echo esc_html($fp_gpension); ?></span><?php endif; ?>
                         <?php if($fp_gvol_chip !== ''): ?><span class="sh-chip"><?php echo esc_html($fp_gvol_chip); ?></span><?php endif; ?>
+                        <?php if ($fp_golf_pt === 'vs08_circuit') : ?>
+                        <span class="sh-chip">🗺️ Circuit</span>
+                        <?php else : ?>
                         <span class="sh-chip">🧳 Soute + sac golf</span>
                         <?php if($fp_gbuggy): ?><span class="sh-chip">🛞 Buggy inclus</span><?php endif; ?>
+                        <?php endif; ?>
                     </div>
                     <?php if(!empty($fp_ggolfs)): ?>
                     <div class="sh-golfs">
                         <?php foreach(array_slice($fp_ggolfs, 0, 2) as $fg): ?>
-                        <span class="sh-golf-name">⛳ <?php echo esc_html($fg['nom'] ?? ''); ?><?php if(!empty($fg['trous'])): ?> · <?php echo esc_html($fg['trous']); ?> trous<?php endif; ?></span>
+                        <span class="sh-golf-name"><?php echo $fp_golf_pt === 'vs08_circuit' ? '🏨 ' : '⛳ '; ?><?php echo esc_html($fg['nom'] ?? ''); ?><?php if(!empty($fg['trous'])): ?> · <?php echo esc_html($fg['trous']); ?> trous<?php endif; ?></span>
                         <?php endforeach; ?>
                     </div>
                     <?php endif; ?>
@@ -1006,6 +1303,29 @@ document.addEventListener('DOMContentLoaded', function() {
         wp_reset_postdata();
         $dl_guided = array_slice($dl_guided, 0, 3);
         $dl_roadtrips = array_slice($dl_roadtrips, 0, 3);
+        if (class_exists('VS08V_Homepage_Editor')) {
+            $dl_circ_slots = VS08V_Homepage_Editor::get_section_slots('circuits', 6);
+            for ($dl_oi = 1; $dl_oi <= 3; $dl_oi++) {
+                $dl_oid = (int) ($dl_circ_slots[$dl_oi] ?? 0);
+                if ($dl_oid > 0) {
+                    $dl_orow = VS08V_Homepage_Editor::build_homepage_dl_circuit_entry($dl_oid);
+                    if ($dl_orow !== null) {
+                        $dl_guided[$dl_oi - 1] = $dl_orow;
+                    }
+                }
+            }
+            for ($dl_oi = 4; $dl_oi <= 6; $dl_oi++) {
+                $dl_oid = (int) ($dl_circ_slots[$dl_oi] ?? 0);
+                if ($dl_oid > 0) {
+                    $dl_orow = VS08V_Homepage_Editor::build_homepage_dl_circuit_entry($dl_oid);
+                    if ($dl_orow !== null) {
+                        $dl_roadtrips[$dl_oi - 4] = $dl_orow;
+                    }
+                }
+            }
+            $dl_guided    = array_values($dl_guided);
+            $dl_roadtrips = array_values($dl_roadtrips);
+        }
         ?>
         <div class="dl-grid">
             <div class="dl-half dl-dark">
@@ -1121,10 +1441,12 @@ document.addEventListener('DOMContentLoaded', function() {
         <p class="fp-section-label fp-label-light">✦ Notre différence</p>
         <h2 class="fp-section-title fp-title-white">Pourquoi nous <em>faire confiance ?</em></h2>
         <div class="fp-why-grid">
-            <div class="fp-why-item"><div class="fp-why-icon">⛳</div><h3>Experts Golf</h3><p>Passionnés de golf depuis 20 ans, nous jouons sur les parcours que nous vous proposons.</p></div>
-            <div class="fp-why-item"><div class="fp-why-icon">🏷️</div><h3>Prix transparents</h3><p>Tout est inclus : vols, hôtel, green fees, transferts. Le prix affiché est le prix payé.</p></div>
-            <div class="fp-why-item"><div class="fp-why-icon">📞</div><h3>Conseiller unique</h3><p>Un conseiller unique dédié avant, pendant et après votre voyage. Pas de chatbot.</p></div>
-            <div class="fp-why-item"><div class="fp-why-icon">🔒</div><h3>Paiement sécurisé</h3><p>3D Secure, acompte ou règlement total (voir conditions d'annulation sur chaque produit).</p></div>
+            <div class="fp-why-item"><div class="fp-why-icon">🏠</div><h3>Agence physique à Châlons</h3><p>Une vraie agence, de vrais conseillers. Venez nous rencontrer ou appelez-nous — nous construisons votre voyage ensemble, sans chatbot ni centre d'appels.</p></div>
+            <div class="fp-why-item fp-why-item--highlight"><div class="fp-why-icon">🔴</div><h3>Prix vols en temps réel</h3><p>Seule agence golf en France connectée en direct aux tarifs des compagnies aériennes. Le prix affiché est le vrai prix du moment — réservable instantanément en ligne, 24h/24.</p></div>
+            <div class="fp-why-item fp-why-item--highlight"><div class="fp-why-icon">⚡</div><h3>Réservation 100 % en ligne</h3><p>Vol + hôtel + green fees + voiture en un seul forfait, réservable en 3 minutes. Aucun concurrent golf ne propose ça. Pas de formulaire de devis, pas d'attente — c'est immédiat.</p></div>
+            <div class="fp-why-item"><div class="fp-why-icon">🏷️</div><h3>Forfait golf sur mesure</h3><p>Départ de votre région, dates libres, hôtel et parcours au choix, green fees inclus. Tout compris, zéro surprise. Votre séjour golf exactement comme vous le voulez.</p></div>
+            <div class="fp-why-item"><div class="fp-why-icon">👥</div><h3>Paiement partagé pour groupes</h3><p>Partez à plusieurs golfeurs ? Chaque participant règle sa part en ligne via son propre lien sécurisé. Idéal pour les clubs, associations et comités d'entreprise.</p></div>
+            <div class="fp-why-item"><div class="fp-why-icon">🔒</div><h3>Partez l'esprit tranquille</h3><p>Garantie financière APST, immatriculation Atout France, assurance Hiscox, paiement 3D Secure. Vos vacances sont entre de bonnes mains.</p></div>
         </div>
     </div>
 </section>
@@ -1136,9 +1458,10 @@ document.addEventListener('DOMContentLoaded', function() {
 <section class="fp-dest">
     <div class="fp-container">
         <div class="fp-section-header">
-            <div><p class="fp-section-label">🌍 Nos destinations</p><h2 class="fp-section-title">Partir jouer <em>partout dans le monde</em></h2></div>
+            <div><p class="fp-section-label">🌍 Nos destinations</p><h2 class="fp-section-title">Partir <em>partout dans le monde</em></h2></div>
             <a href="<?php echo esc_url($fp_url_destinations); ?>" class="fp-section-link">Toutes les destinations →</a>
         </div>
+        <p class="fp-dest-update-note" role="note">Notre site est <strong>actualisé quotidiennement</strong> : de nouveaux voyages (séjours, circuits, formules…) sont publiés et <strong>ajoutés au fil du temps</strong>. Revenez régulièrement pour découvrir nos dernières offres — ou contactez-nous pour un projet sur mesure.</p>
         <div class="fp-map-box">
             <div class="fp-map-airports" id="fp-map-airports">
                 <span class="fp-map-apl">Aéroport de départ :</span>
@@ -1167,11 +1490,437 @@ document.addEventListener('DOMContentLoaded', function() {
 </section>
 
 <!-- D3.js + TopoJSON pour la carte du monde -->
+<?php
+// ── Construire les données de la carte directement depuis la BDD ──
+$fp_map_destinations = [];
+$fp_map_airports_used = [];
+$fp_map_coords = [
+    // Méditerranée & Proche-Orient
+    'Portugal'=>['lat'=>37.02,'lon'=>-7.93,'city'=>'Algarve','iata'=>'FAO','region'=>'PORTUGAL'],
+    'Espagne'=>['lat'=>36.72,'lon'=>-4.42,'city'=>'Marbella','iata'=>'AGP','region'=>'ESPAGNE'],
+    'France'=>['lat'=>44.8,'lon'=>2.0,'city'=>'Biarritz','iata'=>'BOD','region'=>'FRANCE'],
+    'Maroc'=>['lat'=>31.63,'lon'=>-8.0,'city'=>'Marrakech','iata'=>'RAK','region'=>'MAROC'],
+    'Tunisie'=>['lat'=>34.0,'lon'=>9.8,'city'=>'Djerba','iata'=>'DJE','region'=>'TUNISIE'],
+    'Égypte'=>['lat'=>27.18,'lon'=>33.8,'city'=>'Hurghada','iata'=>'HRG','region'=>'ÉGYPTE'],
+    'Italie'=>['lat'=>40.8,'lon'=>14.5,'city'=>'Sicile','iata'=>'CTA','region'=>'ITALIE'],
+    'Grèce'=>['lat'=>35.5,'lon'=>24.5,'city'=>'Crète','iata'=>'HER','region'=>'GRÈCE'],
+    'Turquie'=>['lat'=>37.5,'lon'=>30.7,'city'=>'Antalya','iata'=>'AYT','region'=>'TURQUIE'],
+    'Irlande'=>['lat'=>52.3,'lon'=>-8.5,'city'=>'Kerry','iata'=>'SNN','region'=>'IRLANDE'],
+    'Canaries'=>['lat'=>28.45,'lon'=>-13.86,'city'=>'Fuerteventura','iata'=>'FUE','region'=>'CANARIES'],
+    'Thaïlande'=>['lat'=>8.5,'lon'=>98.4,'city'=>'Phuket','iata'=>'HKT','region'=>'THAÏLANDE'],
+    'Croatie'=>['lat'=>43.5,'lon'=>16.4,'city'=>'Split','iata'=>'SPU','region'=>'CROATIE'],
+    'République Dominicaine'=>['lat'=>18.5,'lon'=>-69.9,'city'=>'Punta Cana','iata'=>'PUJ','region'=>'RÉP. DOMINICAINE'],
+    'Maurice'=>['lat'=>-20.3,'lon'=>57.5,'city'=>'Île Maurice','iata'=>'MRU','region'=>'ÎLE MAURICE'],
+    'Chypre'=>['lat'=>34.7,'lon'=>33.0,'city'=>'Paphos','iata'=>'PFO','region'=>'CHYPRE'],
+    'Vietnam'=>['lat'=>16.05,'lon'=>108.2,'city'=>'Da Nang','iata'=>'DAD','region'=>'VIETNAM'],
+    'Costa Rica'=>['lat'=>9.93,'lon'=>-84.08,'city'=>'San José','iata'=>'SJO','region'=>'COSTA RICA'],
+    'Malte'=>['lat'=>35.9,'lon'=>14.5,'city'=>'La Valette','iata'=>'MLA','region'=>'MALTE'],
+    'Écosse'=>['lat'=>56.5,'lon'=>-3.5,'city'=>'St Andrews','iata'=>'EDI','region'=>'ÉCOSSE'],
+    // Europe du Nord & de l'Ouest
+    'Royaume-Uni'=>['lat'=>51.5,'lon'=>-0.12,'city'=>'Londres','iata'=>'LHR','region'=>'ROYAUME-UNI'],
+    'Angleterre'=>['lat'=>51.5,'lon'=>-0.12,'city'=>'Londres','iata'=>'LHR','region'=>'ANGLETERRE'],
+    'Pays de Galles'=>['lat'=>51.5,'lon'=>-3.2,'city'=>'Cardiff','iata'=>'CWL','region'=>'PAYS DE GALLES'],
+    'Allemagne'=>['lat'=>48.14,'lon'=>11.58,'city'=>'Munich','iata'=>'MUC','region'=>'ALLEMAGNE'],
+    'Autriche'=>['lat'=>47.48,'lon'=>13.12,'city'=>'Salzbourg','iata'=>'SZG','region'=>'AUTRICHE'],
+    'Suisse'=>['lat'=>46.95,'lon'=>7.45,'city'=>'Berne','iata'=>'ZRH','region'=>'SUISSE'],
+    'Belgique'=>['lat'=>50.9,'lon'=>4.48,'city'=>'Bruxelles','iata'=>'BRU','region'=>'BELGIQUE'],
+    'Pays-Bas'=>['lat'=>52.37,'lon'=>4.9,'city'=>'Amsterdam','iata'=>'AMS','region'=>'PAYS-BAS'],
+    'Danemark'=>['lat'=>55.68,'lon'=>12.57,'city'=>'Copenhague','iata'=>'CPH','region'=>'DANEMARK'],
+    'Suède'=>['lat'=>59.33,'lon'=>18.07,'city'=>'Stockholm','iata'=>'ARN','region'=>'SUÈDE'],
+    'Finlande'=>['lat'=>60.17,'lon'=>24.94,'city'=>'Helsinki','iata'=>'HEL','region'=>'FINLANDE'],
+    'Estonie'=>['lat'=>59.44,'lon'=>24.75,'city'=>'Tallinn','iata'=>'TLL','region'=>'ESTONIE'],
+    'Lettonie'=>['lat'=>56.95,'lon'=>24.11,'city'=>'Riga','iata'=>'RIX','region'=>'LETTONIE'],
+    'Lituanie'=>['lat'=>54.69,'lon'=>25.28,'city'=>'Vilnius','iata'=>'VNO','region'=>'LITUANIE'],
+    // Europe Centrale & Balkans
+    'Roumanie'=>['lat'=>44.43,'lon'=>26.1,'city'=>'Bucarest','iata'=>'OTP','region'=>'ROUMANIE'],
+    'Pologne'=>['lat'=>52.23,'lon'=>21.0,'city'=>'Varsovie','iata'=>'WAW','region'=>'POLOGNE'],
+    'République Tchèque'=>['lat'=>50.08,'lon'=>14.43,'city'=>'Prague','iata'=>'PRG','region'=>'RÉP. TCHÈQUE'],
+    'Slovaquie'=>['lat'=>48.15,'lon'=>17.1,'city'=>'Bratislava','iata'=>'BTS','region'=>'SLOVAQUIE'],
+    'Hongrie'=>['lat'=>47.5,'lon'=>19.05,'city'=>'Budapest','iata'=>'BUD','region'=>'HONGRIE'],
+    'Slovénie'=>['lat'=>46.05,'lon'=>14.5,'city'=>'Ljubljana','iata'=>'LJU','region'=>'SLOVÉNIE'],
+];
+// Alias : destination → pays (pour regrouper les produits par pays sur la carte)
+$fp_dest_to_pays = [
+    // Portugal
+    'Algarve'=>'Portugal','Lisbonne'=>'Portugal','Madère'=>'Portugal','Madeira'=>'Portugal','Porto'=>'Portugal','Faro'=>'Portugal','Cascais'=>'Portugal','Vilamoura'=>'Portugal',
+    // Espagne
+    'Marbella'=>'Espagne','Costa del Sol'=>'Espagne','Majorque'=>'Espagne','Mallorca'=>'Espagne','Tenerife'=>'Espagne',
+    'Lanzarote'=>'Espagne','Fuerteventura'=>'Espagne','Gran Canaria'=>'Espagne','Andalousie'=>'Espagne','Ibiza'=>'Espagne',
+    'Minorque'=>'Espagne','Valence'=>'Espagne','Barcelone'=>'Espagne','Séville'=>'Espagne','Malaga'=>'Espagne',
+    'Costa Brava'=>'Espagne','Costa Blanca'=>'Espagne','Costa Dorada'=>'Espagne','Madrid'=>'Espagne','Bilbao'=>'Espagne',
+    'Îles Canaries'=>'Canaries','Iles Canaries'=>'Canaries','La Palma'=>'Canaries','La Gomera'=>'Canaries',
+    // Maroc
+    'Marrakech'=>'Maroc','Agadir'=>'Maroc','Saidia'=>'Maroc','Tanger'=>'Maroc','El Jadida'=>'Maroc','Essaouira'=>'Maroc','Rabat'=>'Maroc','Casablanca'=>'Maroc','Fès'=>'Maroc','Ouarzazate'=>'Maroc',
+    // Turquie
+    'Antalya'=>'Turquie','Belek'=>'Turquie','Istanbul'=>'Turquie','Bodrum'=>'Turquie','Side'=>'Turquie','Alanya'=>'Turquie','Izmir'=>'Turquie','Cappadoce'=>'Turquie',
+    // Tunisie
+    'Djerba'=>'Tunisie','Hammamet'=>'Tunisie','Sousse'=>'Tunisie','Monastir'=>'Tunisie','Tabarka'=>'Tunisie','Tunis'=>'Tunisie',
+    // Grèce
+    'Crète'=>'Grèce','Rhodes'=>'Grèce','Corfou'=>'Grèce','Santorin'=>'Grèce','Athènes'=>'Grèce','Costa Navarino'=>'Grèce','Mykonos'=>'Grèce','Kos'=>'Grèce','Zakynthos'=>'Grèce','Céphalonie'=>'Grèce','Thessalonique'=>'Grèce',
+    // Italie
+    'Sicile'=>'Italie','Sardaigne'=>'Italie','Rome'=>'Italie','Toscane'=>'Italie','Pouilles'=>'Italie','Naples'=>'Italie','Venise'=>'Italie','Milan'=>'Italie','Florence'=>'Italie','Calabre'=>'Italie','Bologna'=>'Italie',
+    // Irlande
+    'Dublin'=>'Irlande','Kerry'=>'Irlande','Cork'=>'Irlande','Galway'=>'Irlande','Killarney'=>'Irlande',
+    // Écosse
+    'St Andrews'=>'Écosse','Édimbourg'=>'Écosse','Glasgow'=>'Écosse','Highlands'=>'Écosse','Inverness'=>'Écosse',
+    // Royaume-Uni / Angleterre
+    'Londres'=>'Royaume-Uni','Angleterre'=>'Angleterre','Lake District'=>'Angleterre','Cornwall'=>'Angleterre',
+    // Pays de Galles
+    'Cardiff'=>'Pays de Galles','Pays de Galles'=>'Pays de Galles',
+    // Égypte
+    'Hurghada'=>'Égypte','Sharm el Sheikh'=>'Égypte','Soma Bay'=>'Égypte','El Gouna'=>'Égypte','Louxor'=>'Égypte','Le Caire'=>'Égypte','Marsa Alam'=>'Égypte',
+    // Thaïlande
+    'Phuket'=>'Thaïlande','Bangkok'=>'Thaïlande','Hua Hin'=>'Thaïlande','Chiang Mai'=>'Thaïlande','Koh Samui'=>'Thaïlande','Pattaya'=>'Thaïlande','Krabi'=>'Thaïlande',
+    // Croatie
+    'Split'=>'Croatie','Dubrovnik'=>'Croatie','Zagreb'=>'Croatie','Zadar'=>'Croatie','Pula'=>'Croatie',
+    // Rép. Dominicaine
+    'Punta Cana'=>'République Dominicaine','Saint-Domingue'=>'République Dominicaine','La Romana'=>'République Dominicaine',
+    // Maurice
+    'Île Maurice'=>'Maurice','Ile Maurice'=>'Maurice',
+    // Chypre
+    'Paphos'=>'Chypre','Limassol'=>'Chypre','Larnaca'=>'Chypre',
+    // Vietnam
+    'Da Nang'=>'Vietnam','Hanoï'=>'Vietnam','Ho Chi Minh'=>'Vietnam','Hoi An'=>'Vietnam','Nha Trang'=>'Vietnam',
+    // Costa Rica
+    'San José'=>'Costa Rica','Liberia'=>'Costa Rica',
+    // France
+    'Biarritz'=>'France','Côte d\'Azur'=>'France','Provence'=>'France','Normandie'=>'France','Corse'=>'France','Pays Basque'=>'France','Bretagne'=>'France','Alsace'=>'France',
+    // DOM-TOM
+    'Pointe-à-Pitre'=>'Guadeloupe','Guadeloupe'=>'Guadeloupe','Sainte-Anne'=>'Guadeloupe','Saint-François'=>'Guadeloupe','Gosier'=>'Guadeloupe',
+    'Fort-de-France'=>'Martinique','Martinique'=>'Martinique','Les Trois-Îlets'=>'Martinique','Sainte-Lucie'=>'Martinique',
+    'Réunion'=>'Réunion','Saint-Denis'=>'Réunion','Saint-Gilles'=>'Réunion',
+    // Afrique & Océan Indien
+    'Zanzibar'=>'Tanzanie','Dar es Salaam'=>'Tanzanie','Kilimandjaro'=>'Tanzanie',
+    'Nosy Be'=>'Madagascar','Antananarivo'=>'Madagascar','Majunga'=>'Madagascar',
+    'Mombasa'=>'Kenya','Nairobi'=>'Kenya','Malindi'=>'Kenya',
+    'Dakar'=>'Sénégal','Saly'=>'Sénégal',
+    'Sal'=>'Cap-Vert','Boa Vista'=>'Cap-Vert',
+    // Asie
+    'Bali'=>'Indonésie','Jakarta'=>'Indonésie','Lombok'=>'Indonésie',
+    'Siem Reap'=>'Cambodge','Phnom Penh'=>'Cambodge','Angkor'=>'Cambodge',
+    'Manille'=>'Philippines','Cebu'=>'Philippines','Palawan'=>'Philippines','Boracay'=>'Philippines',
+    'Singapour'=>'Singapour',
+    'Kuala Lumpur'=>'Malaisie','Penang'=>'Malaisie','Langkawi'=>'Malaisie',
+    'Tokyo'=>'Japon','Osaka'=>'Japon','Kyoto'=>'Japon',
+    'Séoul'=>'Corée du Sud',
+    'Mumbai'=>'Inde','Goa'=>'Inde','New Delhi'=>'Inde','Jaipur'=>'Inde','Kerala'=>'Inde','Rajasthan'=>'Inde',
+    'Colombo'=>'Sri Lanka','Negombo'=>'Sri Lanka',
+    // Amériques
+    'Cancún'=>'Mexique','Playa del Carmen'=>'Mexique','Los Cabos'=>'Mexique','Puerto Vallarta'=>'Mexique','Riviera Maya'=>'Mexique',
+    'Miami'=>'États-Unis','New York'=>'États-Unis','Las Vegas'=>'États-Unis','Los Angeles'=>'États-Unis','Orlando'=>'États-Unis','Hawaii'=>'États-Unis','San Francisco'=>'États-Unis','Floride'=>'États-Unis',
+    'Montréal'=>'Canada','Québec'=>'Canada','Toronto'=>'Canada','Vancouver'=>'Canada','Colombie-Britannique'=>'Canada',
+    'Nassau'=>'Bahamas','Paradise Island'=>'Bahamas',
+    'La Havane'=>'Cuba','Varadero'=>'Cuba','Trinidad'=>'Cuba','Santiago de Cuba'=>'Cuba',
+    'Cusco'=>'Pérou','Lima'=>'Pérou','Machu Picchu'=>'Pérou',
+    'Buenos Aires'=>'Argentine','Patagonie'=>'Argentine','Mendoza'=>'Argentine',
+    'São Paulo'=>'Brésil','Rio de Janeiro'=>'Brésil','Salvador'=>'Brésil','Fortaleza'=>'Brésil',
+    'Bogotá'=>'Colombie','Carthagène'=>'Colombie','Medellín'=>'Colombie',
+    // Moyen-Orient & Afrique du Nord
+    'Dubaï'=>'Émirats arabes unis','Abu Dhabi'=>'Émirats arabes unis',
+    'Mascate'=>'Oman','Muscat'=>'Oman',
+    'Amman'=>'Jordanie','Pétra'=>'Jordanie','Aqaba'=>'Jordanie',
+    'Le Cap'=>'Afrique du Sud','Johannesburg'=>'Afrique du Sud','Durban'=>'Afrique du Sud','Garden Route'=>'Afrique du Sud',
+    // Europe du Nord
+    'Bergen'=>'Norvège','Oslo'=>'Norvège','Fjords'=>'Norvège',
+    'Reykjavik'=>'Islande',
+    'Stockholm'=>'Suède','Göteborg'=>'Suède','Malmö'=>'Suède',
+    'Helsinki'=>'Finlande','Turku'=>'Finlande',
+    'Copenhague'=>'Danemark','Aarhus'=>'Danemark',
+    // Europe Centrale
+    'Munich'=>'Allemagne','Francfort'=>'Allemagne','Berlin'=>'Allemagne','Hambourg'=>'Allemagne','Düsseldorf'=>'Allemagne',
+    'Vienne'=>'Autriche','Salzbourg'=>'Autriche','Innsbruck'=>'Autriche',
+    'Genève'=>'Suisse','Zurich'=>'Suisse','Berne'=>'Suisse','Interlaken'=>'Suisse',
+    'Amsterdam'=>'Pays-Bas','Rotterdam'=>'Pays-Bas',
+    'Bruxelles'=>'Belgique','Bruges'=>'Belgique','Gand'=>'Belgique',
+    'Prague'=>'République Tchèque',
+    'Budapest'=>'Hongrie',
+    'Bratislava'=>'Slovaquie',
+    'Ljubljana'=>'Slovénie','Lac de Bled'=>'Slovénie',
+    'Varsovie'=>'Pologne','Cracovie'=>'Pologne','Gdansk'=>'Pologne',
+    'Bucarest'=>'Roumanie','Transylvanie'=>'Roumanie','Cluj'=>'Roumanie',
+    'Tallinn'=>'Estonie','Riga'=>'Lettonie','Vilnius'=>'Lituanie',
+    'Tivat'=>'Monténégro','Kotor'=>'Monténégro',
+    'Bourgas'=>'Bulgarie','Sunny Beach'=>'Bulgarie','Varna'=>'Bulgarie',
+    // Océanie
+    'Sydney'=>'Australie','Melbourne'=>'Australie','Cairns'=>'Australie','Gold Coast'=>'Australie','Adélaïde'=>'Australie','Perth'=>'Australie',
+    'Auckland'=>'Nouvelle-Zélande','Queenstown'=>'Nouvelle-Zélande','Wellington'=>'Nouvelle-Zélande',
+    'Tahiti'=>'Polynésie','Moorea'=>'Polynésie','Bora Bora'=>'Polynésie',
+];
+// IATA destination → pays (fallback ultime : résout via le code aéroport d'arrivée)
+$fp_iata_to_pays = [
+    // Portugal
+    'FAO'=>'Portugal','LIS'=>'Portugal','OPO'=>'Portugal','FNC'=>'Portugal',
+    // Espagne continentale
+    'AGP'=>'Espagne','ALC'=>'Espagne','BCN'=>'Espagne','MAD'=>'Espagne','SVQ'=>'Espagne','VLC'=>'Espagne','BIO'=>'Espagne','PMI'=>'Espagne','IBZ'=>'Espagne','MAH'=>'Espagne','GRX'=>'Espagne','REU'=>'Espagne','MJV'=>'Espagne',
+    // Canaries
+    'TFS'=>'Canaries','LPA'=>'Canaries','FUE'=>'Canaries','ACE'=>'Canaries','TFN'=>'Canaries','SPC'=>'Canaries',
+    // Maroc
+    'RAK'=>'Maroc','AGA'=>'Maroc','CMN'=>'Maroc','FEZ'=>'Maroc','TNG'=>'Maroc','OUD'=>'Maroc','NDR'=>'Maroc','RBA'=>'Maroc','ESU'=>'Maroc',
+    // Turquie
+    'AYT'=>'Turquie','IST'=>'Turquie','SAW'=>'Turquie','DLM'=>'Turquie','BJV'=>'Turquie','ADB'=>'Turquie','GZT'=>'Turquie',
+    // Tunisie
+    'DJE'=>'Tunisie','TUN'=>'Tunisie','NBE'=>'Tunisie','MIR'=>'Tunisie','SFA'=>'Tunisie',
+    // Grèce
+    'HER'=>'Grèce','ATH'=>'Grèce','RHO'=>'Grèce','CFU'=>'Grèce','JTR'=>'Grèce','JMK'=>'Grèce','CHQ'=>'Grèce','KGS'=>'Grèce','ZTH'=>'Grèce','SKG'=>'Grèce','KLX'=>'Grèce','PVK'=>'Grèce','EFL'=>'Grèce',
+    // Italie
+    'CTA'=>'Italie','PMO'=>'Italie','FCO'=>'Italie','NAP'=>'Italie','VCE'=>'Italie','MXP'=>'Italie','BLQ'=>'Italie','OLB'=>'Italie','CAG'=>'Italie','PSA'=>'Italie','FLR'=>'Italie','BRI'=>'Italie','SUF'=>'Italie','TRS'=>'Italie',
+    // Croatie
+    'SPU'=>'Croatie','DBV'=>'Croatie','ZAG'=>'Croatie','PUY'=>'Croatie','BWK'=>'Croatie',
+    // Irlande
+    'DUB'=>'Irlande','SNN'=>'Irlande','ORK'=>'Irlande',
+    // Écosse
+    'EDI'=>'Écosse','GLA'=>'Écosse','INV'=>'Écosse','PIK'=>'Écosse',
+    // Royaume-Uni / Angleterre / Pays de Galles
+    'LHR'=>'Royaume-Uni','LGW'=>'Royaume-Uni','STN'=>'Royaume-Uni','LTN'=>'Royaume-Uni','LCY'=>'Royaume-Uni',
+    'MAN'=>'Angleterre','BHX'=>'Angleterre','BRS'=>'Angleterre','NCL'=>'Angleterre','LBA'=>'Angleterre','LPL'=>'Angleterre',
+    'CWL'=>'Pays de Galles',
+    // Allemagne
+    'FRA'=>'Allemagne','MUC'=>'Allemagne','DUS'=>'Allemagne','HAM'=>'Allemagne','BER'=>'Allemagne','STR'=>'Allemagne','CGN'=>'Allemagne','NUE'=>'Allemagne','FKB'=>'Allemagne',
+    // Autriche
+    'VIE'=>'Autriche','SZG'=>'Autriche','INN'=>'Autriche','GRZ'=>'Autriche','LNZ'=>'Autriche',
+    // Suisse
+    'ZRH'=>'Suisse','GVA'=>'Suisse','BSL'=>'Suisse',
+    // Pays-Bas
+    'AMS'=>'Pays-Bas','EIN'=>'Pays-Bas',
+    // Belgique
+    'BRU'=>'Belgique','CRL'=>'Belgique',
+    // Danemark
+    'CPH'=>'Danemark','AAL'=>'Danemark','BLL'=>'Danemark',
+    // Suède
+    'ARN'=>'Suède','NYO'=>'Suède','GOT'=>'Suède','MMX'=>'Suède',
+    // Finlande
+    'HEL'=>'Finlande','TMP'=>'Finlande','TKU'=>'Finlande',
+    // Pays Baltes
+    'TLL'=>'Estonie','RIX'=>'Lettonie','VNO'=>'Lituanie',
+    // Pologne
+    'WAW'=>'Pologne','KRK'=>'Pologne','GDN'=>'Pologne','POZ'=>'Pologne','WRO'=>'Pologne','KTW'=>'Pologne',
+    // Europe Centrale
+    'PRG'=>'République Tchèque','BTS'=>'Slovaquie','BUD'=>'Hongrie','LJU'=>'Slovénie',
+    'OTP'=>'Roumanie','CLJ'=>'Roumanie','TSR'=>'Roumanie','SBZ'=>'Roumanie',
+    // Égypte
+    'HRG'=>'Égypte','SSH'=>'Égypte','CAI'=>'Égypte','LXR'=>'Égypte','RMF'=>'Égypte','HBE'=>'Égypte',
+    // Thaïlande
+    'HKT'=>'Thaïlande','BKK'=>'Thaïlande','CNX'=>'Thaïlande','USM'=>'Thaïlande','DMK'=>'Thaïlande','KBV'=>'Thaïlande',
+    // Rép. Dominicaine
+    'PUJ'=>'République Dominicaine','SDQ'=>'République Dominicaine',
+    // Maurice
+    'MRU'=>'Maurice',
+    // Chypre
+    'PFO'=>'Chypre','LCA'=>'Chypre',
+    // Vietnam
+    'DAD'=>'Vietnam','HAN'=>'Vietnam','SGN'=>'Vietnam','CXR'=>'Vietnam',
+    // Costa Rica
+    'SJO'=>'Costa Rica','LIR'=>'Costa Rica',
+    // Malte
+    'MLA'=>'Malte',
+    // Mexique
+    'CUN'=>'Mexique','SJD'=>'Mexique','PVR'=>'Mexique','MEX'=>'Mexique',
+    // Caraïbes
+    'NAS'=>'Bahamas','MBJ'=>'Jamaïque','HAV'=>'Cuba','VRA'=>'Cuba','SNU'=>'Cuba',
+    // Amérique du Nord
+    'JFK'=>'États-Unis','MIA'=>'États-Unis','LAX'=>'États-Unis','MCO'=>'États-Unis','HNL'=>'États-Unis','SFO'=>'États-Unis','LAS'=>'États-Unis','ORD'=>'États-Unis','ATL'=>'États-Unis','BOS'=>'États-Unis',
+    'YUL'=>'Canada','YYZ'=>'Canada','YVR'=>'Canada','YOW'=>'Canada','YQB'=>'Canada',
+    // Amérique du Sud
+    'EZE'=>'Argentine','BUE'=>'Argentine',
+    'GRU'=>'Brésil','GIG'=>'Brésil','FOR'=>'Brésil','REC'=>'Brésil','SSA'=>'Brésil',
+    'BOG'=>'Colombie','MDE'=>'Colombie','CTG'=>'Colombie',
+    'CUZ'=>'Pérou','LIM'=>'Pérou',
+    // Asie du Sud-Est
+    'DPS'=>'Indonésie','CGK'=>'Indonésie',
+    'REP'=>'Cambodge','PNH'=>'Cambodge',
+    'MNL'=>'Philippines','CEB'=>'Philippines','PPS'=>'Philippines',
+    'SIN'=>'Singapour',
+    'KUL'=>'Malaisie','PEN'=>'Malaisie','LGK'=>'Malaisie',
+    // Asie du Nord & du Sud
+    'NRT'=>'Japon','HND'=>'Japon','KIX'=>'Japon','CTS'=>'Japon','FUK'=>'Japon',
+    'ICN'=>'Corée du Sud','GMP'=>'Corée du Sud',
+    'PVG'=>'Chine','PEK'=>'Chine','CAN'=>'Chine','CTU'=>'Chine','SHA'=>'Chine',
+    'DEL'=>'Inde','BOM'=>'Inde','GOI'=>'Inde','MAA'=>'Inde','CCU'=>'Inde',
+    'CMB'=>'Sri Lanka',
+    'MLE'=>'Maldives',
+    // Moyen-Orient
+    'MCT'=>'Oman','SLL'=>'Oman',
+    'DXB'=>'Émirats arabes unis','AUH'=>'Émirats arabes unis','SHJ'=>'Émirats arabes unis',
+    'AMM'=>'Jordanie','AQJ'=>'Jordanie',
+    // Afrique
+    'CPT'=>'Afrique du Sud','JNB'=>'Afrique du Sud','DUR'=>'Afrique du Sud',
+    'DSS'=>'Sénégal',
+    'SID'=>'Cap-Vert','BVC'=>'Cap-Vert','RAI'=>'Cap-Vert',
+    'ZNZ'=>'Tanzanie','DAR'=>'Tanzanie','JRO'=>'Tanzanie',
+    'MBA'=>'Kenya','NBO'=>'Kenya','MYD'=>'Kenya',
+    'TNR'=>'Madagascar','NOS'=>'Madagascar','MJN'=>'Madagascar',
+    // DOM-TOM & Océan Indien
+    'PTP'=>'Guadeloupe','FDF'=>'Martinique','RUN'=>'Réunion','CAY'=>'Guyane',
+    // Océanie
+    'SYD'=>'Australie','MEL'=>'Australie','BNE'=>'Australie','CNS'=>'Australie','OOL'=>'Australie','PER'=>'Australie',
+    'AKL'=>'Nouvelle-Zélande','CHC'=>'Nouvelle-Zélande','ZQN'=>'Nouvelle-Zélande',
+    'PPT'=>'Polynésie',
+    // Divers
+    'NOU'=>'Nouvelle-Calédonie',
+    'TIV'=>'Monténégro','TGD'=>'Monténégro',
+    'BOJ'=>'Bulgarie','VAR'=>'Bulgarie',
+    'KEF'=>'Islande',
+    'OSL'=>'Norvège','BGO'=>'Norvège','TRF'=>'Norvège',
+];
+// Ajouter les coords pour les pays qui ne sont pas encore dans la table
+$fp_map_coords += [
+    // Méditerranée & Moyen-Orient
+    'Mexique'=>['lat'=>20.6,'lon'=>-87.1,'city'=>'Cancún','iata'=>'CUN','region'=>'MEXIQUE'],
+    'Indonésie'=>['lat'=>-8.65,'lon'=>115.2,'city'=>'Bali','iata'=>'DPS','region'=>'INDONÉSIE'],
+    'Maldives'=>['lat'=>4.18,'lon'=>73.5,'city'=>'Malé','iata'=>'MLE','region'=>'MALDIVES'],
+    'Émirats arabes unis'=>['lat'=>25.25,'lon'=>55.3,'city'=>'Dubaï','iata'=>'DXB','region'=>'ÉMIRATS'],
+    'Jordanie'=>['lat'=>31.95,'lon'=>35.9,'city'=>'Amman','iata'=>'AMM','region'=>'JORDANIE'],
+    'Oman'=>['lat'=>23.6,'lon'=>58.3,'city'=>'Mascate','iata'=>'MCT','region'=>'OMAN'],
+    // Afrique
+    'Afrique du Sud'=>['lat'=>-33.97,'lon'=>18.6,'city'=>'Le Cap','iata'=>'CPT','region'=>'AFRIQUE DU SUD'],
+    'Sénégal'=>['lat'=>14.74,'lon'=>-17.5,'city'=>'Dakar','iata'=>'DSS','region'=>'SÉNÉGAL'],
+    'Cap-Vert'=>['lat'=>16.73,'lon'=>-22.9,'city'=>'Sal','iata'=>'SID','region'=>'CAP-VERT'],
+    'Tanzanie'=>['lat'=>-6.77,'lon'=>39.3,'city'=>'Zanzibar','iata'=>'ZNZ','region'=>'TANZANIE'],
+    'Kenya'=>['lat'=>-4.03,'lon'=>39.6,'city'=>'Mombasa','iata'=>'MBA','region'=>'KENYA'],
+    'Madagascar'=>['lat'=>-18.9,'lon'=>47.5,'city'=>'Antananarivo','iata'=>'TNR','region'=>'MADAGASCAR'],
+    // Asie
+    'Sri Lanka'=>['lat'=>7.07,'lon'=>79.9,'city'=>'Colombo','iata'=>'CMB','region'=>'SRI LANKA'],
+    'Cambodge'=>['lat'=>13.41,'lon'=>103.87,'city'=>'Siem Reap','iata'=>'REP','region'=>'CAMBODGE'],
+    'Malaisie'=>['lat'=>3.14,'lon'=>101.7,'city'=>'Kuala Lumpur','iata'=>'KUL','region'=>'MALAISIE'],
+    'Vietnam'=>['lat'=>16.05,'lon'=>108.2,'city'=>'Da Nang','iata'=>'DAD','region'=>'VIETNAM'],
+    'Philippines'=>['lat'=>14.51,'lon'=>121.02,'city'=>'Manille','iata'=>'MNL','region'=>'PHILIPPINES'],
+    'Singapour'=>['lat'=>1.36,'lon'=>103.99,'city'=>'Singapour','iata'=>'SIN','region'=>'SINGAPOUR'],
+    'Japon'=>['lat'=>34.69,'lon'=>135.50,'city'=>'Osaka','iata'=>'KIX','region'=>'JAPON'],
+    'Corée du Sud'=>['lat'=>37.56,'lon'=>126.99,'city'=>'Séoul','iata'=>'ICN','region'=>'CORÉE DU SUD'],
+    'Chine'=>['lat'=>31.17,'lon'=>121.48,'city'=>'Shanghai','iata'=>'PVG','region'=>'CHINE'],
+    'Inde'=>['lat'=>28.55,'lon'=>77.1,'city'=>'New Delhi','iata'=>'DEL','region'=>'INDE'],
+    // Amériques
+    'Cuba'=>['lat'=>23.0,'lon'=>-82.4,'city'=>'La Havane','iata'=>'HAV','region'=>'CUBA'],
+    'Jamaïque'=>['lat'=>18.5,'lon'=>-77.9,'city'=>'Montego Bay','iata'=>'MBJ','region'=>'JAMAÏQUE'],
+    'Bahamas'=>['lat'=>25.03,'lon'=>-77.39,'city'=>'Nassau','iata'=>'NAS','region'=>'BAHAMAS'],
+    'États-Unis'=>['lat'=>25.79,'lon'=>-80.29,'city'=>'Miami','iata'=>'MIA','region'=>'ÉTATS-UNIS'],
+    'Canada'=>['lat'=>45.51,'lon'=>-73.56,'city'=>'Montréal','iata'=>'YUL','region'=>'CANADA'],
+    'Brésil'=>['lat'=>-23.43,'lon'=>-46.47,'city'=>'São Paulo','iata'=>'GRU','region'=>'BRÉSIL'],
+    'Argentine'=>['lat'=>-34.6,'lon'=>-58.38,'city'=>'Buenos Aires','iata'=>'EZE','region'=>'ARGENTINE'],
+    'Colombie'=>['lat'=>4.7,'lon'=>-74.13,'city'=>'Bogotá','iata'=>'BOG','region'=>'COLOMBIE'],
+    'Pérou'=>['lat'=>-13.53,'lon'=>-71.97,'city'=>'Cusco','iata'=>'CUZ','region'=>'PÉROU'],
+    // Europe du Nord
+    'Islande'=>['lat'=>63.98,'lon'=>-22.6,'city'=>'Reykjavik','iata'=>'KEF','region'=>'ISLANDE'],
+    'Norvège'=>['lat'=>60.2,'lon'=>5.23,'city'=>'Bergen','iata'=>'BGO','region'=>'NORVÈGE'],
+    // DOM-TOM & Océan Indien
+    'Guadeloupe'=>['lat'=>16.27,'lon'=>-61.53,'city'=>'Pointe-à-Pitre','iata'=>'PTP','region'=>'GUADELOUPE'],
+    'Martinique'=>['lat'=>14.59,'lon'=>-61.0,'city'=>'Fort-de-France','iata'=>'FDF','region'=>'MARTINIQUE'],
+    'Réunion'=>['lat'=>-21.32,'lon'=>55.42,'city'=>'Saint-Denis','iata'=>'RUN','region'=>'LA RÉUNION'],
+    // Europe Centrale (déjà dans table principale, ajout ici si absent)
+    'Monténégro'=>['lat'=>42.4,'lon'=>18.8,'city'=>'Tivat','iata'=>'TIV','region'=>'MONTÉNÉGRO'],
+    'Bulgarie'=>['lat'=>42.57,'lon'=>27.5,'city'=>'Bourgas','iata'=>'BOJ','region'=>'BULGARIE'],
+    // Océanie
+    'Australie'=>['lat'=>-33.87,'lon'=>151.21,'city'=>'Sydney','iata'=>'SYD','region'=>'AUSTRALIE'],
+    'Nouvelle-Zélande'=>['lat'=>-36.85,'lon'=>174.77,'city'=>'Auckland','iata'=>'AKL','region'=>'NOUVELLE-ZÉLANDE'],
+    'Polynésie'=>['lat'=>-17.55,'lon'=>-149.6,'city'=>'Tahiti','iata'=>'PPT','region'=>'POLYNÉSIE'],
+    'Nouvelle-Calédonie'=>['lat'=>-22.27,'lon'=>166.46,'city'=>'Nouméa','iata'=>'NOU','region'=>'NOUVELLE-CALÉDONIE'],
+];
+$fp_type_colors = ['sejour_golf'=>'#c9a84c','circuit'=>'#e55d3a','sejour'=>'#59b7b7','road_trip'=>'#8e44ad','city_trip'=>'#3498db','parc'=>'#e74c3c'];
+
+if (class_exists('VS08V_MetaBoxes')) {
+    // Scanner les 2 types de produits : voyages ET circuits
+    $fp_map_ids_voyages = get_posts(['post_type'=>'vs08_voyage','post_status'=>'publish','posts_per_page'=>-1,'fields'=>'ids']);
+    $fp_map_ids_circuits = get_posts(['post_type'=>'vs08_circuit','post_status'=>'publish','posts_per_page'=>-1,'fields'=>'ids']);
+    $fp_dest_agg = []; // pays → ['types'=>[], 'airports'=>[], 'count'=>0, 'cities'=>[]]
+
+    // ── Voyages (sejour_golf, sejour, road_trip, city_trip, parc) ──
+    foreach ($fp_map_ids_voyages as $pid) {
+        $m = VS08V_MetaBoxes::get($pid);
+        if (($m['statut'] ?? '') === 'archive') continue;
+        $dest = trim($m['destination'] ?? '');
+        $pays = trim($m['pays'] ?? '');
+        $type = $m['type_voyage'] ?? '';
+        $iata = strtoupper(trim($m['iata_dest'] ?? ''));
+        if (!$type) continue;
+
+        $map_key = '';
+        if ($pays && isset($fp_map_coords[$pays])) { $map_key = $pays; }
+        elseif ($dest && isset($fp_dest_to_pays[$dest])) { $map_key = $fp_dest_to_pays[$dest]; }
+        elseif ($pays && isset($fp_dest_to_pays[$pays])) { $map_key = $fp_dest_to_pays[$pays]; }
+        elseif ($dest && isset($fp_map_coords[$dest])) { $map_key = $dest; }
+        elseif ($iata && isset($fp_iata_to_pays[$iata])) { $map_key = $fp_iata_to_pays[$iata]; }
+        elseif ($pays) { $map_key = $pays; }
+        elseif ($dest) { $map_key = $dest; }
+        if (!$map_key) continue;
+
+        if (!isset($fp_dest_agg[$map_key])) $fp_dest_agg[$map_key] = ['types'=>[],'airports'=>[],'count'=>0,'cities'=>[]];
+        $fp_dest_agg[$map_key]['count']++;
+        if (!in_array($type, $fp_dest_agg[$map_key]['types'])) $fp_dest_agg[$map_key]['types'][] = $type;
+        if ($dest && !in_array($dest, $fp_dest_agg[$map_key]['cities'])) $fp_dest_agg[$map_key]['cities'][] = $dest;
+        if (!empty($m['aeroports']) && is_array($m['aeroports'])) {
+            foreach ($m['aeroports'] as $a) {
+                $code = strtoupper(trim($a['code'] ?? ''));
+                if ($code && !in_array($code, $fp_dest_agg[$map_key]['airports'])) $fp_dest_agg[$map_key]['airports'][] = $code;
+                if ($code) $fp_map_airports_used[$code] = true;
+            }
+        }
+    }
+
+    // ── Circuits (post_type vs08_circuit) ──
+    if (class_exists('VS08C_Meta')) {
+        foreach ($fp_map_ids_circuits as $pid) {
+            $m = VS08C_Meta::get($pid);
+            if (($m['statut'] ?? '') === 'archive') continue;
+            $dest = trim($m['destination'] ?? '');
+            $pays = trim($m['pays'] ?? '');
+            $type = 'circuit';
+            $iata = strtoupper(trim($m['iata_dest'] ?? ''));
+
+            $map_key = '';
+            if ($pays && isset($fp_map_coords[$pays])) { $map_key = $pays; }
+            elseif ($dest && isset($fp_dest_to_pays[$dest])) { $map_key = $fp_dest_to_pays[$dest]; }
+            elseif ($pays && isset($fp_dest_to_pays[$pays])) { $map_key = $fp_dest_to_pays[$pays]; }
+            elseif ($dest && isset($fp_map_coords[$dest])) { $map_key = $dest; }
+            elseif ($iata && isset($fp_iata_to_pays[$iata])) { $map_key = $fp_iata_to_pays[$iata]; }
+            elseif ($pays) { $map_key = $pays; }
+            elseif ($dest) { $map_key = $dest; }
+            if (!$map_key) continue;
+
+            if (!isset($fp_dest_agg[$map_key])) $fp_dest_agg[$map_key] = ['types'=>[],'airports'=>[],'count'=>0,'cities'=>[]];
+            $fp_dest_agg[$map_key]['count']++;
+            if (!in_array($type, $fp_dest_agg[$map_key]['types'])) $fp_dest_agg[$map_key]['types'][] = $type;
+            if ($dest && !in_array($dest, $fp_dest_agg[$map_key]['cities'])) $fp_dest_agg[$map_key]['cities'][] = $dest;
+            if (!empty($m['aeroports']) && is_array($m['aeroports'])) {
+                foreach ($m['aeroports'] as $a) {
+                    $code = strtoupper(trim($a['code'] ?? ''));
+                    if ($code && !in_array($code, $fp_dest_agg[$map_key]['airports'])) $fp_dest_agg[$map_key]['airports'][] = $code;
+                    if ($code) $fp_map_airports_used[$code] = true;
+                }
+            }
+        }
+    }
+    foreach ($fp_dest_agg as $pays => $info) {
+        $coords = $fp_map_coords[$pays] ?? null;
+        if (!$coords) continue; // Pas de coordonnées connues → skip
+        // URL de recherche: utiliser le pays ou la première destination
+        $dest_param = $pays;
+        $url = home_url('/resultats-recherche') . '?dest=' . rawurlencode($dest_param);
+        if (count($info['types']) === 1) $url .= '&type=' . rawurlencode($info['types'][0]);
+        $colors = [];
+        foreach ($info['types'] as $t) { $colors[] = $fp_type_colors[$t] ?? '#59b7b7'; }
+        // Sous-titre: villes si multiples, sinon le nom par défaut
+        $city_label = !empty($info['cities']) ? implode(', ', array_slice($info['cities'], 0, 3)) : $coords['city'];
+        $fp_map_destinations[] = [
+            'id'=>sanitize_title($pays),'pays'=>$pays,'city'=>$city_label,
+            'region'=>$coords['region'],'iata'=>$coords['iata'],
+            'lat'=>$coords['lat'],'lon'=>$coords['lon'],
+            'colors'=>$colors,'types'=>$info['types'],
+            'airports'=>$info['airports'],'count'=>$info['count'],'url'=>$url,
+        ];
+    }
+}
+$fp_map_missed = [];
+foreach (($fp_dest_agg ?? []) as $k => $v) {
+    if (!isset($fp_map_coords[$k])) $fp_map_missed[] = $k . '(' . $v['count'] . ')';
+}
+?>
+<!-- DEBUG MAP: <?php echo count($fp_map_destinations); ?> sur carte | <?php echo count($fp_map_ids_voyages ?? []); ?> voyages + <?php echo count($fp_map_ids_circuits ?? []); ?> circuits | OK: <?php echo implode(', ', array_keys(array_filter($fp_dest_agg ?? [], function($v, $k) use ($fp_map_coords) { return isset($fp_map_coords[$k]); }, ARRAY_FILTER_USE_BOTH))); ?> | MANQUE coords: <?php echo $fp_map_missed ? implode(', ', $fp_map_missed) : 'aucun'; ?> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script>
 (function(){
-    var APTS=[
+    var DS = <?php echo wp_json_encode($fp_map_destinations, JSON_UNESCAPED_UNICODE); ?>;
+    var APTS = [
         {code:'CDG',name:'Paris CDG',lat:49.01,lon:2.55},
         {code:'ORY',name:'Paris Orly',lat:48.72,lon:2.36},
         {code:'LYS',name:'Lyon',lat:45.73,lon:5.08},
@@ -1181,27 +1930,24 @@ document.addEventListener('DOMContentLoaded', function() {
         {code:'TLS',name:'Toulouse',lat:43.63,lon:1.37},
         {code:'LIL',name:'Lille',lat:50.57,lon:3.10},
         {code:'NCE',name:'Nice',lat:43.66,lon:7.22},
-        {code:'BRU',name:'Bruxelles',lat:50.90,lon:4.48}
-    ];
-    var HOME = '<?php echo esc_url(home_url()); ?>';
-    var URL_RES = '<?php echo esc_url($fp_url_resultats); ?>';
-    var URL_CIRCUITS = '<?php echo esc_url($fp_url_circuits); ?>';
-    var DS=[
-        {id:'portugal',flag:'\u{1F1F5}\u{1F1F9}',c:'Portugal',city:'Algarve',r:'PORTUGAL',iata:'FAO',n:14,lat:37.02,lon:-7.93,col:'#c9a84c',u:URL_RES+'?type=sejour_golf&dest=portugal',tags:['golf','beach'],desc:'Links face à l\'Atlantique, resorts 5 étoiles et soleil garanti.',price:'À partir de 899€/pers.'},
-        {id:'espagne',flag:'\u{1F1EA}\u{1F1F8}',c:'Espagne',city:'Marbella',r:'ESPAGNE · ANDALOUSIE',iata:'AGP',n:11,lat:36.72,lon:-4.42,col:'#c9a84c',u:URL_RES+'?type=sejour_golf&dest=espagne',tags:['golf','beach'],desc:'Costa del Sol, parcours de championnat et gastronomie.',price:'À partir de 949€/pers.'},
-        {id:'france',flag:'\u{1F1EB}\u{1F1F7}',c:'France',city:'Biarritz',r:'FRANCE · SUD',iata:'BOD',n:12,lat:44.8,lon:2.0,col:'#c9a84c',u:URL_RES+'?type=sejour_golf&dest=france',tags:['golf'],desc:'Parcours entre océan et montagne, douceur de vivre.',price:'À partir de 590€/pers.'},
-        {id:'maroc',flag:'\u{1F1F2}\u{1F1E6}',c:'Maroc',city:'Marrakech',r:'MAROC',iata:'RAK',n:9,lat:31.63,lon:-8.0,col:'#c9a84c',u:URL_RES+'?dest=maroc',tags:['golf','ai'],desc:'Royal Golf, palmeraies et riads. Soleil toute l\'année.',price:'À partir de 749€/pers.'},
-        {id:'tunisie',flag:'\u{1F1F9}\u{1F1F3}',c:'Tunisie',city:'Djerba',r:'TUNISIE',iata:'DJE',n:7,lat:34.0,lon:9.8,col:'#59b7b7',u:URL_RES+'?type=sejour&dest=tunisie',tags:['ai','beach'],desc:'Clubs all inclusive face à la Méditerranée.',price:'À partir de 599€/pers.'},
-        {id:'egypte',flag:'\u{1F1EA}\u{1F1EC}',c:'Égypte',city:'Hurghada',r:'ÉGYPTE · MER ROUGE',iata:'HRG',n:5,lat:27.18,lon:33.8,col:'#59b7b7',u:URL_RES+'?type=sejour&dest=egypte',tags:['ai','beach'],desc:'Récifs coralliens, resorts et soleil 365 jours.',price:'À partir de 649€/pers.'},
-        {id:'italie',flag:'\u{1F1EE}\u{1F1F9}',c:'Italie',city:'Sicile',r:'ITALIE',iata:'CTA',n:6,lat:40.8,lon:14.5,col:'#59b7b7',u:URL_CIRCUITS+'?destination=italie',tags:['circuit'],desc:'Volcans, temples grecs et cuisine divine.',price:'À partir de 899€/pers.'},
-        {id:'grece',flag:'\u{1F1EC}\u{1F1F7}',c:'Grèce',city:'Crète',r:'GRÈCE',iata:'HER',n:8,lat:35.5,lon:24.5,col:'#59b7b7',u:URL_CIRCUITS+'?destination=grece',tags:['circuit','beach'],desc:'Plages de sable rose, gorges et villages blancs.',price:'À partir de 799€/pers.'},
-        {id:'turquie',flag:'\u{1F1F9}\u{1F1F7}',c:'Turquie',city:'Antalya',r:'TURQUIE · BELEK',iata:'AYT',n:10,lat:37.5,lon:30.7,col:'#c9a84c',u:URL_RES+'?dest=turquie',tags:['golf','ai'],desc:'Parcours world-class, resorts 5★ all inclusive.',price:'À partir de 819€/pers.'},
-        {id:'irlande',flag:'\u{1F1EE}\u{1F1EA}',c:'Irlande',city:'Kerry',r:'IRLANDE',iata:'SNN',n:4,lat:52.3,lon:-8.5,col:'#59b7b7',u:URL_RES+'?type=sejour_golf&dest=irlande',tags:['golf'],desc:'Links légendaires battus par le vent.',price:'À partir de 1 190€/pers.'},
-        {id:'canaries',flag:'\u{1F1EA}\u{1F1F8}',c:'Canaries',city:'Fuerteventura',r:'ÎLES CANARIES',iata:'FUE',n:6,lat:28.45,lon:-13.86,col:'#59b7b7',u:URL_RES+'?type=sejour&dest=canaries',tags:['ai','beach'],desc:'Printemps éternel et plages infinies.',price:'À partir de 729€/pers.'},
-        {id:'thailande',flag:'\u{1F1F9}\u{1F1ED}',c:'Thaïlande',city:'Phuket',r:'THAÏLANDE',iata:'HKT',n:5,lat:8.5,lon:98.4,col:'#c9a84c',u:URL_RES+'?type=sejour_golf&dest=thailande',tags:['golf','beach'],desc:'Parcours tropicaux et plages carte postale.',price:'À partir de 1 490€/pers.'}
-    ];
-    var TAGS={golf:{l:'Golf',c:'fp-tt-tag-golf'},ai:{l:'All Inclusive',c:'fp-tt-tag-ai'},beach:{l:'Plage',c:'fp-tt-tag-beach'},circuit:{l:'Circuit',c:'fp-tt-tag-circuit'}};
-    var sel=APTS[0],W=1200,H=580;
+        {code:'BRU',name:'Bruxelles',lat:50.90,lon:4.48},
+        {code:'SXB',name:'Strasbourg',lat:48.54,lon:7.63},
+        {code:'BVA',name:'Beauvais',lat:49.45,lon:2.11},
+        {code:'MLH',name:'Mulhouse',lat:47.59,lon:7.53},
+        {code:'GVA',name:'Genève',lat:46.24,lon:6.11},
+        {code:'LUX',name:'Luxembourg',lat:49.63,lon:6.20},
+        {code:'ETZ',name:'Metz-Nancy',lat:48.98,lon:6.25},
+        {code:'RNS',name:'Rennes',lat:48.07,lon:-1.73},
+        {code:'CFE',name:'Clermont-Fd',lat:45.79,lon:3.16},
+        {code:'MPL',name:'Montpellier',lat:43.58,lon:3.96},
+        {code:'BES',name:'Brest',lat:48.45,lon:-4.42},
+        {code:'REI',name:'Reims',lat:49.31,lon:4.05},
+        {code:'CDG',name:'Paris CDG',lat:49.01,lon:2.55}
+    ].filter(function(a,i,arr){ return arr.findIndex(function(b){return b.code===a.code;})=== i; });
+    var TYPE_LABELS = {sejour_golf:'Séjours Golf',circuit:'Circuits',sejour:'All Inclusive',road_trip:'Road Trip',city_trip:'City Trip',parc:'Parcs'};
+    var APT_MAP = {}; APTS.forEach(function(a){ APT_MAP[a.code]=a; });
+
+    var sel=null, W=1200, H=580;
     var proj=d3.geoNaturalEarth1().center([20,30]).scale(340).translate([W/2,H/2]);
     var pathG=d3.geoPath(proj);
     var box=document.getElementById('fp-map-wrap');
@@ -1215,37 +1961,76 @@ document.addEventListener('DOMContentLoaded', function() {
     var gc=svg.append('g').attr('clip-path','url(#fp-mc)');
     var gO=gc.append('g'),gGr=gc.append('g'),gL=gc.append('g'),gA=gc.append('g'),gM=gc.append('g');
 
-    /* Boutons aéroports */
+    /* Zoom & pan */
+    var zoom=d3.zoom()
+        .scaleExtent([1,8])
+        .translateExtent([[0,0],[W,H]])
+        .on('zoom',function(e){ gc.attr('transform',e.transform); });
+    svg.call(zoom);
+    svg.on('dblclick.zoom',null); // désactiver double-clic zoom
+
+    // Bouton reset zoom (apparaît quand zoomé)
+    var zBtn=document.createElement('button');
+    zBtn.className='fp-map-zoom-reset';
+    zBtn.textContent='⟲ Vue globale';
+    zBtn.style.display='none';
+    zBtn.onclick=function(){ svg.transition().duration(600).call(zoom.transform,d3.zoomIdentity); };
+    box.style.position='relative';
+    box.appendChild(zBtn);
+    svg.on('zoom',null); // clear old
+    zoom.on('zoom',function(e){
+        gc.attr('transform',e.transform);
+        zBtn.style.display=(e.transform.k>1.05)?'block':'none';
+    });
+    svg.call(zoom);
+
+    /* Boutons aéroports avec "Tous" */
     var ap=document.getElementById('fp-map-airports');
-    APTS.forEach(function(a,i){
+    ap.innerHTML='';
+    var bAll=document.createElement('button');
+    bAll.className='fp-map-ab on'; bAll.textContent='Tous'; bAll.title='Toutes les destinations';
+    bAll.onclick=function(){sel=null;ap.querySelectorAll('.fp-map-ab').forEach(function(x){x.classList.remove('on');});bAll.classList.add('on');update();};
+    ap.appendChild(bAll);
+    APTS.forEach(function(a){
         var b=document.createElement('button');
-        b.className='fp-map-ab'+(i===0?' on':'');
-        b.textContent=a.code;
-        b.title=a.name;
-        b.onclick=function(){sel=a;ap.querySelectorAll('.fp-map-ab').forEach(function(x){x.classList.remove('on');});b.classList.add('on');drawArcs();};
+        b.className='fp-map-ab'; b.textContent=a.code; b.title=a.name;
+        b.onclick=function(){sel=a;ap.querySelectorAll('.fp-map-ab').forEach(function(x){x.classList.remove('on');});b.classList.add('on');update();};
         ap.appendChild(b);
     });
 
-    /* Fond océan + graticule */
+    /* Fond */
     gO.append('path').datum({type:'Sphere'}).attr('d',pathG).attr('fill','url(#fp-oc)').attr('stroke','rgba(89,183,183,.08)').attr('stroke-width',.5);
     gGr.append('path').datum(d3.geoGraticule().step([20,20])()).attr('d',pathG).attr('fill','none').attr('stroke','rgba(89,183,183,.04)').attr('stroke-width',.3);
 
-    /* Chargement TopoJSON */
+    /* Charger le monde */
     d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(function(w){
         var land=topojson.feature(w,w.objects.countries);
         var bord=topojson.mesh(w,w.objects.countries,function(a,b){return a!==b;});
         gL.selectAll('path').data(land.features).join('path').attr('d',pathG).attr('fill','#1a2640').attr('stroke','none');
         gL.append('path').datum(bord).attr('d',pathG).attr('fill','none').attr('stroke','rgba(89,183,183,.07)').attr('stroke-width',.3);
-        drawArcs();
-        drawMarkers();
+        update();
     });
 
-    /* Arcs de vol animés */
+    function getFiltered(){
+        if(!sel) return DS;
+        var f=DS.filter(function(d){return d.airports&&d.airports.indexOf(sel.code)!==-1;});
+        return f.length>0?f:DS; // jamais vide
+    }
+
+    function update(){ drawArcs(); drawMarkers(); }
+
+    /* Arcs de vol */
     function drawArcs(){
         gA.selectAll('*').remove();
+        if(!sel) return; // mode Tous = pas d'arcs
         var o=[sel.lon,sel.lat],op=proj(o);
-        DS.forEach(function(d,i){
-            gA.append('path').datum({type:'LineString',coordinates:[o,[d.lon,d.lat]]}).attr('d',pathG).attr('fill','none').attr('stroke',d.col).attr('stroke-width',1).attr('stroke-dasharray','6 5').attr('opacity',.22).style('animation','fp-map-dash '+(1.6+i*.1)+'s linear infinite');
+        var fd=getFiltered();
+        fd.forEach(function(d,i){
+            var mainCol=d.colors&&d.colors[0]?d.colors[0]:'#59b7b7';
+            gA.append('path').datum({type:'LineString',coordinates:[o,[d.lon,d.lat]]})
+                .attr('d',pathG).attr('fill','none').attr('stroke',mainCol)
+                .attr('stroke-width',1.2).attr('stroke-dasharray','6 5').attr('opacity',.3)
+                .style('animation','fp-map-dash '+(1.6+i*.1)+'s linear infinite');
         });
         if(op){
             gA.append('circle').attr('cx',op[0]).attr('cy',op[1]).attr('r',6).attr('fill','#fff');
@@ -1254,53 +2039,91 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    /* Marqueurs destinations + tooltips */
+    /* Marqueurs destinations — camembert multi-couleur */
     function drawMarkers(){
+        gM.selectAll('*').remove();
         var tt=document.getElementById('fp-map-tt');
-        var tiata=document.getElementById('fp-tt-iata'),tcity=document.getElementById('fp-tt-city'),tregion=document.getElementById('fp-tt-region'),ttags=document.getElementById('fp-tt-tags'),tdesc=document.getElementById('fp-tt-desc'),tprice=document.getElementById('fp-tt-price'),tbtn=document.getElementById('fp-tt-btn');
-        var hT=null;
-        DS.forEach(function(d){
-            var p=proj([d.lon,d.lat]);if(!p)return;
-            if(p[0]<-20||p[0]>W+20||p[1]<-20||p[1]>H+20)return;
-            var g=gM.append('g').style('cursor','pointer');
-            g.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',26).attr('fill',d.col).attr('opacity',.06);
-            g.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',10).attr('fill','#0e1528').attr('stroke',d.col).attr('stroke-width',3);
-            g.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',4).attr('fill',d.col);
-            var rg=g.append('circle').attr('cx',p[0]).attr('cy',p[1]).attr('r',10).attr('fill','none').attr('stroke',d.col).attr('stroke-width',.7);
+        var tiata=document.getElementById('fp-tt-iata'),tcity=document.getElementById('fp-tt-city'),
+            tregion=document.getElementById('fp-tt-region'),ttags=document.getElementById('fp-tt-tags'),
+            tdesc=document.getElementById('fp-tt-desc'),tprice=document.getElementById('fp-tt-price'),
+            tbtn=document.getElementById('fp-tt-btn');
+        var hT=null, R=11;
+        var arc=d3.arc();
+        var fd=getFiltered();
+
+        fd.forEach(function(d){
+            var p=proj([d.lon,d.lat]); if(!p) return;
+            if(p[0]<-20||p[0]>W+20||p[1]<-20||p[1]>H+20) return;
+            var g=gM.append('g').style('cursor','pointer').attr('transform','translate('+p[0]+','+p[1]+')');
+
+            // Halo
+            g.append('circle').attr('r',26).attr('fill',d.colors[0]).attr('opacity',.08);
+
+            // Fond noir du marqueur
+            g.append('circle').attr('r',R).attr('fill','#0e1528');
+
+            // Segments camembert (divisé par type)
+            var nc=d.colors.length;
+            if(nc===1){
+                // Un seul type : cercle plein
+                g.append('circle').attr('r',R).attr('fill','none').attr('stroke',d.colors[0]).attr('stroke-width',3);
+                g.append('circle').attr('r',4).attr('fill',d.colors[0]);
+            } else {
+                // Multi-types : arcs divisés
+                var anglePerSlice=2*Math.PI/nc;
+                d.colors.forEach(function(col,i){
+                    g.append('path')
+                        .attr('d',arc({innerRadius:R-3,outerRadius:R,startAngle:i*anglePerSlice,endAngle:(i+1)*anglePerSlice}))
+                        .attr('fill',col);
+                });
+                // Point central = première couleur
+                g.append('circle').attr('r',3.5).attr('fill',d.colors[0]);
+                // Bord extérieur pour la lisibilité
+                g.append('circle').attr('r',R).attr('fill','none').attr('stroke','rgba(255,255,255,.15)').attr('stroke-width',.5);
+            }
+
+            // Pulsation
+            var rg=g.append('circle').attr('r',R).attr('fill','none').attr('stroke',d.colors[0]).attr('stroke-width',.7);
             var dur=(2.4+Math.random()*1)+'s';
-            rg.append('animate').attr('attributeName','r').attr('values','11;24;11').attr('dur',dur).attr('repeatCount','indefinite');
+            rg.append('animate').attr('attributeName','r').attr('values','12;26;12').attr('dur',dur).attr('repeatCount','indefinite');
             rg.append('animate').attr('attributeName','opacity').attr('values','.3;0;.3').attr('dur',dur).attr('repeatCount','indefinite');
+
+            // Tooltip
             g.on('mouseenter',function(){
                 clearTimeout(hT);
                 tiata.textContent=d.iata;
-                tcity.textContent=d.flag+' '+d.city;
-                tregion.textContent=d.r;
+                tcity.textContent=d.pays;
+                tregion.textContent=d.region;
                 ttags.innerHTML='';
-                d.tags.forEach(function(t){var tg=TAGS[t];ttags.innerHTML+='<span class="fp-tt-tag '+tg.c+'">'+tg.l+'</span>';});
-                tdesc.textContent=d.desc;
-                tprice.textContent=d.price;
-                tbtn.textContent='Voir les '+d.n+' séjours \u2192';
-                tbtn.href=d.u;
+                (d.types||[]).forEach(function(t){
+                    var lbl=TYPE_LABELS[t]||t;
+                    ttags.innerHTML+='<span class="fp-tt-tag" style="background:rgba(255,255,255,.1);color:#fff">'+lbl+'</span>';
+                });
+                tdesc.textContent=d.city+' — '+d.count+' séjour'+(d.count>1?'s':'');
+                tprice.textContent=d.count+' séjour'+(d.count>1?'s':'')+' disponible'+(d.count>1?'s':'');
+                tbtn.textContent='Voir les séjours \u2192';
+                tbtn.href=d.url;
                 var br=box.getBoundingClientRect(),svgE=box.querySelector('svg'),sr=svgE.getBoundingClientRect();
                 var sx=sr.width/W,sy=sr.height/H;
                 var px=sr.left-br.left+p[0]*sx,py=sr.top-br.top+p[1]*sy;
                 tt.style.left=(px+26)+'px';tt.style.top=(py-60)+'px';
-                if(px+290>br.width)tt.style.left=(px-275)+'px';
-                if(py-60<0)tt.style.top=(py+26)+'px';
+                if(px+290>br.width) tt.style.left=(px-275)+'px';
+                if(py-60<0) tt.style.top=(py+26)+'px';
                 tt.classList.add('on');
                 gM.selectAll('g').style('opacity',function(){return this===g.node()?1:.12;});
             });
             g.on('mouseleave',function(){hT=setTimeout(function(){tt.classList.remove('on');gM.selectAll('g').style('opacity',1);},200);});
-            g.on('click',function(){window.location.href=d.u;});
-            /* Touch mobile : 1er tap = tooltip, 2e tap = navigation */
+            g.on('click',function(){window.location.href=d.url;});
             g.on('touchstart',function(e){
                 e.preventDefault();
-                if(tt.classList.contains('on')&&tcity.textContent.indexOf(d.city)>-1){window.location.href=d.u;}
+                if(tt.classList.contains('on')&&tcity.textContent.indexOf(d.pays)>-1){window.location.href=d.url;}
                 else{g.dispatch('mouseenter');}
             },{passive:false});
         });
-        tt.addEventListener('mouseenter',function(){clearTimeout(hT);});
-        tt.addEventListener('mouseleave',function(){hT=setTimeout(function(){tt.classList.remove('on');gM.selectAll('g').style('opacity',1);},200);});
+        if(tt){
+            tt.addEventListener('mouseenter',function(){clearTimeout(hT);});
+            tt.addEventListener('mouseleave',function(){hT=setTimeout(function(){tt.classList.remove('on');gM.selectAll('g').style('opacity',1);},200);});
+        }
     }
 })();
 </script>
@@ -1312,23 +2135,23 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="fp-container">
         <div class="fp-trust-row">
             <div class="fp-trust-item">
-                <div class="fp-trust-logo"><svg viewBox="0 0 120 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="120" height="44" rx="8" fill="#1a5276"/><text x="60" y="28" text-anchor="middle" fill="#fff" font-family="Outfit,Arial,sans-serif" font-weight="800" font-size="16">APST</text><text x="60" y="38" text-anchor="middle" fill="rgba(255,255,255,.85)" font-family="Outfit,Arial,sans-serif" font-weight="600" font-size="8">Garantie voyageurs</text></svg></div>
+                <div class="fp-trust-logo"><img src="https://apst.travel/wp-content/uploads/2025/12/Logo-Full-Ladybug-1.png" alt="APST Garantie" loading="lazy"></div>
                 <div class="fp-trust-text"><strong>Garantie APST</strong><span>Protection financière voyageurs</span></div>
             </div>
             <div class="fp-trust-sep"></div>
             <div class="fp-trust-item">
-                <div class="fp-trust-logo"><svg viewBox="0 0 100 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="44" rx="8" fill="#002654"/><text x="50" y="26" text-anchor="middle" fill="#fff" font-family="Outfit,Arial,sans-serif" font-weight="800" font-size="11">Atout France</text><text x="50" y="38" text-anchor="middle" fill="rgba(255,255,255,.9)" font-family="Outfit,Arial,sans-serif" font-weight="600" font-size="8">IM051100014</text></svg></div>
-                <div class="fp-trust-text"><strong>Atout France</strong><span>Immatriculation tourisme</span></div>
+                <div class="fp-trust-logo"><svg viewBox="0 0 140 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="140" height="44" rx="6" fill="#002654"/><rect x="0" width="8" height="44" rx="0" fill="#002654"/><rect x="4" width="4" height="44" fill="#fff"/><rect x="8" width="4" height="44" fill="#ED2939"/><text x="78" y="20" text-anchor="middle" fill="#fff" font-family="Georgia,serif" font-weight="700" font-size="13" letter-spacing=".5">Atout France</text><text x="78" y="34" text-anchor="middle" fill="rgba(255,255,255,.8)" font-family="Outfit,Arial,sans-serif" font-weight="600" font-size="8" letter-spacing=".8">IM051100014</text></svg></div>
+                <div class="fp-trust-text"><strong>Atout France</strong><span>Immatriculation IM051100014</span></div>
             </div>
             <div class="fp-trust-sep"></div>
             <div class="fp-trust-item">
-                <div class="fp-trust-logo"><svg viewBox="0 0 100 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="44" rx="8" fill="#1a1a2e"/><text x="50" y="28" text-anchor="middle" fill="#00d4aa" font-family="Outfit,Arial,sans-serif" font-weight="800" font-size="14">3D Secure</text><text x="50" y="40" text-anchor="middle" fill="rgba(0,212,170,.8)" font-family="Outfit,Arial,sans-serif" font-size="7">Paiement sécurisé</text></svg></div>
-                <div class="fp-trust-text"><strong>Paiement 3D Secure</strong><span>Transactions sécurisées SSL</span></div>
+                <div class="fp-trust-logo"><svg viewBox="0 0 110 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="110" height="44" rx="6" fill="#0a2540"/><path d="M35 8 L55 4 L75 8 L75 24 C75 32 65 38 55 40 C45 38 35 32 35 24Z" fill="none" stroke="#00d4aa" stroke-width="1.5"/><path d="M46 22 L52 28 L64 16" fill="none" stroke="#00d4aa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><text x="55" y="17" text-anchor="middle" fill="rgba(255,255,255,.25)" font-family="Outfit,sans-serif" font-size="5" letter-spacing="1">SSL</text></svg></div>
+                <div class="fp-trust-text"><strong>Paiement sécurisé</strong><span>3D Secure · SSL · Paybox</span></div>
             </div>
             <div class="fp-trust-sep"></div>
             <div class="fp-trust-item">
-                <div class="fp-trust-logo"><svg viewBox="0 0 100 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="44" rx="8" fill="#c41230"/><text x="50" y="28" text-anchor="middle" fill="#fff" font-family="Outfit,Arial,sans-serif" font-weight="800" font-size="14">Hiscox</text><text x="50" y="40" text-anchor="middle" fill="rgba(255,255,255,.9)" font-family="Outfit,Arial,sans-serif" font-size="7">Assurance RC Pro</text></svg></div>
-                <div class="fp-trust-text"><strong>Assurance Hiscox</strong><span>Responsabilité civile professionnelle</span></div>
+                <div class="fp-trust-logo"><svg viewBox="0 0 110 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="110" height="44" rx="6" fill="#fff" stroke="#e5e7eb" stroke-width="1"/><text x="55" y="24" text-anchor="middle" fill="#c41230" font-family="Georgia,serif" font-weight="700" font-size="18" letter-spacing="2">HISCOX</text><text x="55" y="36" text-anchor="middle" fill="#9ca3af" font-family="Outfit,sans-serif" font-weight="600" font-size="7" letter-spacing=".5">RC Professionnelle</text></svg></div>
+                <div class="fp-trust-text"><strong>Assurance Hiscox</strong><span>Responsabilité civile pro</span></div>
             </div>
         </div>
     </div>
@@ -1350,12 +2173,12 @@ document.addEventListener('DOMContentLoaded', function() {
 $vs08_google_reviews = get_option('vs08v_google_reviews', []);
 if (!is_array($vs08_google_reviews) || empty($vs08_google_reviews)) {
     $vs08_google_reviews = [
-        ['initials' => 'MR', 'name' => 'Michel R.', 'trip' => 'Portugal Algarve — Oct. 2024', 'text' => 'Séjour parfait au Portugal. Parcours magnifiques, hôtel de rêve. L\'équipe a tout pensé, on n\'avait qu\'à jouer. On repart l\'an prochain !'],
-        ['initials' => 'SL', 'name' => 'Sophie L.', 'trip' => 'Maroc Agadir — Fév. 2025', 'text' => 'Premier voyage golf en agence et je ne m\'en passerai plus. Prix vraiment transparent. Le conseiller était disponible même depuis le Maroc.'],
-        ['initials' => 'JP', 'name' => 'Jean-Pierre V.', 'trip' => 'Espagne Marbella — Avr. 2025', 'text' => 'On était 4 amis golfeurs, tout était parfaitement coordonné. Tee-times, transferts, dîner de groupe... Un vrai service premium à prix honnête.'],
-        ['initials' => 'CG', 'name' => 'Catherine G.', 'trip' => 'Thaïlande Hua Hin — Jan. 2026', 'text' => 'Nous sommes partis en couple pour la première fois avec une agence spécialiste golf. Organisation au top, parcours sublimes. On recommande à 200 %.'],
-        ['initials' => 'AD', 'name' => 'Alain D.', 'trip' => 'Irlande Kerry — Mai 2025', 'text' => 'Groupe de 8 golfeurs : tout a été coordonné à la perfection. Tee-times, dîners, navettes. Un service haut de gamme et des souvenirs incroyables.'],
-        ['initials' => 'PB', 'name' => 'Philippe B.', 'trip' => 'Turquie Belek — Nov. 2025', 'text' => '3ème séjour avec Sortir Monde : Algarve, Maroc et maintenant la Turquie. On ne change pas une équipe qui gagne, toujours au-delà de nos attentes.'],
+        ['initials' => 'MR', 'name' => 'Michel R.', 'trip' => 'Séjour Golf — Portugal Algarve', 'text' => 'Séjour parfait au Portugal. Parcours magnifiques, hôtel de rêve. L\'équipe a tout organisé, on n\'avait qu\'à jouer. On repart l\'an prochain !'],
+        ['initials' => 'SL', 'name' => 'Sophie L.', 'trip' => 'Circuit — Italie du Sud', 'text' => 'Notre circuit en Italie était exceptionnel. Chaque étape était une découverte. Le conseiller a adapté le programme à nos envies. Merci !'],
+        ['initials' => 'JP', 'name' => 'Jean-Pierre V.', 'trip' => 'Séjour Golf — Espagne Marbella', 'text' => 'On était 4 amis golfeurs, tout était parfaitement coordonné. Tee-times, transferts, dîner de groupe... Un vrai service premium à prix honnête.'],
+        ['initials' => 'CG', 'name' => 'Catherine G.', 'trip' => 'Circuit — Grèce Crète', 'text' => 'Premier voyage organisé par une agence et quelle réussite ! Les hôtels, les visites, le rythme... tout était pensé pour nous. On recommande à 200 %.'],
+        ['initials' => 'AD', 'name' => 'Alain D.', 'trip' => 'Séjour Golf — Maroc Agadir', 'text' => 'Prix vraiment transparent et service au top. Le conseiller était disponible même depuis le Maroc. Premier voyage golf en agence, je ne m\'en passerai plus.'],
+        ['initials' => 'PB', 'name' => 'Philippe B.', 'trip' => 'Séjour Golf — Turquie Belek', 'text' => '3ème séjour avec Sortir 08 : Algarve, Maroc et maintenant la Turquie. On ne change pas une équipe qui gagne, toujours au-delà de nos attentes.'],
     ];
 }
 ?>
@@ -1368,8 +2191,8 @@ if (!is_array($vs08_google_reviews) || empty($vs08_google_reviews)) {
     <div class="fp-nl-band">
         <div class="fp-nl-side">
             <p class="fp-nl-badge">📧 Newsletter exclusive</p>
-            <h2>Offres privées & <em>bons plans golf</em></h2>
-            <p>Ventes flash, nouveaux parcours, conseils d'expert : recevez le meilleur du golf voyage directement dans votre boîte mail.</p>
+            <h2>Offres privées & <em>bons plans voyage</em></h2>
+            <p>Ventes flash, nouvelles destinations, conseils d'expert : recevez le meilleur de nos offres directement dans votre boîte mail.</p>
             <form class="fp-nl-form" id="vs08-newsletter-form">
                 <input type="email" name="email" placeholder="Votre adresse email..." required>
                 <button type="submit">S'inscrire →</button>
@@ -1387,12 +2210,12 @@ if (!is_array($vs08_google_reviews) || empty($vs08_google_reviews)) {
             <div class="fp-cta-wrap">
                 <div class="fp-cta-box">
                     <p class="fp-cta-eyebrow">Devis gratuit</p>
-                    <h2>Votre séjour golf sur mesure</h2>
-                    <p class="fp-cta-desc">Dites-nous destination, budget et niveau. Un conseiller vous envoie une proposition sous 24h, sans engagement.</p>
+                    <h2>Votre voyage sur mesure</h2>
+                    <p class="fp-cta-desc">Dites-nous destination, budget et envies. Un conseiller vous envoie une proposition sous 24-48h, sans engagement.</p>
                     <div class="fp-cta-trust">
-                        <span>Réponse sous 24h</span><span>Sans engagement</span><span>Devis personnalisé</span>
+                        <span>Réponse sous 24-48h</span><span>Sans engagement</span><span>Devis personnalisé</span>
                     </div>
-                    <a href="<?php echo esc_url(home_url('/devis-golf')); ?>" class="fp-btn-devis">Demander mon devis <span class="btn-arrow">→</span></a>
+                    <a href="<?php echo esc_url(home_url('/devis-gratuit')); ?>" class="fp-btn-devis">Demander mon devis <span class="btn-arrow">→</span></a>
                     <div class="fp-cta-phone">
                         <span>Ou par téléphone</span>
                         <a href="tel:<?php echo esc_attr(preg_replace('/\s+/', '', vs08_opt('vs08_tel', '0326652863'))); ?>"><span>📞</span> <?php echo esc_html(vs08_opt('vs08_tel', '03 26 65 28 63')); ?></a>
