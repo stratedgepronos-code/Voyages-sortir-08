@@ -16,19 +16,11 @@ img { max-width: 100%; height: auto; }
     .header .announce { font-size: 11px; padding: 7px 12px; }
     .nav-bar { height: 50px !important; padding: 10px 14px !important; }
 
-    /* ── HERO HOMEPAGE ── */
-    .hc-wrap { height: 55vh !important; min-height: 360px !important; max-height: 520px !important; }
-    .hc-title { font-size: clamp(22px, 5.5vw, 32px) !important; }
-    .hc-sub { font-size: 13px !important; }
-    .hc-btns { flex-direction: column; gap: 10px; }
-    .hc-btns a { width: 100%; text-align: center; padding: 14px 24px; font-size: 14px; }
+    /* ── HERO HOMEPAGE (front-page.php gère le détail ; pas de !important pour ne pas casser dots centrés / safe-area) ── */
     .hc-stats { display: none !important; }
-    .hc-dots { left: 20px !important; bottom: 70px !important; }
     .hc-conf { display: none !important; }
-    .hc-content { padding: 0 20px !important; }
 
-    /* ── BARRE DE RECHERCHE — comme Booking.com mobile ── */
-    .fp-search { margin-top: -30px !important; padding: 0 12px 10px !important; }
+    /* ── BARRE DE RECHERCHE — comme Booking.com mobile (marges = front-page.php) ── */
     .fp-search-card {
         flex-direction: column !important;
         padding: 18px 16px !important;
