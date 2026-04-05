@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) exit;
 
 class VS08V_Search {
 
-    const TRANSIENT_KEY = 'vs08v_search_agg_v10';
+    const TRANSIENT_KEY = 'vs08v_search_agg_v11';
 
     const TYPE_LABELS = [
         'sejour_golf' => 'Séjours Golfique',
@@ -26,12 +26,13 @@ class VS08V_Search {
         if (get_option('_vs08v_vol_cache_reset') !== 'v3') {
             add_action('init', [__CLASS__, 'reset_vol_cache_once']);
         }
-        // Force recalcul du cache search (v5 : flag emoji fix)
-        if (get_option('_vs08v_search_cache_v') !== 'v5') {
+        // Force recalcul du cache search (v6 : retrait flags des dropdowns)
+        if (get_option('_vs08v_search_cache_v') !== 'v6') {
             delete_transient('vs08v_search_agg_v8');
             delete_transient('vs08v_search_agg_v9');
+            delete_transient('vs08v_search_agg_v10');
             delete_transient(self::TRANSIENT_KEY);
-            update_option('_vs08v_search_cache_v', 'v5');
+            update_option('_vs08v_search_cache_v', 'v6');
         }
     }
 
@@ -127,7 +128,7 @@ class VS08V_Search {
             $flag = class_exists('VS08V_MetaBoxes') ? VS08V_MetaBoxes::resolve_flag($m) : trim($m['flag'] ?? '');
             // label = pays (priorité) ou destination si pays vide
             $display_val   = $pays !== '' ? $pays : $dest;
-            $display_label = ($flag !== '' ? $flag . ' ' : '') . mb_convert_case($display_val, MB_CASE_TITLE, 'UTF-8');
+            $display_label = mb_convert_case($display_val, MB_CASE_TITLE, 'UTF-8');
             if ($dest !== '' || $pays !== '') {
                 $key = self::destination_aggregate_key($pays, $dest);
                 if ($key !== '' && !isset($destinations[$key])) {
