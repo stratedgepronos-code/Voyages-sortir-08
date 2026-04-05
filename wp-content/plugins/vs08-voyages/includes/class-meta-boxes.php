@@ -877,9 +877,9 @@ class VS08V_MetaBoxes {
     public static function resolve_flag($m) {
         if (!is_array($m)) return '';
         $flag = trim((string) ($m['flag'] ?? ''));
-        // Si le flag est un code ISO 2 lettres (ex: "CY", "PT"), le convertir en emoji drapeau
-        if ($flag !== '' && preg_match('/^[A-Z]{2}$/', $flag)) {
-            $flag = mb_chr(0x1F1E6 + ord($flag[0]) - 65, 'UTF-8') . mb_chr(0x1F1E6 + ord($flag[1]) - 65, 'UTF-8');
+        // Si le flag est un code ISO 2 lettres (ex: "CY", "pt"), le convertir en emoji drapeau
+        if ($flag !== '' && preg_match('/^[A-Za-z]{2}$/', $flag)) {
+            $flag = self::code_to_flag_emoji(strtoupper($flag));
         }
         if ($flag !== '') return $flag;
 
@@ -896,6 +896,18 @@ class VS08V_MetaBoxes {
         }
 
         return '';
+    }
+
+    /** Convertit un code ISO 2 lettres en emoji drapeau (ex: "PT" → 🇵🇹) */
+    public static function code_to_flag_emoji($code) {
+        $code = strtoupper(trim($code));
+        if (strlen($code) !== 2) return '';
+        // Utilise les octets UTF-8 bruts des Regional Indicator Symbols (U+1F1E6..U+1F1FF)
+        $a = ord($code[0]) - 65; // 0-25
+        $b = ord($code[1]) - 65;
+        if ($a < 0 || $a > 25 || $b < 0 || $b > 25) return '';
+        // Chaque Regional Indicator = 4 octets UTF-8 : F0 9F 87 (A6+offset)
+        return pack('C4', 0xF0, 0x9F, 0x87, 0xA6 + $a) . pack('C4', 0xF0, 0x9F, 0x87, 0xA6 + $b);
     }
 
     /** Drapeau emoji à partir du nom du pays (fallback si meta flag vide) */
@@ -925,7 +937,6 @@ class VS08V_MetaBoxes {
         $code = $map[$pays] ?? '';
         if (empty($code)) return '';
         $code = strtoupper(substr($code, 0, 2));
-        if (strlen($code) < 2) return '';
-        return mb_chr(0x1F1E6 + ord($code[0]) - 65, 'UTF-8') . mb_chr(0x1F1E6 + ord($code[1]) - 65, 'UTF-8');
+        return self::code_to_flag_emoji($code);
     }
 }

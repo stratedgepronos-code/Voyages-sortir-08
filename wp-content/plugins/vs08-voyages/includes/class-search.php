@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) exit;
 
 class VS08V_Search {
 
-    const TRANSIENT_KEY = 'vs08v_search_agg_v9';
+    const TRANSIENT_KEY = 'vs08v_search_agg_v10';
 
     const TYPE_LABELS = [
         'sejour_golf' => 'Séjours Golfique',
@@ -26,10 +26,12 @@ class VS08V_Search {
         if (get_option('_vs08v_vol_cache_reset') !== 'v3') {
             add_action('init', [__CLASS__, 'reset_vol_cache_once']);
         }
-        // Force recalcul du cache search (agrégation par pays v4)
-        if (get_option('_vs08v_search_cache_v') !== 'v4') {
+        // Force recalcul du cache search (v5 : flag emoji fix)
+        if (get_option('_vs08v_search_cache_v') !== 'v5') {
+            delete_transient('vs08v_search_agg_v8');
+            delete_transient('vs08v_search_agg_v9');
             delete_transient(self::TRANSIENT_KEY);
-            update_option('_vs08v_search_cache_v', 'v4');
+            update_option('_vs08v_search_cache_v', 'v5');
         }
     }
 
