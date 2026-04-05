@@ -112,17 +112,13 @@ get_header();
 .bk-step-line.done{border-color:#59b7b7;border-style:solid}
 @media(max-width:480px){.bk-step-pin-body{width:30px;height:30px}.bk-step-pin{width:34px;height:44px}.bk-step-label{font-size:9px}.bk-step-pin-icon{font-size:12px}.bk-step-line{transform:translateY(-22px)}}
 @media(max-width:768px){
-.bk-stepper{padding:20px 12px 16px}
+.bk-wrap{padding:100px 0 60px!important}
+.bk-stepper{padding:16px 10px 12px;margin-bottom:20px}
 .bk-stepper-track{min-width:0;width:100%}
 .bk-step{flex-shrink:1;min-width:0}
-.bk-step-label{font-size:8px;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px;text-align:center}
-.bk-step-hint{font-size:7px;overflow:hidden;text-overflow:ellipsis;max-width:60px;text-align:center}
+.bk-step-label{font-size:8px;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55px;text-align:center}
+.bk-step-hint{font-size:7px;overflow:hidden;text-overflow:ellipsis;max-width:55px;text-align:center}
 .bk-step-line{margin:0 2px}
-.bk-route-header{padding:10px 14px;gap:8px;flex-wrap:nowrap;overflow:hidden}
-.bk-route-iata{font-size:20px}
-.bk-route-city{font-size:9px}
-.bk-route-arrow{font-size:16px}
-.bk-route-dates{font-size:10px;padding:2px 8px}
 }
 
 /* ── Step 1 : Sélection vol ── */
@@ -307,7 +303,16 @@ get_header();
 .bk-success-ref strong{color:#3d9a9a;font-size:19px}
 @media(max-width:900px){.bk-inner{grid-template-columns:1fr;padding:0 20px}.bk-recap-col{position:static}.bk-field-row{grid-template-columns:1fr 1fr}.bk-field-row.cols-4{grid-template-columns:1fr 1fr}.bk-filters-sidebar{display:none!important}}
 @media(max-width:480px){.bk-field-row{grid-template-columns:1fr}.bk-field-row.cols-4{grid-template-columns:1fr}.combo-header{flex-direction:column;gap:8px;align-items:flex-start}.combo-leg-times{gap:6px}.combo-time{font-size:16px}.combo-airline{gap:6px}.combo-airline img{width:28px;height:28px}.bk-nav{flex-direction:column;gap:10px}.bk-btn-next,.bk-btn-prev{width:100%;text-align:center}}
-@media(max-width:768px){.combo-leg{padding:10px 12px}.combo-leg-times{margin:0 6px;gap:6px}.combo-leg-meta{gap:4px;font-size:12px}.combo-leg-badge{font-size:11px;width:52px;padding:2px 5px}.combo-time{font-size:18px}.bk-card{padding:16px}}
+@media(max-width:768px){.combo-leg{padding:10px 12px}.combo-leg-times{margin:0 6px;gap:6px}.combo-leg-meta{gap:4px;font-size:12px}.combo-leg-badge{font-size:11px;width:52px;padding:2px 5px}.combo-time{font-size:18px}.bk-card{padding:16px}
+.bk-route-header{padding:10px 12px;gap:6px;margin-bottom:14px;border-radius:10px}
+.bk-route-iata{font-size:18px;letter-spacing:0}
+.bk-route-city{font-size:8px}
+.bk-route-arrow{font-size:14px}
+.bk-route-dates{font-size:9px;padding:2px 6px}
+.combo-header{padding:10px 12px 8px}
+.combo-airline-name{font-size:13px}
+.combo-airline img{width:32px;height:32px}
+}
 /* ── Encart création de compte dans le tunnel ── */
 .bk-account-nudge{background:linear-gradient(135deg,#f0f9f9 0%,#e4f3f3 100%);border:1.5px solid #a8d8d8;border-radius:16px;padding:20px 24px;margin-bottom:26px;display:flex;align-items:center;gap:20px;position:relative;overflow:hidden}
 .bk-account-nudge::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(61,154,154,.12),transparent 70%);pointer-events:none}
