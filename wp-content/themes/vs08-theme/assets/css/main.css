@@ -1340,8 +1340,10 @@ h1,h2,h3,h4,h5,h6 {
 
 /* ── Fix hero mobile — contenu sous le header fixe ── */
 @media(max-width:768px){
-    .hc-content{padding-top:100px!important}
-    .hc-dots{bottom:20px!important}
-    .hc-btns{flex-direction:column!important;gap:12px!important}
+    .hc-content{padding-top:140px!important;padding-left:24px!important;padding-right:24px!important}
+    .hc-wrap{min-height:520px!important}
+    .hc-dots{bottom:20px!important;left:24px!important;z-index:20!important}
+    .hc-btns{flex-direction:column!important;gap:12px!important;position:relative!important;z-index:15!important}
     .hc-btns a{text-align:center!important}
+    .hc-sub{font-size:16px!important;margin-bottom:20px!important}
 }
