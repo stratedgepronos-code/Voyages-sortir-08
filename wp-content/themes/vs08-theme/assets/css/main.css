@@ -1337,3 +1337,11 @@ h1,h2,h3,h4,h5,h6 {
         top: 46px;
     }
 }
+
+/* ── Fix hero mobile — contenu sous le header fixe ── */
+@media(max-width:768px){
+    .hc-content{padding-top:100px!important}
+    .hc-dots{bottom:20px!important}
+    .hc-btns{flex-direction:column!important;gap:12px!important}
+    .hc-btns a{text-align:center!important}
+}
