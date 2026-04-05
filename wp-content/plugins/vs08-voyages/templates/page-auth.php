@@ -38,9 +38,11 @@ if (function_exists('wc_lostpassword_url')) {
     <!-- ============ PANNEAU GAUCHE : Visuel immersif ============ -->
     <div class="auth-visual">
         <div class="auth-visual-slides">
-            <div class="auth-visual-slide auth-slide-active" style="background-image:url('https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=1400&q=80')"></div>
-            <div class="auth-visual-slide" style="background-image:url('https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=1400&q=80')"></div>
-            <div class="auth-visual-slide" style="background-image:url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1400&q=80')"></div>
+            <div class="auth-visual-slide auth-slide-active" style="background-image:url('https://images.unsplash.com/photo-1535131749006-b7f58c99034b?w=1400&q=80')"></div>
+            <div class="auth-visual-slide" style="background-image:url('https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=1400&q=80')"></div>
+            <div class="auth-visual-slide" style="background-image:url('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1400&q=80')"></div>
+            <div class="auth-visual-slide" style="background-image:url('https://images.unsplash.com/photo-1480796927426-f609979314bd?w=1400&q=80')"></div>
+            <div class="auth-visual-slide" style="background-image:url('https://images.unsplash.com/photo-1540541338287-41700207dee6?w=1400&q=80')"></div>
         </div>
         <div class="auth-visual-overlay"></div>
         <div class="auth-visual-content">
@@ -53,13 +55,22 @@ if (function_exists('wc_lostpassword_url')) {
                 <?php endif; ?>
             </a>
             <div class="auth-slogans">
-                <p class="auth-slogan auth-slogan-active">Votre prochaine destination vous attend</p>
-                <p class="auth-slogan">Des parcours d'exception, des souvenirs inoubliables</p>
-                <p class="auth-slogan">L'art du voyage golfique</p>
+                <p class="auth-slogan auth-slogan-active">🏌️ Séjours golf tout compris — Algarve, Marrakech, Turquie…</p>
+                <p class="auth-slogan">🏖️ All inclusive au soleil — Farniente, plage & détente</p>
+                <p class="auth-slogan">🗺️ Circuits sur mesure — Croatie, Malaisie, Scandinavie…</p>
+                <p class="auth-slogan">🏙️ City breaks & escapades — Lisbonne, Prague, Dubaï…</p>
+                <p class="auth-slogan">🎢 Parcs d'attractions — Disneyland, Parc Astérix, Europa-Park…</p>
+            </div>
+            <div class="auth-visual-pills">
+                <span class="auth-pill">⛳ Golf</span>
+                <span class="auth-pill">🌴 Séjours</span>
+                <span class="auth-pill">🗺️ Circuits</span>
+                <span class="auth-pill">🏙️ City Break</span>
+                <span class="auth-pill">🎢 Parcs</span>
             </div>
             <div class="auth-social-proof">
                 <span class="auth-sp-dot"></span>
-                Rejoints par <strong>500+</strong> golfeurs passionnés
+                Départ de votre région · <strong>Tout inclus</strong> · Prix vols en temps réel
             </div>
         </div>
     </div>
@@ -274,11 +285,11 @@ if (function_exists('wc_lostpassword_url')) {
     if (slides.length > 1) {
         setInterval(function(){
             slides[idx].classList.remove('auth-slide-active');
-            slogans[idx].classList.remove('auth-slogan-active');
+            if (slogans[idx]) slogans[idx].classList.remove('auth-slogan-active');
             idx = (idx + 1) % slides.length;
             slides[idx].classList.add('auth-slide-active');
-            slogans[idx].classList.add('auth-slogan-active');
-        }, 6000);
+            if (slogans[idx]) slogans[idx].classList.add('auth-slogan-active');
+        }, 5000);
     }
 
     /* ── Floating labels ── */

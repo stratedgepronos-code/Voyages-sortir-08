@@ -113,7 +113,7 @@ html { margin-top: 0 !important; }
 /* ── Slogans rotatifs ── */
 .auth-slogans {
     position: relative;
-    min-height: 120px;
+    min-height: 80px;
     width: 100%;
     margin-bottom: 0.5rem;
 }
@@ -123,7 +123,7 @@ html { margin-top: 0 !important; }
     top: 0;
     left: 0;
     font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.85rem;
+    font-size: 1.6rem;
     font-weight: 500;
     font-style: italic;
     color: #fff;
@@ -145,7 +145,7 @@ html { margin-top: 0 !important; }
     color: rgba(255,255,255,0.75);
     font-size: 0.88rem;
     letter-spacing: 0.02em;
-    margin-top: 2rem;
+    margin-top: 1.5rem;
 }
 .auth-sp-dot {
     width: 8px;
@@ -157,6 +157,35 @@ html { margin-top: 0 !important; }
 @keyframes authPulse {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.5; transform: scale(1.4); }
+}
+
+/* ── Pills catégories ── */
+.auth-visual-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 1.2rem;
+}
+.auth-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 100px;
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    transition: all 0.3s;
+}
+.auth-pill:hover {
+    background: rgba(255,255,255,0.22);
+    transform: translateY(-1px);
 }
 
 /* ── PANNEAU DROIT : Formulaire ── */
@@ -559,17 +588,19 @@ html { margin-top: 0 !important; }
     }
     .auth-visual {
         flex: none;
-        height: 35vh;
-        min-height: 240px;
+        height: 40vh;
+        min-height: 280px;
     }
     .auth-visual-content {
-        gap: 1.2rem;
+        gap: 0.8rem;
         padding: 1.5rem;
     }
     .auth-logo { max-width: 160px; }
-    .auth-slogan { font-size: 1.2rem; }
-    .auth-slogans { min-height: 65px; }
-    .auth-social-proof { font-size: 0.8rem; }
+    .auth-slogan { font-size: 1.1rem; }
+    .auth-slogans { min-height: 50px; }
+    .auth-social-proof { font-size: 0.8rem; margin-top: 0.8rem; }
+    .auth-visual-pills { gap: 6px; margin-top: 0.8rem; }
+    .auth-pill { font-size: 10px; padding: 4px 10px; }
 
     .auth-form-panel {
         padding: 1.5rem 1rem;
@@ -584,9 +615,10 @@ html { margin-top: 0 !important; }
 
 @media (max-width: 480px) {
     .auth-visual {
-        height: 28vh;
-        min-height: 200px;
+        height: 32vh;
+        min-height: 220px;
     }
+    .auth-visual-pills { display: none; }
     .auth-form-inner { padding: 1.5rem 1.2rem; }
     .auth-field-row {
         grid-template-columns: 1fr;
