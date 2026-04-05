@@ -6,6 +6,14 @@ if (!defined('ABSPATH')) exit;
   Les plugins lourds sont déjà gérés par les mu-plugins dédiés.
 ============================================================ */
 
+/* Décoder les entités HTML dans les titres (corrige l&rsquo; → l') */
+add_filter('the_title', function($title) {
+    return wp_specialchars_decode($title, ENT_QUOTES);
+});
+add_filter('single_post_title', function($title) {
+    return wp_specialchars_decode($title, ENT_QUOTES);
+});
+
 /* ============================================================
    SMTP — Envoi d'emails via Hostinger (obligatoire)
    Sans ça, wp_mail() utilise mail() de PHP qui est bloqué.
