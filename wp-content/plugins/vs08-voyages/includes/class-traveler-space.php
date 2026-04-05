@@ -1120,6 +1120,23 @@ class VS08V_Traveler_Space {
             if (!in_array($ext, $allowed, true)) {
                 wp_send_json_error(['message' => 'Type de fichier non autorisé : ' . esc_html($name) . '. Autorisés : PDF, images, Word.']);
             }
+            // Validation MIME côté serveur (empêche les fichiers PHP déguisés)
+            $allowed_mimes = [
+                'pdf' => 'application/pdf',
+                'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg',
+                'png' => 'image/png', 'gif' => 'image/gif',
+                'doc' => 'application/msword',
+                'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ];
+            if (function_exists('finfo_open')) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mime = finfo_file($finfo, $tmps[$i]);
+                finfo_close($finfo);
+                $expected = $allowed_mimes[$ext] ?? '';
+                if ($expected && $mime !== $expected && $mime !== 'application/octet-stream') {
+                    wp_send_json_error(['message' => 'Le fichier ' . esc_html($name) . ' ne correspond pas au type attendu.']);
+                }
+            }
             if (isset($files['size']) && (is_array($files['size']) ? $files['size'][$i] : $files['size']) > $max_size) {
                 wp_send_json_error(['message' => 'Fichier trop volumineux : ' . esc_html($name) . '. Max 10 Mo.']);
             }

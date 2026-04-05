@@ -126,11 +126,18 @@ class VS08SP_DB {
     public static function list_groups(string $status = '', int $limit = 20, int $offset = 0) {
         global $wpdb;
         $table = $wpdb->prefix . 'vs08sp_groups';
-        $where = '';
+        $limit = absint($limit);
+        $offset = absint($offset);
         if ($status) {
-            $where = $wpdb->prepare("WHERE status = %s", $status);
+            return $wpdb->get_results(
+                $wpdb->prepare("SELECT * FROM $table WHERE status = %s ORDER BY created_at DESC LIMIT %d OFFSET %d", $status, $limit, $offset),
+                ARRAY_A
+            );
         }
-        return $wpdb->get_results("SELECT * FROM $table $where ORDER BY created_at DESC LIMIT $limit OFFSET $offset", ARRAY_A);
+        return $wpdb->get_results(
+            $wpdb->prepare("SELECT * FROM $table ORDER BY created_at DESC LIMIT %d OFFSET %d", $limit, $offset),
+            ARRAY_A
+        );
     }
 
     /**

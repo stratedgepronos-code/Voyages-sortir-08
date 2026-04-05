@@ -48,6 +48,7 @@ class VS08V_Booking {
         $options_totaux = 0;
         if (!empty($_POST['options'])) {
             foreach ($_POST['options'] as $opt_id => $qty) {
+                $opt_id = sanitize_text_field($opt_id);
                 $qty = intval($qty);
                 if ($qty <= 0) continue;
                 foreach ($options_disponibles as $opt) {
