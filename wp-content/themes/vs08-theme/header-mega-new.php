@@ -11,13 +11,31 @@ $vs08_circuits_url = add_query_arg(['type' => 'circuit'], $vs08_res);
 <header class="header" id="header">
 <?php if (vs08_opt('vs08_show_annonce', '1') === '1') : ?>
 <div class="announce announce--ticker" id="vs08Announce">
-    <div class="announce-track">🏠 Agence physique à Châlons-en-Champagne &nbsp;·&nbsp; ✈️ Départ de votre région &nbsp;·&nbsp; ⛳ Forfait golf 100&nbsp;% sur mesure, tout inclus &nbsp;·&nbsp; 🔴 Prix vols en temps réel &nbsp;·&nbsp; Réservation instantanée en ligne ! &nbsp;·&nbsp; 🏠 Agence physique à Châlons-en-Champagne &nbsp;·&nbsp; ✈️ Départ de votre région &nbsp;·&nbsp; ⛳ Forfait golf 100&nbsp;% sur mesure, tout inclus &nbsp;·&nbsp; 🔴 Prix vols en temps réel &nbsp;·&nbsp; Réservation instantanée en ligne ! &nbsp;·&nbsp; </div>
+    <div class="announce-track" id="vs08Track"><span class="announce-segment">🏠 Agence physique à Châlons-en-Champagne &nbsp;·&nbsp; ✈️ Départ de votre région &nbsp;·&nbsp; ⛳ Forfait golf 100&nbsp;% sur mesure, tout inclus &nbsp;·&nbsp; 🔴 Prix vols en temps réel &nbsp;·&nbsp; Réservation instantanée en ligne ! &nbsp;·&nbsp; </span></div>
 </div>
-<style>
-.announce-track{display:inline-block;white-space:nowrap;animation:vs08ticker 30s linear infinite;will-change:transform}
-@keyframes vs08ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.announce:hover .announce-track{animation-play-state:paused}
-</style>
+<script>
+(function(){
+    var track=document.getElementById('vs08Track');
+    if(!track)return;
+    var seg=track.querySelector('.announce-segment');
+    if(!seg)return;
+    // Cloner le segment assez de fois pour remplir 2x l'écran
+    var html=seg.outerHTML;
+    var copies=Math.ceil(window.innerWidth*2/seg.offsetWidth)+1;
+    for(var i=0;i<copies;i++) track.insertAdjacentHTML('beforeend',html);
+    // Largeur d'un segment = distance de scroll pour boucler
+    var w=seg.offsetWidth;
+    track.style.animation='none';
+    track.style.cssText='display:inline-block;white-space:nowrap;will-change:transform';
+    // CSS animation dynamique
+    var style=document.createElement('style');
+    style.textContent='@keyframes vs08tick{0%{transform:translateX(0)}100%{transform:translateX(-'+w+'px)}}.announce:hover .announce-track{animation-play-state:paused}';
+    document.head.appendChild(style);
+    var speed=50; // pixels par seconde
+    var dur=w/speed;
+    track.style.animation='vs08tick '+dur+'s linear infinite';
+})();
+</script>
 <?php endif; ?>
 <nav class="nav-bar">
     <div class="logo-wrap">
