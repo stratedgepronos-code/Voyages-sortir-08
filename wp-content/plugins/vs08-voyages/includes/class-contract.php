@@ -134,18 +134,44 @@ class VS08V_Contract {
             }
         }
 
-        $is_prereservation = !empty($data['reglement_agence']) && $order && !$order->is_paid();
-
         ob_start();
         ?>
 <!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+@media(max-width:640px){
+    body{font-size:13px!important}
+    .ct-wrap{margin:0!important;border:none!important}
+    .ct-header{padding:16px!important}
+    .ct-header table{display:block!important}
+    .ct-header tr{display:flex!important;flex-direction:column!important;gap:8px}
+    .ct-header td{display:block!important;text-align:left!important;width:100%!important}
+    .ct-header td:first-child div:first-child{font-size:17px!important}
+    .ct-header td:last-child{font-size:11px!important}
+    .ct-title{padding:10px 16px!important;font-size:12px!important}
+    .ct-section{padding:0 10px 10px!important}
+    .ct-section-title{padding:8px 16px!important;font-size:12px!important}
+    .ct-mentions{padding:10px 14px!important;font-size:10px!important;line-height:1.5!important}
+    .ct-footer{padding:12px!important;font-size:9px!important}
+    /* Tables clé-valeur (2 colonnes) : garder en table mais compact */
+    .ct-section table{font-size:11px!important;width:100%!important}
+    .ct-section th,.ct-section td{padding:4px 6px!important;word-break:break-word}
+    /* Tables multi-colonnes : empiler en cartes */
+    .ct-stack{display:block!important}
+    .ct-stack thead{display:none!important}
+    .ct-stack tbody,.ct-stack tr,.ct-stack td{display:block!important;width:100%!important}
+    .ct-stack tr{border:1px solid #e0e0e0!important;border-radius:8px!important;margin-bottom:8px!important;padding:10px!important;background:#fff!important}
+    .ct-stack td{border:none!important;padding:3px 0!important;font-size:12px!important}
+    .ct-stack td::before{content:attr(data-label);font-weight:bold;color:#1a3a3a;margin-right:6px;font-size:11px}
+}
+</style>
+</head>
 <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;">
-<div style="max-width:800px;margin:20px auto;background:#fff;border:1px solid #d0d0d0;">
+<div class="ct-wrap" style="max-width:800px;margin:20px auto;background:#fff;border:1px solid #d0d0d0;">
 
 <!-- ═══════════════ EN-TÊTE ═══════════════ -->
-<div style="background:#1a3a3a;color:#fff;padding:24px 32px;">
+<div class="ct-header" style="background:#1a3a3a;color:#fff;padding:24px 32px;">
     <table width="100%" cellpadding="0" cellspacing="0"><tr>
         <td style="vertical-align:top">
             <div style="font-size:22px;font-weight:bold;font-family:Georgia,serif;letter-spacing:1px;"><?php echo $c['name']; ?></div>
@@ -160,22 +186,13 @@ class VS08V_Contract {
     </tr></table>
 </div>
 
-<?php if (!empty($is_prereservation)) : ?>
-<div style="background:#fef3c7;color:#78350f;padding:16px 32px;font-size:13px;line-height:1.55;border-bottom:2px solid #f59e0b;">
-    <strong>Pré-réservation — règlement en agence</strong><br>
-    Ce document ne constitue <strong>pas un contrat de vente définitif</strong>. Aucun paiement par carte bancaire n’a été encaissé en ligne.
-    Le prix du voyage peut encore évoluer (disponibilités, tarifs prestataires) tant que le règlement n’est pas effectué en agence ou validé par <?php echo esc_html($c['name']); ?>.
-    Après encaissement (notamment par CB sur le site depuis votre espace voyageur), le <strong>contrat de vente définitif</strong> vous sera communiqué.
-</div>
-<?php endif; ?>
-
 <!-- ═══════════════ TITRE CONTRAT ═══════════════ -->
-<div style="background:#2a7f7f;color:#fff;padding:12px 32px;font-size:16px;font-weight:bold;text-align:center;">
-    <?php echo !empty($is_prereservation) ? 'Fiche de pré-réservation' : 'Contrat de vente'; ?> N° <?php echo $contrat_num; ?> du <?php echo $date_contrat; ?>
+<div class="ct-title" style="background:#2a7f7f;color:#fff;padding:12px 32px;font-size:16px;font-weight:bold;text-align:center;">
+    Contrat de vente N° <?php echo $contrat_num; ?> du <?php echo $date_contrat; ?>
 </div>
 
 <!-- ═══════════════ CLIENT ═══════════════ -->
-<div style="padding:24px 32px 16px;">
+<div class="ct-section" style="padding:24px 32px 16px;">
     <table width="100%" cellpadding="0" cellspacing="0"><tr>
         <td style="vertical-align:top;width:55%">
             <div style="font-size:11px;color:#888;text-transform:uppercase;margin-bottom:4px;">Client</div>
@@ -194,7 +211,7 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Récapitulatif de la réservation'); ?>
-<div style="padding:0 32px 16px;">
+<div class="ct-section" style="padding:0 32px 16px;">
     <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;">
         <tr><td style="padding:6px 12px;border:1px solid #e0e0e0;background:#f8f8f8;width:38%;font-weight:bold;">📋 Voyage</td><td style="padding:6px 12px;border:1px solid #e0e0e0;"><?php echo esc_html($data['voyage_titre'] ?? ''); ?></td></tr>
         <tr><td style="padding:6px 12px;border:1px solid #e0e0e0;background:#f8f8f8;font-weight:bold;">📅 Date de départ</td><td style="padding:6px 12px;border:1px solid #e0e0e0;"><?php echo $date_depart ? date('d/m/Y', strtotime($date_depart)) : '—'; ?></td></tr>
@@ -226,8 +243,9 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Voyageurs'); ?>
-<div style="padding:0 32px 16px;">
-    <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">
+<div class="ct-section" style="padding:0 32px 16px;">
+    <table class="ct-stack" width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">
+        <thead>
         <tr style="background:#1a3a3a;color:#fff;font-size:12px;text-transform:uppercase;">
             <th style="padding:8px 12px;text-align:left;border:1px solid #1a3a3a;">Nom</th>
             <th style="padding:8px 12px;text-align:left;border:1px solid #1a3a3a;">Prénom</th>
@@ -235,13 +253,15 @@ class VS08V_Contract {
             <th style="padding:8px 12px;text-align:left;border:1px solid #1a3a3a;">N° passeport</th>
             <th style="padding:8px 12px;text-align:left;border:1px solid #1a3a3a;">Type</th>
         </tr>
+        </thead>
+        <tbody>
         <?php foreach ($voyageurs as $i => $v):
             $bg = ($i % 2 === 0) ? '#f8f8f8' : '#fff';
         ?>
         <tr style="background:<?php echo $bg; ?>;">
-            <td style="padding:8px 12px;border:1px solid #e0e0e0;font-weight:bold;"><?php echo esc_html(strtoupper($v['nom'] ?? '')); ?></td>
-            <td style="padding:8px 12px;border:1px solid #e0e0e0;"><?php echo esc_html($v['prenom'] ?? ''); ?></td>
-            <td style="padding:8px 12px;border:1px solid #e0e0e0;"><?php
+            <td data-label="Nom" style="padding:8px 12px;border:1px solid #e0e0e0;font-weight:bold;"><?php echo esc_html(strtoupper($v['nom'] ?? '')); ?></td>
+            <td data-label="Prénom" style="padding:8px 12px;border:1px solid #e0e0e0;"><?php echo esc_html($v['prenom'] ?? ''); ?></td>
+            <td data-label="Date naiss." style="padding:8px 12px;border:1px solid #e0e0e0;"><?php
                 $ddn_raw = $v['ddn'] ?? $v['date_naissance'] ?? '';
                 if ($ddn_raw && (preg_match('/^\d{4}-\d{2}-\d{2}$/', $ddn_raw) || preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $ddn_raw))) {
                     $d = DateTime::createFromFormat('Y-m-d', $ddn_raw) ?: DateTime::createFromFormat('d/m/Y', $ddn_raw);
@@ -250,15 +270,16 @@ class VS08V_Contract {
                     echo $ddn_raw ? esc_html($ddn_raw) : '—';
                 }
             ?></td>
-            <td style="padding:8px 12px;border:1px solid #e0e0e0;"><?php echo esc_html($v['passeport'] ?? '—'); ?></td>
-            <td style="padding:8px 12px;border:1px solid #e0e0e0;"><?php echo ($v['type'] ?? 'golfeur') === 'golfeur' ? 'Golfeur' : 'Accompagnant'; ?></td>
+            <td data-label="Passeport" style="padding:8px 12px;border:1px solid #e0e0e0;"><?php echo esc_html($v['passeport'] ?? '—'); ?></td>
+            <td data-label="Type" style="padding:8px 12px;border:1px solid #e0e0e0;"><?php echo ($v['type'] ?? 'golfeur') === 'golfeur' ? 'Golfeur' : 'Accompagnant'; ?></td>
         </tr>
         <?php endforeach; ?>
+        </tbody>
     </table>
 </div>
 
 <?php echo self::section_title('Informations voyage'); ?>
-<div style="padding:0 32px 16px;">
+<div class="ct-section" style="padding:0 32px 16px;">
     <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;">
         <tr><td style="padding:6px 12px;border:1px solid #e0e0e0;background:#f8f8f8;width:40%;font-weight:bold;">Organisateur / Détaillant</td><td style="padding:6px 12px;border:1px solid #e0e0e0;"><?php echo $c['name']; ?>, <?php echo $c['address']; ?> <?php echo $c['city']; ?></td></tr>
         <tr><td style="padding:6px 12px;border:1px solid #e0e0e0;background:#f8f8f8;font-weight:bold;">Destination</td><td style="padding:6px 12px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($destination)); ?></td></tr>
@@ -272,8 +293,9 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Transport'); ?>
-<div style="padding:0 32px 16px;">
-    <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;">
+<div class="ct-section" style="padding:0 32px 16px;">
+    <table class="ct-stack" width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;">
+        <thead>
         <tr style="background:#1a3a3a;color:#fff;font-size:11px;text-transform:uppercase;">
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Type</th>
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Départ de</th>
@@ -282,26 +304,29 @@ class VS08V_Contract {
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Arrivée à</th>
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Compagnie</th>
         </tr>
+        </thead>
+        <tbody>
         <?php if (!empty($params['vol_aller_num'])): ?>
         <tr style="background:#f8f8f8;">
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;">AVION</td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($params['aeroport'] ?? '')); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_depart ? date('d/m/Y', strtotime($date_depart)) : ''; ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_aller_depart'] ?? ''); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($destination)); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_aller_cie'] ?? ''); ?> / <?php echo esc_html($params['vol_aller_num'] ?? ''); ?></td>
+            <td data-label="Type" style="padding:6px 8px;border:1px solid #e0e0e0;">AVION</td>
+            <td data-label="Départ" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($params['aeroport'] ?? '')); ?></td>
+            <td data-label="Date" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_depart ? date('d/m/Y', strtotime($date_depart)) : ''; ?></td>
+            <td data-label="Heure" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_aller_depart'] ?? ''); ?></td>
+            <td data-label="Arrivée" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($destination)); ?></td>
+            <td data-label="Cie" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_aller_cie'] ?? ''); ?> / <?php echo esc_html($params['vol_aller_num'] ?? ''); ?></td>
         </tr>
         <?php endif; ?>
         <?php if (!empty($params['vol_retour_num'])): ?>
         <tr>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;">AVION</td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($destination)); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_retour ? date('d/m/Y', strtotime($date_retour)) : ''; ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_retour_depart'] ?? ''); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($params['aeroport'] ?? '')); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_aller_cie'] ?? ''); ?> / <?php echo esc_html($params['vol_retour_num'] ?? ''); ?></td>
+            <td data-label="Type" style="padding:6px 8px;border:1px solid #e0e0e0;">AVION</td>
+            <td data-label="Départ" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($destination)); ?></td>
+            <td data-label="Date" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_retour ? date('d/m/Y', strtotime($date_retour)) : ''; ?></td>
+            <td data-label="Heure" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_retour_depart'] ?? ''); ?></td>
+            <td data-label="Arrivée" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($params['aeroport'] ?? '')); ?></td>
+            <td data-label="Cie" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_aller_cie'] ?? ''); ?> / <?php echo esc_html($params['vol_retour_num'] ?? ''); ?></td>
         </tr>
         <?php endif; ?>
+        </tbody>
     </table>
     <div style="margin-top:8px;font-size:11px;color:#888;line-height:1.5;">
         * Vols spéciaux : Les prix sont calculés de façon forfaitaire. Si, en raison des horaires imposés par les compagnies aériennes, la première et la dernière journée se trouvaient écourtées, aucun remboursement ne pourrait avoir lieu.<br>
@@ -311,8 +336,9 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Hébergement'); ?>
-<div style="padding:0 32px 16px;">
-    <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;">
+<div class="ct-section" style="padding:0 32px 16px;">
+    <table class="ct-stack" width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;">
+        <thead>
         <tr style="background:#1a3a3a;color:#fff;font-size:11px;text-transform:uppercase;">
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Hôtel</th>
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Catégorie</th>
@@ -322,20 +348,23 @@ class VS08V_Contract {
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Chambre</th>
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Pension</th>
         </tr>
+        </thead>
+        <tbody>
         <tr style="background:#f8f8f8;">
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;font-weight:bold;"><?php echo esc_html($hotel_nom ?: 'Hôtel du séjour'); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $hotel_etoiles ? str_repeat('★', intval($hotel_etoiles)) : ''; ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_depart ? date('d/m/Y', strtotime($date_depart)) : ''; ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_retour ? date('d/m/Y', strtotime($date_retour)) : ''; ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $duree; ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(ucfirst($params['type_chambre'] ?? 'double')); ?> x<?php echo intval($params['nb_chambres'] ?? 1); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($pension_label); ?></td>
+            <td data-label="Hôtel" style="padding:6px 8px;border:1px solid #e0e0e0;font-weight:bold;"><?php echo esc_html($hotel_nom ?: 'Hôtel du séjour'); ?></td>
+            <td data-label="Catégorie" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $hotel_etoiles ? str_repeat('★', intval($hotel_etoiles)) : ''; ?></td>
+            <td data-label="Arrivée" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_depart ? date('d/m/Y', strtotime($date_depart)) : ''; ?></td>
+            <td data-label="Départ" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_retour ? date('d/m/Y', strtotime($date_retour)) : ''; ?></td>
+            <td data-label="Nuits" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $duree; ?></td>
+            <td data-label="Chambre" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(ucfirst($params['type_chambre'] ?? 'double')); ?> x<?php echo intval($params['nb_chambres'] ?? 1); ?></td>
+            <td data-label="Pension" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($pension_label); ?></td>
         </tr>
+        </tbody>
     </table>
 </div>
 
 <?php echo self::section_title('Assurances'); ?>
-<div style="padding:0 32px 16px;font-size:13px;line-height:1.6;">
+<div class="ct-mentions" style="padding:0 32px 16px;font-size:13px;line-height:1.6;">
     <?php if ($assurance > 0): ?>
     <p>- Assurance(s) proposée(s) par le vendeur et acceptée(s) par le client : <strong>Assurance annulation (<?php echo number_format($assurance, 2, ',', ' '); ?> &euro;)</strong></p>
     <?php else: ?>
@@ -345,7 +374,7 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Décompte'); ?>
-<div style="padding:0 32px 16px;">
+<div class="ct-section" style="padding:0 32px 16px;">
     <!-- Détail des prestations : une ligne forfait + assurance si souscrite, sans quantités -->
     <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;margin-bottom:12px;">
         <tr style="background:#1a3a3a;color:#fff;font-size:11px;text-transform:uppercase;">
@@ -386,7 +415,7 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Formalités'); ?>
-<div style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
+<div class="ct-mentions" style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
     <p><strong>Police :</strong> Passeport en cours de validité.</p>
     <p><strong>Santé :</strong> Aucune formalité obligatoire (à vérifier selon la destination).</p>
     <p>Formalités données à titre d'information, dont l'accomplissement incombe au client. Les informations ci-dessus sont communiquées selon les données disponibles à la date d'établissement du contrat et sont susceptibles de modification.</p>
@@ -396,7 +425,7 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Révision du prix'); ?>
-<div style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
+<div class="ct-mentions" style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
     <p>Conformément aux articles L.211-12, R. 211-8 et R. 211-9 du Code du tourisme, les prix prévus au contrat sont révisables à la hausse comme à la baisse pour tenir compte des variations du coût des transports (carburant/énergie), des redevances et taxes et des taux de change.</p>
     <p>Vous serez informé de toute hausse du prix total du forfait, au plus tard 20 jours avant le départ. Pour toute hausse supérieure à 8%, vous recevrez le détail de la variation du prix et le choix d'accepter ou de refuser.</p>
 </div>
@@ -407,7 +436,7 @@ class VS08V_Contract {
         $annulation_texte   = $m['annulation_texte'] ?? '';
 ?>
 <?php echo self::section_title('Conditions de modification et d\'annulation'); ?>
-<div style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
+<div class="ct-mentions" style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
     <p><strong>Absence de droit de rétractation</strong> — Conformément aux articles L. 221-2 et L. 221-28 du Code de la consommation, le présent contrat n'est pas soumis au droit de rétractation.</p>
     <p><strong>Frais d'annulation</strong> (conditions définies au bon de commande) — Le voyageur a la possibilité d'annuler/résoudre le présent contrat moyennant le paiement des frais suivants (sur le prix total du voyage) :</p>
     <?php if (!empty($annulation_paliers)): ?>
@@ -437,14 +466,14 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Responsabilité et réclamations'); ?>
-<div style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
+<div class="ct-mentions" style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
     <p>Le détaillant et l'organisateur sont responsables de la bonne exécution des services prévus au présent contrat et sont tenus d'apporter de l'aide au voyageur en difficulté.</p>
     <p><strong>Réclamations :</strong> Le voyageur peut saisir le service client à l'adresse suivante : <?php echo $c['name']; ?> <?php echo $c['address']; ?> <?php echo $c['city']; ?> par lettre RAR ou par mail à <?php echo $c['email']; ?>.</p>
     <p>A défaut de réponse satisfaisante dans un délai de 60 jours, le client peut saisir le Médiateur du Tourisme et du Voyage : <a href="https://www.mtv.travel" style="color:#2a7f7f;">www.mtv.travel</a> — MTV Médiation Tourisme Voyage — BP 80 303 — 75 823 Paris Cedex 17.</p>
 </div>
 
 <?php echo self::section_title('Protection des données personnelles'); ?>
-<div style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
+<div class="ct-mentions" style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
     <p>La personne concluant le présent contrat accepte de transmettre ses données à l'agence dans le but de son exécution et garantit qu'il a recueilli le consentement des autres voyageurs aux mêmes fins.</p>
     <p>Conformément à la législation en vigueur, vous disposez d'un droit d'accès, de rectification, de suppression et de portabilité des données personnelles vous concernant. Pour exercer ces droits : <?php echo $c['email']; ?>.</p>
 </div>
@@ -468,7 +497,7 @@ class VS08V_Contract {
 </div>
 
 <!-- ═══════════════ FOOTER ═══════════════ -->
-<div style="background:#1a3a3a;color:#b0cece;padding:16px 32px;font-size:10px;line-height:1.6;text-align:center;">
+<div class="ct-footer" style="background:#1a3a3a;color:#b0cece;padding:16px 32px;font-size:10px;line-height:1.6;text-align:center;">
     Siège social : <?php echo $c['legal']; ?> <?php echo $c['address']; ?> <?php echo $c['city']; ?> — Capital de <?php echo $c['capital']; ?> &euro; — RCS <?php echo $c['rcs']; ?><br>
     APE <?php echo $c['ape']; ?> — TVA intra. <?php echo $c['tva_intra']; ?> — RCP : <?php echo $c['rcp']; ?><br>
     Garantie Financière : <?php echo $c['garantie']; ?> — Immat. <?php echo $c['immat']; ?> — Siret <?php echo $c['siret']; ?>
@@ -482,6 +511,6 @@ class VS08V_Contract {
     }
 
     private static function section_title($title) {
-        return '<div style="background:#2a7f7f;color:#fff;padding:8px 32px;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">' . esc_html($title) . '</div>';
+        return '<div class="ct-section-title" style="background:#2a7f7f;color:#fff;padding:8px 32px;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">' . esc_html($title) . '</div>';
     }
 }
