@@ -138,12 +138,31 @@ class VS08V_Contract {
         ?>
 <!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+@media(max-width:640px){
+    body{font-size:13px!important}
+    .ct-wrap{margin:0!important;border:none!important}
+    .ct-header{padding:16px 16px!important}
+    .ct-header td:first-child div:first-child{font-size:17px!important}
+    .ct-header td:last-child{font-size:11px!important}
+    .ct-title{padding:10px 16px!important;font-size:13px!important}
+    .ct-section{padding:0 12px 12px!important;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .ct-section-title{padding:8px 16px!important;font-size:12px!important}
+    .ct-section table{font-size:11px!important}
+    .ct-section th,.ct-section td{padding:5px 6px!important;word-break:break-word}
+    .ct-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .ct-footer{padding:16px!important;font-size:10px!important}
+    .ct-paiement{padding:0 12px 12px!important}
+    .ct-mentions{padding:12px 16px!important;font-size:10px!important;line-height:1.5!important}
+}
+</style>
+</head>
 <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;">
-<div style="max-width:800px;margin:20px auto;background:#fff;border:1px solid #d0d0d0;">
+<div class="ct-wrap" style="max-width:800px;margin:20px auto;background:#fff;border:1px solid #d0d0d0;">
 
 <!-- ═══════════════ EN-TÊTE ═══════════════ -->
-<div style="background:#1a3a3a;color:#fff;padding:24px 32px;">
+<div class="ct-header" style="background:#1a3a3a;color:#fff;padding:24px 32px;">
     <table width="100%" cellpadding="0" cellspacing="0"><tr>
         <td style="vertical-align:top">
             <div style="font-size:22px;font-weight:bold;font-family:Georgia,serif;letter-spacing:1px;"><?php echo $c['name']; ?></div>
@@ -159,12 +178,12 @@ class VS08V_Contract {
 </div>
 
 <!-- ═══════════════ TITRE CONTRAT ═══════════════ -->
-<div style="background:#2a7f7f;color:#fff;padding:12px 32px;font-size:16px;font-weight:bold;text-align:center;">
+<div class="ct-title" style="background:#2a7f7f;color:#fff;padding:12px 32px;font-size:16px;font-weight:bold;text-align:center;">
     Contrat de vente N° <?php echo $contrat_num; ?> du <?php echo $date_contrat; ?>
 </div>
 
 <!-- ═══════════════ CLIENT ═══════════════ -->
-<div style="padding:24px 32px 16px;">
+<div class="ct-section" style="padding:24px 32px 16px;">
     <table width="100%" cellpadding="0" cellspacing="0"><tr>
         <td style="vertical-align:top;width:55%">
             <div style="font-size:11px;color:#888;text-transform:uppercase;margin-bottom:4px;">Client</div>
@@ -183,7 +202,7 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Récapitulatif de la réservation'); ?>
-<div style="padding:0 32px 16px;">
+<div class="ct-section" style="padding:0 32px 16px;">
     <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;">
         <tr><td style="padding:6px 12px;border:1px solid #e0e0e0;background:#f8f8f8;width:38%;font-weight:bold;">📋 Voyage</td><td style="padding:6px 12px;border:1px solid #e0e0e0;"><?php echo esc_html($data['voyage_titre'] ?? ''); ?></td></tr>
         <tr><td style="padding:6px 12px;border:1px solid #e0e0e0;background:#f8f8f8;font-weight:bold;">📅 Date de départ</td><td style="padding:6px 12px;border:1px solid #e0e0e0;"><?php echo $date_depart ? date('d/m/Y', strtotime($date_depart)) : '—'; ?></td></tr>
@@ -215,7 +234,7 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Voyageurs'); ?>
-<div style="padding:0 32px 16px;">
+<div class="ct-section" style="padding:0 32px 16px;">
     <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">
         <tr style="background:#1a3a3a;color:#fff;font-size:12px;text-transform:uppercase;">
             <th style="padding:8px 12px;text-align:left;border:1px solid #1a3a3a;">Nom</th>
@@ -247,7 +266,7 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Informations voyage'); ?>
-<div style="padding:0 32px 16px;">
+<div class="ct-section" style="padding:0 32px 16px;">
     <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;">
         <tr><td style="padding:6px 12px;border:1px solid #e0e0e0;background:#f8f8f8;width:40%;font-weight:bold;">Organisateur / Détaillant</td><td style="padding:6px 12px;border:1px solid #e0e0e0;"><?php echo $c['name']; ?>, <?php echo $c['address']; ?> <?php echo $c['city']; ?></td></tr>
         <tr><td style="padding:6px 12px;border:1px solid #e0e0e0;background:#f8f8f8;font-weight:bold;">Destination</td><td style="padding:6px 12px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($destination)); ?></td></tr>
@@ -261,7 +280,7 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Transport'); ?>
-<div style="padding:0 32px 16px;">
+<div class="ct-section" style="padding:0 32px 16px;">
     <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;">
         <tr style="background:#1a3a3a;color:#fff;font-size:11px;text-transform:uppercase;">
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Type</th>
@@ -300,7 +319,7 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Hébergement'); ?>
-<div style="padding:0 32px 16px;">
+<div class="ct-section" style="padding:0 32px 16px;">
     <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;">
         <tr style="background:#1a3a3a;color:#fff;font-size:11px;text-transform:uppercase;">
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Hôtel</th>
@@ -324,7 +343,7 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Assurances'); ?>
-<div style="padding:0 32px 16px;font-size:13px;line-height:1.6;">
+<div class="ct-mentions" style="padding:0 32px 16px;font-size:13px;line-height:1.6;">
     <?php if ($assurance > 0): ?>
     <p>- Assurance(s) proposée(s) par le vendeur et acceptée(s) par le client : <strong>Assurance annulation (<?php echo number_format($assurance, 2, ',', ' '); ?> &euro;)</strong></p>
     <?php else: ?>
@@ -334,7 +353,7 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Décompte'); ?>
-<div style="padding:0 32px 16px;">
+<div class="ct-section" style="padding:0 32px 16px;">
     <!-- Détail des prestations : une ligne forfait + assurance si souscrite, sans quantités -->
     <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;margin-bottom:12px;">
         <tr style="background:#1a3a3a;color:#fff;font-size:11px;text-transform:uppercase;">
@@ -375,7 +394,7 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Formalités'); ?>
-<div style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
+<div class="ct-mentions" style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
     <p><strong>Police :</strong> Passeport en cours de validité.</p>
     <p><strong>Santé :</strong> Aucune formalité obligatoire (à vérifier selon la destination).</p>
     <p>Formalités données à titre d'information, dont l'accomplissement incombe au client. Les informations ci-dessus sont communiquées selon les données disponibles à la date d'établissement du contrat et sont susceptibles de modification.</p>
@@ -385,7 +404,7 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Révision du prix'); ?>
-<div style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
+<div class="ct-mentions" style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
     <p>Conformément aux articles L.211-12, R. 211-8 et R. 211-9 du Code du tourisme, les prix prévus au contrat sont révisables à la hausse comme à la baisse pour tenir compte des variations du coût des transports (carburant/énergie), des redevances et taxes et des taux de change.</p>
     <p>Vous serez informé de toute hausse du prix total du forfait, au plus tard 20 jours avant le départ. Pour toute hausse supérieure à 8%, vous recevrez le détail de la variation du prix et le choix d'accepter ou de refuser.</p>
 </div>
@@ -396,7 +415,7 @@ class VS08V_Contract {
         $annulation_texte   = $m['annulation_texte'] ?? '';
 ?>
 <?php echo self::section_title('Conditions de modification et d\'annulation'); ?>
-<div style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
+<div class="ct-mentions" style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
     <p><strong>Absence de droit de rétractation</strong> — Conformément aux articles L. 221-2 et L. 221-28 du Code de la consommation, le présent contrat n'est pas soumis au droit de rétractation.</p>
     <p><strong>Frais d'annulation</strong> (conditions définies au bon de commande) — Le voyageur a la possibilité d'annuler/résoudre le présent contrat moyennant le paiement des frais suivants (sur le prix total du voyage) :</p>
     <?php if (!empty($annulation_paliers)): ?>
@@ -426,14 +445,14 @@ class VS08V_Contract {
 </div>
 
 <?php echo self::section_title('Responsabilité et réclamations'); ?>
-<div style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
+<div class="ct-mentions" style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
     <p>Le détaillant et l'organisateur sont responsables de la bonne exécution des services prévus au présent contrat et sont tenus d'apporter de l'aide au voyageur en difficulté.</p>
     <p><strong>Réclamations :</strong> Le voyageur peut saisir le service client à l'adresse suivante : <?php echo $c['name']; ?> <?php echo $c['address']; ?> <?php echo $c['city']; ?> par lettre RAR ou par mail à <?php echo $c['email']; ?>.</p>
     <p>A défaut de réponse satisfaisante dans un délai de 60 jours, le client peut saisir le Médiateur du Tourisme et du Voyage : <a href="https://www.mtv.travel" style="color:#2a7f7f;">www.mtv.travel</a> — MTV Médiation Tourisme Voyage — BP 80 303 — 75 823 Paris Cedex 17.</p>
 </div>
 
 <?php echo self::section_title('Protection des données personnelles'); ?>
-<div style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
+<div class="ct-mentions" style="padding:0 32px 16px;font-size:12px;line-height:1.6;color:#555;">
     <p>La personne concluant le présent contrat accepte de transmettre ses données à l'agence dans le but de son exécution et garantit qu'il a recueilli le consentement des autres voyageurs aux mêmes fins.</p>
     <p>Conformément à la législation en vigueur, vous disposez d'un droit d'accès, de rectification, de suppression et de portabilité des données personnelles vous concernant. Pour exercer ces droits : <?php echo $c['email']; ?>.</p>
 </div>
@@ -457,7 +476,7 @@ class VS08V_Contract {
 </div>
 
 <!-- ═══════════════ FOOTER ═══════════════ -->
-<div style="background:#1a3a3a;color:#b0cece;padding:16px 32px;font-size:10px;line-height:1.6;text-align:center;">
+<div class="ct-footer" style="background:#1a3a3a;color:#b0cece;padding:16px 32px;font-size:10px;line-height:1.6;text-align:center;">
     Siège social : <?php echo $c['legal']; ?> <?php echo $c['address']; ?> <?php echo $c['city']; ?> — Capital de <?php echo $c['capital']; ?> &euro; — RCS <?php echo $c['rcs']; ?><br>
     APE <?php echo $c['ape']; ?> — TVA intra. <?php echo $c['tva_intra']; ?> — RCP : <?php echo $c['rcp']; ?><br>
     Garantie Financière : <?php echo $c['garantie']; ?> — Immat. <?php echo $c['immat']; ?> — Siret <?php echo $c['siret']; ?>
@@ -471,6 +490,6 @@ class VS08V_Contract {
     }
 
     private static function section_title($title) {
-        return '<div style="background:#2a7f7f;color:#fff;padding:8px 32px;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">' . esc_html($title) . '</div>';
+        return '<div class="ct-section-title" style="background:#2a7f7f;color:#fff;padding:8px 32px;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">' . esc_html($title) . '</div>';
     }
 }
