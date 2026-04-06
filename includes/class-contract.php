@@ -143,18 +143,27 @@ class VS08V_Contract {
 @media(max-width:640px){
     body{font-size:13px!important}
     .ct-wrap{margin:0!important;border:none!important}
-    .ct-header{padding:16px 16px!important}
+    .ct-header{padding:16px!important}
+    .ct-header table{display:block!important}
+    .ct-header tr{display:flex!important;flex-direction:column!important;gap:8px}
+    .ct-header td{display:block!important;text-align:left!important;width:100%!important}
     .ct-header td:first-child div:first-child{font-size:17px!important}
     .ct-header td:last-child{font-size:11px!important}
-    .ct-title{padding:10px 16px!important;font-size:13px!important}
-    .ct-section{padding:0 12px 12px!important;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .ct-title{padding:10px 16px!important;font-size:12px!important}
+    .ct-section{padding:0 10px 10px!important}
     .ct-section-title{padding:8px 16px!important;font-size:12px!important}
-    .ct-section table{font-size:11px!important}
-    .ct-section th,.ct-section td{padding:5px 6px!important;word-break:break-word}
-    .ct-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-    .ct-footer{padding:16px!important;font-size:10px!important}
-    .ct-paiement{padding:0 12px 12px!important}
-    .ct-mentions{padding:12px 16px!important;font-size:10px!important;line-height:1.5!important}
+    .ct-mentions{padding:10px 14px!important;font-size:10px!important;line-height:1.5!important}
+    .ct-footer{padding:12px!important;font-size:9px!important}
+    /* Tables clé-valeur (2 colonnes) : garder en table mais compact */
+    .ct-section table{font-size:11px!important;width:100%!important}
+    .ct-section th,.ct-section td{padding:4px 6px!important;word-break:break-word}
+    /* Tables multi-colonnes : empiler en cartes */
+    .ct-stack{display:block!important}
+    .ct-stack thead{display:none!important}
+    .ct-stack tbody,.ct-stack tr,.ct-stack td{display:block!important;width:100%!important}
+    .ct-stack tr{border:1px solid #e0e0e0!important;border-radius:8px!important;margin-bottom:8px!important;padding:10px!important;background:#fff!important}
+    .ct-stack td{border:none!important;padding:3px 0!important;font-size:12px!important}
+    .ct-stack td::before{content:attr(data-label);font-weight:bold;color:#1a3a3a;margin-right:6px;font-size:11px}
 }
 </style>
 </head>
@@ -235,7 +244,8 @@ class VS08V_Contract {
 
 <?php echo self::section_title('Voyageurs'); ?>
 <div class="ct-section" style="padding:0 32px 16px;">
-    <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">
+    <table class="ct-stack" width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">
+        <thead>
         <tr style="background:#1a3a3a;color:#fff;font-size:12px;text-transform:uppercase;">
             <th style="padding:8px 12px;text-align:left;border:1px solid #1a3a3a;">Nom</th>
             <th style="padding:8px 12px;text-align:left;border:1px solid #1a3a3a;">Prénom</th>
@@ -243,13 +253,15 @@ class VS08V_Contract {
             <th style="padding:8px 12px;text-align:left;border:1px solid #1a3a3a;">N° passeport</th>
             <th style="padding:8px 12px;text-align:left;border:1px solid #1a3a3a;">Type</th>
         </tr>
+        </thead>
+        <tbody>
         <?php foreach ($voyageurs as $i => $v):
             $bg = ($i % 2 === 0) ? '#f8f8f8' : '#fff';
         ?>
         <tr style="background:<?php echo $bg; ?>;">
-            <td style="padding:8px 12px;border:1px solid #e0e0e0;font-weight:bold;"><?php echo esc_html(strtoupper($v['nom'] ?? '')); ?></td>
-            <td style="padding:8px 12px;border:1px solid #e0e0e0;"><?php echo esc_html($v['prenom'] ?? ''); ?></td>
-            <td style="padding:8px 12px;border:1px solid #e0e0e0;"><?php
+            <td data-label="Nom" style="padding:8px 12px;border:1px solid #e0e0e0;font-weight:bold;"><?php echo esc_html(strtoupper($v['nom'] ?? '')); ?></td>
+            <td data-label="Prénom" style="padding:8px 12px;border:1px solid #e0e0e0;"><?php echo esc_html($v['prenom'] ?? ''); ?></td>
+            <td data-label="Date naiss." style="padding:8px 12px;border:1px solid #e0e0e0;"><?php
                 $ddn_raw = $v['ddn'] ?? $v['date_naissance'] ?? '';
                 if ($ddn_raw && (preg_match('/^\d{4}-\d{2}-\d{2}$/', $ddn_raw) || preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $ddn_raw))) {
                     $d = DateTime::createFromFormat('Y-m-d', $ddn_raw) ?: DateTime::createFromFormat('d/m/Y', $ddn_raw);
@@ -258,10 +270,11 @@ class VS08V_Contract {
                     echo $ddn_raw ? esc_html($ddn_raw) : '—';
                 }
             ?></td>
-            <td style="padding:8px 12px;border:1px solid #e0e0e0;"><?php echo esc_html($v['passeport'] ?? '—'); ?></td>
-            <td style="padding:8px 12px;border:1px solid #e0e0e0;"><?php echo ($v['type'] ?? 'golfeur') === 'golfeur' ? 'Golfeur' : 'Accompagnant'; ?></td>
+            <td data-label="Passeport" style="padding:8px 12px;border:1px solid #e0e0e0;"><?php echo esc_html($v['passeport'] ?? '—'); ?></td>
+            <td data-label="Type" style="padding:8px 12px;border:1px solid #e0e0e0;"><?php echo ($v['type'] ?? 'golfeur') === 'golfeur' ? 'Golfeur' : 'Accompagnant'; ?></td>
         </tr>
         <?php endforeach; ?>
+        </tbody>
     </table>
 </div>
 
@@ -281,7 +294,8 @@ class VS08V_Contract {
 
 <?php echo self::section_title('Transport'); ?>
 <div class="ct-section" style="padding:0 32px 16px;">
-    <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;">
+    <table class="ct-stack" width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;">
+        <thead>
         <tr style="background:#1a3a3a;color:#fff;font-size:11px;text-transform:uppercase;">
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Type</th>
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Départ de</th>
@@ -290,26 +304,29 @@ class VS08V_Contract {
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Arrivée à</th>
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Compagnie</th>
         </tr>
+        </thead>
+        <tbody>
         <?php if (!empty($params['vol_aller_num'])): ?>
         <tr style="background:#f8f8f8;">
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;">AVION</td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($params['aeroport'] ?? '')); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_depart ? date('d/m/Y', strtotime($date_depart)) : ''; ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_aller_depart'] ?? ''); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($destination)); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_aller_cie'] ?? ''); ?> / <?php echo esc_html($params['vol_aller_num'] ?? ''); ?></td>
+            <td data-label="Type" style="padding:6px 8px;border:1px solid #e0e0e0;">AVION</td>
+            <td data-label="Départ" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($params['aeroport'] ?? '')); ?></td>
+            <td data-label="Date" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_depart ? date('d/m/Y', strtotime($date_depart)) : ''; ?></td>
+            <td data-label="Heure" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_aller_depart'] ?? ''); ?></td>
+            <td data-label="Arrivée" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($destination)); ?></td>
+            <td data-label="Cie" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_aller_cie'] ?? ''); ?> / <?php echo esc_html($params['vol_aller_num'] ?? ''); ?></td>
         </tr>
         <?php endif; ?>
         <?php if (!empty($params['vol_retour_num'])): ?>
         <tr>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;">AVION</td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($destination)); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_retour ? date('d/m/Y', strtotime($date_retour)) : ''; ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_retour_depart'] ?? ''); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($params['aeroport'] ?? '')); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_aller_cie'] ?? ''); ?> / <?php echo esc_html($params['vol_retour_num'] ?? ''); ?></td>
+            <td data-label="Type" style="padding:6px 8px;border:1px solid #e0e0e0;">AVION</td>
+            <td data-label="Départ" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($destination)); ?></td>
+            <td data-label="Date" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_retour ? date('d/m/Y', strtotime($date_retour)) : ''; ?></td>
+            <td data-label="Heure" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_retour_depart'] ?? ''); ?></td>
+            <td data-label="Arrivée" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(strtoupper($params['aeroport'] ?? '')); ?></td>
+            <td data-label="Cie" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($params['vol_aller_cie'] ?? ''); ?> / <?php echo esc_html($params['vol_retour_num'] ?? ''); ?></td>
         </tr>
         <?php endif; ?>
+        </tbody>
     </table>
     <div style="margin-top:8px;font-size:11px;color:#888;line-height:1.5;">
         * Vols spéciaux : Les prix sont calculés de façon forfaitaire. Si, en raison des horaires imposés par les compagnies aériennes, la première et la dernière journée se trouvaient écourtées, aucun remboursement ne pourrait avoir lieu.<br>
@@ -320,7 +337,8 @@ class VS08V_Contract {
 
 <?php echo self::section_title('Hébergement'); ?>
 <div class="ct-section" style="padding:0 32px 16px;">
-    <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;">
+    <table class="ct-stack" width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:13px;">
+        <thead>
         <tr style="background:#1a3a3a;color:#fff;font-size:11px;text-transform:uppercase;">
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Hôtel</th>
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Catégorie</th>
@@ -330,15 +348,18 @@ class VS08V_Contract {
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Chambre</th>
             <th style="padding:8px;border:1px solid #1a3a3a;text-align:left;">Pension</th>
         </tr>
+        </thead>
+        <tbody>
         <tr style="background:#f8f8f8;">
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;font-weight:bold;"><?php echo esc_html($hotel_nom ?: 'Hôtel du séjour'); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $hotel_etoiles ? str_repeat('★', intval($hotel_etoiles)) : ''; ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_depart ? date('d/m/Y', strtotime($date_depart)) : ''; ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_retour ? date('d/m/Y', strtotime($date_retour)) : ''; ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $duree; ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(ucfirst($params['type_chambre'] ?? 'double')); ?> x<?php echo intval($params['nb_chambres'] ?? 1); ?></td>
-            <td style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($pension_label); ?></td>
+            <td data-label="Hôtel" style="padding:6px 8px;border:1px solid #e0e0e0;font-weight:bold;"><?php echo esc_html($hotel_nom ?: 'Hôtel du séjour'); ?></td>
+            <td data-label="Catégorie" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $hotel_etoiles ? str_repeat('★', intval($hotel_etoiles)) : ''; ?></td>
+            <td data-label="Arrivée" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_depart ? date('d/m/Y', strtotime($date_depart)) : ''; ?></td>
+            <td data-label="Départ" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $date_retour ? date('d/m/Y', strtotime($date_retour)) : ''; ?></td>
+            <td data-label="Nuits" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo $duree; ?></td>
+            <td data-label="Chambre" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html(ucfirst($params['type_chambre'] ?? 'double')); ?> x<?php echo intval($params['nb_chambres'] ?? 1); ?></td>
+            <td data-label="Pension" style="padding:6px 8px;border:1px solid #e0e0e0;"><?php echo esc_html($pension_label); ?></td>
         </tr>
+        </tbody>
     </table>
 </div>
 
